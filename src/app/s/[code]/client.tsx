@@ -120,7 +120,7 @@ export default function CustomerClient({
     });
 
     const unsub2 = on("stamp-request:rejected", () => {
-      toast.error("Request declined", { description: "Please ask staff for help." });
+      toast.error("Request declined");
       setStatus("idle");
     });
 
