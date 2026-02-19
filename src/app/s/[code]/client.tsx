@@ -162,6 +162,16 @@ export default function CustomerClient({
     }
   }, [shopId, customerId, name, customerName, animalName, stamps, threshold, send]);
 
+  // Timeout after 3 minutes of waiting
+  useEffect(() => {
+    if (status !== "waiting") return;
+    const timer = setTimeout(() => {
+      toast.error("Request timed out", { description: "Please try again." });
+      setStatus("idle");
+    }, 3 * 60 * 1000);
+    return () => clearTimeout(timer);
+  }, [status]);
+
   // Auto-request stamp on page load once connected
   // If customer has enough stamps for a free drink, show choice first
   useEffect(() => {
