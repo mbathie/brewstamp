@@ -62,8 +62,8 @@ export async function sendWelcomeEmail({
                     <div style="background-color: #d97706; color: #ffffff; width: 28px; height: 28px; border-radius: 14px; text-align: center; line-height: 28px; font-size: 14px; font-weight: 700;">1</div>
                   </td>
                   <td>
-                    <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print your QR code</h3>
-                    <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard and print it out. Stick it at the counter, on the menu board, or wherever customers will see it.</p>
+                    <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print and display your QR code</h3>
+                    <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard, print it out and place it at your point of sale so customers can easily scan it on their phones.</p>
                     <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR Code &rarr;</a>
                   </td>
                 </tr>
@@ -82,8 +82,9 @@ export async function sendWelcomeEmail({
                     <div style="background-color: #d97706; color: #ffffff; width: 28px; height: 28px; border-radius: 14px; text-align: center; line-height: 28px; font-size: 14px; font-weight: 700;">2</div>
                   </td>
                   <td>
-                    <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Display it for customers</h3>
-                    <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5;">When a customer wants a stamp, they scan the QR code with their phone camera. No app download needed &mdash; it opens right in their browser.</p>
+                    <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Approve stamps from your device</h3>
+                    <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Keep a phone or tablet logged into your Brewstamp dashboard at the counter. When a customer scans, a stamp request pops up instantly &mdash; tap approve and they get their stamp in real-time.</p>
+                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -99,26 +100,6 @@ export async function sendWelcomeEmail({
                 <tr>
                   <td style="vertical-align: top; padding-right: 14px;">
                     <div style="background-color: #d97706; color: #ffffff; width: 28px; height: 28px; border-radius: 14px; text-align: center; line-height: 28px; font-size: 14px; font-weight: 700;">3</div>
-                  </td>
-                  <td>
-                    <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Approve stamps from your device</h3>
-                    <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Keep a phone or tablet logged into your Brewstamp dashboard at the counter. When a customer scans, a stamp request pops up instantly &mdash; tap approve and they get their stamp in real-time.</p>
-                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Step 4 -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden;">
-          <tr>
-            <td style="padding: 20px;">
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="vertical-align: top; padding-right: 14px;">
-                    <div style="background-color: #d97706; color: #ffffff; width: 28px; height: 28px; border-radius: 14px; text-align: center; line-height: 28px; font-size: 14px; font-weight: 700;">4</div>
                   </td>
                   <td>
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Customise your branding</h3>
