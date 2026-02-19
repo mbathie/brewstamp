@@ -3,9 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   devIndicators: false,
   serverExternalPackages: ["mongoose", "bcrypt"],
-  experimental: {
-    serverBodyLimit: "12mb",
-  },
   images: {
     remotePatterns: [
       {
