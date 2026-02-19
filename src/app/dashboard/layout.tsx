@@ -34,6 +34,7 @@ export default async function DashboardLayout({
         <DashboardSidebar
           userName={session.user.name || "Merchant"}
           shopName={shop?.name || "My Shop"}
+          userEmail={session.user.email || ""}
         />
         <SidebarInset>
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">

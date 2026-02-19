@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   ChevronUp,
+  Store,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,13 +34,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+const ADMIN_EMAIL = "mbathie@gmail.com";
+
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export function DashboardSidebar({ userName, shopName }: { userName: string; shopName: string }) {
+const adminItems = [
+  { title: "Shops", href: "/dashboard/admin/shops", icon: Store },
+];
+
+export function DashboardSidebar({ userName, shopName, userEmail }: { userName: string; shopName: string; userEmail: string }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
 
@@ -55,7 +62,7 @@ export function DashboardSidebar({ userName, shopName }: { userName: string; sho
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{shopName}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-muted-foreground font-[family-name:var(--font-logo)] tracking-wide">
                     Brewstamp
                   </span>
                 </div>
@@ -91,6 +98,30 @@ export function DashboardSidebar({ userName, shopName }: { userName: string; sho
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {userEmail === ADMIN_EMAIL && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.href)}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
