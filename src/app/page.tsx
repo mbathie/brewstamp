@@ -80,8 +80,8 @@ export default function Home() {
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-300">
               Digital rewards for <mark className="bg-amber-500/20 px-1 text-white">coffee shops</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
-              collect stamps, and earn <mark className="bg-amber-500/20 px-1 text-white">free drinks</mark>. No app to download, no
-              account to create. Just scan, stamp, and sip.
+              collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No app to download</mark>, no
+              account to create. <mark className="bg-amber-500/20 px-1 text-white">Just scan</mark> and <mark className="bg-amber-500/20 px-1 text-white">stamp</mark>.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
