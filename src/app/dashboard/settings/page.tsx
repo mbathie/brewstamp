@@ -234,7 +234,7 @@ export default function SettingsPage() {
                 onChange={(v) => setThreshold(v)}
               />
             </div>
-            <QrDisplay shopCode={shop.code} shopName={name} shopLogo={logo} stampThreshold={threshold} bgColor={bgColor} fgColor={fgColor} bgPattern={bgPattern} />
+            <QrDisplay shopCode={shop.code} shopName={name} shopLogo={logo} stampThreshold={threshold ?? undefined} bgColor={bgColor} fgColor={fgColor} bgPattern={bgPattern} />
           </CardContent>
         </Card>
       </div>
