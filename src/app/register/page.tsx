@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -60,8 +60,13 @@ export default function RegisterPage() {
     router.push("/dashboard");
   }
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [status, router]);
+
   if (status === "authenticated") {
-    router.replace("/dashboard");
     return null;
   }
 

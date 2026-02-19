@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/mongoose";
 import { User, Shop } from "@/models";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   await connectDB();
@@ -30,6 +31,11 @@ export async function POST(req: Request) {
 
   user.shopId = shop._id;
   await user.save();
+
+  // Send welcome email (fire-and-forget, don't block registration)
+  sendWelcomeEmail({ to: email, merchantName: name, shopName }).catch((err) =>
+    console.error("[Register] Welcome email failed:", err)
+  );
 
   return NextResponse.json({ success: true }, { status: 201 });
 }
