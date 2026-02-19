@@ -1,0 +1,16 @@
+{
+  "name": "Brewstamp",
+  "short_name": "Brewstamp",
+  "description": "Digital coffee stamp card — no app download required.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c1917",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

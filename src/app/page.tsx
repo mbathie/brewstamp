@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,40 +12,52 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
+
+export const metadata: Metadata = {
+  title: "Brewstamp - Digital Coffee Stamp Card",
+  description:
+    "Replace paper loyalty cards with a digital stamp card for your coffee shop. No app download required. Free to get started.",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "Brewstamp",
+      url: "https://brewstamp.app",
+      logo: "https://brewstamp.app/apple-touch-icon.png",
+      description:
+        "Digital loyalty stamp cards for coffee shops. No app download required.",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Brewstamp",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      url: "https://brewstamp.app",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      description:
+        "Replace paper loyalty cards with a digital stamp card for your coffee shop.",
+    },
+  ],
+};
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
-      {/* Nav - fixed, dark glass */}
-      <header className="fixed top-0 z-50 w-full border-b border-white/10 bg-stone-900/60 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600">
-              <Coffee className="h-4.5 w-4.5 text-white" />
-            </div>
-            <span className="font-[family-name:var(--font-logo)] text-2xl tracking-wide text-white">
-              Brewstamp
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                className="cursor-pointer text-stone-300 hover:bg-white/10 hover:text-white"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button className="cursor-pointer bg-amber-600 hover:bg-amber-700">
-                Get Started Free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PublicHeader transparent />
 
       {/* Hero */}
       <section className="relative min-h-screen overflow-hidden">

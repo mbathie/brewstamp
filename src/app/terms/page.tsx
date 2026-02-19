@@ -1,20 +1,16 @@
-import Link from "next/link";
-import { Coffee } from "lucide-react";
+import type { Metadata } from "next";
+import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "Brewstamp terms of service for merchants and customers.",
+};
 
 export default function TermsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
-      <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-600">
-              <Coffee className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-[family-name:var(--font-logo)] text-lg tracking-wide text-stone-900">Brewstamp</span>
-          </Link>
-        </div>
-      </header>
+      <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
         <h1 className="text-2xl font-bold text-stone-900">Terms of Service</h1>
         <div className="mt-6 space-y-4 text-sm leading-relaxed text-stone-600">

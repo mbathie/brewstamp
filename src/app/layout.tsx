@@ -22,8 +22,35 @@ const kaushanScript = Kaushan_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Brewstamp - Digital Coffee Stamp Card",
-  description: "Replace paper loyalty cards with a digital stamp card. No app download required.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app"
+  ),
+  title: {
+    default: "Brewstamp - Digital Coffee Stamp Card",
+    template: "%s | Brewstamp",
+  },
+  description:
+    "Replace paper loyalty cards with a digital stamp card. No app download required.",
+  openGraph: {
+    type: "website",
+    siteName: "Brewstamp",
+    title: "Brewstamp - Digital Coffee Stamp Card",
+    description:
+      "Replace paper loyalty cards with a digital stamp card. No app download required.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brewstamp - Digital Coffee Stamp Card",
+    description:
+      "Replace paper loyalty cards with a digital stamp card. No app download required.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
