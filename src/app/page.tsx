@@ -195,7 +195,7 @@ export default function Home() {
               {
                 icon: Clock,
                 title: "Real-time approvals",
-                desc: "WebSocket-powered live connection between your dashboard and the customer's phone. Instant feedback.",
+                desc: "Live connection between your dashboard and the customer's phone. Approve stamps instantly.",
               },
               {
                 icon: Shield,
