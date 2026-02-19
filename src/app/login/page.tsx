@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,14 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { status } = useSession();
+  const router = useRouter();
+
+  if (status === "authenticated") {
+    router.replace("/dashboard");
+    return null;
+  }
+
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
       <img

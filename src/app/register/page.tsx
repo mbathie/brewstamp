@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee } from "lucide-react";
 
 export default function RegisterPage() {
+  const { status } = useSession();
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,11 @@ export default function RegisterPage() {
     }
 
     router.push("/dashboard");
+  }
+
+  if (status === "authenticated") {
+    router.replace("/dashboard");
+    return null;
   }
 
   return (
