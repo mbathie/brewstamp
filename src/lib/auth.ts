@@ -5,6 +5,7 @@ import { connectDB } from "./mongoose";
 import { User, Shop } from "@/models";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
