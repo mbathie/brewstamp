@@ -167,7 +167,7 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
           </TableHeader>
           <TableBody>
             {filtered.map((card) => (
-              <TableRow key={card._id} className="cursor-pointer">
+              <TableRow key={card._id} className="relative cursor-pointer">
                 <TableCell>
                   <Link
                     href={`/dashboard/customers/${card.customer._id}`}
