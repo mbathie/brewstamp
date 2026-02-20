@@ -248,16 +248,16 @@ export default function CustomerClient({
 
           {/* Personalized progress */}
           {remaining > 0 && displayName ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex, opacity: 0.6 }}>
+            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
               {displayName}, you&apos;re {remaining} drink{remaining > 1 ? "s" : ""} away from a free one!
             </p>
           ) : remaining > 0 ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex, opacity: 0.5 }}>
+            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
               Buy {threshold} drinks to earn 1 free
             </p>
           ) : null}
 
-          <p className="mt-1 text-center text-xs" style={{ color: fgHex, opacity: 0.35 }}>
+          <p className="mt-1 text-center text-xs" style={{ color: fgHex}}>
             {totalEarned} stamps earned &middot; {freeRedeemed} free drinks redeemed
           </p>
         </div>
@@ -465,7 +465,7 @@ export default function CustomerClient({
           <a
             href="/"
             className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs transition-opacity hover:opacity-80"
-            style={{ backgroundColor: fgHex + "15", color: fgHex, opacity: 0.5 }}
+            style={{ backgroundColor: fgHex + "15", color: fgHex }}
           >
             Powered by{" "}
             <span className="font-[family-name:var(--font-logo)] tracking-wide" style={{ opacity: 1 }}>

@@ -21,7 +21,7 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate }: Pr
           {stamps} of {threshold} stamps
         </p>
         {remaining > 0 && (
-          <p className="text-xs" style={{ color: fg, opacity: 0.5 }}>
+          <p className="text-xs" style={{ color: fg }}>
             {remaining} to go
           </p>
         )}
@@ -60,13 +60,13 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate }: Pr
               style={
                 filled
                   ? { borderColor: fg, backgroundColor: fg + "30", color: fg }
-                  : { borderColor: fg + "12", backgroundColor: fg + "06", color: fg + "20" }
+                  : { borderColor: fg + "40", backgroundColor: fg + "18", color: fg + "45" }
               }
             >
               {filled ? (
                 <Check className="h-5 w-5" strokeWidth={2.5} />
               ) : (
-                <Coffee className="h-5 w-5" />
+                <Coffee className="size-5" />
               )}
             </div>
           );
