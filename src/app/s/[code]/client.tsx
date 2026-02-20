@@ -221,7 +221,7 @@ export default function CustomerClient({
       {/* Card */}
       <div className="relative z-10 w-full max-w-sm space-y-6">
         {/* Shop header */}
-        <div className="space-y-3">
+        <div>
           {shopLogo ? (
             <img
               src={shopLogo}
@@ -233,17 +233,16 @@ export default function CustomerClient({
               className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl shadow-lg"
               style={{ backgroundColor: fgHex }}
             >
-              <Coffee className="h-9 w-9 text-white" />
+              <h1 className="text-2xl font-bold text-white">{shopName}</h1>
             </div>
           )}
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-bold" style={{ color: fgHex }}>{shopName}</h1>
-            <p className="text-sm" style={{ color: fgHex, opacity: 0.7 }}>Loyalty Card</p>
-          </div>
         </div>
 
         {/* Stamp card */}
         <div className="rounded-2xl p-6" style={{ backgroundColor: fgHex + "38", border: `1px solid ${fgHex}50` }}>
+          <p className="mb-4 text-center text-sm font-medium" style={{ color: fgHex }}>
+            {shopName} <span style={{ opacity: 0.6 }}>&middot; Loyalty Card</span>
+          </p>
           <StampDisplay stamps={stamps} threshold={threshold} fgColor={fgHex} animate={status === "approved"} />
 
           {/* Personalized progress */}
