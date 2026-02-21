@@ -327,7 +327,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
             </div>
           </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
