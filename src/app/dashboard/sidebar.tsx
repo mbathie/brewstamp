@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronUp,
   Store,
+  UserCog,
 } from "lucide-react";
 import {
   Sidebar,
@@ -154,6 +155,12 @@ export function DashboardSidebar({ userName, shopName, userEmail }: { userName: 
                 className="w-(--radix-dropdown-menu-trigger-width) min-w-56"
                 align="start"
               >
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/dashboard/account" onClick={() => setOpenMobile(false)}>
+                    <UserCog className="mr-2 size-4" />
+                    Account
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => signOut({ callbackUrl: "/" })}

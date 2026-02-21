@@ -32,6 +32,7 @@ export default function RegisterPage() {
         name: formData.get("name"),
         email,
         password,
+        phone: formData.get("phone") || undefined,
         shopName: formData.get("shopName"),
       }),
     });
@@ -101,6 +102,10 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number <span className="text-stone-400 font-normal">(optional)</span></Label>
+              <Input id="phone" name="phone" type="tel" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

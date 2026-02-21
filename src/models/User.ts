@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     hash: { type: String, required: true },
+    phone: { type: String },
+    resetToken: { type: String },
+    resetTokenExpiry: { type: Date },
     shopId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Shop",

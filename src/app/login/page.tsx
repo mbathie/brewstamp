@@ -16,6 +16,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const registered = searchParams.get("registered");
+  const reset = searchParams.get("reset");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,6 +51,10 @@ function LoginForm() {
           <p className="text-sm text-green-600">
             Account created! Please sign in.
           </p>
+        ) : reset ? (
+          <p className="text-sm text-green-600">
+            Password reset! Please sign in with your new password.
+          </p>
         ) : (
           <p className="text-sm text-stone-500">
             Welcome back. Manage your stamp cards.
@@ -63,7 +68,12 @@ function LoginForm() {
             <Input id="email" name="email" type="email" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link href="/forgot-password" className="text-xs text-amber-700 hover:text-amber-800">
+                Forgot password?
+              </Link>
+            </div>
             <Input id="password" name="password" type="password" required />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

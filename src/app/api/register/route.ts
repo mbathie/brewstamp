@@ -6,7 +6,7 @@ import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   await connectDB();
-  const { name, email, password, shopName } = await req.json();
+  const { name, email, password, phone, shopName } = await req.json();
 
   if (!name || !email || !password || !shopName) {
     return NextResponse.json({ error: "All fields are required" }, { status: 400 });
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
   } while (await Shop.findOne({ code }));
 
-  const user = await User.create({ name, email, hash });
+  const user = await User.create({ name, email, hash, ...(phone && { phone }) });
   const shop = await Shop.create({ name: shopName, owner: user._id, code });
 
   user.shopId = shop._id;
