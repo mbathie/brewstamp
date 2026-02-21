@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, ExternalLink } from "lucide-react";
 import { generateQRCodeWithLogo } from "@/lib/qr";
 import { jsPDF } from "jspdf";
 import { kaushanScriptBase64 } from "@/lib/fonts/kaushan-script";
@@ -147,15 +147,19 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
 
   async function handlePrint() {
     if (!qrUrl) return;
+    // Open window immediately to preserve user gesture on iOS Safari
+    const win = window.open("", "_blank");
     const pdf = await generatePdf();
-    const blobUrl = pdf.output("bloburl");
-    window.open(blobUrl, "_blank");
+    const blobUrl = pdf.output("bloburl") as string;
+    if (win) {
+      win.location.href = blobUrl;
+    }
   }
 
   return (
     <div className="space-y-4">
       <Label>Customer QR Code</Label>
-      <div className="mx-auto aspect-square w-full max-w-[14rem] rounded-lg border bg-white p-4">
+      <div className="mx-auto aspect-square w-full max-w-[12rem] rounded-lg border bg-white p-3 sm:max-w-[14rem] sm:p-4">
         {qrUrl ? (
           <img src={qrUrl} alt="Shop QR Code" className="h-full w-full" />
         ) : (
@@ -175,7 +179,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
           className="flex-1 cursor-pointer"
         >
           <Download className="mr-2 h-4 w-4" />
-          Download PDF
+          PDF
         </Button>
         <Button
           variant="outline"
@@ -185,6 +189,16 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         >
           <Printer className="mr-2 h-4 w-4" />
           Print
+        </Button>
+        <Button
+          variant="outline"
+          asChild
+          className="flex-1 cursor-pointer"
+        >
+          <a href={`${appUrl}/s/${shopCode}`} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="mr-2 h-4 w-4" />
+            View
+          </a>
         </Button>
       </div>
     </div>

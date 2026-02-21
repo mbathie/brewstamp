@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,12 +25,8 @@ interface ShopRow {
   createdAt: string;
 }
 
-type SortKey = "name" | "ownerEmail" | "code" | "totalStamps" | "customers" | "ratio" | "createdAt";
+type SortKey = "name" | "ownerEmail" | "code" | "totalStamps" | "customers" | "createdAt";
 type SortDir = "asc" | "desc";
-
-function getRatio(shop: ShopRow) {
-  return shop.customers === 0 ? 0 : shop.totalStamps / shop.customers;
-}
 
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
@@ -59,10 +55,7 @@ export default function AdminShopsPage() {
       let aVal: string | number;
       let bVal: string | number;
 
-      if (sortKey === "ratio") {
-        aVal = getRatio(a);
-        bVal = getRatio(b);
-      } else if (sortKey === "createdAt") {
+      if (sortKey === "createdAt") {
         aVal = new Date(a.createdAt).getTime();
         bVal = new Date(b.createdAt).getTime();
       } else {
@@ -121,7 +114,6 @@ export default function AdminShopsPage() {
                 { key: "code" as SortKey, label: "Code", align: "" },
                 { key: "totalStamps" as SortKey, label: "Stamps", align: "text-right" },
                 { key: "customers" as SortKey, label: "Customers", align: "text-right" },
-                { key: "ratio" as SortKey, label: "Stamps/Customer", align: "text-right" },
                 { key: "createdAt" as SortKey, label: "Signed Up", align: "" },
               ]).map((col) => (
                 <TableHead
@@ -133,12 +125,13 @@ export default function AdminShopsPage() {
                   <SortIcon col={col.key} />
                 </TableHead>
               ))}
+              <TableHead className="text-center">View</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                   No shops found
                 </TableCell>
               </TableRow>
@@ -150,11 +143,18 @@ export default function AdminShopsPage() {
                   <TableCell className="font-mono text-xs">{shop.code}</TableCell>
                   <TableCell className="text-right">{shop.totalStamps}</TableCell>
                   <TableCell className="text-right">{shop.customers}</TableCell>
-                  <TableCell className="text-right">
-                    {shop.customers === 0 ? "—" : getRatio(shop).toFixed(1)}
-                  </TableCell>
                   <TableCell>
                     {new Date(shop.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <a
+                      href={`/s/${shop.code}?checkin=0`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <ExternalLink className="size-4" />
+                    </a>
                   </TableCell>
                 </TableRow>
               ))

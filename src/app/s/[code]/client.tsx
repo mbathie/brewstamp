@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useWebSocket } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,9 @@ export default function CustomerClient({
   const [email, setEmail] = useState(customerEmail || "");
   const [showDetailsPrompt, setShowDetailsPrompt] = useState(false);
   const [showShopSwitcher, setShowShopSwitcher] = useState(false);
+
+  const searchParams = useSearchParams();
+  const viewOnly = searchParams.get("checkin") === "0";
 
   const { connected, send, on } = useWebSocket(shopCode, "customer", customerId);
   const autoRequestedRef = useRef(false);
@@ -174,7 +178,9 @@ export default function CustomerClient({
 
   // Auto-request stamp on page load once connected
   // If customer has enough stamps for a free drink, show choice first
+  // Skip if ?checkin=0 (view-only mode)
   useEffect(() => {
+    if (viewOnly) return;
     if (connected && !autoRequestedRef.current && status === "idle") {
       autoRequestedRef.current = true;
       if (stamps >= threshold) {
@@ -183,7 +189,7 @@ export default function CustomerClient({
         requestStamp();
       }
     }
-  }, [connected, status, requestStamp, stamps, threshold]);
+  }, [connected, status, requestStamp, stamps, threshold, viewOnly]);
 
   async function saveDetails() {
     const update: any = {};
