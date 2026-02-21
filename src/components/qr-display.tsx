@@ -150,7 +150,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     // Open window immediately to preserve user gesture on iOS Safari
     const win = window.open("", "_blank");
     const pdf = await generatePdf();
-    const blobUrl = pdf.output("bloburl") as string;
+    const blobUrl = pdf.output("bloburl") as unknown as string;
     if (win) {
       win.location.href = blobUrl;
     }
