@@ -135,6 +135,7 @@ export async function sendWelcomeEmail({
                   <td>
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print and display your QR code</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard, print it out and place it at your point of sale so customers can easily scan it on their phones.</p>
+                    <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg" alt="QR code printed out on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
                     <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR Code &rarr;</a>
                   </td>
                 </tr>
@@ -155,6 +156,7 @@ export async function sendWelcomeEmail({
                   <td>
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Customise your branding</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Add your logo, pick your brand colours, and set how many stamps earn a free drink. Make it yours.</p>
+                    <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-loyalty-card.png" alt="Example branded loyalty card" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
                     <a href="${APP_URL}/dashboard/settings" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Customise Settings &rarr;</a>
                   </td>
                 </tr>
@@ -175,6 +177,35 @@ export async function sendWelcomeEmail({
                   <td>
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Approve stamps from your device</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Keep a phone or tablet logged into your Brewstamp dashboard at the counter. When a customer scans, a stamp request pops up instantly &mdash; tap approve and they get their stamp in real-time.</p>
+                    <!-- Device icons -->
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td style="padding-right: 8px;">
+                          <div style="display: inline-block; background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 14px; text-align: center;">
+                            <img src="https://img.icons8.com/color/48/iphone-x.png" alt="iPhone" width="32" height="32" style="display: block; margin: 0 auto 4px;" />
+                            <span style="font-size: 11px; color: #78716c; font-weight: 500;">iPhone</span>
+                          </div>
+                        </td>
+                        <td style="padding-right: 8px;">
+                          <div style="display: inline-block; background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 14px; text-align: center;">
+                            <img src="https://img.icons8.com/color/48/ipad.png" alt="iPad" width="32" height="32" style="display: block; margin: 0 auto 4px;" />
+                            <span style="font-size: 11px; color: #78716c; font-weight: 500;">iPad</span>
+                          </div>
+                        </td>
+                        <td style="padding-right: 8px;">
+                          <div style="display: inline-block; background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 14px; text-align: center;">
+                            <img src="https://img.icons8.com/color/48/android-os.png" alt="Android" width="32" height="32" style="display: block; margin: 0 auto 4px;" />
+                            <span style="font-size: 11px; color: #78716c; font-weight: 500;">Android</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style="display: inline-block; background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 14px; text-align: center;">
+                            <img src="https://img.icons8.com/color/48/laptop.png" alt="Laptop" width="32" height="32" style="display: block; margin: 0 auto 4px;" />
+                            <span style="font-size: 11px; color: #78716c; font-weight: 500;">Laptop</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                     <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
                   </td>
                 </tr>
