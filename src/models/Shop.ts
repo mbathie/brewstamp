@@ -14,6 +14,8 @@ const shopSchema = new mongoose.Schema(
     bgColor: { type: String, default: "stone-800" },
     fgColor: { type: String, default: "amber-600" },
     bgPattern: { type: String, default: "none" },
+    dripDay3Sent: { type: Boolean, default: false },
+    dripDay7Sent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -4,6 +4,7 @@ import next from "next";
 import { WebSocketServer, WebSocket } from "ws";
 import { Socket } from "net";
 import { randomUUID } from "crypto";
+import { startDripCron } from "./src/lib/drip-cron";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
@@ -142,5 +143,6 @@ app.prepare().then(() => {
 
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
+    startDripCron();
   });
 });

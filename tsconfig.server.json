@@ -10,6 +10,6 @@
     "strict": true,
     "resolveJsonModule": true
   },
-  "include": ["server.ts"],
+  "include": ["server.ts", "src/lib/mongoose.ts", "src/lib/email.ts", "src/lib/drip-cron.ts", "src/models/**/*.ts"],
   "exclude": ["node_modules"]
 }
