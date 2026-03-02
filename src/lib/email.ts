@@ -378,18 +378,27 @@ export async function sendDay3NudgeEmail({
       </td>
     </tr>
 
-    <!-- Help box -->
+    <!-- Primary CTA -->
     <tr>
-      <td style="padding: 8px 24px 24px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafaf9; border-radius: 8px; border: 1px solid #e7e5e4;">
+      <td style="padding: 8px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border-radius: 8px; border: 1px solid #fde68a;">
           <tr>
-            <td style="padding: 20px; text-align: center;">
-              <p style="margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #1c1917;">Need a hand getting set up?</p>
-              <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">We&rsquo;re happy to help you get everything running smoothly.</p>
-              <a href="https://brewstamp.app/contact" style="display: inline-block; background-color: #1c1917; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 500;">Get in Touch &rarr;</a>
+            <td style="padding: 24px; text-align: center;">
+              <p style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1c1917;">Your first 10 stamps are free &mdash; don&rsquo;t let them go to waste</p>
+              <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">Print the QR code, stick it at the counter, and watch the stamps roll in.</p>
+              <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Print my QR code &rarr;</a>
             </td>
           </tr>
         </table>
+      </td>
+    </tr>
+
+    <!-- P.S. -->
+    <tr>
+      <td style="padding: 16px 24px 24px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; font-style: italic;">
+          P.S. Most cafes get their first stamp within an hour of putting up the QR code. Just print it and place it &mdash; that&rsquo;s all it takes.
+        </p>
       </td>
     </tr>
 
@@ -530,25 +539,27 @@ export async function sendDay7FollowUpEmail({
       </td>
     </tr>
 
-    <!-- CTA -->
+    <!-- Primary CTA -->
     <tr>
-      <td style="padding: 8px 24px 24px; text-align: center;">
-        <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Open your Dashboard &rarr;</a>
-      </td>
-    </tr>
-
-    <!-- Help box -->
-    <tr>
-      <td style="padding: 0 24px 24px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafaf9; border-radius: 8px; border: 1px solid #e7e5e4;">
+      <td style="padding: 8px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border-radius: 8px; border: 1px solid #fde68a;">
           <tr>
-            <td style="padding: 20px; text-align: center;">
-              <p style="margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #1c1917;">Still figuring things out?</p>
-              <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">No worries &mdash; we&rsquo;re here to help you get everything running smoothly.</p>
-              <a href="https://brewstamp.app/contact" style="display: inline-block; background-color: #1c1917; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 500;">Contact Us &rarr;</a>
+            <td style="padding: 24px; text-align: center;">
+              <p style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1c1917;">Your regulars are waiting &mdash; let&rsquo;s get them stamping</p>
+              <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your QR code, print it out, and place it at the counter. That&rsquo;s it.</p>
+              <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Download my QR code &rarr;</a>
             </td>
           </tr>
         </table>
+      </td>
+    </tr>
+
+    <!-- P.S. -->
+    <tr>
+      <td style="padding: 16px 24px 24px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; font-style: italic;">
+          P.S. Reply to this email if you want a hand getting set up &mdash; happy to walk you through it personally.
+        </p>
       </td>
     </tr>
 
