@@ -383,14 +383,14 @@ export default function AdminShopsPage() {
                   <TableCell>{shop.ownerEmail}</TableCell>
                   <TableCell className="font-mono text-xs">{shop.code}</TableCell>
                   <TableCell className="text-right">
-                    <span className="inline-flex items-center gap-1.5">
-                      {shop.totalStamps}
+                    <span className="inline-flex items-center justify-end gap-1.5">
                       {shop.totalStamps >= 100 && (
                         <Badge variant="outline" className="border-amber-500/50 text-amber-500 text-[10px] px-1 py-0">
                           <AlertTriangle className="mr-0.5 size-2.5" />
                           limit
                         </Badge>
                       )}
+                      {shop.totalStamps}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">{shop.customers}</TableCell>
