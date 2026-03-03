@@ -11,6 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const FROM = `"Brewstamp" <${process.env.EMAIL_FROM || "hello@brewstamp.app"}>`;
+const REPLY_TO = "hello@brewstamp.app";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
 
 export async function sendResetEmail({
@@ -253,6 +254,7 @@ export async function sendWelcomeEmail({
   try {
     const info = await transporter.sendMail({
       from: FROM,
+      replyTo: REPLY_TO,
       to,
       subject: `Welcome to Brewstamp, ${merchantName}!`,
       html,
@@ -416,6 +418,7 @@ export async function sendDay3NudgeEmail({
   try {
     const info = await transporter.sendMail({
       from: FROM,
+      replyTo: REPLY_TO,
       to,
       subject: `Quick check-in \u2014 is your QR code up yet, ${merchantName}?`,
       html,
@@ -577,6 +580,7 @@ export async function sendDay7FollowUpEmail({
   try {
     const info = await transporter.sendMail({
       from: FROM,
+      replyTo: REPLY_TO,
       to,
       subject: `Your loyalty program is ready \u2014 here\u2019s how to make it count`,
       html,
