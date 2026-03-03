@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Zap, Loader2, Mail } from "lucide-react";
+import { CreditCard, Zap, Loader2, Mail, ExternalLink } from "lucide-react";
 
 interface BillingData {
   totalStamps: number;

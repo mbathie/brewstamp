@@ -560,6 +560,7 @@ export default function AdminShopDetailPage() {
                   size="sm"
                   disabled={page === 0}
                   onClick={() => setPage(page - 1)}
+                  className="border-border text-foreground"
                 >
                   <ChevronLeft className="mr-1 size-4" />
                   Previous
@@ -569,6 +570,7 @@ export default function AdminShopDetailPage() {
                   size="sm"
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage(page + 1)}
+                  className="border-border text-foreground"
                 >
                   Next
                   <ChevronRight className="ml-1 size-4" />
