@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ export default function AdminShopsPage() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const router = useRouter();
 
   useEffect(() => {
     if (status === "loading") return;
@@ -125,7 +127,7 @@ export default function AdminShopsPage() {
                   <SortIcon col={col.key} />
                 </TableHead>
               ))}
-              <TableHead className="text-center">View</TableHead>
+              <TableHead className="w-8"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,7 +139,11 @@ export default function AdminShopsPage() {
               </TableRow>
             ) : (
               sorted.map((shop) => (
-                <TableRow key={shop._id}>
+                <TableRow
+                  key={shop._id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/dashboard/admin/shops/${shop._id}`)}
+                >
                   <TableCell className="font-medium">{shop.name}</TableCell>
                   <TableCell>{shop.ownerEmail}</TableCell>
                   <TableCell className="font-mono text-xs">{shop.code}</TableCell>
@@ -146,15 +152,8 @@ export default function AdminShopsPage() {
                   <TableCell>
                     {new Date(shop.createdAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="text-center">
-                    <a
-                      href={`/s/${shop.code}?checkin=0`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                    >
-                      <ExternalLink className="size-4" />
-                    </a>
+                  <TableCell>
+                    <ChevronRight className="size-4 text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ))
