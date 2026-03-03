@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Download, Monitor, QrCode } from "lucide-react";
+import { CalendarIcon, ChevronRight, Download, Monitor, QrCode } from "lucide-react";
 import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -439,18 +439,16 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                   const awarded = c.stampsAwarded || 0;
 
                   return (
-                    <TableRow key={c._id}>
+                    <TableRow key={c._id} className="cursor-pointer" onClick={() => window.location.href = `/dashboard/customers/${c.customer?._id}`}>
                       <TableCell>
-                        <Link href={`/dashboard/customers/${c.customer?._id}`} className="hover:underline">
-                          <p className="font-medium">
-                            {c.customer?.name || generateAnimalName(c.customer?.cookieId || "")}
+                        <p className="font-medium">
+                          {c.customer?.name || generateAnimalName(c.customer?.cookieId || "")}
+                        </p>
+                        {c.customer?.email && (
+                          <p className="text-xs text-muted-foreground">
+                            {c.customer.email}
                           </p>
-                          {c.customer?.email && (
-                            <p className="text-xs text-muted-foreground">
-                              {c.customer.email}
-                            </p>
-                          )}
-                        </Link>
+                        )}
                       </TableCell>
                       <TableCell>
                         {isRedeem ? (
@@ -492,6 +490,9 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {formatTime(c.createdAt)}
+                      </TableCell>
+                      <TableCell className="w-8 text-muted-foreground">
+                        <ChevronRight className="h-4 w-4" />
                       </TableCell>
                     </TableRow>
                   );
