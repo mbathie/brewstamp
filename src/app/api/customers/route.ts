@@ -11,7 +11,7 @@ export async function GET() {
 
   await connectDB();
 
-  const stampCards = await StampCard.find({ shop: merchant.shop._id })
+  const stampCards = await StampCard.find({ shop: merchant.shop._id, totalEarned: { $gt: 0 } })
     .populate("customer", "name cookieId email")
     .sort({ updatedAt: -1 });
 

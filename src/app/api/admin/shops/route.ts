@@ -18,7 +18,15 @@ export async function GET() {
   const shopIds = shops.map((s) => s._id);
   const stampCounts = await StampCard.aggregate([
     { $match: { shop: { $in: shopIds } } },
-    { $group: { _id: "$shop", totalStamps: { $sum: "$totalEarned" }, customers: { $sum: 1 } } },
+    {
+      $group: {
+        _id: "$shop",
+        totalStamps: { $sum: "$totalEarned" },
+        customers: {
+          $sum: { $cond: [{ $gt: ["$totalEarned", 0] }, 1, 0] },
+        },
+      },
+    },
   ]);
 
   const stampMap = new Map(
