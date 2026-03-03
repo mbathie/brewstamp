@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, ChevronRight } from "lucide-react";
+import { redirect, useRouter } from "next/navigation";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Users, Stamp, Store } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -26,12 +38,36 @@ interface ShopRow {
   createdAt: string;
 }
 
+interface ChartPoint {
+  _id: string;
+  stamps?: number;
+  customers?: number;
+  shops?: number;
+}
+
 type SortKey = "name" | "ownerEmail" | "code" | "totalStamps" | "customers" | "createdAt";
 type SortDir = "asc" | "desc";
+
+const stampsChartConfig = {
+  stamps: { label: "Stamps", color: "var(--chart-1)" },
+} satisfies ChartConfig;
+
+const customersChartConfig = {
+  customers: { label: "Customers", color: "var(--chart-2)" },
+} satisfies ChartConfig;
+
+const shopsChartConfig = {
+  shops: { label: "Shops", color: "var(--chart-3)" },
+} satisfies ChartConfig;
 
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
   const [shops, setShops] = useState<ShopRow[]>([]);
+  const [charts, setCharts] = useState<{
+    dailyStamps: ChartPoint[];
+    dailyCustomers: ChartPoint[];
+    dailyShops: ChartPoint[];
+  }>({ dailyStamps: [], dailyCustomers: [], dailyShops: [] });
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -46,7 +82,8 @@ export default function AdminShopsPage() {
     fetch("/api/admin/shops")
       .then((res) => res.json())
       .then((data) => {
-        setShops(data);
+        setShops(data.shops || data);
+        if (data.charts) setCharts(data.charts);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -89,6 +126,10 @@ export default function AdminShopsPage() {
       : <ArrowDown className="ml-1 inline size-3" />;
   }
 
+  function formatDate(d: string) {
+    return new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -96,6 +137,9 @@ export default function AdminShopsPage() {
       </div>
     );
   }
+
+  const totalStamps = shops.reduce((sum, s) => sum + s.totalStamps, 0);
+  const totalCustomers = shops.reduce((sum, s) => sum + s.customers, 0);
 
   return (
     <div className="space-y-6">
@@ -106,6 +150,64 @@ export default function AdminShopsPage() {
         </p>
       </div>
 
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Stamps ({totalStamps})
+            </CardTitle>
+            <Stamp className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={stampsChartConfig} className="h-[120px] w-full">
+              <BarChart data={charts.dailyStamps.map(d => ({ date: formatDate(d._id), stamps: d.stamps }))}>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="stamps" fill="var(--color-stamps)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Customers ({totalCustomers})
+            </CardTitle>
+            <Users className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={customersChartConfig} className="h-[120px] w-full">
+              <BarChart data={charts.dailyCustomers.map(d => ({ date: formatDate(d._id), customers: d.customers }))}>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="customers" fill="var(--color-customers)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Shop Signups ({shops.length})
+            </CardTitle>
+            <Store className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={shopsChartConfig} className="h-[120px] w-full">
+              <BarChart data={charts.dailyShops.map(d => ({ date: formatDate(d._id), shops: d.shops }))}>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="shops" fill="var(--color-shops)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

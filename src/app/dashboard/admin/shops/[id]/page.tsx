@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   ExternalLink,
   Users,
   Stamp,
@@ -13,6 +16,8 @@ import {
   Check,
   X,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   Table,
@@ -29,6 +34,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/ui/multi-select";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -71,15 +84,22 @@ interface ShopDetail {
     visits: number;
     redeems: number;
   }[];
-  recentRequests: {
-    status: string;
-    stampsAwarded: number;
-    redeem: boolean;
-    customerName: string | null;
-    customerEmail: string | null;
-    createdAt: string;
-  }[];
+  recentRequests: RequestRow[];
 }
+
+interface RequestRow {
+  status: string;
+  stampsAwarded: number;
+  redeem: boolean;
+  customerName: string | null;
+  customerEmail: string | null;
+  createdAt: string;
+}
+
+type ReqSortKey = "customer" | "status" | "stampsAwarded" | "redeem" | "createdAt";
+type SortDir = "asc" | "desc";
+
+const PAGE_SIZE = 20;
 
 function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -102,6 +122,12 @@ export default function AdminShopDetailPage() {
   const [data, setData] = useState<ShopDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Request table state
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [reqSortKey, setReqSortKey] = useState<ReqSortKey>("createdAt");
+  const [reqSortDir, setReqSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(0);
+
   useEffect(() => {
     if (status === "loading") return;
     if (session?.user?.email !== ADMIN_EMAIL) {
@@ -116,6 +142,81 @@ export default function AdminShopDetailPage() {
       })
       .catch(() => setLoading(false));
   }, [session, status, params.id]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, reqSortKey, reqSortDir]);
+
+  const filteredRequests = useMemo(() => {
+    if (!data) return [];
+    let rows = data.recentRequests;
+
+    // Filter by status
+    if (statusFilter.length > 0) {
+      rows = rows.filter((r) => statusFilter.includes(r.status));
+    }
+
+    // Sort
+    return [...rows].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (reqSortKey) {
+        case "customer":
+          aVal = (a.customerName || a.customerEmail || "").toLowerCase();
+          bVal = (b.customerName || b.customerEmail || "").toLowerCase();
+          break;
+        case "status":
+          aVal = a.status;
+          bVal = b.status;
+          break;
+        case "stampsAwarded":
+          aVal = a.stampsAwarded ?? 0;
+          bVal = b.stampsAwarded ?? 0;
+          break;
+        case "redeem":
+          aVal = a.redeem ? 1 : 0;
+          bVal = b.redeem ? 1 : 0;
+          break;
+        case "createdAt":
+        default:
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+      }
+
+      if (typeof aVal === "string") {
+        const cmp = aVal.localeCompare(bVal as string);
+        return reqSortDir === "asc" ? cmp : -cmp;
+      }
+      return reqSortDir === "asc"
+        ? (aVal as number) - (bVal as number)
+        : (bVal as number) - (aVal as number);
+    });
+  }, [data, statusFilter, reqSortKey, reqSortDir]);
+
+  const totalPages = Math.ceil(filteredRequests.length / PAGE_SIZE);
+  const pagedRequests = filteredRequests.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE,
+  );
+
+  function toggleReqSort(key: ReqSortKey) {
+    if (reqSortKey === key) {
+      setReqSortDir(reqSortDir === "asc" ? "desc" : "asc");
+    } else {
+      setReqSortKey(key);
+      setReqSortDir(key === "createdAt" || key === "stampsAwarded" ? "desc" : "asc");
+    }
+  }
+
+  function ReqSortIcon({ col }: { col: ReqSortKey }) {
+    if (reqSortKey !== col) return <ArrowUpDown className="ml-1 inline size-3 opacity-40" />;
+    return reqSortDir === "asc"
+      ? <ArrowUp className="ml-1 inline size-3" />
+      : <ArrowDown className="ml-1 inline size-3" />;
+  }
 
   if (status === "loading" || loading) {
     return (
@@ -133,7 +234,7 @@ export default function AdminShopDetailPage() {
     );
   }
 
-  const { shop, customers, stats, dailyActivity, recentRequests } = data;
+  const { shop, customers, stats, dailyActivity } = data;
 
   return (
     <div className="space-y-6">
@@ -346,62 +447,135 @@ export default function AdminShopDetailPage() {
         </div>
       )}
 
-      {/* Recent requests */}
-      {recentRequests.length > 0 && (
+      {/* Requests table */}
+      {data.recentRequests.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">
-            Recent Requests (Last 50)
-          </h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">
+              Requests ({filteredRequests.length})
+            </h2>
+            <MultiSelect
+              values={statusFilter}
+              onValuesChange={setStatusFilter}
+            >
+              <MultiSelectTrigger className="h-9 min-w-[140px]">
+                <MultiSelectValue placeholder="All statuses" />
+              </MultiSelectTrigger>
+              <MultiSelectContent search={false}>
+                <MultiSelectItem value="approved">
+                  <span className="text-green-500">approved</span>
+                </MultiSelectItem>
+                <MultiSelectItem value="rejected">
+                  <span className="text-red-400">rejected</span>
+                </MultiSelectItem>
+                <MultiSelectItem value="expired">
+                  <span className="text-muted-foreground">expired</span>
+                </MultiSelectItem>
+                <MultiSelectItem value="pending">
+                  <span className="text-yellow-500">pending</span>
+                </MultiSelectItem>
+              </MultiSelectContent>
+            </MultiSelect>
+          </div>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Stamps</TableHead>
-                  <TableHead>Redeem</TableHead>
-                  <TableHead>Time</TableHead>
+                  {([
+                    { key: "customer" as ReqSortKey, label: "Customer", align: "" },
+                    { key: "status" as ReqSortKey, label: "Status", align: "" },
+                    { key: "stampsAwarded" as ReqSortKey, label: "Stamps", align: "text-right" },
+                    { key: "redeem" as ReqSortKey, label: "Redeem", align: "" },
+                    { key: "createdAt" as ReqSortKey, label: "Time", align: "" },
+                  ]).map((col) => (
+                    <TableHead
+                      key={col.key}
+                      className={`${col.align} cursor-pointer select-none hover:text-foreground`}
+                      onClick={() => toggleReqSort(col.key)}
+                    >
+                      {col.label}
+                      <ReqSortIcon col={col.key} />
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentRequests.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">
-                      {r.customerName || r.customerEmail || (
-                        <span className="text-muted-foreground">Anonymous</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={
-                          r.status === "approved"
-                            ? "text-green-500"
-                            : r.status === "rejected"
-                              ? "text-red-400"
-                              : "text-muted-foreground"
-                        }
-                      >
-                        {r.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {r.stampsAwarded ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {r.redeem ? (
-                        <Gift className="size-4 text-amber-500" />
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(r.createdAt).toLocaleString()}
+                {pagedRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                      No requests match filter
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  pagedRequests.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">
+                        {r.customerName || r.customerEmail || (
+                          <span className="text-muted-foreground">Anonymous</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            r.status === "approved"
+                              ? "border-green-500/50 text-green-500"
+                              : r.status === "rejected"
+                                ? "border-red-400/50 text-red-400"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {r.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {r.stampsAwarded ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        {r.redeem ? (
+                          <Gift className="size-4 text-amber-500" />
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(r.createdAt).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Page {page + 1} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <ChevronLeft className="mr-1 size-4" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                  <ChevronRight className="ml-1 size-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

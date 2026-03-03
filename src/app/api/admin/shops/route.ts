@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard, User } from "@/models";
+import { Shop, StampCard, StampRequest, User } from "@/models";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -47,5 +47,51 @@ export async function GET() {
     createdAt: shop.createdAt,
   }));
 
-  return NextResponse.json(result);
+  // Growth charts: daily stamps, new customers, shop signups
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [dailyStamps, dailyCustomers] = await Promise.all([
+    // Daily stamps (approved requests)
+    StampRequest.aggregate([
+      { $match: { status: "approved", createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          stamps: { $sum: { $ifNull: ["$stampsAwarded", 1] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    // Daily new customers (stamp cards created with activity)
+    StampCard.aggregate([
+      { $match: { totalEarned: { $gt: 0 }, createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          customers: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+  ]);
+
+  // Shop signups by date (from shops array, no extra query needed)
+  const shopsByDate: Record<string, number> = {};
+  for (const shop of shops) {
+    const d = new Date((shop as any).createdAt).toISOString().slice(0, 10);
+    shopsByDate[d] = (shopsByDate[d] || 0) + 1;
+  }
+  const dailyShops = Object.entries(shopsByDate)
+    .map(([date, count]) => ({ _id: date, shops: count }))
+    .sort((a, b) => a._id.localeCompare(b._id));
+
+  return NextResponse.json({
+    shops: result,
+    charts: {
+      dailyStamps,
+      dailyCustomers,
+      dailyShops,
+    },
+  });
 }

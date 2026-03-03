@@ -53,11 +53,10 @@ export async function GET(
     },
   ]);
 
-  // Get recent stamp requests (last 50)
+  // Get all stamp requests
   const recentRequests = await StampRequest.find({ shop: id })
     .populate("customer", "name email cookieId")
     .sort({ createdAt: -1 })
-    .limit(50)
     .lean();
 
   // Activity by day (last 30 days)
