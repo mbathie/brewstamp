@@ -147,16 +147,15 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
 
   async function handlePrint() {
     if (!qrUrl) return;
-    // Open window immediately to preserve user gesture on iOS Safari
-    const win = window.open("", "_blank");
-    if (!win) return;
     const pdf = await generatePdf();
-    const dataUri = pdf.output("datauristring");
-    win.document.write(
-      `<!DOCTYPE html><html><head><title>Print QR Code</title><style>@media print{@page{margin:0}body{margin:0}}</style></head>` +
-      `<body style="margin:0"><img src="${dataUri}" style="width:100vw;height:auto" onload="setTimeout(function(){window.print()},400)" /></body></html>`
-    );
-    win.document.close();
+    const blob = pdf.output("blob");
+    const blobUrl = URL.createObjectURL(blob);
+    const win = window.open(blobUrl, "_blank");
+    if (win) {
+      win.addEventListener("afterprint", () => URL.revokeObjectURL(blobUrl));
+      // Auto-trigger print once PDF loads
+      win.onload = () => setTimeout(() => win.print(), 500);
+    }
   }
 
   return (
