@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Download, Printer, ExternalLink } from "lucide-react";
+import { Download, Printer, ExternalLink, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 import { generateQRCodeWithLogo } from "@/lib/qr";
 import { jsPDF } from "jspdf";
 import { kaushanScriptBase64 } from "@/lib/fonts/kaushan-script";
@@ -170,9 +171,16 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
           </div>
         )}
       </div>
-      <p className="text-center text-xs text-muted-foreground">
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(`${appUrl}/s/${shopCode}`);
+          toast.success("Link copied to clipboard");
+        }}
+        className="flex w-full cursor-pointer items-center justify-center gap-1.5 text-center text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
         {appUrl}/s/{shopCode}
-      </p>
+        <Copy className="size-3" />
+      </button>
       <div className="flex gap-2">
         <Button
           variant="outline"
