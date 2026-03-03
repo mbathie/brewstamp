@@ -41,9 +41,12 @@ export function StampUsageIndicator({ totalStamps, hasSubscription }: Props) {
   return (
     <Link
       href="/dashboard/billing"
-      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-80 ${colorClasses} ${pulse ? "animate-pulse" : ""}`}
+      className={`flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-80 ${colorClasses} ${pulse ? "animate-pulse" : ""}`}
     >
-      {totalStamps}/100 stamps
+      {totalStamps}/100 stamps used
+      <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+        Upgrade
+      </span>
     </Link>
   );
 }

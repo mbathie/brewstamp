@@ -4,6 +4,19 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Dev-only: forward ?stamp=N as a header for dashboard layout
+  if (
+    process.env.NODE_ENV === "development" &&
+    pathname.startsWith("/dashboard")
+  ) {
+    const stamp = request.nextUrl.searchParams.get("stamp");
+    if (stamp) {
+      const headers = new Headers(request.headers);
+      headers.set("x-debug-stamp", stamp);
+      return NextResponse.next({ request: { headers } });
+    }
+  }
+
   // Only set the cookie for customer scan pages
   if (!pathname.startsWith("/s/")) return NextResponse.next();
 
@@ -24,5 +37,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/s/:path*",
+  matcher: ["/s/:path*", "/dashboard/:path*"],
 };

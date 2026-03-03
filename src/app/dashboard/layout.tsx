@@ -33,7 +33,15 @@ export default async function DashboardLayout({
         { $group: { _id: null, total: { $sum: "$totalEarned" } } },
       ])
     : [null];
-  const totalStamps = stampAgg?.total || 0;
+  let totalStamps = stampAgg?.total || 0;
+
+  // Dev-only: simulate stamp count via ?stamp=N query param
+  if (process.env.NODE_ENV === "development") {
+    const { headers } = await import("next/headers");
+    const headersList = await headers();
+    const debugStamp = headersList.get("x-debug-stamp");
+    if (debugStamp) totalStamps = parseInt(debugStamp, 10);
+  }
 
   // Check subscription status
   const activeSub = shopId
