@@ -274,7 +274,6 @@ export async function sendPaymentReceiptEmail({
   currency,
   invoiceDate,
   periodEnd,
-  invoicePdf,
 }: {
   to: string;
   merchantName: string;
