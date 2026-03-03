@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect, useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Users, Stamp, Store } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Users, Stamp, Store, Trophy, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -177,6 +178,13 @@ export default function AdminShopsPage() {
   const totalStamps = useMemo(() => shops.reduce((sum, s) => sum + s.totalStamps, 0), [shops]);
   const totalCustomers = useMemo(() => shops.reduce((sum, s) => sum + s.customers, 0), [shops]);
 
+  const top5 = useMemo(() => {
+    return [...shops]
+      .sort((a, b) => b.totalStamps - a.totalStamps)
+      .slice(0, 5)
+      .filter(s => s.totalStamps > 0);
+  }, [shops]);
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -299,6 +307,39 @@ export default function AdminShopsPage() {
         </Card>
       </div>
 
+      {/* Top 5 shops */}
+      {top5.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 pb-3">
+            <Trophy className="size-4 text-amber-500" />
+            <CardTitle className="text-sm font-medium">Top Performing Shops</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="space-y-3">
+              {top5.map((shop, i) => (
+                <div
+                  key={shop._id}
+                  className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+                  onClick={() => router.push(`/dashboard/admin/shops/${shop._id}`)}
+                >
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{shop.name}</p>
+                    <p className="text-xs text-muted-foreground">{shop.ownerEmail}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold">{shop.totalStamps} stamps</p>
+                    <p className="text-xs text-muted-foreground">{shop.customers} customers</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Table */}
       <div className="rounded-md border">
         <Table>
@@ -341,7 +382,17 @@ export default function AdminShopsPage() {
                   <TableCell className="font-medium">{shop.name}</TableCell>
                   <TableCell>{shop.ownerEmail}</TableCell>
                   <TableCell className="font-mono text-xs">{shop.code}</TableCell>
-                  <TableCell className="text-right">{shop.totalStamps}</TableCell>
+                  <TableCell className="text-right">
+                    <span className="inline-flex items-center gap-1.5">
+                      {shop.totalStamps}
+                      {shop.totalStamps >= 100 && (
+                        <Badge variant="outline" className="border-amber-500/50 text-amber-500 text-[10px] px-1 py-0">
+                          <AlertTriangle className="mr-0.5 size-2.5" />
+                          limit
+                        </Badge>
+                      )}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">{shop.customers}</TableCell>
                   <TableCell>
                     {new Date(shop.createdAt).toLocaleDateString()}
