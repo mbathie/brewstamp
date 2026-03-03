@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  Zap,
 } from "lucide-react";
 import {
   Table,
@@ -58,6 +59,7 @@ interface ShopDetail {
     createdAt: string;
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
+    isPro: boolean;
     owner: { name: string; email: string; phone?: string };
   };
   customers: {
@@ -251,6 +253,12 @@ export default function AdminShopDetailPage() {
             <h1 className="text-xl font-semibold text-foreground">
               {shop.name}
             </h1>
+            {shop.isPro && (
+              <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs px-2 py-0.5">
+                <Zap className="mr-1 size-3" />
+                Pro
+              </Badge>
+            )}
             <a
               href={`/s/${shop.code}?checkin=0`}
               target="_blank"

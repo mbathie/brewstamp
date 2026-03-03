@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard, StampRequest, User } from "@/models";
+import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -37,6 +37,10 @@ export async function GET() {
   const owners = await User.find({ _id: { $in: ownerIds } }).lean();
   const ownerMap = new Map(owners.map((u: any) => [u._id.toString(), u.email]));
 
+  // Check which shops have active subscriptions
+  const activeSubs = await Subscription.find({ shop: { $in: shopIds }, status: "active" }).lean();
+  const proShopIds = new Set(activeSubs.map((s: any) => s.shop.toString()));
+
   const result = shops.map((shop: any) => ({
     _id: shop._id,
     name: shop.name,
@@ -45,6 +49,7 @@ export async function GET() {
     totalStamps: stampMap.get(shop._id.toString())?.totalStamps || 0,
     customers: stampMap.get(shop._id.toString())?.customers || 0,
     createdAt: shop.createdAt,
+    isPro: proShopIds.has(shop._id.toString()),
   }));
 
   // Growth charts: daily stamps, new customers, shop signups

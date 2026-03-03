@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect, useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Users, Stamp, Store, Trophy, AlertTriangle } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Users, Stamp, Store, Trophy, AlertTriangle, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -38,6 +38,7 @@ interface ShopRow {
   totalStamps: number;
   customers: number;
   createdAt: string;
+  isPro: boolean;
 }
 
 interface ChartPoint {
@@ -379,7 +380,17 @@ export default function AdminShopsPage() {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => router.push(`/dashboard/admin/shops/${shop._id}`)}
                 >
-                  <TableCell className="font-medium">{shop.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="inline-flex items-center gap-1.5">
+                      {shop.name}
+                      {shop.isPro && (
+                        <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-[10px] px-1.5 py-0">
+                          <Zap className="mr-0.5 size-2.5" />
+                          Pro
+                        </Badge>
+                      )}
+                    </span>
+                  </TableCell>
                   <TableCell>{shop.ownerEmail}</TableCell>
                   <TableCell className="font-mono text-xs">{shop.code}</TableCell>
                   <TableCell className="text-right">

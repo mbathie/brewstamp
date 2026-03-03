@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard, StampRequest, User } from "@/models";
+import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
 import Customer from "@/models/Customer";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
@@ -82,6 +82,8 @@ export async function GET(
     { $sort: { _id: -1 } },
   ]);
 
+  const activeSub = await Subscription.findOne({ shop: shop._id, status: "active" }).lean();
+
   return NextResponse.json({
     shop: {
       _id: (shop as any)._id,
@@ -96,6 +98,7 @@ export async function GET(
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,
       owner: (shop as any).owner,
+      isPro: !!activeSub,
     },
     customers: stampCards.map((sc: any) => ({
       name: sc.customer?.name || null,
