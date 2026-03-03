@@ -24,7 +24,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, XAxis, CartesianGrid } from "recharts";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -141,6 +141,24 @@ export default function AdminShopsPage() {
   const totalStamps = shops.reduce((sum, s) => sum + s.totalStamps, 0);
   const totalCustomers = shops.reduce((sum, s) => sum + s.customers, 0);
 
+  // Cumulative customers
+  const cumulativeCustomers = useMemo(() => {
+    let total = 0;
+    return charts.dailyCustomers.map(d => {
+      total += d.customers || 0;
+      return { date: formatDate(d._id), customers: total };
+    });
+  }, [charts.dailyCustomers]);
+
+  // Cumulative shops
+  const cumulativeShops = useMemo(() => {
+    let total = 0;
+    return charts.dailyShops.map(d => {
+      total += d.shops || 0;
+      return { date: formatDate(d._id), shops: total };
+    });
+  }, [charts.dailyShops]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -161,11 +179,18 @@ export default function AdminShopsPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={stampsChartConfig} className="h-[120px] w-full">
-              <BarChart data={charts.dailyStamps.map(d => ({ date: formatDate(d._id), stamps: d.stamps }))}>
+              <AreaChart data={charts.dailyStamps.map(d => ({ date: formatDate(d._id), stamps: d.stamps }))} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                <defs>
+                  <linearGradient id="fillStamps" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-stamps)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="var(--color-stamps)" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="stamps" fill="var(--color-stamps)" radius={[2, 2, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="stamps" stroke="var(--color-stamps)" strokeWidth={2} fill="url(#fillStamps)" />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -179,11 +204,18 @@ export default function AdminShopsPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={customersChartConfig} className="h-[120px] w-full">
-              <BarChart data={charts.dailyCustomers.map(d => ({ date: formatDate(d._id), customers: d.customers }))}>
+              <AreaChart data={cumulativeCustomers} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                <defs>
+                  <linearGradient id="fillCustomers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-customers)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="var(--color-customers)" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="customers" fill="var(--color-customers)" radius={[2, 2, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="customers" stroke="var(--color-customers)" strokeWidth={2} fill="url(#fillCustomers)" />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -197,11 +229,18 @@ export default function AdminShopsPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={shopsChartConfig} className="h-[120px] w-full">
-              <BarChart data={charts.dailyShops.map(d => ({ date: formatDate(d._id), shops: d.shops }))}>
+              <AreaChart data={cumulativeShops} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                <defs>
+                  <linearGradient id="fillShops" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-shops)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="var(--color-shops)" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="shops" fill="var(--color-shops)" radius={[2, 2, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="shops" stroke="var(--color-shops)" strokeWidth={2} fill="url(#fillShops)" />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
