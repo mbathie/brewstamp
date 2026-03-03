@@ -6,7 +6,7 @@ import { useWebSocket } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Coffee, Gift, Stamp, ArrowRightLeft, HelpCircle } from "lucide-react";
+import { Coffee, Gift, Stamp, ArrowRightLeft, HelpCircle, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -36,6 +36,7 @@ interface Props {
   customerId: string;
   customerName: string | null;
   customerEmail: string | null;
+  customerHasPassword: boolean;
   stamps: number;
   totalEarned: number;
   freeRedeemed: number;
@@ -57,6 +58,7 @@ export default function CustomerClient({
   customerId,
   customerName,
   customerEmail,
+  customerHasPassword,
   stamps: initialStamps,
   totalEarned: initialTotal,
   freeRedeemed: initialRedeemed,
@@ -78,8 +80,14 @@ export default function CustomerClient({
   const [wasRedeemed, setWasRedeemed] = useState(false);
   const [name, setName] = useState(customerName || "");
   const [email, setEmail] = useState(customerEmail || "");
+  const [password, setPassword] = useState("");
   const [showDetailsPrompt, setShowDetailsPrompt] = useState(false);
   const [showShopSwitcher, setShowShopSwitcher] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const viewOnly = searchParams.get("checkin") === "0";
@@ -195,6 +203,7 @@ export default function CustomerClient({
     const update: any = {};
     if (name.trim()) update.name = name.trim();
     if (email.trim()) update.email = email.trim();
+    if (password.trim()) update.password = password.trim();
     if (Object.keys(update).length > 0) {
       await fetch(`/api/customers/${customerId}`, {
         method: "PATCH",
@@ -205,6 +214,28 @@ export default function CustomerClient({
     setShowDetailsPrompt(false);
     setStatus("idle");
     setFreedEarned(false);
+  }
+
+  async function handleLogin() {
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/customers/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setLoginError(data.error || "Login failed");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setLoginError("Something went wrong");
+    } finally {
+      setLoginLoading(false);
+    }
   }
 
   const patternCSS = getPatternCSS(bgPattern, fgHex, 0.05);
@@ -343,6 +374,16 @@ export default function CustomerClient({
                   className="placeholder-inherit"
                 />
               )}
+              {!customerHasPassword && (
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Set a password (optional)"
+                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+                  className="placeholder-inherit"
+                />
+              )}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
@@ -419,6 +460,63 @@ export default function CustomerClient({
           )}
 
         </div>
+
+        {/* Login for returning customers */}
+        {!customerName && (
+          <div className="text-center">
+            {!showLogin ? (
+              <Button
+                onClick={() => setShowLogin(true)}
+                className="w-full cursor-pointer text-base font-normal hover:opacity-90"
+                size="lg"
+                style={{ backgroundColor: fgHex, color: bgHex }}
+              >
+                <LogIn className="mr-1.5 h-4 w-4" />
+                Have an existing account? Log in
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <Input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="Email"
+                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+                  className="placeholder-inherit"
+                />
+                <Input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="Password"
+                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+                  className="placeholder-inherit"
+                />
+                {loginError && (
+                  <p className="text-xs text-red-400">{loginError}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowLogin(false)}
+                    variant="outline"
+                    className="flex-1 cursor-pointer hover:opacity-90"
+                    style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleLogin}
+                    disabled={loginLoading || !loginEmail || !loginPassword}
+                    className="flex-1 cursor-pointer hover:opacity-90"
+                    style={{ backgroundColor: fgHex, color: bgHex }}
+                  >
+                    {loginLoading ? "Logging in..." : "Log in"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Switch shop */}
         {otherShops.length > 0 && (

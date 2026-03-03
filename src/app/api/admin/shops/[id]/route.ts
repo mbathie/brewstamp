@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
 import Customer from "@/models/Customer";
+import { generateAnimalName } from "@/lib/animal-names";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -101,7 +102,7 @@ export async function GET(
       isPro: !!activeSub,
     },
     customers: stampCards.map((sc: any) => ({
-      name: sc.customer?.name || null,
+      name: sc.customer?.name || (sc.customer?.cookieId ? generateAnimalName(sc.customer.cookieId) : null),
       email: sc.customer?.email || null,
       cookieId: sc.customer?.cookieId || null,
       stamps: sc.stamps,
@@ -123,7 +124,7 @@ export async function GET(
       status: r.status,
       stampsAwarded: r.stampsAwarded,
       redeem: r.redeem,
-      customerName: r.customer?.name || null,
+      customerName: r.customer?.name || (r.customer?.cookieId ? generateAnimalName(r.customer.cookieId) : null),
       customerEmail: r.customer?.email || null,
       createdAt: r.createdAt,
     })),

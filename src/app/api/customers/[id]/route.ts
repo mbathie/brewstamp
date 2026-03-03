@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Customer } from "@/models";
+import bcrypt from "bcrypt";
 
 export async function PATCH(
   req: Request,
@@ -9,10 +10,11 @@ export async function PATCH(
   const { id } = await params;
   await connectDB();
 
-  const { name, email } = await req.json();
+  const { name, email, password } = await req.json();
   const update: any = {};
   if (name) update.name = name;
   if (email) update.email = email;
+  if (password) update.password = await bcrypt.hash(password, 10);
 
   const customer = await Customer.findByIdAndUpdate(id, update, { new: true });
   if (!customer) {

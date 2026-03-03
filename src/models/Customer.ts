@@ -5,6 +5,7 @@ const customerSchema = new mongoose.Schema(
     cookieId: { type: String, required: true, unique: true },
     name: { type: String },
     email: { type: String },
+    password: { type: String },
   },
   { timestamps: true }
 );

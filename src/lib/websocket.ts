@@ -13,6 +13,7 @@ export function useWebSocket(
   const [connected, setConnected] = useState(false);
   const handlersRef = useRef<Map<string, MessageHandler[]>>(new Map());
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectDelayRef = useRef(1000);
   const mountedRef = useRef(true);
 
   const connect = useCallback(() => {
@@ -27,6 +28,7 @@ export function useWebSocket(
 
     ws.onopen = () => {
       if (mountedRef.current) setConnected(true);
+      reconnectDelayRef.current = 1000;
     };
 
     ws.onmessage = (event) => {
@@ -48,7 +50,8 @@ export function useWebSocket(
         setConnected(false);
         wsRef.current = null;
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = setTimeout(connect, 2000);
+        reconnectTimeoutRef.current = setTimeout(connect, reconnectDelayRef.current);
+        reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30000);
       }
     };
 

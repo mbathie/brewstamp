@@ -101,6 +101,7 @@ export default async function CustomerScanPage({
       customerName={customer.name || null}
       animalName={generateAnimalName(customer.cookieId)}
       customerEmail={customer.email || null}
+      customerHasPassword={!!customer.password}
       stamps={stampCard.stamps}
       totalEarned={stampCard.totalEarned}
       freeRedeemed={stampCard.freeRedeemed}
