@@ -480,7 +480,12 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={c.status === "approved" ? "default" : "destructive"}
+                          variant="outline"
+                          className={
+                            c.status === "approved"
+                              ? "border-green-500/50 text-green-500"
+                              : "border-red-400/50 text-red-400"
+                          }
                         >
                           {c.status}
                         </Badge>

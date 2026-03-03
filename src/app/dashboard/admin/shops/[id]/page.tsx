@@ -411,8 +411,8 @@ export default function AdminShopDetailPage() {
                     <TableCell className="text-right">
                       {c.freeRedeemed}
                     </TableCell>
-                    <TableCell>
-                      {new Date(c.lastVisit).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(c.lastVisit).toLocaleString("en-AU", { day: "numeric", month: "short", year: "2-digit", hour: "numeric", minute: "2-digit" })}
                     </TableCell>
                   </TableRow>
                 ))

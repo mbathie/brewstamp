@@ -169,10 +169,11 @@ export default async function CustomerDetailPage({
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge
-                          variant={
+                          variant="outline"
+                          className={
                             req.status === "approved"
-                              ? "default"
-                              : "destructive"
+                              ? "border-green-500/50 text-green-500"
+                              : "border-red-400/50 text-red-400"
                           }
                         >
                           {req.status}
