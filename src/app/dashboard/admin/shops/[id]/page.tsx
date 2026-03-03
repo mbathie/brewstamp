@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -206,23 +207,15 @@ export default function AdminShopDetailPage() {
       </div>
 
       {/* Drip status */}
-      <div className="flex gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          {shop.dripDay3Sent ? (
-            <Check className="size-3 text-green-500" />
-          ) : (
-            <X className="size-3 text-red-400" />
-          )}
+      <div className="flex gap-2">
+        <Badge variant={shop.dripDay3Sent ? "default" : "outline"} className={shop.dripDay3Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.dripDay3Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 3 drip
-        </span>
-        <span className="flex items-center gap-1">
-          {shop.dripDay7Sent ? (
-            <Check className="size-3 text-green-500" />
-          ) : (
-            <X className="size-3 text-red-400" />
-          )}
+        </Badge>
+        <Badge variant={shop.dripDay7Sent ? "default" : "outline"} className={shop.dripDay7Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.dripDay7Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 7 drip
-        </span>
+        </Badge>
       </div>
 
       {/* Customers table */}
