@@ -160,7 +160,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-2">
       <Label>Customer QR Code</Label>
       <div className="mx-auto aspect-square w-full max-w-[12rem] overflow-hidden rounded-lg border bg-white p-3 sm:max-w-[14rem] sm:p-4">
         {qrUrl ? (
