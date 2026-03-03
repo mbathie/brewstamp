@@ -160,7 +160,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
         }
       }
       return Object.values(dateMap).map((p) => ({
-        label: new Date(String(p._id)).toLocaleDateString(undefined, {
+        label: new Date(String(p._id)).toLocaleDateString("en-AU", {
           day: "numeric",
           month: "short",
         }),
@@ -284,10 +284,10 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                   >
                     <CalendarIcon className="h-3.5 w-3.5" />
                     {range === "date" && selectedDate
-                      ? selectedDate.toLocaleDateString(undefined, {
-                          day: "2-digit",
+                      ? selectedDate.toLocaleDateString("en-AU", {
+                          day: "numeric",
                           month: "short",
-                          year: "numeric",
+                          year: "2-digit",
                         })
                       : null}
                   </Button>
@@ -417,7 +417,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
             <p className="text-sm text-muted-foreground">
               No check-ins{" "}
               {range === "date" && selectedDate
-                ? `on ${selectedDate.toLocaleDateString()}`
+                ? `on ${selectedDate.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}`
                 : range === "today"
                   ? "today"
                   : `this ${range}`}.

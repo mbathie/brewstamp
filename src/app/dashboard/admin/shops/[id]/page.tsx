@@ -275,7 +275,7 @@ export default function AdminShopDetailPage() {
           <p className="text-xs text-muted-foreground">
             Code: <span className="font-mono">{shop.code}</span> &middot;
             Threshold: {shop.stampThreshold} stamps &middot; Signed up{" "}
-            {new Date(shop.createdAt).toLocaleDateString()}
+            {new Date(shop.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
           </p>
         </div>
       </div>
@@ -412,7 +412,7 @@ export default function AdminShopDetailPage() {
                       {c.freeRedeemed}
                     </TableCell>
                     <TableCell>
-                      {new Date(c.lastVisit).toLocaleDateString()}
+                      {new Date(c.lastVisit).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
                     </TableCell>
                   </TableRow>
                 ))
@@ -442,7 +442,7 @@ export default function AdminShopDetailPage() {
                 {dailyActivity.map((day) => (
                   <TableRow key={day._id}>
                     <TableCell>
-                      {new Date(day._id + "T00:00:00").toLocaleDateString()}
+                      {new Date(day._id + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
                     </TableCell>
                     <TableCell className="text-right">{day.visits}</TableCell>
                     <TableCell className="text-right">{day.stamps}</TableCell>
@@ -547,7 +547,7 @@ export default function AdminShopDetailPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(r.createdAt).toLocaleString()}
+                        {new Date(r.createdAt).toLocaleString("en-AU", { day: "numeric", month: "short", year: "2-digit", hour: "numeric", minute: "2-digit" })}
                       </TableCell>
                     </TableRow>
                   ))

@@ -406,7 +406,7 @@ export default function AdminShopsPage() {
                   </TableCell>
                   <TableCell className="text-right">{shop.customers}</TableCell>
                   <TableCell>
-                    {new Date(shop.createdAt).toLocaleDateString()}
+                    {new Date(shop.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
                   </TableCell>
                   <TableCell>
                     <ChevronRight className="size-4 text-muted-foreground" />

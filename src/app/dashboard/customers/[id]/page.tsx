@@ -131,11 +131,11 @@ export default async function CustomerDetailPage({
                   return (
                     <TableRow key={req._id.toString()}>
                       <TableCell className="text-muted-foreground">
-                        {new Date(req.createdAt).toLocaleString(undefined, {
-                          day: "2-digit",
-                          month: "2-digit",
+                        {new Date(req.createdAt).toLocaleString("en-AU", {
+                          day: "numeric",
+                          month: "short",
                           year: "2-digit",
-                          hour: "2-digit",
+                          hour: "numeric",
                           minute: "2-digit",
                         })}
                       </TableCell>
