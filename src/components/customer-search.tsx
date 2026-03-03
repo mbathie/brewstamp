@@ -193,9 +193,9 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
                 <TableCell>{card.freeRedeemed}</TableCell>
                 <TableCell className="text-right text-muted-foreground">
                   {new Date(card.updatedAt).toLocaleDateString("en-AU", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
+                    day: "numeric",
+                    month: "short",
+                    year: "2-digit",
                   })}
                 </TableCell>
               </TableRow>
