@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
-import { StampRequest, StampCard, Shop } from "@/models";
+import { StampRequest, StampCard, Shop, Subscription } from "@/models";
 
 export async function PATCH(
   req: Request,
@@ -33,6 +33,28 @@ export async function PATCH(
       const shop = await Shop.findById(request.shop);
       const threshold = shop?.stampThreshold || 8;
 
+      // Check stamp limit for non-subscribers
+      const awarded = stampsAwarded || 0;
+      if (awarded > 0) {
+        const activeSub = await Subscription.findOne({
+          shop: request.shop,
+          status: "active",
+        });
+        if (!activeSub) {
+          const [agg] = await StampCard.aggregate([
+            { $match: { shop: request.shop } },
+            { $group: { _id: null, total: { $sum: "$totalEarned" } } },
+          ]);
+          const totalStamps = agg?.total || 0;
+          if (totalStamps + awarded > 100) {
+            return NextResponse.json(
+              { error: "Stamp limit reached. Upgrade to Pro for unlimited stamps.", code: "LIMIT_REACHED" },
+              { status: 403 }
+            );
+          }
+        }
+      }
+
       if (redeem && stampCard.stamps >= threshold) {
         // Redeem a free drink
         stampCard.stamps -= threshold;
@@ -40,7 +62,6 @@ export async function PATCH(
       }
 
       // Award stamps (can happen alongside a redeem)
-      const awarded = stampsAwarded || 0;
       if (awarded > 0) {
         stampCard.stamps += awarded;
         stampCard.totalEarned += awarded;

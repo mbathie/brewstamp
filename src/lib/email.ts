@@ -266,6 +266,146 @@ export async function sendWelcomeEmail({
   }
 }
 
+export async function sendPaymentReceiptEmail({
+  to,
+  merchantName,
+  shopName,
+  amount,
+  currency,
+  invoiceDate,
+  periodEnd,
+  invoicePdf,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  amount: number;
+  currency: string;
+  invoiceDate: Date;
+  periodEnd: Date;
+}) {
+  const formattedAmount = `$${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
+  const formattedDate = invoiceDate.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const formattedPeriodEnd = periodEnd.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Receipt</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 24px 16px;">
+        <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">Payment Receipt</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Hi ${merchantName}, here&rsquo;s your receipt for <strong>${shopName}</strong>&rsquo;s Brewstamp Pro subscription.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Receipt details -->
+    <tr>
+      <td style="padding: 0 24px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="padding: 16px 20px; border-bottom: 1px solid #e7e5e4;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size: 14px; color: #78716c;">Plan</td>
+                  <td style="font-size: 14px; color: #1c1917; text-align: right; font-weight: 600;">Brewstamp Pro</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 20px; border-bottom: 1px solid #e7e5e4;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size: 14px; color: #78716c;">Amount</td>
+                  <td style="font-size: 14px; color: #1c1917; text-align: right; font-weight: 600;">${formattedAmount}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 20px; border-bottom: 1px solid #e7e5e4;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size: 14px; color: #78716c;">Date</td>
+                  <td style="font-size: 14px; color: #1c1917; text-align: right;">${formattedDate}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size: 14px; color: #78716c;">Next billing date</td>
+                  <td style="font-size: 14px; color: #1c1917; text-align: right;">${formattedPeriodEnd}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Manage -->
+    <tr>
+      <td style="padding: 0 24px 24px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; text-align: center;">
+          Manage your subscription anytime from your <a href="${APP_URL}/dashboard/billing" style="color: #d97706; text-decoration: none; font-weight: 500;">billing dashboard</a>.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Brewstamp Pro receipt \u2014 ${formattedAmount} on ${formattedDate}`,
+      html,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send payment receipt:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendDay3NudgeEmail({
   to,
   merchantName,

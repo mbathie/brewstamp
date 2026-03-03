@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop } from "@/models";
+import { Shop, StampCard, Subscription } from "@/models";
 import { DashboardSidebar } from "./sidebar";
+import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import DashboardClient from "./dashboard-client";
-import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -23,6 +23,22 @@ export default async function DashboardLayout({
 
   await connectDB();
   const shop = await Shop.findById((session.user as any).shopId);
+
+  const shopId = shop?._id;
+
+  // Aggregate total stamps for usage indicator
+  const [stampAgg] = shopId
+    ? await StampCard.aggregate([
+        { $match: { shop: shopId } },
+        { $group: { _id: null, total: { $sum: "$totalEarned" } } },
+      ])
+    : [null];
+  const totalStamps = stampAgg?.total || 0;
+
+  // Check subscription status
+  const activeSub = shopId
+    ? await Subscription.findOne({ shop: shopId, status: "active" })
+    : null;
 
   const cookieStore = await cookies();
   const sidebarState = cookieStore.get("sidebar_state")?.value;
@@ -44,11 +60,16 @@ export default async function DashboardLayout({
               shopId={shop?._id.toString() || ""}
               threshold={shop?.stampThreshold || 8}
             />
+            <div className="ml-auto">
+              <StampUsageIndicator
+                totalStamps={totalStamps}
+                hasSubscription={!!activeSub}
+              />
+            </div>
           </header>
           <main className="flex-1 p-6">{children}</main>
         </SidebarInset>
       </SidebarProvider>
-      <Toaster theme="dark" position="top-right" duration={10000} />
     </div>
   );
 }

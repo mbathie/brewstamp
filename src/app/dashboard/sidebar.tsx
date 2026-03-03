@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   Coffee,
+  CreditCard,
   Home,
   Users,
   Settings,
@@ -40,6 +41,7 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
+  { title: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
