@@ -15,6 +15,7 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -47,18 +48,63 @@ interface ChartPoint {
 
 type SortKey = "name" | "ownerEmail" | "code" | "totalStamps" | "customers" | "createdAt";
 type SortDir = "asc" | "desc";
+type TimeRange = "daily" | "weekly" | "monthly";
 
-const stampsChartConfig = {
+const chartConfig = {
   stamps: { label: "Stamps", color: "var(--chart-1)" },
-} satisfies ChartConfig;
-
-const customersChartConfig = {
   customers: { label: "Customers", color: "var(--chart-2)" },
-} satisfies ChartConfig;
-
-const shopsChartConfig = {
   shops: { label: "Shops", color: "var(--chart-3)" },
 } satisfies ChartConfig;
+
+function getWeekKey(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  const monday = new Date(d.setDate(diff));
+  return monday.toISOString().slice(0, 10);
+}
+
+function getMonthKey(dateStr: string): string {
+  return dateStr.slice(0, 7); // YYYY-MM
+}
+
+function formatLabel(key: string, range: TimeRange): string {
+  if (range === "monthly") {
+    const d = new Date(key + "-01T00:00:00");
+    return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+  }
+  if (range === "weekly") {
+    const d = new Date(key + "T00:00:00");
+    return "w/c " + d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  return new Date(key + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function aggregateByRange(
+  data: ChartPoint[],
+  field: "stamps" | "customers" | "shops",
+  range: TimeRange,
+): { key: string; value: number }[] {
+  const map = new Map<string, number>();
+  for (const d of data) {
+    const bucket =
+      range === "weekly" ? getWeekKey(d._id) :
+      range === "monthly" ? getMonthKey(d._id) :
+      d._id;
+    map.set(bucket, (map.get(bucket) || 0) + ((d as any)[field] || 0));
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => ({ key, value }));
+}
+
+function toCumulative(data: { key: string; value: number }[]): { key: string; value: number }[] {
+  let total = 0;
+  return data.map(d => {
+    total += d.value;
+    return { key: d.key, value: total };
+  });
+}
 
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
@@ -71,6 +117,7 @@ export default function AdminShopsPage() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [timeRange, setTimeRange] = useState<TimeRange>("daily");
   const router = useRouter();
 
   useEffect(() => {
@@ -110,6 +157,26 @@ export default function AdminShopsPage() {
     });
   }, [shops, sortKey, sortDir]);
 
+  const stampsData = useMemo(() => {
+    const agg = aggregateByRange(charts.dailyStamps, "stamps", timeRange);
+    return agg.map(d => ({ date: formatLabel(d.key, timeRange), stamps: d.value }));
+  }, [charts.dailyStamps, timeRange]);
+
+  const customersData = useMemo(() => {
+    const agg = aggregateByRange(charts.dailyCustomers, "customers", timeRange);
+    const cum = toCumulative(agg);
+    return cum.map(d => ({ date: formatLabel(d.key, timeRange), customers: d.value }));
+  }, [charts.dailyCustomers, timeRange]);
+
+  const shopsData = useMemo(() => {
+    const agg = aggregateByRange(charts.dailyShops, "shops", timeRange);
+    const cum = toCumulative(agg);
+    return cum.map(d => ({ date: formatLabel(d.key, timeRange), shops: d.value }));
+  }, [charts.dailyShops, timeRange]);
+
+  const totalStamps = useMemo(() => shops.reduce((sum, s) => sum + s.totalStamps, 0), [shops]);
+  const totalCustomers = useMemo(() => shops.reduce((sum, s) => sum + s.customers, 0), [shops]);
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -126,10 +193,6 @@ export default function AdminShopsPage() {
       : <ArrowDown className="ml-1 inline size-3" />;
   }
 
-  function formatDate(d: string) {
-    return new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  }
-
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -137,27 +200,6 @@ export default function AdminShopsPage() {
       </div>
     );
   }
-
-  const totalStamps = shops.reduce((sum, s) => sum + s.totalStamps, 0);
-  const totalCustomers = shops.reduce((sum, s) => sum + s.customers, 0);
-
-  // Cumulative customers
-  const cumulativeCustomers = useMemo(() => {
-    let total = 0;
-    return charts.dailyCustomers.map(d => {
-      total += d.customers || 0;
-      return { date: formatDate(d._id), customers: total };
-    });
-  }, [charts.dailyCustomers]);
-
-  // Cumulative shops
-  const cumulativeShops = useMemo(() => {
-    let total = 0;
-    return charts.dailyShops.map(d => {
-      total += d.shops || 0;
-      return { date: formatDate(d._id), shops: total };
-    });
-  }, [charts.dailyShops]);
 
   return (
     <div className="space-y-6">
@@ -168,18 +210,33 @@ export default function AdminShopsPage() {
         </p>
       </div>
 
+      {/* Time range toggle */}
+      <div className="inline-flex rounded-lg border p-1">
+        {(["daily", "weekly", "monthly"] as TimeRange[]).map((range) => (
+          <button
+            key={range}
+            onClick={() => setTimeRange(range)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              timeRange === range
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {range.charAt(0).toUpperCase() + range.slice(1)}
+          </button>
+        ))}
+      </div>
+
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Stamps ({totalStamps})
-            </CardTitle>
-            <Stamp className="size-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardDescription>Stamps</CardDescription>
+            <CardTitle className="text-2xl">{totalStamps}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={stampsChartConfig} className="h-[120px] w-full">
-              <AreaChart data={charts.dailyStamps.map(d => ({ date: formatDate(d._id), stamps: d.stamps }))} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+            <ChartContainer config={chartConfig} className="h-[140px] w-full">
+              <AreaChart data={stampsData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="fillStamps" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--color-stamps)" stopOpacity={0.3} />
@@ -196,15 +253,13 @@ export default function AdminShopsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Customers ({totalCustomers})
-            </CardTitle>
-            <Users className="size-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardDescription>Customers</CardDescription>
+            <CardTitle className="text-2xl">{totalCustomers}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={customersChartConfig} className="h-[120px] w-full">
-              <AreaChart data={cumulativeCustomers} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+            <ChartContainer config={chartConfig} className="h-[140px] w-full">
+              <AreaChart data={customersData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="fillCustomers" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--color-customers)" stopOpacity={0.3} />
@@ -221,15 +276,13 @@ export default function AdminShopsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Shop Signups ({shops.length})
-            </CardTitle>
-            <Store className="size-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardDescription>Shop Signups</CardDescription>
+            <CardTitle className="text-2xl">{shops.length}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={shopsChartConfig} className="h-[120px] w-full">
-              <AreaChart data={cumulativeShops} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+            <ChartContainer config={chartConfig} className="h-[140px] w-full">
+              <AreaChart data={shopsData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="fillShops" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--color-shops)" stopOpacity={0.3} />
