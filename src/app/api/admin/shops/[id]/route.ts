@@ -91,6 +91,8 @@ export async function GET(
       stampThreshold: (shop as any).stampThreshold,
       bgColor: (shop as any).bgColor,
       fgColor: (shop as any).fgColor,
+      bgPattern: (shop as any).bgPattern,
+      logo: !!(shop as any).logo,
       createdAt: (shop as any).createdAt,
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,

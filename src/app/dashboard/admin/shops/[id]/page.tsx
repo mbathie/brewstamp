@@ -40,6 +40,8 @@ interface ShopDetail {
     stampThreshold: number;
     bgColor: string;
     fgColor: string;
+    bgPattern: string;
+    logo: boolean;
     createdAt: string;
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
@@ -206,8 +208,8 @@ export default function AdminShopDetailPage() {
         </Card>
       </div>
 
-      {/* Drip status */}
-      <div className="flex gap-2">
+      {/* Status badges */}
+      <div className="flex flex-wrap gap-2">
         <Badge variant={shop.dripDay3Sent ? "default" : "outline"} className={shop.dripDay3Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
           {shop.dripDay3Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 3 drip
@@ -216,6 +218,28 @@ export default function AdminShopDetailPage() {
           {shop.dripDay7Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 7 drip
         </Badge>
+        <Badge variant={shop.logo ? "default" : "outline"} className={shop.logo ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.logo ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+          Logo
+        </Badge>
+        {(() => {
+          const customColors = shop.bgColor !== "stone-800" || shop.fgColor !== "amber-600";
+          return (
+            <Badge variant={customColors ? "default" : "outline"} className={customColors ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+              {customColors ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+              Colors
+            </Badge>
+          );
+        })()}
+        {(() => {
+          const customPattern = shop.bgPattern && shop.bgPattern !== "none";
+          return (
+            <Badge variant={customPattern ? "default" : "outline"} className={customPattern ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+              {customPattern ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+              Pattern
+            </Badge>
+          );
+        })()}
       </div>
 
       {/* Customers table */}
