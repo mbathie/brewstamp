@@ -385,16 +385,17 @@ export default function CustomerClient({
                 />
               )}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
-                    Save your details
-                  </p>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <button className="cursor-pointer" style={{ color: fgHex, opacity: 0.4 }}>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="flex cursor-pointer items-center gap-1.5" type="button">
+                      <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
+                        Save your details
+                      </p>
+                      <span style={{ color: fgHex, opacity: 0.4 }}>
                         <HelpCircle className="h-3.5 w-3.5" />
-                      </button>
-                    </DialogTrigger>
+                      </span>
+                    </button>
+                  </DialogTrigger>
                     <DialogContent className="max-w-xs">
                       <DialogHeader>
                         <DialogTitle>Why save your details?</DialogTitle>
@@ -406,10 +407,12 @@ export default function CustomerClient({
                         <p>
                           Saving your name and email makes it easier for the shop to look you up if you ever forget your phone or lose access to your stamp card.
                         </p>
+                        <p>
+                          Setting a password lets you log in from any device to access your stamps — so you never lose your progress.
+                        </p>
                       </div>
                     </DialogContent>
-                  </Dialog>
-                </div>
+                </Dialog>
               </div>
               {!customerName && !customerEmail ? (
                 <div className="flex gap-2">

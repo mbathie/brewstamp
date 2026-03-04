@@ -20,6 +20,8 @@ export function useWebSocket(
     if (wsRef.current) {
       const state = wsRef.current.readyState;
       if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+      // Clear stale reference (CLOSING or CLOSED)
+      wsRef.current = null;
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -48,10 +50,13 @@ export function useWebSocket(
     ws.onclose = () => {
       if (mountedRef.current) {
         setConnected(false);
-        wsRef.current = null;
+        // Only schedule reconnect if this ws is still the current one
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(connect, reconnectDelayRef.current);
-        reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30000);
+        reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 5000);
       }
     };
 
@@ -61,9 +66,34 @@ export function useWebSocket(
   useEffect(() => {
     mountedRef.current = true;
     connect();
+
+    // Reconnect immediately when tab becomes visible or network comes back
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && mountedRef.current) {
+        const state = wsRef.current?.readyState;
+        if (state !== WebSocket.OPEN && state !== WebSocket.CONNECTING) {
+          if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+          reconnectDelayRef.current = 1000;
+          connect();
+        }
+      }
+    };
+    const onOnline = () => {
+      if (mountedRef.current) {
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectDelayRef.current = 1000;
+        connect();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+
     return () => {
       mountedRef.current = false;
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.close();
