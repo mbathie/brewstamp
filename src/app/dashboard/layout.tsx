@@ -21,6 +21,11 @@ export default async function DashboardLayout({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  // If user has no shop, redirect to setup
+  if (!(session.user as any).shopId) {
+    redirect("/setup");
+  }
+
   await connectDB();
   const shop = await Shop.findById((session.user as any).shopId);
 

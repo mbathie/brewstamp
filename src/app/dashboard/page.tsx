@@ -11,11 +11,16 @@ export default async function DashboardPage({
 }) {
   const merchant = await getMerchant();
   if (!merchant) redirect("/login");
+  if (!merchant.shop) redirect("/setup");
 
   const { init } = await searchParams;
 
   await connectDB();
   const hasActivity = await StampRequest.exists({ shop: merchant.shop._id });
+
+  const needsProfileUpdate =
+    !merchant.user.phone ||
+    merchant.user.name === merchant.user.email.split("@")[0];
 
   return (
     <DashboardContent
@@ -24,6 +29,7 @@ export default async function DashboardPage({
       shopLogo={merchant.shop.logo || null}
       stampThreshold={merchant.shop.stampThreshold}
       isNewShop={init === "1" || !hasActivity}
+      needsProfileUpdate={needsProfileUpdate}
     />
   );
 }

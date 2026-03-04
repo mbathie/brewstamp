@@ -95,9 +95,12 @@ app.prepare().then(() => {
     });
 
     ws.on("close", () => {
-      if (role === "merchant") {
+      // Only clear the reference if this socket is still the current one.
+      // A newer connection may have already replaced it (e.g. React Strict
+      // Mode double-mount or fast reconnect), and we must not null it out.
+      if (role === "merchant" && channel.merchant === ws) {
         channel.merchant = null;
-      } else if (clientId) {
+      } else if (clientId && channel.customers.get(clientId) === ws) {
         channel.customers.delete(clientId);
       }
 

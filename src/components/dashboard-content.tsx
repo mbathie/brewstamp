@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronRight, Download, Monitor, QrCode } from "lucide-react";
+import { CalendarIcon, ChevronRight, Download, Monitor, QrCode, UserPen } from "lucide-react";
 import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -58,6 +58,7 @@ interface Props {
   shopLogo?: string | null;
   stampThreshold: number;
   isNewShop: boolean;
+  needsProfileUpdate?: boolean;
 }
 
 const chartConfig = {
@@ -71,7 +72,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function DashboardContent({ shopName, shopCode, shopLogo, stampThreshold, isNewShop }: Props) {
+export default function DashboardContent({ shopName, shopCode, shopLogo, stampThreshold, isNewShop, needsProfileUpdate }: Props) {
   const [range, setRange] = useState<Range>("today");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [activeDates, setActiveDates] = useState<Set<string>>(new Set());
@@ -198,6 +199,26 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                 Follow these three steps to start collecting stamps from your customers.
               </p>
               <div className="space-y-5">
+                {needsProfileUpdate && (
+                  <div className="flex gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-600/30 bg-amber-600/10 text-sm font-bold text-amber-600">
+                      <UserPen className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">Complete your profile</p>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Add your name and contact info in{" "}
+                        <Link href="/dashboard/settings" className="font-medium text-amber-600 hover:underline">
+                          Settings
+                        </Link>{" "}
+                        so customers know who you are.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-sm font-bold text-white">
                     1
