@@ -408,7 +408,7 @@ export default function CustomerClient({
                           Saving your name and email makes it easier for the shop to look you up if you ever forget your phone or lose access to your stamp card.
                         </p>
                         <p>
-                          Setting a password lets you log in from any device to access your stamps — so you never lose your progress.
+                          Setting a <strong className="text-foreground">password</strong> lets you log in from any device to access your stamps — so you never lose your progress.
                         </p>
                       </div>
                     </DialogContent>
