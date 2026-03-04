@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
+import { Shop, StampCard, StampRequest, User, Subscription, Account } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -85,6 +85,17 @@ export async function GET(
 
   const activeSub = await Subscription.findOne({ shop: shop._id, status: "active" }).lean();
 
+  // Determine auth methods for shop owner
+  const ownerId = (shop as any).owner._id;
+  const ownerDoc = await User.findById(ownerId).select("hash").lean();
+  const accounts = await Account.find({ userId: ownerId }).select("provider").lean();
+  const authMethods: string[] = [];
+  if ((ownerDoc as any)?.hash) authMethods.push("password");
+  for (const acc of accounts) {
+    authMethods.push((acc as any).provider);
+  }
+  if (authMethods.length === 0) authMethods.push("magic-link");
+
   return NextResponse.json({
     shop: {
       _id: (shop as any)._id,
@@ -98,7 +109,7 @@ export async function GET(
       createdAt: (shop as any).createdAt,
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,
-      owner: (shop as any).owner,
+      owner: { ...(shop as any).owner, authMethods },
       isPro: !!activeSub,
     },
     customers: stampCards.map((sc: any) => ({

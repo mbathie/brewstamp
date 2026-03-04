@@ -82,8 +82,10 @@ export default function CustomerClient({
   const [email, setEmail] = useState(customerEmail || "");
   const [password, setPassword] = useState("");
   const [showDetailsPrompt, setShowDetailsPrompt] = useState(false);
+  const [detailsSaved, setDetailsSaved] = useState(false);
   const [showShopSwitcher, setShowShopSwitcher] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [emailError, setEmailError] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -123,7 +125,7 @@ export default function CustomerClient({
         toast.success(`+${awarded} stamp${awarded > 1 ? "s" : ""}!`);
       }
 
-      if (!customerName || !customerEmail) {
+      if (!detailsSaved && (!customerName || !customerEmail)) {
         setShowDetailsPrompt(true);
         setStatus("approved");
       } else {
@@ -140,7 +142,7 @@ export default function CustomerClient({
       unsub1();
       unsub2();
     };
-  }, [on, customerName, customerEmail, freeRedeemed]);
+  }, [on, customerName, customerEmail, freeRedeemed, detailsSaved]);
 
   const requestStamp = useCallback(async (redeem = false) => {
     setStatus("requesting");
@@ -200,6 +202,11 @@ export default function CustomerClient({
   }, [connected, status, requestStamp, stamps, threshold, viewOnly]);
 
   async function saveDetails() {
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+    setEmailError("");
     const update: any = {};
     if (name.trim()) update.name = name.trim();
     if (email.trim()) update.email = email.trim();
@@ -211,6 +218,7 @@ export default function CustomerClient({
         body: JSON.stringify(update),
       });
     }
+    setDetailsSaved(true);
     setShowDetailsPrompt(false);
     setStatus("idle");
     setFreedEarned(false);
@@ -365,21 +373,24 @@ export default function CustomerClient({
                 />
               )}
               {!customerEmail && (
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email"
-                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                  className="placeholder-inherit"
-                />
+                <div>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
+                    placeholder="Your email"
+                    style={{ borderColor: emailError ? undefined : fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+                    className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
+                  />
+                  {emailError && <p className="mt-1 text-xs text-red-400">{emailError}</p>}
+                </div>
               )}
               {!customerHasPassword && (
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Set a password (optional)"
+                  placeholder="Set a password"
                   style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                   className="placeholder-inherit"
                 />
@@ -389,7 +400,7 @@ export default function CustomerClient({
                   <DialogTrigger asChild>
                     <button className="flex cursor-pointer items-center gap-1.5" type="button">
                       <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
-                        Save your details
+                        Why save your details?
                       </p>
                       <span style={{ color: fgHex, opacity: 0.4 }}>
                         <HelpCircle className="h-3.5 w-3.5" />
@@ -418,6 +429,7 @@ export default function CustomerClient({
                 <div className="flex gap-2">
                   <Button
                     onClick={() => {
+                      setDetailsSaved(true);
                       setShowDetailsPrompt(false);
                       setStatus("idle");
                       setFreedEarned(false);

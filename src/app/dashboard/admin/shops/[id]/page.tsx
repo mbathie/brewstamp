@@ -60,7 +60,7 @@ interface ShopDetail {
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
     isPro: boolean;
-    owner: { name: string; email: string; phone?: string };
+    owner: { name: string; email: string; phone?: string; authMethods?: string[] };
   };
   customers: {
     name: string | null;
@@ -270,7 +270,10 @@ export default function AdminShopDetailPage() {
           </div>
           <p className="text-sm text-muted-foreground">
             {shop.owner.name} &middot; {shop.owner.email}
-            {shop.owner.phone && ` \u00B7 ${shop.owner.phone}`}
+            {shop.owner.phone && ` · ${shop.owner.phone}`}
+            {shop.owner.authMethods && shop.owner.authMethods.length > 0 && (
+              <> &middot; Auth: {shop.owner.authMethods.join(", ")}</>
+            )}
           </p>
           <p className="text-xs text-muted-foreground">
             Code: <span className="font-mono">{shop.code}</span> &middot;
