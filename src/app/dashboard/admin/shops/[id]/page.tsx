@@ -43,8 +43,21 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/ui/multi-select";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
+
+const activityChartConfig = {
+  visits: { label: "Visits", color: "var(--chart-1)" },
+  stamps: { label: "Stamps", color: "var(--chart-2)" },
+  redeems: { label: "Redeems", color: "var(--chart-3)" },
+} satisfies ChartConfig;
 
 interface ShopDetail {
   shop: {
@@ -429,37 +442,34 @@ export default function AdminShopDetailPage() {
         </div>
       </div>
 
-      {/* Daily activity */}
+      {/* Daily activity chart */}
       {dailyActivity.length > 0 && (
-        <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">
-            Daily Activity (Last 30 Days)
-          </h2>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Visits</TableHead>
-                  <TableHead className="text-right">Stamps</TableHead>
-                  <TableHead className="text-right">Redeems</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dailyActivity.map((day) => (
-                  <TableRow key={day._id}>
-                    <TableCell>
-                      {new Date(day._id + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
-                    </TableCell>
-                    <TableCell className="text-right">{day.visits}</TableCell>
-                    <TableCell className="text-right">{day.stamps}</TableCell>
-                    <TableCell className="text-right">{day.redeems}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold">Daily Activity (Last 30 Days)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={activityChartConfig} className="h-[250px] w-full">
+              <BarChart
+                data={[...dailyActivity].reverse().map((day) => ({
+                  date: new Date(day._id + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short" }),
+                  visits: day.visits,
+                  stamps: day.stamps,
+                  redeems: day.redeems,
+                }))}
+                margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10 }} allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="visits" fill="var(--color-visits)" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="stamps" fill="var(--color-stamps)" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="redeems" fill="var(--color-redeems)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       )}
 
       {/* Requests table */}

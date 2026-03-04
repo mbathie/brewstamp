@@ -327,7 +327,19 @@ export default function AdminShopsPage() {
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{shop.name}</p>
+                    <p className="truncate text-sm font-medium inline-flex items-center gap-1.5">
+                      {shop.name}
+                      {shop.isPro ? (
+                        <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-[10px] px-1.5 py-0">
+                          <Zap className="mr-0.5 size-2.5" />
+                          Pro
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground text-[10px] px-1.5 py-0">
+                          Free
+                        </Badge>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">{shop.ownerEmail}</p>
                   </div>
                   <div className="text-right">
