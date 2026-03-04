@@ -253,10 +253,14 @@ export default function AdminShopDetailPage() {
             <h1 className="text-xl font-semibold text-foreground">
               {shop.name}
             </h1>
-            {shop.isPro && (
+            {shop.isPro ? (
               <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs px-2 py-0.5">
                 <Zap className="mr-1 size-3" />
                 Pro
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground text-xs px-2 py-0.5">
+                Free
               </Badge>
             )}
             <a
@@ -284,7 +288,7 @@ export default function AdminShopDetailPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">

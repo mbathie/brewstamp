@@ -383,10 +383,14 @@ export default function AdminShopsPage() {
                   <TableCell className="font-medium">
                     <span className="inline-flex items-center gap-1.5">
                       {shop.name}
-                      {shop.isPro && (
+                      {shop.isPro ? (
                         <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-[10px] px-1.5 py-0">
                           <Zap className="mr-0.5 size-2.5" />
                           Pro
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground text-[10px] px-1.5 py-0">
+                          Free
                         </Badge>
                       )}
                     </span>
