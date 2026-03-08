@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Search,
 } from "lucide-react";
 import {
   Table,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -111,6 +113,7 @@ interface RequestRow {
   createdAt: string;
 }
 
+type CustSortKey = "name" | "email" | "stamps" | "totalEarned" | "freeRedeemed" | "lastVisit";
 type ReqSortKey = "customer" | "status" | "stampsAwarded" | "redeem" | "createdAt";
 type SortDir = "asc" | "desc";
 
@@ -136,6 +139,12 @@ export default function AdminShopDetailPage() {
   const params = useParams();
   const [data, setData] = useState<ShopDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Customer table state
+  const [custSearch, setCustSearch] = useState("");
+  const [custSortKey, setCustSortKey] = useState<CustSortKey>("lastVisit");
+  const [custSortDir, setCustSortDir] = useState<SortDir>("desc");
+  const [custPage, setCustPage] = useState(0);
 
   // Request table state
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -229,6 +238,77 @@ export default function AdminShopDetailPage() {
   function ReqSortIcon({ col }: { col: ReqSortKey }) {
     if (reqSortKey !== col) return <ArrowUpDown className="ml-1 inline size-3 opacity-40" />;
     return reqSortDir === "asc"
+      ? <ArrowUp className="ml-1 inline size-3" />
+      : <ArrowDown className="ml-1 inline size-3" />;
+  }
+
+  // Customer table sort/pagination
+  useEffect(() => {
+    setCustPage(0);
+  }, [custSortKey, custSortDir, custSearch]);
+
+  const sortedCustomers = useMemo(() => {
+    if (!data) return [];
+    let rows = data.customers;
+    if (custSearch.trim()) {
+      const q = custSearch.toLowerCase();
+      rows = rows.filter((c) =>
+        (c.name || "").toLowerCase().includes(q) ||
+        (c.email || "").toLowerCase().includes(q)
+      );
+    }
+    return [...rows].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+      switch (custSortKey) {
+        case "name":
+          aVal = (a.name || "").toLowerCase();
+          bVal = (b.name || "").toLowerCase();
+          break;
+        case "email":
+          aVal = (a.email || "").toLowerCase();
+          bVal = (b.email || "").toLowerCase();
+          break;
+        case "stamps":
+          aVal = a.stamps; bVal = b.stamps; break;
+        case "totalEarned":
+          aVal = a.totalEarned; bVal = b.totalEarned; break;
+        case "freeRedeemed":
+          aVal = a.freeRedeemed; bVal = b.freeRedeemed; break;
+        case "lastVisit":
+        default:
+          aVal = new Date(a.lastVisit).getTime();
+          bVal = new Date(b.lastVisit).getTime();
+          break;
+      }
+      if (typeof aVal === "string") {
+        const cmp = aVal.localeCompare(bVal as string);
+        return custSortDir === "asc" ? cmp : -cmp;
+      }
+      return custSortDir === "asc"
+        ? (aVal as number) - (bVal as number)
+        : (bVal as number) - (aVal as number);
+    });
+  }, [data, custSearch, custSortKey, custSortDir]);
+
+  const custTotalPages = Math.ceil(sortedCustomers.length / PAGE_SIZE);
+  const pagedCustomers = sortedCustomers.slice(
+    custPage * PAGE_SIZE,
+    (custPage + 1) * PAGE_SIZE,
+  );
+
+  function toggleCustSort(key: CustSortKey) {
+    if (custSortKey === key) {
+      setCustSortDir(custSortDir === "asc" ? "desc" : "asc");
+    } else {
+      setCustSortKey(key);
+      setCustSortDir(key === "lastVisit" || key === "stamps" || key === "totalEarned" || key === "freeRedeemed" ? "desc" : "asc");
+    }
+  }
+
+  function CustSortIcon({ col }: { col: CustSortKey }) {
+    if (custSortKey !== col) return <ArrowUpDown className="ml-1 inline size-3 opacity-40" />;
+    return custSortDir === "asc"
       ? <ArrowUp className="ml-1 inline size-3" />
       : <ArrowDown className="ml-1 inline size-3" />;
   }
@@ -388,23 +468,45 @@ export default function AdminShopDetailPage() {
 
       {/* Customers table */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">
-          Customers ({customers.length})
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            Customers ({sortedCustomers.length}{custSearch.trim() ? ` of ${customers.length}` : ""})
+          </h2>
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search customers..."
+              value={custSearch}
+              onChange={(e) => setCustSearch(e.target.value)}
+              className="pl-9 text-foreground"
+            />
+          </div>
+        </div>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-right">Current Stamps</TableHead>
-                <TableHead className="text-right">Total Earned</TableHead>
-                <TableHead className="text-right">Free Drinks</TableHead>
-                <TableHead>Last Visit</TableHead>
+                {[
+                  { key: "name" as CustSortKey, label: "Name", align: "" },
+                  { key: "email" as CustSortKey, label: "Email", align: "" },
+                  { key: "stamps" as CustSortKey, label: "Current Stamps", align: "text-right" },
+                  { key: "totalEarned" as CustSortKey, label: "Total Earned", align: "text-right" },
+                  { key: "freeRedeemed" as CustSortKey, label: "Free Drinks", align: "text-right" },
+                  { key: "lastVisit" as CustSortKey, label: "Last Visit", align: "" },
+                ].map(({ key, label, align }) => (
+                  <TableHead
+                    key={key}
+                    className={`cursor-pointer select-none ${align}`}
+                    onClick={() => toggleCustSort(key)}
+                  >
+                    {label}
+                    <CustSortIcon col={key} />
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.length === 0 ? (
+              {pagedCustomers.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
@@ -414,7 +516,7 @@ export default function AdminShopDetailPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.map((c, i) => (
+                pagedCustomers.map((c, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium">
                       {c.name || (
@@ -440,6 +542,37 @@ export default function AdminShopDetailPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Customer pagination */}
+        {custTotalPages > 1 && (
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Page {custPage + 1} of {custTotalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={custPage === 0}
+                onClick={() => setCustPage(custPage - 1)}
+                className="border-border text-foreground"
+              >
+                <ChevronLeft className="mr-1 size-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={custPage >= custTotalPages - 1}
+                onClick={() => setCustPage(custPage + 1)}
+                className="border-border text-foreground"
+              >
+                Next
+                <ChevronRight className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Daily activity chart */}

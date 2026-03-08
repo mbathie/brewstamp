@@ -81,15 +81,16 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
     router.push(`/dashboard/customers/${customerId}`);
   }
 
+  const validCards = stampCards.filter((card) => card.customer != null);
   const filtered = query.trim()
-    ? stampCards.filter((card) => {
+    ? validCards.filter((card) => {
         const q = query.toLowerCase();
         const name = card.customer.name?.toLowerCase() || "";
         const email = card.customer.email?.toLowerCase() || "";
-        const cookieId = card.customer.cookieId.toLowerCase();
+        const cookieId = card.customer.cookieId?.toLowerCase() || "";
         return name.includes(q) || email.includes(q) || cookieId.includes(q);
       })
-    : stampCards;
+    : validCards;
 
   return (
     <>

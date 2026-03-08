@@ -296,8 +296,7 @@ export default function BillingPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      ${(invoice.amount / 100).toFixed(2)}{" "}
-                      {invoice.currency.toUpperCase()}
+                      ${(invoice.amount / 100).toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <Badge
