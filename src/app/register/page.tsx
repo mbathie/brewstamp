@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee, Gift } from "lucide-react";
 
-function ReferralBanner() {
+function ReferralBannerInner() {
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref");
   if (!ref) return null;
@@ -22,6 +22,14 @@ function ReferralBanner() {
         <strong>{ref}</strong> invited you! Sign up and get your <strong>first month of Pro free</strong>.
       </p>
     </div>
+  );
+}
+
+function ReferralBanner() {
+  return (
+    <Suspense fallback={null}>
+      <ReferralBannerInner />
+    </Suspense>
   );
 }
 
