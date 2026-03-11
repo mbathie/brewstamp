@@ -730,3 +730,82 @@ export async function sendDay7FollowUpEmail({
     return { success: false, error };
   }
 }
+
+export async function sendUpgradeNudgeEmail({
+  to,
+  merchantName,
+  shopName,
+  stampsUsed,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  stampsUsed: number;
+}) {
+  const stampsRemaining = 100 - stampsUsed;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stamp limit update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 24px 24px;">
+        <p style="margin: 0 0 16px; font-size: 16px; color: #1c1917; line-height: 1.6;">
+          Hi ${merchantName},
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Just a heads up &mdash; <strong>${shopName}</strong> has used <strong>${stampsUsed} of 100</strong> free stamps. You have <strong>${stampsRemaining} left</strong> before new stamp requests are paused.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          ${stampsUsed} stamps means customers are coming back &mdash; your loyalty card is doing its job. To keep things running without interruption, you can switch to the unlimited plan ($5/mo) from your billing page:
+        </p>
+        <p style="margin: 0 0 24px; font-size: 16px;">
+          <a href="${APP_URL}/dashboard/billing" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/billing</a>
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          No rush &mdash; everything keeps working until you hit 100. Just wanted to make sure you&rsquo;re not caught off guard.
+        </p>
+        <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Cheers,<br/>The Brewstamp team
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `${shopName} \u2014 ${stampsRemaining} free stamps remaining`,
+      html,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send upgrade nudge email:", error);
+    return { success: false, error };
+  }
+}
