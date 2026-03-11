@@ -12,7 +12,7 @@ import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
 import ColorPicker from "@/components/ui/color-picker";
 import PatternPicker from "@/components/ui/pattern-picker";
-import { getColorHex } from "@/lib/tailwind-colors";
+import { getColorHex, getContrastRatio } from "@/lib/tailwind-colors";
 import { getRandomColorPair } from "@/lib/random-colors";
 
 export default function SettingsPage() {
@@ -199,12 +199,22 @@ export default function SettingsPage() {
                   <ColorPicker value={fgColor} onChange={setFgColor} />
                 </div>
               </div>
-              {bgColor === fgColor && (
-                <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
-                  <AlertTriangle className="size-4 shrink-0" />
-                  Background and foreground are the same color — text will be invisible.
-                </div>
-              )}
+              {(() => {
+                const ratio = getContrastRatio(getColorHex(bgColor), getColorHex(fgColor));
+                if (ratio < 1.5) return (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                    <AlertTriangle className="size-4 shrink-0" />
+                    These colors are too similar — text will be invisible.
+                  </div>
+                );
+                if (ratio < 3) return (
+                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+                    <AlertTriangle className="size-4 shrink-0" />
+                    Low contrast — text may be hard to read.
+                  </div>
+                );
+                return null;
+              })()}
             </div>
             <div className="space-y-2">
               <Label>Background Pattern</Label>
