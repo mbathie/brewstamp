@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import {
   Coffee,
   CreditCard,
+  Gift,
   Home,
   Users,
   Settings,
@@ -42,6 +43,7 @@ const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard },
+  { title: "Referrals", href: "/dashboard/referrals", icon: Gift },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

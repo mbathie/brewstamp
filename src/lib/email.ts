@@ -809,3 +809,79 @@ export async function sendUpgradeNudgeEmail({
     return { success: false, error };
   }
 }
+
+export async function sendReferralRewardEmail({
+  to,
+  merchantName,
+  referredShopName,
+}: {
+  to: string;
+  merchantName: string;
+  referredShopName: string;
+}) {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referral reward</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 24px 24px;">
+        <p style="margin: 0 0 16px; font-size: 16px; color: #1c1917; line-height: 1.6;">
+          Hi ${merchantName},
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Great news &mdash; <strong>${referredShopName}</strong> just upgraded to Brewstamp Pro through your referral link!
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          As a thank you, we&rsquo;ve added a <strong>$10 credit</strong> to your account &mdash; that&rsquo;s <strong>2 free months</strong> of Pro on us. The credit will be automatically applied to your next invoices.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Keep sharing your referral link to earn more rewards:
+        </p>
+        <p style="margin: 0 0 24px; font-size: 16px;">
+          <a href="${APP_URL}/dashboard/referrals" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/referrals</a>
+        </p>
+        <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Cheers,<br/>The Brewstamp team
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Your referral just upgraded \u2014 you earned 2 free months!`,
+      html,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send referral reward email:", error);
+    return { success: false, error };
+  }
+}

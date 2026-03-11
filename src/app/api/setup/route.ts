@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { User, Shop } from "@/models";
 import { sendWelcomeEmail } from "@/lib/email";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -34,7 +35,23 @@ export async function POST(req: Request) {
     code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
   } while (await Shop.findOne({ code }));
 
-  const shop = await Shop.create({ name: shopName, owner: user._id, code });
+  // Check for referral cookie
+  const cookieStore = await cookies();
+  const refCookie = cookieStore.get("brewstamp_ref");
+  let referredBy: string | undefined;
+  if (refCookie?.value) {
+    const referringShop = await Shop.findById(refCookie.value);
+    if (referringShop) {
+      referredBy = referringShop._id.toString();
+    }
+  }
+
+  const shop = await Shop.create({
+    name: shopName,
+    owner: user._id,
+    code,
+    ...(referredBy ? { referredBy } : {}),
+  });
 
   user.shopId = shop._id;
   if (name) user.name = name;
@@ -47,6 +64,13 @@ export async function POST(req: Request) {
     merchantName: user.name,
     shopName,
   }).catch((err) => console.error("[Setup] Welcome email failed:", err));
+
+  // Clear referral cookie after use
+  if (refCookie?.value) {
+    const response = NextResponse.json({ success: true, shopId: shop._id }, { status: 201 });
+    response.cookies.delete("brewstamp_ref");
+    return response;
+  }
 
   return NextResponse.json({ success: true, shopId: shop._id }, { status: 201 });
 }

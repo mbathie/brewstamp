@@ -24,10 +24,17 @@ export async function POST() {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+  // Apply referral coupon if this shop was referred
+  const discounts: { coupon: string }[] = [];
+  if (shop.referredBy && process.env.STRIPE_REFERRAL_COUPON_ID) {
+    discounts.push({ coupon: process.env.STRIPE_REFERRAL_COUPON_ID });
+  }
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+    ...(discounts.length > 0 ? { discounts } : {}),
     success_url: `${appUrl}/dashboard/billing?success=1`,
     cancel_url: `${appUrl}/dashboard/billing`,
     metadata: { shopId: shop._id.toString() },

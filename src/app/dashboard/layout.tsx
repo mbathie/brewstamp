@@ -8,6 +8,7 @@ import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import DashboardClient from "./dashboard-client";
+import { ReferralCallout } from "@/components/referral-callout";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -73,12 +74,14 @@ export default async function DashboardLayout({
               shopId={shop?._id.toString() || ""}
               threshold={shop?.stampThreshold || 8}
             />
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-3">
+              <ReferralCallout shopCode={shop?.code || ""} />
               <StampUsageIndicator
                 totalStamps={totalStamps}
                 hasSubscription={!!activeSub}
               />
             </div>
+
           </header>
           <main className="flex-1 p-6">{children}</main>
         </SidebarInset>
