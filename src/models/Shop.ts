@@ -17,6 +17,7 @@ const shopSchema = new mongoose.Schema(
     stripeCustomerId: { type: String },
     dripDay3Sent: { type: Boolean, default: false },
     dripDay7Sent: { type: Boolean, default: false },
+    upgradeNudgeSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -3,7 +3,12 @@ import { connectDB } from "./mongoose";
 import Shop from "../models/Shop";
 import User from "../models/User";
 import StampCard from "../models/StampCard";
-import { sendDay3NudgeEmail, sendDay7FollowUpEmail } from "./email";
+import Subscription from "../models/Subscription";
+import {
+  sendDay3NudgeEmail,
+  sendDay7FollowUpEmail,
+  sendUpgradeNudgeEmail,
+} from "./email";
 
 export function startDripCron() {
   // Daily at 8am AEDT
@@ -105,7 +110,59 @@ export async function runDripEmails() {
     }
   }
 
+  // Upgrade nudge: shops with 80+ stamps, no subscription, not yet notified
+  const upgradeShops = await Shop.find({
+    upgradeNudgeSent: { $ne: true },
+  }).populate("owner");
+
+  const upgradeShopIds = upgradeShops.map((s: any) => s._id);
+
+  // Get active subscriptions to exclude Pro shops
+  const activeSubShopIds = new Set(
+    (
+      await Subscription.find({
+        shop: { $in: upgradeShopIds },
+        status: "active",
+      }).select("shop")
+    ).map((s: any) => s.shop.toString())
+  );
+
+  // Get stamp counts for these shops
+  const upgradeStampCounts = await StampCard.aggregate([
+    { $match: { shop: { $in: upgradeShopIds } } },
+    { $group: { _id: "$shop", total: { $sum: "$totalEarned" } } },
+  ]);
+  const upgradeStampMap = new Map<string, number>(
+    upgradeStampCounts.map((s: any) => [s._id.toString(), s.total])
+  );
+
+  let upgradeCount = 0;
+  for (const shop of upgradeShops) {
+    const shopIdStr = shop._id.toString();
+    const stamps = upgradeStampMap.get(shopIdStr) || 0;
+
+    // Skip if under 80 stamps or already on Pro
+    if (stamps < 80 || activeSubShopIds.has(shopIdStr)) continue;
+
+    const owner = shop.owner as any;
+    await Shop.updateOne({ _id: shop._id }, { upgradeNudgeSent: true });
+
+    if (!owner?.email || EXCLUDED_EMAILS.includes(owner.email)) continue;
+
+    const to = isDev ? "mbathie@gmail.com" : owner.email;
+    await sendUpgradeNudgeEmail({
+      to,
+      merchantName: owner.name,
+      shopName: shop.name,
+      stampsUsed: stamps,
+    });
+    console.log(
+      `[Drip] Upgrade nudge sent to ${to} for shop "${shop.name}" (${stamps} stamps)`
+    );
+    upgradeCount++;
+  }
+
   console.log(
-    `[Drip] Run complete. Day 3: ${day3Shops.length} shops processed. Day 7: ${day7Shops.length} shops processed.`
+    `[Drip] Run complete. Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Upgrade: ${upgradeCount} emails sent.`
   );
 }
