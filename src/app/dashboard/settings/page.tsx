@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coffee, Upload, Shuffle } from "lucide-react";
+import { Coffee, Upload, Shuffle, AlertTriangle } from "lucide-react";
 import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
 import ColorPicker from "@/components/ui/color-picker";
@@ -199,6 +199,12 @@ export default function SettingsPage() {
                   <ColorPicker value={fgColor} onChange={setFgColor} />
                 </div>
               </div>
+              {bgColor === fgColor && (
+                <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+                  <AlertTriangle className="size-4 shrink-0" />
+                  Background and foreground are the same color — text will be invisible.
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Background Pattern</Label>
