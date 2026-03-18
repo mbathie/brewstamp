@@ -33,11 +33,11 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 interface ShopRow {
   _id: string;
   name: string;
-  code: string;
   ownerEmail: string;
   totalStamps: number;
   customers: number;
   createdAt: string;
+  lastActive: string | null;
   isPro: boolean;
 }
 
@@ -48,7 +48,7 @@ interface ChartPoint {
   shops?: number;
 }
 
-type SortKey = "name" | "ownerEmail" | "code" | "totalStamps" | "customers" | "createdAt";
+type SortKey = "name" | "ownerEmail" | "totalStamps" | "customers" | "createdAt" | "lastActive";
 type SortDir = "asc" | "desc";
 type TimeRange = "daily" | "weekly" | "monthly";
 
@@ -143,9 +143,9 @@ export default function AdminShopsPage() {
       let aVal: string | number;
       let bVal: string | number;
 
-      if (sortKey === "createdAt") {
-        aVal = new Date(a.createdAt).getTime();
-        bVal = new Date(b.createdAt).getTime();
+      if (sortKey === "createdAt" || sortKey === "lastActive") {
+        aVal = a[sortKey] ? new Date(a[sortKey]!).getTime() : 0;
+        bVal = b[sortKey] ? new Date(b[sortKey]!).getTime() : 0;
       } else {
         aVal = a[sortKey];
         bVal = b[sortKey];
@@ -191,7 +191,7 @@ export default function AdminShopsPage() {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDir(key === "name" || key === "ownerEmail" || key === "code" ? "asc" : "desc");
+      setSortDir(key === "name" || key === "ownerEmail" ? "asc" : "desc");
     }
   }
 
@@ -361,10 +361,10 @@ export default function AdminShopsPage() {
               {([
                 { key: "name" as SortKey, label: "Shop Name", align: "" },
                 { key: "ownerEmail" as SortKey, label: "Owner", align: "" },
-                { key: "code" as SortKey, label: "Code", align: "" },
                 { key: "totalStamps" as SortKey, label: "Stamps", align: "text-right" },
                 { key: "customers" as SortKey, label: "Customers", align: "text-right" },
                 { key: "createdAt" as SortKey, label: "Signed Up", align: "" },
+                { key: "lastActive" as SortKey, label: "Last Active", align: "" },
               ]).map((col) => (
                 <TableHead
                   key={col.key}
@@ -408,7 +408,6 @@ export default function AdminShopsPage() {
                     </span>
                   </TableCell>
                   <TableCell>{shop.ownerEmail}</TableCell>
-                  <TableCell className="font-mono text-xs">{shop.code}</TableCell>
                   <TableCell className="text-right">
                     <span className="inline-flex items-center justify-end gap-1.5">
                       {shop.totalStamps >= 100 && (
@@ -423,6 +422,11 @@ export default function AdminShopsPage() {
                   <TableCell className="text-right">{shop.customers}</TableCell>
                   <TableCell>
                     {new Date(shop.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {shop.lastActive
+                      ? new Date(shop.lastActive).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })
+                      : "—"}
                   </TableCell>
                   <TableCell>
                     <ChevronRight className="size-4 text-muted-foreground" />

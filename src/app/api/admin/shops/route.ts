@@ -33,6 +33,16 @@ export async function GET() {
     stampCounts.map((s: any) => [s._id.toString(), { totalStamps: s.totalStamps, customers: s.customers }])
   );
 
+  // Last activity per shop (most recent approved stamp request)
+  const lastActivity = await StampRequest.aggregate([
+    { $match: { status: "approved", shop: { $in: shopIds } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: "$shop", lastActive: { $first: "$createdAt" } } },
+  ]);
+  const lastActiveMap = new Map(
+    lastActivity.map((s: any) => [s._id.toString(), s.lastActive])
+  );
+
   const ownerIds = shops.map((s) => s.owner);
   const owners = await User.find({ _id: { $in: ownerIds } }).lean();
   const ownerMap = new Map(owners.map((u: any) => [u._id.toString(), u.email]));
@@ -49,6 +59,7 @@ export async function GET() {
     totalStamps: stampMap.get(shop._id.toString())?.totalStamps || 0,
     customers: stampMap.get(shop._id.toString())?.customers || 0,
     createdAt: shop.createdAt,
+    lastActive: lastActiveMap.get(shop._id.toString()) || null,
     isPro: proShopIds.has(shop._id.toString()),
   }));
 
