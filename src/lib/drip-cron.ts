@@ -7,6 +7,7 @@ import Subscription from "../models/Subscription";
 import {
   sendDay3NudgeEmail,
   sendDay7FollowUpEmail,
+  sendDay14ReengagementEmail,
   sendUpgradeNudgeEmail,
 } from "./email";
 
@@ -24,6 +25,7 @@ export async function runDripEmails() {
   const now = new Date();
   const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
   // Day 3: shops created >= 3 days ago that haven't received the day 3 email
   const day3Shops = await Shop.find({
@@ -37,10 +39,17 @@ export async function runDripEmails() {
     dripDay7Sent: { $ne: true },
   }).populate("owner");
 
+  // Day 14: shops created >= 14 days ago that haven't received the day 14 email
+  const day14Shops = await Shop.find({
+    createdAt: { $lte: fourteenDaysAgo },
+    dripDay14Sent: { $ne: true },
+  }).populate("owner");
+
   // Collect all shop IDs to batch-query stamp counts
   const allShopIds = [
     ...day3Shops.map((s: any) => s._id),
     ...day7Shops.map((s: any) => s._id),
+    ...day14Shops.map((s: any) => s._id),
   ];
 
   // Batch aggregate total stamps per shop
@@ -103,9 +112,38 @@ export async function runDripEmails() {
         to,
         merchantName: owner.name,
         shopName: shop.name,
+        stamps,
       });
       console.log(
         `[Drip] Day 7 email sent to ${to} for shop "${shop.name}"`
+      );
+    }
+  }
+
+  // Process Day 14 emails
+  for (const shop of day14Shops) {
+    const owner = shop.owner as any;
+    if (!owner?.email) {
+      await Shop.updateOne({ _id: shop._id }, { dripDay14Sent: true });
+      continue;
+    }
+
+    const stamps = stampMap.get(shop._id.toString()) || 0;
+
+    // Mark as sent regardless
+    await Shop.updateOne({ _id: shop._id }, { dripDay14Sent: true });
+
+    // Only send email if stamp count <= 10 and not excluded
+    if (stamps <= 10 && !EXCLUDED_EMAILS.includes(owner.email)) {
+      const to = isDev ? "mbathie@gmail.com" : owner.email;
+      await sendDay14ReengagementEmail({
+        to,
+        merchantName: owner.name,
+        shopName: shop.name,
+        stamps,
+      });
+      console.log(
+        `[Drip] Day 14 email sent to ${to} for shop "${shop.name}"`
       );
     }
   }
@@ -163,6 +201,6 @@ export async function runDripEmails() {
   }
 
   console.log(
-    `[Drip] Run complete. Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Upgrade: ${upgradeCount} emails sent.`
+    `[Drip] Run complete. Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Day 14: ${day14Shops.length}, Upgrade: ${upgradeCount} emails sent.`
   );
 }

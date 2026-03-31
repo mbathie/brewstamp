@@ -17,9 +17,20 @@ import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
-  title: "Brewstamp - Digital Coffee Stamp Card",
+  title:
+    "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",
   description:
-    "Replace paper loyalty cards with a digital stamp card for your coffee shop. No app download required. Free to get started.",
+    "Free digital coffee loyalty card for your cafe or coffee shop. Customers scan a QR code to collect stamps and earn free drinks — no app download required. Set up in 2 minutes.",
+  keywords: [
+    "coffee loyalty card",
+    "coffee stamp card",
+    "coffee rewards card",
+    "digital loyalty card",
+    "cafe loyalty program",
+    "coffee shop loyalty app",
+    "QR code loyalty",
+    "digital stamp card",
+  ],
 };
 
 const jsonLd = {
@@ -31,7 +42,7 @@ const jsonLd = {
       url: "https://brewstamp.app",
       logo: "https://brewstamp.app/apple-touch-icon.png",
       description:
-        "Digital loyalty stamp cards for coffee shops. No app download required.",
+        "Digital coffee loyalty cards and stamp rewards for cafes. No app download required.",
     },
     {
       "@type": "SoftwareApplication",
@@ -45,17 +56,68 @@ const jsonLd = {
         priceCurrency: "USD",
       },
       description:
-        "Replace paper loyalty cards with a digital stamp card for your coffee shop.",
+        "Free digital coffee loyalty card for cafes. Customers scan a QR code to collect stamps and earn rewards.",
+      aggregateRating: undefined,
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "What is a digital coffee loyalty card?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "A digital coffee loyalty card replaces paper stamp cards with a phone-based version. Customers scan a QR code at your counter to collect stamps and earn free drinks — no app download required.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How does a QR code coffee rewards program work?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "You place a QR code at your counter. Customers scan it with their phone camera, you approve the stamp from your dashboard, and the stamp appears on their digital card instantly. After enough stamps, they earn a free drink.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Do customers need to download an app?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How much does a digital loyalty card for cafes cost?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $5/month for unlimited stamps.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How long does it take to set up a coffee shop loyalty program?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Less than 2 minutes. Create your shop, customise your card, print your QR code, and start stamping. No technical knowledge required.",
+          },
+        },
+      ],
     },
   ],
 };
+
+// Remove undefined values from JSON-LD
+const cleanJsonLd = JSON.parse(
+  JSON.stringify(jsonLd, (_, v) => (v === undefined ? undefined : v))
+);
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(cleanJsonLd) }}
       />
       <PublicHeader transparent />
 
@@ -74,14 +136,14 @@ export default function Home() {
               Free to get started
             </div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-              Ditch the paper cards.
+              The digital coffee loyalty card
               <br />
-              <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">Go digital in minutes.</span>
+              <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">your cafe deserves.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-300">
-              Digital rewards for <mark className="bg-amber-500/20 px-1 text-white">coffee shops</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
+              Replace paper stamp cards with a <mark className="bg-amber-500/20 px-1 text-white">digital rewards program</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
               collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No app to download</mark>, no
-              account to create. <mark className="bg-amber-500/20 px-1 text-white">Just scan</mark> and <mark className="bg-amber-500/20 px-1 text-white">stamp</mark>.
+              account to create. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
@@ -349,6 +411,59 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="bg-white py-24">
+        <div className="mx-auto max-w-3xl px-6">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+              FAQ
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
+              Frequently asked questions
+            </h2>
+          </div>
+          <div className="mt-12 space-y-6">
+            {[
+              {
+                q: "What is a digital coffee loyalty card?",
+                a: "A digital coffee loyalty card replaces paper stamp cards with a phone-based version. Customers scan a QR code at your counter to collect stamps and earn free drinks — no app download required.",
+              },
+              {
+                q: "How does a QR code coffee rewards program work?",
+                a: "You place a QR code at your counter. Customers scan it with their phone camera, you approve the stamp from your dashboard, and the stamp appears on their digital card instantly. After enough stamps, they earn a free drink.",
+              },
+              {
+                q: "Do customers need to download an app?",
+                a: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
+              },
+              {
+                q: "How much does a digital loyalty card for cafes cost?",
+                a: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $5/month for unlimited stamps.",
+              },
+              {
+                q: "How long does it take to set up a coffee shop loyalty program?",
+                a: "Less than 2 minutes. Create your shop, customise your card, print your QR code, and start stamping. No technical knowledge required.",
+              },
+            ].map(({ q, a }) => (
+              <details
+                key={q}
+                className="group rounded-xl border border-stone-200 bg-stone-50 px-6 py-5"
+              >
+                <summary className="flex cursor-pointer items-center justify-between font-semibold text-stone-900">
+                  {q}
+                  <span className="ml-4 text-stone-400 transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-stone-500">
+                  {a}
+                </p>
+              </details>
+            ))}
           </div>
         </div>
       </section>

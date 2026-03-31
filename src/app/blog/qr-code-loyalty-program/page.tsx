@@ -16,9 +16,28 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How to Set Up a QR Code Loyalty Program for Your Coffee Shop",
+  description:
+    "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
+  author: { "@type": "Organization", name: "Brewstamp" },
+  publisher: {
+    "@type": "Organization",
+    name: "Brewstamp",
+    logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
+  },
+  mainEntityOfPage: "https://brewstamp.app/blog/qr-code-loyalty-program",
+};
+
 export default function BlogPost() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
         <article>

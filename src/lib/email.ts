@@ -14,6 +14,11 @@ const FROM = `"Brewstamp" <${process.env.EMAIL_FROM || "hello@brewstamp.app"}>`;
 const REPLY_TO = "hello@brewstamp.app";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
 
+function utm(path: string, campaign: string) {
+  const sep = path.includes("?") ? "&" : "?";
+  return `${APP_URL}${path}${sep}utm_source=brewstamp&utm_medium=email&utm_campaign=${campaign}`;
+}
+
 export async function sendResetEmail({
   to,
   token,
@@ -137,7 +142,7 @@ export async function sendWelcomeEmail({
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print and display your QR code</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard, print it out and place it at your point of sale so customers can easily scan it on their phones.</p>
                     <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg" alt="QR code printed out on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
-                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR Code &rarr;</a>
+                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR Code &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -158,7 +163,7 @@ export async function sendWelcomeEmail({
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Customise your branding</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Add your logo, pick your brand colours, and set how many stamps earn a free drink. Make it yours.</p>
                     <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-loyalty-card.png" alt="Example branded loyalty card" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
-                    <a href="${APP_URL}/dashboard/settings" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Customise Settings &rarr;</a>
+                    <a href="${utm("/dashboard/settings", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Customise Settings &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -207,7 +212,7 @@ export async function sendWelcomeEmail({
                         </td>
                       </tr>
                     </table>
-                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
+                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -236,7 +241,7 @@ export async function sendWelcomeEmail({
     <!-- CTA -->
     <tr>
       <td style="padding: 0 24px 32px; text-align: center;">
-        <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to your Dashboard</a>
+        <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to your Dashboard</a>
       </td>
     </tr>
 
@@ -374,7 +379,7 @@ export async function sendPaymentReceiptEmail({
     <tr>
       <td style="padding: 0 24px 24px;">
         <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; text-align: center;">
-          Manage your subscription anytime from your <a href="${APP_URL}/dashboard/billing" style="color: #d97706; text-decoration: none; font-weight: 500;">billing dashboard</a>.
+          Manage your subscription anytime from your <a href="${utm("/dashboard/billing", "payment-receipt")}" style="color: #d97706; text-decoration: none; font-weight: 500;">billing dashboard</a>.
         </p>
       </td>
     </tr>
@@ -456,7 +461,7 @@ export async function sendDay3NudgeEmail({
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print your QR code and stick it at the counter</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download the PDF from your dashboard, print it out, and place it where customers can see it. Near the register or on the counter works great.</p>
                     <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg" alt="QR code printed out on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
-                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR PDF &rarr;</a>
+                    <a href="${utm("/dashboard", "drip-day3")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR PDF &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -509,7 +514,7 @@ export async function sendDay3NudgeEmail({
                         </td>
                       </tr>
                     </table>
-                    <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
+                    <a href="${utm("/dashboard", "drip-day3")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
                   </td>
                 </tr>
               </table>
@@ -527,7 +532,7 @@ export async function sendDay3NudgeEmail({
             <td style="padding: 24px; text-align: center;">
               <p style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1c1917;">Your first 10 stamps are free &mdash; don&rsquo;t let them go to waste</p>
               <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">Print the QR code, stick it at the counter, and watch the stamps roll in.</p>
-              <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Print my QR code &rarr;</a>
+              <a href="${utm("/dashboard", "drip-day3")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Print my QR code &rarr;</a>
             </td>
           </tr>
         </table>
@@ -573,10 +578,12 @@ export async function sendDay7FollowUpEmail({
   to,
   merchantName,
   shopName,
+  stamps = 0,
 }: {
   to: string;
   merchantName: string;
   shopName: string;
+  stamps?: number;
 }) {
   const html = `
 <!DOCTYPE html>
@@ -600,7 +607,7 @@ export async function sendDay7FollowUpEmail({
       <td style="padding: 32px 24px 16px;">
         <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">Your loyalty card is ready and waiting</h1>
         <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
-          Hey ${merchantName}, it&rsquo;s been a week since you set up <strong>${shopName}</strong> on Brewstamp. Your loyalty card is good to go &mdash; customers just need to know about it!
+          Hey ${merchantName}, it&rsquo;s been a week since you set up <strong>${shopName}</strong> on Brewstamp. ${stamps > 0 ? `You&rsquo;ve collected <strong>${stamps} stamp${stamps === 1 ? "" : "s"}</strong> so far &mdash; great start! Here&rsquo;s how to keep the momentum going.` : `Your loyalty card is good to go &mdash; customers just need to know about it!`}
         </p>
       </td>
     </tr>
@@ -689,7 +696,7 @@ export async function sendDay7FollowUpEmail({
             <td style="padding: 24px; text-align: center;">
               <p style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1c1917;">Your regulars are waiting &mdash; let&rsquo;s get them stamping</p>
               <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your QR code, print it out, and place it at the counter. That&rsquo;s it.</p>
-              <a href="${APP_URL}/dashboard" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Download my QR code &rarr;</a>
+              <a href="${utm("/dashboard", "drip-day7")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Download my QR code &rarr;</a>
             </td>
           </tr>
         </table>
@@ -727,6 +734,123 @@ export async function sendDay7FollowUpEmail({
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("[Email] Failed to send day 7 follow-up email:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendDay14ReengagementEmail({
+  to,
+  merchantName,
+  shopName,
+  stamps = 0,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  stamps?: number;
+}) {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>We&rsquo;re here to help</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+
+    <!-- Greeting -->
+    <tr>
+      <td style="padding: 32px 24px 16px;">
+        <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">Still thinking about it, ${merchantName}?</h1>
+        <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
+          It&rsquo;s been two weeks since you set up <strong>${shopName}</strong> on Brewstamp${stamps > 0 ? ` and you&rsquo;ve collected ${stamps} stamp${stamps === 1 ? "" : "s"}` : ""}. We know getting a new system going can feel like one more thing on the list &mdash; so here&rsquo;s the simplest possible next step:
+        </p>
+      </td>
+    </tr>
+
+    <!-- Single action -->
+    <tr>
+      <td style="padding: 8px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border-radius: 8px; border: 1px solid #fde68a;">
+          <tr>
+            <td style="padding: 24px;">
+              <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1c1917;">Just do this one thing today:</h3>
+              <p style="margin: 0 0 16px; font-size: 15px; color: #57534e; line-height: 1.6;">
+                Print your QR code and tape it next to the register. That&rsquo;s it. Don&rsquo;t overthink it &mdash; just put it where customers can see it. The first scan usually happens within the hour.
+              </p>
+              <a href="${utm("/dashboard", "drip-day14")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Download my QR code &rarr;</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Social proof -->
+    <tr>
+      <td style="padding: 16px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e7e5e4; border-radius: 8px;">
+          <tr>
+            <td style="padding: 20px;">
+              <p style="margin: 0 0 8px; font-size: 14px; color: #1c1917; font-weight: 600;">Why cafes stick with Brewstamp:</p>
+              <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #57534e; line-height: 1.5;">&#x2714;&nbsp; No app for customers to download</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #57534e; line-height: 1.5;">&#x2714;&nbsp; Takes 5 seconds per customer</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #57534e; line-height: 1.5;">&#x2714;&nbsp; Free for your first 100 stamps</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #57534e; line-height: 1.5;">&#x2714;&nbsp; See exactly who your regulars are</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Help offer -->
+    <tr>
+      <td style="padding: 8px 24px 24px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; font-style: italic;">
+          P.S. Stuck on something? Just reply to this email &mdash; I&rsquo;ll personally help you get set up. No bots, just me.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `${merchantName}, your loyalty card is one print away from working`,
+      html,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send day 14 re-engagement email:", error);
     return { success: false, error };
   }
 }
@@ -773,7 +897,7 @@ export async function sendUpgradeNudgeEmail({
           ${stampsUsed} stamps means customers are coming back &mdash; your loyalty card is doing its job. To keep things running without interruption, you can switch to the unlimited plan ($5/mo) from your billing page:
         </p>
         <p style="margin: 0 0 24px; font-size: 16px;">
-          <a href="${APP_URL}/dashboard/billing" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/billing</a>
+          <a href="${utm("/dashboard/billing", "drip-upgrade")}" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/billing</a>
         </p>
         <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
           No rush &mdash; everything keeps working until you hit 100. Just wanted to make sure you&rsquo;re not caught off guard.
@@ -852,7 +976,7 @@ export async function sendReferralRewardEmail({
           Keep sharing your referral link to earn more rewards:
         </p>
         <p style="margin: 0 0 24px; font-size: 16px;">
-          <a href="${APP_URL}/dashboard/referrals" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/referrals</a>
+          <a href="${utm("/dashboard/referrals", "referral-reward")}" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/referrals</a>
         </p>
         <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
           Cheers,<br/>The Brewstamp team

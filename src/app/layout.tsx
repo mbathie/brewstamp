@@ -26,24 +26,25 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app"
   ),
   title: {
-    default: "Brewstamp - Digital Coffee Stamp Card",
+    default:
+      "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",
     template: "%s | Brewstamp",
   },
   description:
-    "Replace paper loyalty cards with a digital stamp card. No app download required.",
+    "Free digital coffee loyalty card for cafes. Customers scan a QR code to collect stamps and earn rewards — no app download required. Set up in 2 minutes.",
   openGraph: {
     type: "website",
     siteName: "Brewstamp",
-    title: "Brewstamp - Digital Coffee Stamp Card",
+    title: "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",
     description:
-      "Replace paper loyalty cards with a digital stamp card. No app download required.",
+      "Free digital coffee loyalty card for cafes. Customers scan a QR code to collect stamps and earn rewards — no app download required.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brewstamp - Digital Coffee Stamp Card",
+    title: "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",
     description:
-      "Replace paper loyalty cards with a digital stamp card. No app download required.",
+      "Free digital coffee loyalty card for cafes. Customers scan a QR code to collect stamps and earn rewards — no app download required.",
     images: ["/og-image.png"],
   },
   icons: {

@@ -74,6 +74,7 @@ interface ShopDetail {
     createdAt: string;
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
+    dripDay14Sent: boolean;
     isPro: boolean;
     owner: { name: string; email: string; phone?: string; authMethods?: string[] };
   };
@@ -441,6 +442,10 @@ export default function AdminShopDetailPage() {
         <Badge variant={shop.dripDay7Sent ? "default" : "outline"} className={shop.dripDay7Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
           {shop.dripDay7Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 7 drip
+        </Badge>
+        <Badge variant={shop.dripDay14Sent ? "default" : "outline"} className={shop.dripDay14Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.dripDay14Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+          Day 14 drip
         </Badge>
         <Badge variant={shop.logo ? "default" : "outline"} className={shop.logo ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
           {shop.logo ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}

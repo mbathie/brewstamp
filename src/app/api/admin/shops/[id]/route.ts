@@ -109,6 +109,7 @@ export async function GET(
       createdAt: (shop as any).createdAt,
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,
+      dripDay14Sent: (shop as any).dripDay14Sent,
       owner: { ...(shop as any).owner, authMethods },
       isPro: !!activeSub,
     },

@@ -16,9 +16,28 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Digital Loyalty Cards for Cafes: The Complete Guide (2026)",
+  description:
+    "Everything cafe owners need to know about digital loyalty cards. How they work, what they cost, and why they outperform paper stamp cards.",
+  author: { "@type": "Organization", name: "Brewstamp" },
+  publisher: {
+    "@type": "Organization",
+    name: "Brewstamp",
+    logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
+  },
+  mainEntityOfPage: "https://brewstamp.app/blog/digital-loyalty-cards-for-cafes",
+};
+
 export default function BlogPost() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
         <article>

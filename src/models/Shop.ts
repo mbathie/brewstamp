@@ -17,6 +17,7 @@ const shopSchema = new mongoose.Schema(
     stripeCustomerId: { type: String },
     dripDay3Sent: { type: Boolean, default: false },
     dripDay7Sent: { type: Boolean, default: false },
+    dripDay14Sent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     referralRewardApplied: { type: Boolean, default: false },

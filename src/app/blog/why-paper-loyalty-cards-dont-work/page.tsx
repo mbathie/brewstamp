@@ -18,9 +18,28 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Why Paper Loyalty Cards Don't Work Anymore (And What to Use Instead)",
+  description:
+    "Paper stamp cards lose customers, generate zero data, and are easy to fake. Here's why cafes are switching to digital.",
+  author: { "@type": "Organization", name: "Brewstamp" },
+  publisher: {
+    "@type": "Organization",
+    name: "Brewstamp",
+    logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
+  },
+  mainEntityOfPage: "https://brewstamp.app/blog/why-paper-loyalty-cards-dont-work",
+};
+
 export default function BlogPost() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
         <article>
