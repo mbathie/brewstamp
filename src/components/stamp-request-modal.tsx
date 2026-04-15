@@ -57,7 +57,7 @@ export default function StampRequestModal({
             <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
               <Gift className="h-5 w-5 text-amber-600" />
               <p className="text-sm font-medium text-amber-700">
-                Wants to redeem a free drink
+                Wants to redeem a reward
               </p>
             </div>
 

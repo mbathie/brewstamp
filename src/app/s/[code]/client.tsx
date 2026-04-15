@@ -114,12 +114,12 @@ export default function CustomerClient({
 
       // Show toast instead of celebration rectangle
       if (redeemed) {
-        toast.success("You earned a free drink!", {
+        toast.success("You earned a reward!", {
           description: awarded > 0 ? `+${awarded} stamp${awarded > 1 ? "s" : ""} added too` : undefined,
         });
       } else if (earnedFree) {
         toast.success(`+${awarded} stamp${awarded > 1 ? "s" : ""}!`, {
-          description: "You earned a free drink!",
+          description: "You earned a reward!",
         });
       } else if (awarded > 0) {
         toast.success(`+${awarded} stamp${awarded > 1 ? "s" : ""}!`);
@@ -293,16 +293,16 @@ export default function CustomerClient({
           {/* Personalized progress */}
           {remaining > 0 && displayName ? (
             <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              {displayName}, you&apos;re {remaining} drink{remaining > 1 ? "s" : ""} away from a free one!
+              {displayName}, you&apos;re {remaining} stamp{remaining > 1 ? "s" : ""} away from a free one!
             </p>
           ) : remaining > 0 ? (
             <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              Buy {threshold} drinks to earn 1 free
+              Collect {threshold} stamps to earn 1 free
             </p>
           ) : null}
 
           <p className="mt-1 text-center text-xs" style={{ color: fgHex}}>
-            {totalEarned} stamps earned &middot; {freeRedeemed} free drinks redeemed
+            {totalEarned} stamps earned &middot; {freeRedeemed} rewards redeemed
           </p>
         </div>
 
@@ -329,7 +329,7 @@ export default function CustomerClient({
           {status === "choosing" && (
             <div className="space-y-3">
               <p className="text-center text-sm font-medium" style={{ color: fgHex }}>
-                You have a free drink available!
+                You have a reward available!
               </p>
               <Button
                 onClick={() => requestStamp(true)}
@@ -338,7 +338,7 @@ export default function CustomerClient({
                 size="lg"
               >
                 <Gift className="mr-2 h-5 w-5" />
-                Redeem Free Drink
+                Redeem Reward
               </Button>
               <Button
                 onClick={() => requestStamp(false)}

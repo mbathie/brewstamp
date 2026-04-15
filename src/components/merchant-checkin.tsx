@@ -70,7 +70,7 @@ export default function MerchantCheckin({
           parts.push(`+${stampsAwarded} stamp${stampsAwarded > 1 ? "s" : ""}`);
         }
         if (redeem) {
-          parts.push("free drink redeemed");
+          parts.push("reward redeemed");
         }
         parts.push(`(${data.stampCard.stamps}/${threshold} stamps)`);
         toast.success(`${customerName} — ${parts.join(", ")}`);

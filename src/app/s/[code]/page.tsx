@@ -20,7 +20,7 @@ export async function generateMetadata({
   }
 
   const title = `${shop.name} Loyalty Card`;
-  const description = `Collect stamps and earn free drinks at ${shop.name}. Powered by Brewstamp.`;
+  const description = `Collect stamps and earn rewards at ${shop.name}. Powered by Brewstamp.`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
 
   return {

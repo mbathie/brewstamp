@@ -241,7 +241,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="threshold">Stamps for a free drink</Label>
+              <Label htmlFor="threshold">Stamps for a free reward</Label>
               <NumberInput
                 id="threshold"
                 min={1}

@@ -27,7 +27,7 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate }: Pr
         )}
         {remaining <= 0 && (
           <p className="text-xs font-medium" style={{ color: fg }}>
-            Free drink ready!
+            Reward ready!
           </p>
         )}
       </div>
