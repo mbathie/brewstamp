@@ -69,7 +69,7 @@ export default function AlternativesIndex() {
     <div className="flex min-h-screen flex-col bg-stone-50">
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
-        <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+        <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
           Comparisons
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -96,7 +96,7 @@ export default function AlternativesIndex() {
                 />
               </div>
               <div className="flex-1 p-6">
-                <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
                   Brewstamp vs {c.competitor}
                 </p>
                 <h2 className="mt-2 text-xl font-bold leading-snug text-stone-900">

@@ -130,7 +130,7 @@ export default function BlogIndex() {
                 />
               </div>
               <div className="flex-1 p-6">
-                <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
                   {post.tag}
                 </p>
                 <h2 className="mt-2 text-xl font-bold leading-snug text-stone-900">

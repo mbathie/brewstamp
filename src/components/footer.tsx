@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-600">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-700">
                 <Coffee className="h-3.5 w-3.5 text-white" />
               </div>
               <span className="font-[family-name:var(--font-logo)] text-lg tracking-wide text-stone-900">
@@ -85,7 +85,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-stone-100 pt-6 text-center text-xs text-stone-400">
+        <div className="mt-10 border-t border-stone-100 pt-6 text-center text-xs text-stone-500">
           Made with <Heart className="inline h-3 w-3 fill-red-500 text-red-500" /> in Brunswick Heads, Australia 2026
         </div>
       </div>

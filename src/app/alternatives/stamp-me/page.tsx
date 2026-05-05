@@ -104,7 +104,7 @@ export default function StampMeAlternative() {
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="cursor-pointer bg-amber-600 px-8 text-base hover:bg-amber-700"
+                  className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
                 >
                   Try the free alternative
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -159,7 +159,7 @@ export default function StampMeAlternative() {
       <section id="compare" className="scroll-mt-20 bg-white py-24">
         <div className="mx-auto max-w-5xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Brewstamp vs Stamp Me
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -255,7 +255,7 @@ export default function StampMeAlternative() {
       <section className="border-y border-stone-200 bg-stone-50 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Why cafes switch
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -305,7 +305,7 @@ export default function StampMeAlternative() {
       {/* When the competitor is better — fairness */}
       <section className="bg-white py-24">
         <div className="mx-auto max-w-3xl px-6">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
             When Stamp Me might be the better fit
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -350,7 +350,7 @@ export default function StampMeAlternative() {
       <section className="border-t border-stone-200 bg-stone-50 py-24">
         <div className="mx-auto max-w-4xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Pricing
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -390,7 +390,7 @@ export default function StampMeAlternative() {
               </Link>
             </div>
             <div className="relative rounded-2xl border-2 border-amber-600 bg-white p-8">
-              <div className="absolute -top-3 right-6 rounded-full bg-amber-600 px-3 py-0.5 text-xs font-medium text-white">
+              <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
                 vs $29–79 on Stamp Me
               </div>
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
@@ -416,7 +416,7 @@ export default function StampMeAlternative() {
                 </li>
               </ul>
               <Link href="/register">
-                <Button className="mt-8 w-full cursor-pointer bg-amber-600 hover:bg-amber-700">
+                <Button className="mt-8 w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                   Get started
                 </Button>
               </Link>
@@ -429,7 +429,7 @@ export default function StampMeAlternative() {
       <section className="bg-white py-24">
         <div className="mx-auto max-w-3xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               FAQ
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -498,7 +498,7 @@ export default function StampMeAlternative() {
             <Link href="/register">
               <Button
                 size="lg"
-                className="cursor-pointer bg-amber-600 px-10 text-base hover:bg-amber-700"
+                className="cursor-pointer bg-amber-700 px-10 text-base hover:bg-amber-800"
               >
                 Create your free account
                 <ArrowRight className="ml-2 h-4 w-4" />

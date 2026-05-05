@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="px-8 pt-10 pb-0 text-center">
           <Link
             href="/"
-            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600"
+            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700"
           >
             <Coffee className="h-5 w-5 text-white" />
           </Link>
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
                 password reset link shortly.
               </p>
               <Link href="/login">
-                <Button className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700">
+                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                   Back to Sign In
                 </Button>
               </Link>
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button
                 type="submit"
-                className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+                className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
                 disabled={loading}
               >
                 {loading ? "Sending..." : "Send Reset Link"}

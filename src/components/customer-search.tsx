@@ -106,7 +106,7 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="cursor-pointer bg-amber-600 hover:bg-amber-700">
+            <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
               <Plus className="mr-1 size-4" />
               Add Customer
             </Button>
@@ -142,7 +142,7 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button
                 type="submit"
-                className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+                className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
                 disabled={!!adding}
               >
                 {adding || "Add Customer"}

@@ -21,7 +21,7 @@ export default function VerifyRequestPage() {
       <Card className="relative z-10 w-full max-w-md border-stone-200 text-center shadow-xl">
         <CardHeader className="px-8 pt-10 pb-0">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <Mail className="h-8 w-8 text-amber-600" />
+            <Mail className="h-8 w-8 text-amber-700" />
           </div>
           <CardTitle className="text-xl text-stone-900">Check your email</CardTitle>
           <p className="text-sm text-stone-500">

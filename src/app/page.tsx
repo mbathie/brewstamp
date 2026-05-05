@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -125,10 +126,14 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative min-h-screen overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1920&q=80&auto=format&fit=crop"
+        <Image
+          src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900/70 via-stone-900/60 to-stone-900/80" />
         <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 pt-24 pb-20">
@@ -151,7 +156,7 @@ export default function Home() {
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="cursor-pointer bg-amber-600 px-8 text-base hover:bg-amber-700"
+                  className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
                 >
                   Set up your shop
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -189,7 +194,7 @@ export default function Home() {
       <section id="how-it-works" className="scroll-mt-20 bg-white py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               How it works
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -242,7 +247,7 @@ export default function Home() {
       <section className="border-y border-stone-200 bg-stone-50 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Why Brewstamp
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -315,7 +320,7 @@ export default function Home() {
               { value: "$5", label: "Per month after 100 total stamps" },
             ].map(({ value, label }) => (
               <div key={label}>
-                <p className="text-3xl font-bold text-amber-600 md:text-4xl">
+                <p className="text-3xl font-bold text-amber-700 md:text-4xl">
                   {value}
                 </p>
                 <p className="mt-1 text-sm text-stone-500">{label}</p>
@@ -332,7 +337,7 @@ export default function Home() {
       <section className="border-t border-stone-200 bg-stone-50 py-24">
         <div className="mx-auto max-w-4xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Pricing
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -378,7 +383,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="relative rounded-2xl border-2 border-amber-600 bg-white p-8">
-              <div className="absolute -top-3 right-6 rounded-full bg-amber-600 px-3 py-0.5 text-xs font-medium text-white">
+              <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
                 Most popular
               </div>
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
@@ -408,7 +413,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/register">
-                <Button className="mt-8 w-full cursor-pointer bg-amber-600 hover:bg-amber-700">
+                <Button className="mt-8 w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                   Get started
                 </Button>
               </Link>
@@ -421,7 +426,7 @@ export default function Home() {
       <section className="bg-white py-24">
         <div className="mx-auto max-w-3xl px-6">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               FAQ
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -472,10 +477,13 @@ export default function Home() {
 
       {/* CTA */}
       <section className="relative overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1920&q=80&auto=format&fit=crop"
+        <Image
+          src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1600&q=70&auto=format&fit=crop"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          fill
+          sizes="100vw"
+          loading="lazy"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-stone-900/75" />
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center">
@@ -490,7 +498,7 @@ export default function Home() {
             <Link href="/register">
               <Button
                 size="lg"
-                className="cursor-pointer bg-amber-600 px-10 text-base hover:bg-amber-700"
+                className="cursor-pointer bg-amber-700 px-10 text-base hover:bg-amber-800"
               >
                 Create your free account
                 <ArrowRight className="ml-2 h-4 w-4" />

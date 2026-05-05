@@ -17,7 +17,7 @@ function ReferralBannerInner() {
 
   return (
     <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-3">
-      <Gift className="size-5 shrink-0 text-amber-600" />
+      <Gift className="size-5 shrink-0 text-amber-700" />
       <p className="text-sm text-amber-900">
         <strong>{ref}</strong> invited you! Sign up and get your <strong>first month of Pro free</strong>.
       </p>
@@ -87,7 +87,7 @@ function RegisterForm() {
   return (
     <Card className="w-full border-stone-200 shadow-xl">
       <CardHeader className="px-8 pt-10 pb-0 text-center">
-        <Link href="/" className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600">
+        <Link href="/" className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700">
           <Coffee className="h-5 w-5 text-white" />
         </Link>
         <CardTitle className="text-xl text-stone-900">Create your <span className="font-[family-name:var(--font-logo)] tracking-wide">Brewstamp</span> account</CardTitle>
@@ -148,7 +148,7 @@ function RegisterForm() {
             </div>
             <Button
               type="submit"
-              className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+              className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
               disabled={loading}
             >
               {loading ? "Creating account..." : "Create Account"}
@@ -170,7 +170,7 @@ function RegisterForm() {
             </div>
             <Button
               type="submit"
-              className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+              className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
               disabled={loading}
             >
               {loading ? "Sending link..." : "Sign up with magic link"}

@@ -52,13 +52,13 @@ export default function ContactPage() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
         {isSubmitted ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <CheckCircle2 className="mb-4 h-16 w-16 text-amber-600" />
+            <CheckCircle2 className="mb-4 h-16 w-16 text-amber-700" />
             <h1 className="text-2xl font-bold text-stone-900">Message Sent!</h1>
             <p className="mt-2 text-stone-500">
               Thanks for reaching out. We&apos;ll get back to you as soon as possible.
             </p>
             <Link href="/">
-              <Button className="mt-6 cursor-pointer bg-amber-600 hover:bg-amber-700">
+              <Button className="mt-6 cursor-pointer bg-amber-700 hover:bg-amber-800">
                 Back to Home
               </Button>
             </Link>
@@ -126,7 +126,7 @@ export default function ContactPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="cursor-pointer bg-amber-600 hover:bg-amber-700"
+                className="cursor-pointer bg-amber-700 hover:bg-amber-800"
               >
                 {isSubmitting ? (
                   <>
@@ -146,7 +146,7 @@ export default function ContactPage() {
               You can also email us directly at{" "}
               <a
                 href="mailto:hello@brewstamp.app"
-                className="text-amber-600 hover:text-amber-700"
+                className="text-amber-700 hover:text-amber-700"
               >
                 hello@brewstamp.app
               </a>

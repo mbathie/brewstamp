@@ -13,7 +13,7 @@ export default function PublicHeader({
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600">
+          <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg bg-amber-700">
             <Coffee className="h-4.5 w-4.5 text-white" />
           </div>
           <span className="font-[family-name:var(--font-logo)] text-2xl tracking-wide text-white">
@@ -38,7 +38,7 @@ export default function PublicHeader({
             </Button>
           </Link>
           <Link href="/register">
-            <Button className="cursor-pointer bg-amber-600 hover:bg-amber-700">
+            <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
               Get Started Free
             </Button>
           </Link>

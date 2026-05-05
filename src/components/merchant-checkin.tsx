@@ -106,7 +106,7 @@ export default function MerchantCheckin({
             startCheckin(false);
           }
         }}
-        className="cursor-pointer bg-amber-600 hover:bg-amber-700"
+        className="cursor-pointer bg-amber-700 hover:bg-amber-800"
       >
         <Stamp className="mr-2 h-4 w-4" />
         Check in

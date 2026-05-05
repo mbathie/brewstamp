@@ -62,7 +62,7 @@ export function DashboardSidebar({ userName, shopName, userEmail }: { userName: 
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-amber-600 text-white">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-amber-700 text-white">
                   <Coffee className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

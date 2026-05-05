@@ -66,7 +66,7 @@ export default function BlogPost() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
         <article>
           <header className="mb-12">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               How-to
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
@@ -136,7 +136,7 @@ export default function BlogPost() {
 
           {/* Step 1 */}
           <section className="mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Step 1
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
@@ -180,7 +180,7 @@ export default function BlogPost() {
 
           {/* Step 2 */}
           <section className="mb-14 rounded-2xl bg-stone-100 p-8">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Step 2
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
@@ -204,7 +204,7 @@ export default function BlogPost() {
 
           {/* Step 3 */}
           <section className="mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Step 3
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
@@ -247,7 +247,7 @@ export default function BlogPost() {
 
           {/* Step 4 */}
           <section className="mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Step 4
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
@@ -271,7 +271,7 @@ export default function BlogPost() {
 
           {/* Loyalty card image */}
           <div className="mb-14 text-center">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-amber-700">
               What your customers see
             </p>
             <img
@@ -283,7 +283,7 @@ export default function BlogPost() {
 
           {/* Step 5 */}
           <section className="mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Step 5
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
@@ -404,7 +404,7 @@ export default function BlogPost() {
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="cursor-pointer bg-amber-600 px-8 text-base hover:bg-amber-700"
+                  className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
                 >
                   Create your free account
                   <ArrowRight className="ml-2 h-4 w-4" />

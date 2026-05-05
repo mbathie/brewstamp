@@ -55,7 +55,7 @@ export default function StampRequestModal({
         {request.redeem ? (
           <div className="flex flex-col gap-4 py-4">
             <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-              <Gift className="h-5 w-5 text-amber-600" />
+              <Gift className="h-5 w-5 text-amber-700" />
               <p className="text-sm font-medium text-amber-700">
                 Wants to redeem a reward
               </p>
@@ -68,7 +68,7 @@ export default function StampRequestModal({
               <div className="flex items-center gap-6">
                 <Button
                   size="icon"
-                  className="h-12 w-12 cursor-pointer rounded-full bg-amber-600 text-white hover:bg-amber-700"
+                  className="h-12 w-12 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
                   onClick={() => setRedeemStamps(Math.max(0, redeemStamps - 1))}
                   disabled={redeemStamps <= 0}
                 >
@@ -79,7 +79,7 @@ export default function StampRequestModal({
                 </span>
                 <Button
                   size="icon"
-                  className="h-12 w-12 cursor-pointer rounded-full bg-amber-600 text-white hover:bg-amber-700"
+                  className="h-12 w-12 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
                   onClick={() => setRedeemStamps(Math.min(10, redeemStamps + 1))}
                   disabled={redeemStamps >= 10}
                 >
@@ -102,7 +102,7 @@ export default function StampRequestModal({
                   onApprove(request.requestId, redeemStamps, true);
                   setRedeemStamps(0);
                 }}
-                className="flex-1 cursor-pointer bg-amber-600 hover:bg-amber-700"
+                className="flex-1 cursor-pointer bg-amber-700 hover:bg-amber-800"
                 size="lg"
               >
                 Approve
@@ -118,7 +118,7 @@ export default function StampRequestModal({
               <div className="flex items-center gap-6">
                 <Button
                   size="icon"
-                  className="h-14 w-14 cursor-pointer rounded-full bg-amber-600 text-white hover:bg-amber-700"
+                  className="h-14 w-14 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
                   onClick={() =>
                     setStampsToAward(Math.max(1, stampsToAward - 1))
                   }
@@ -131,7 +131,7 @@ export default function StampRequestModal({
                 </span>
                 <Button
                   size="icon"
-                  className="h-14 w-14 cursor-pointer rounded-full bg-amber-600 text-white hover:bg-amber-700"
+                  className="h-14 w-14 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
                   onClick={() =>
                     setStampsToAward(Math.min(10, stampsToAward + 1))
                   }
@@ -156,7 +156,7 @@ export default function StampRequestModal({
                   onApprove(request.requestId, stampsToAward, false);
                   setStampsToAward(1);
                 }}
-                className="flex-1 cursor-pointer bg-amber-600 hover:bg-amber-700"
+                className="flex-1 cursor-pointer bg-amber-700 hover:bg-amber-800"
                 size="lg"
               >
                 Approve (+{stampsToAward})

@@ -60,7 +60,7 @@ function ResetPasswordForm() {
         <CardHeader className="px-8 pt-10 pb-0 text-center">
           <Link
             href="/"
-            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600"
+            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700"
           >
             <Coffee className="h-5 w-5 text-white" />
           </Link>
@@ -74,7 +74,7 @@ function ResetPasswordForm() {
         <CardContent className="px-8 pb-8">
           <div className="space-y-5 pt-2">
             <Link href="/forgot-password">
-              <Button className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700">
+              <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                 Request a new reset link
               </Button>
             </Link>
@@ -89,7 +89,7 @@ function ResetPasswordForm() {
       <CardHeader className="px-8 pt-10 pb-0 text-center">
         <Link
           href="/"
-          className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600"
+          className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700"
         >
           <Coffee className="h-5 w-5 text-white" />
         </Link>
@@ -125,7 +125,7 @@ function ResetPasswordForm() {
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             type="submit"
-            className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+            className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
             disabled={loading}
           >
             {loading ? "Resetting..." : "Reset Password"}

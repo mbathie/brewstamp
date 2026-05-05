@@ -53,7 +53,7 @@ function LoginForm() {
   return (
     <Card className="w-full border-stone-200 shadow-xl">
       <CardHeader className="px-8 pt-10 pb-0 text-center">
-        <Link href="/" className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600">
+        <Link href="/" className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700">
           <Coffee className="h-5 w-5 text-white" />
         </Link>
         <CardTitle className="text-xl text-stone-900">Sign in to <span className="font-[family-name:var(--font-logo)] tracking-wide">Brewstamp</span></CardTitle>
@@ -130,7 +130,7 @@ function LoginForm() {
             </div>
             <Button
               type="submit"
-              className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+              className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
@@ -153,7 +153,7 @@ function LoginForm() {
             </div>
             <Button
               type="submit"
-              className="w-full cursor-pointer bg-amber-600 hover:bg-amber-700"
+              className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
               disabled={loading}
             >
               {loading ? "Sending link..." : "Send magic link"}

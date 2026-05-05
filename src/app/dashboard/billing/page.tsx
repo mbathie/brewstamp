@@ -252,7 +252,7 @@ export default function BillingPage() {
                 <Button
                   onClick={handleCheckout}
                   disabled={checkoutLoading}
-                  className="w-full bg-amber-600 hover:bg-amber-700"
+                  className="w-full bg-amber-700 hover:bg-amber-800"
                 >
                   {checkoutLoading ? (
                     <Loader2 className="mr-2 size-4 animate-spin" />

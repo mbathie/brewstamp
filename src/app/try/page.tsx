@@ -48,7 +48,7 @@ export default function TryPage() {
             <Link href="/register">
               <Button
                 size="lg"
-                className="cursor-pointer bg-amber-600 px-8 text-base hover:bg-amber-700"
+                className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
               >
                 Set up your shop — it&apos;s free
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -92,7 +92,7 @@ export default function TryPage() {
       {/* Loyalty card screenshot */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-md px-6 text-center">
-          <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-600">
+          <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-700">
             What your customers see
           </p>
           <img
@@ -116,7 +116,7 @@ export default function TryPage() {
             <Link href="/register">
               <Button
                 size="lg"
-                className="cursor-pointer bg-amber-600 px-8 text-base hover:bg-amber-700"
+                className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
               >
                 Set up your shop — it&apos;s free
                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -188,7 +188,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
     <div className="space-y-6">
       {showSetup ? (
         <div className="space-y-6">
-          <Card className="border-amber-600/30 bg-amber-600/5">
+          <Card className="border-amber-600/30 bg-amber-700/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg text-foreground">
                 Welcome! Let&apos;s get you set up
@@ -201,7 +201,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
               <div className="space-y-5">
                 {needsProfileUpdate && (
                   <div className="flex gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-600/30 bg-amber-600/10 text-sm font-bold text-amber-600">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-600/30 bg-amber-700/10 text-sm font-bold text-amber-700">
                       <UserPen className="h-5 w-5" />
                     </div>
                     <div>
@@ -210,7 +210,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         Add your name and contact info in{" "}
-                        <Link href="/dashboard/settings" className="font-medium text-amber-600 hover:underline">
+                        <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
                           Settings
                         </Link>{" "}
                         so customers know who you are.
@@ -220,17 +220,17 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                 )}
 
                 <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-700 text-sm font-bold text-white">
                     1
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Download className="h-4 w-4 text-amber-600" />
+                      <Download className="h-4 w-4 text-amber-700" />
                       <p className="font-medium text-foreground">Download &amp; print your QR code</p>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Go to{" "}
-                      <Link href="/dashboard/settings" className="font-medium text-amber-600 hover:underline">
+                      <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
                         Settings
                       </Link>{" "}
                       to download a printable PDF with your shop&apos;s unique QR code. Print it out and place it where customers can easily scan it — at the register, on the counter, or next to the menu.
@@ -239,12 +239,12 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-700 text-sm font-bold text-white">
                     2
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Monitor className="h-4 w-4 text-amber-600" />
+                      <Monitor className="h-4 w-4 text-amber-700" />
                       <p className="font-medium text-foreground">Stay logged in at the point of sale</p>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -254,12 +254,12 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-700 text-sm font-bold text-white">
                     3
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <QrCode className="h-4 w-4 text-amber-600" />
+                      <QrCode className="h-4 w-4 text-amber-700" />
                       <p className="font-medium text-foreground">Customers scan &amp; you approve</p>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -271,7 +271,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
 
               <div className="mt-6">
                 <Link href="/dashboard/settings">
-                  <Button className="cursor-pointer bg-amber-600 hover:bg-amber-700">
+                  <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
                     <Download className="mr-2 h-4 w-4" />
                     Go to Settings to download your QR code
                   </Button>
