@@ -6,10 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title:
-    "Why Paper Loyalty Cards Don't Work Anymore (And What to Use Instead)",
+  title: "Why Paper Loyalty Cards Don't Work Anymore",
   description:
-    "Paper stamp cards lose customers, generate zero data, and are easy to fake. Here's why cafes are switching to digital — and how to make the switch.",
+    "Paper stamp cards lose customers, generate zero data, and are easy to fake. Here's why cafes are switching to digital.",
   alternates: {
     canonical: "/blog/why-paper-loyalty-cards-dont-work",
   },

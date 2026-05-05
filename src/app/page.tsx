@@ -17,10 +17,12 @@ import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
-  title:
-    "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",
+  title: {
+    absolute: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+  },
   description:
-    "Free digital coffee loyalty card for your cafe or coffee shop. Customers scan a QR code to collect stamps and earn free drinks — no app download required. Set up in 2 minutes.",
+    "Free digital coffee loyalty card for your cafe. Customers scan a QR code to collect stamps and earn free drinks — no app download required.",
+  alternates: { canonical: "/" },
   keywords: [
     "coffee loyalty card",
     "coffee stamp card",

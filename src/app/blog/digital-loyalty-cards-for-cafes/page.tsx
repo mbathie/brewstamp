@@ -6,10 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title:
-    "Coffee Loyalty Card: The Complete Guide for Cafes (2026)",
+  title: "Coffee Loyalty Card: Complete Guide for Cafes",
   description:
-    "Everything cafe owners need to know about the digital coffee loyalty card — how it works, what it costs, and why a digital coffee loyalty card outperforms paper stamp cards.",
+    "Everything cafe owners need to know about digital coffee loyalty cards — how they work, what they cost, and why digital outperforms paper.",
   alternates: {
     canonical: "/blog/digital-loyalty-cards-for-cafes",
   },

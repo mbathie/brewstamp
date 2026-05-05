@@ -5,6 +5,7 @@ import Footer from "@/components/footer";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Brewstamp terms of service for merchants and customers.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

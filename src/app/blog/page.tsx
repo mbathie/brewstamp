@@ -4,9 +4,10 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Blog — Brewstamp",
+  title: "Loyalty Guides for Cafe Owners",
   description:
     "Guides, tips, and insights for cafe owners on loyalty programs, customer retention, and growing your coffee shop.",
+  alternates: { canonical: "/blog" },
   openGraph: {
     type: "website",
     title: "Brewstamp Blog — Loyalty guides for cafes",
@@ -76,9 +77,34 @@ const posts = [
   },
 ];
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  url: "https://brewstamp.app/blog",
+  name: "Brewstamp Blog",
+  description:
+    "Guides, tips, and insights for cafe owners on loyalty programs, customer retention, and growing your coffee shop.",
+  publisher: {
+    "@type": "Organization",
+    name: "Brewstamp",
+    url: "https://brewstamp.app",
+  },
+  blogPost: posts.map((post) => ({
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    url: `https://brewstamp.app/blog/${post.slug}`,
+    image: post.image,
+  })),
+};
+
 export default function BlogIndex() {
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
         <h1 className="text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">

@@ -6,14 +6,15 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Try Brewstamp — Free Digital Loyalty Card for Cafes",
+  title: "Try a Free Digital Loyalty Card",
   description:
     "Set up a digital stamp card for your cafe in 2 minutes. Customers scan a QR code — no app to download. Free to get started.",
+  alternates: { canonical: "/try" },
   openGraph: {
     title: "Try Brewstamp — Free Digital Loyalty Card for Cafes",
     description:
       "Set up a digital stamp card for your cafe in 2 minutes. Customers scan a QR code — no app to download. Free to get started.",
-    url: "https://brewstamp.app/try",
+    url: "/try",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {

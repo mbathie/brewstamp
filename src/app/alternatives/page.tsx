@@ -4,7 +4,7 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Loyalty App Comparisons — Brewstamp Alternatives Guide",
+  title: "Loyalty App Comparisons for Cafes",
   description:
     "Compare Brewstamp to other digital loyalty apps for cafes — Stamp Me, Loopy Loyalty, and PunchPass. Honest pricing and feature breakdowns.",
   alternates: { canonical: "/alternatives" },

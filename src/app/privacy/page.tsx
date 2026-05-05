@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "Brewstamp privacy policy — what data we collect and how we use it.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

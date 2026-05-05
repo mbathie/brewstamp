@@ -17,10 +17,9 @@ import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
-  title:
-    "Loopy Loyalty Alternative: Brewstamp — Browser-Based Digital Stamp Card from $0",
+  title: "Loopy Loyalty Alternative — Free Stamp Card",
   description:
-    "Looking for a Loopy Loyalty alternative? Brewstamp is a browser-based digital stamp card with no Apple Wallet pass setup, free up to 100 stamps, and $5/month after — vs Loopy Loyalty's $25/month minimum.",
+    "Brewstamp is a browser-based Loopy Loyalty alternative. No Apple Wallet pass setup, free up to 100 stamps, $5/month flat after.",
   alternates: { canonical: "/alternatives/loopy-loyalty" },
   openGraph: {
     type: "website",

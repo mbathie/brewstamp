@@ -17,10 +17,9 @@ import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
-  title:
-    "PunchPass Alternative: Brewstamp — Free Digital Loyalty Card for Cafes",
+  title: "PunchPass Alternative — Free Stamp Card",
   description:
-    "Looking for a PunchPass alternative? Brewstamp is a free digital coffee loyalty card with a transparent free tier (100 stamps), $5/month flat after, and a public roadmap.",
+    "Brewstamp is a free PunchPass alternative — transparent free tier (100 stamps), $5/month flat after, and a public roadmap.",
   alternates: { canonical: "/alternatives/punchpass" },
   openGraph: {
     type: "website",

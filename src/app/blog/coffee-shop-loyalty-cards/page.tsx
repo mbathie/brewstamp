@@ -6,10 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title:
-    "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer (2026)",
+  title: "Coffee Shop Loyalty Cards: How They Work (2026)",
   description:
-    "A complete guide to coffee shop loyalty cards — how a loyalty card for a coffee shop works, the best coffee shop loyalty card rewards to offer, and why digital is replacing punch cards.",
+    "How coffee shop loyalty cards work, the best rewards to offer, and why cafes are switching from paper punch cards to digital.",
   alternates: {
     canonical: "/blog/coffee-shop-loyalty-cards",
   },

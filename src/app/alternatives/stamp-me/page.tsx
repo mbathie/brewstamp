@@ -18,10 +18,9 @@ import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
-  title:
-    "Stamp Me Alternative: Brewstamp — Free Digital Loyalty Card with No Customer App",
+  title: "Stamp Me Alternative — Free Loyalty Card",
   description:
-    "Looking for a Stamp Me alternative? Brewstamp is a free digital coffee loyalty card with no customer app, no per-stamp fees, and a flat $5/month after your first 100 stamps.",
+    "Brewstamp is a free Stamp Me alternative — no customer app, no per-stamp fees, $5/month flat after your first 100 stamps.",
   alternates: { canonical: "/alternatives/stamp-me" },
   openGraph: {
     type: "website",
