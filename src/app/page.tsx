@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     absolute: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
   },
   description:
-    "Free digital coffee loyalty card for your cafe. Customers scan a QR code to collect stamps and earn free drinks — no app download required.",
+    "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
   alternates: { canonical: "/" },
   keywords: [
     "coffee loyalty card",
@@ -34,6 +34,19 @@ export const metadata: Metadata = {
     "QR code loyalty",
     "digital stamp card",
   ],
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+    description:
+      "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+    description:
+      "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
+  },
 };
 
 const jsonLd = {
