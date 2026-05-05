@@ -36,6 +36,11 @@ export default function Footer() {
                   Get Started
                 </Link>
               </li>
+              <li>
+                <Link href="/blog" className="transition-colors hover:text-stone-900">
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
 

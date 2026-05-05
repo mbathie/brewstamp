@@ -7,15 +7,52 @@ export const metadata: Metadata = {
   title: "Blog — Brewstamp",
   description:
     "Guides, tips, and insights for cafe owners on loyalty programs, customer retention, and growing your coffee shop.",
+  openGraph: {
+    type: "website",
+    title: "Brewstamp Blog — Loyalty guides for cafes",
+    description:
+      "Guides, tips, and insights for cafe owners on loyalty programs, customer retention, and growing your coffee shop.",
+    images: [
+      {
+        url: "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
+        width: 1200,
+        height: 630,
+        alt: "Barista handing a coffee cup to a customer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brewstamp Blog — Loyalty guides for cafes",
+    description:
+      "Guides, tips, and insights for cafe owners on loyalty programs, customer retention, and growing your coffee shop.",
+    images: [
+      "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
+    ],
+  },
 };
 
 const posts = [
   {
-    slug: "digital-loyalty-cards-for-cafes",
-    title: "Digital Loyalty Cards for Cafes: The Complete Guide",
+    slug: "coffee-shop-loyalty-cards",
+    title:
+      "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer",
     description:
-      "Everything cafe owners need to know about digital loyalty cards. How they work, what they cost, and why they outperform paper stamp cards.",
+      "How a coffee shop loyalty card works, the best coffee shop loyalty card rewards to offer, and why digital is replacing the paper punch card.",
     tag: "Guide",
+    image:
+      "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Barista handing a coffee cup to a customer",
+  },
+  {
+    slug: "digital-loyalty-cards-for-cafes",
+    title: "Coffee Loyalty Card: The Complete Guide for Cafes",
+    description:
+      "Everything cafe owners need to know about the digital coffee loyalty card. How it works, what it costs, and why it outperforms paper stamp cards.",
+    tag: "Guide",
+    image:
+      "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Barista preparing coffee in a modern cafe",
   },
   {
     slug: "qr-code-loyalty-program",
@@ -23,6 +60,9 @@ const posts = [
     description:
       "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
     tag: "How-to",
+    image:
+      "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Customer scanning a QR code with a smartphone",
   },
   {
     slug: "why-paper-loyalty-cards-dont-work",
@@ -30,6 +70,9 @@ const posts = [
     description:
       "Paper stamp cards lose customers, generate zero data, and are easy to fake. Here's why cafes are switching to digital.",
     tag: "Opinion",
+    image:
+      "https://images.pexels.com/photos/6632853/pexels-photo-6632853.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Crumpled paper balls on a flat surface",
   },
 ];
 
@@ -45,20 +88,30 @@ export default function BlogIndex() {
           Guides and insights for cafe owners on loyalty, retention, and
           growing your shop.
         </p>
-        <div className="mt-10 space-y-8">
+        <div className="mt-10 space-y-6">
           {posts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="block rounded-2xl border border-stone-200 bg-white p-6 transition-shadow hover:shadow-md"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white transition-shadow hover:shadow-md sm:flex-row"
             >
-              <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
-                {post.tag}
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-stone-900">
-                {post.title}
-              </h2>
-              <p className="mt-2 text-stone-500">{post.description}</p>
+              <div className="relative w-full shrink-0 overflow-hidden bg-stone-100 sm:w-56 md:w-64">
+                <img
+                  src={post.image}
+                  alt={post.imageAlt}
+                  loading="lazy"
+                  className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-full"
+                />
+              </div>
+              <div className="flex-1 p-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
+                  {post.tag}
+                </p>
+                <h2 className="mt-2 text-xl font-bold leading-snug text-stone-900">
+                  {post.title}
+                </h2>
+                <p className="mt-2 text-stone-500">{post.description}</p>
+              </div>
             </Link>
           ))}
         </div>

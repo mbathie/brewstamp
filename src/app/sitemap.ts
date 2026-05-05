@@ -9,7 +9,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/try`, lastModified: new Date(), priority: 0.8 },
     { url: `${baseUrl}/register`, lastModified: new Date(), priority: 0.7 },
     { url: `${baseUrl}/login`, lastModified: new Date(), priority: 0.5 },
+    { url: `${baseUrl}/alternatives`, lastModified: new Date(), priority: 0.7 },
+    {
+      url: `${baseUrl}/alternatives/stamp-me`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/alternatives/loopy-loyalty`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/alternatives/punchpass`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
+    {
+      url: `${baseUrl}/blog/coffee-shop-loyalty-cards`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
     {
       url: `${baseUrl}/blog/digital-loyalty-cards-for-cafes`,
       lastModified: new Date(),

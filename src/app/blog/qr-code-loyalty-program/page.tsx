@@ -9,10 +9,32 @@ export const metadata: Metadata = {
   title: "How to Set Up a QR Code Loyalty Program for Your Coffee Shop",
   description:
     "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
+  alternates: {
+    canonical: "/blog/qr-code-loyalty-program",
+  },
   openGraph: {
+    type: "article",
+    url: "/blog/qr-code-loyalty-program",
     title: "How to Set Up a QR Code Loyalty Program for Your Coffee Shop",
     description:
       "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
+    images: [
+      {
+        url: "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
+        width: 1200,
+        height: 630,
+        alt: "Customer scanning a QR code with a smartphone",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "How to Set Up a QR Code Loyalty Program for Your Coffee Shop",
+    description:
+      "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
+    images: [
+      "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
+    ],
   },
 };
 
@@ -29,6 +51,8 @@ const jsonLd = {
     logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/qr-code-loyalty-program",
+  image:
+    "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
 
 export default function BlogPost() {
@@ -55,15 +79,45 @@ export default function BlogPost() {
             </p>
           </header>
 
+          {/* Featured-snippet answer */}
+          <div className="mb-14 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+              In short
+            </p>
+            <p className="mt-2 text-base leading-relaxed text-stone-700">
+              A QR code loyalty program lets customers collect stamps or points
+              by scanning a QR code with their phone — no app required. For a
+              coffee shop, you place a QR code at the counter; customers scan,
+              you approve the stamp from a dashboard, and the digital loyalty
+              card appears on their phone. The whole setup takes under 5
+              minutes and works on any iPhone or Android.
+            </p>
+          </div>
+
+          {/* Hero image */}
+          <figure className="mb-14">
+            <img
+              src="https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+              alt="Customer scanning a QR code with a smartphone"
+              className="w-full rounded-2xl"
+              loading="eager"
+            />
+            <figcaption className="mt-2 text-xs text-stone-400">
+              Photo by Julio Lopez on Pexels.
+            </figcaption>
+          </figure>
+
           {/* Section 1 */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
               Why QR codes work for cafe loyalty
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              QR codes became second nature during COVID. Your customers already
-              know how to point their phone camera at a code. That familiarity
-              is a massive advantage — there&apos;s zero learning curve.
+              QR codes became second nature during COVID — the one piece of
+              consumer tech that emerged from 2020 with a fanbase. Your
+              customers already know how to point their phone camera at a code.
+              That familiarity is a massive advantage — there&apos;s zero
+              learning curve.
             </p>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Compared to app-based loyalty programs, QR codes have one critical
@@ -208,9 +262,10 @@ export default function BlogPost() {
               after 8 coffees your next one&apos;s free. No app needed.&quot;
             </blockquote>
             <p className="mt-6 text-base leading-relaxed text-stone-600">
-              That&apos;s it. No hard sell needed. Most customers will scan it
-              right away — especially if they see the QR code already sitting on
-              the counter.
+              That&apos;s it. No hard sell, no scripted enthusiasm, no asking
+              if they&apos;d like to download a 47MB app to save 35 cents. Most
+              customers will scan it right away — especially if they see the QR
+              code already sitting on the counter.
             </p>
           </section>
 
@@ -263,15 +318,15 @@ export default function BlogPost() {
               {[
                 {
                   bold: "Setting the threshold too high.",
-                  text: "15 stamps feels unattainable. 6–10 is the sweet spot.",
+                  text: "15 stamps feels like a long-distance relationship. 6–10 is the sweet spot.",
                 },
                 {
                   bold: "Not telling customers about it.",
-                  text: "A QR code on the counter without context gets ignored. Staff need to mention it for the first few weeks.",
+                  text: "A QR code on the counter without context looks like a wifi password from 2008. Staff need to mention it for the first few weeks.",
                 },
                 {
                   bold: "Overcomplicating the reward.",
-                  text: '"Free regular coffee" is better than a tiered points system. Keep it dead simple.',
+                  text: '"Free regular coffee" beats a four-tier points system every time. If your reward needs a footnote, simplify it.',
                 },
               ].map(({ bold, text }) => (
                 <li
@@ -285,6 +340,56 @@ export default function BlogPost() {
                 </li>
               ))}
             </ul>
+          </section>
+
+          {/* FAQ */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+              QR code loyalty program FAQ
+            </h2>
+            <div className="mt-6 space-y-6">
+              {[
+                {
+                  q: "How does a QR code loyalty program work?",
+                  a: "A customer scans a QR code at your counter with their phone camera. The QR code opens a digital loyalty card in their browser. They request a stamp, you approve it from your dashboard, and the stamp appears on their card in real time. No app download is needed at any step.",
+                },
+                {
+                  q: "Do customers need to download an app to use a QR code loyalty card?",
+                  a: "Not with a browser-based QR code loyalty program. The QR code opens a regular web page that the customer can bookmark or save to their home screen. App-based programs exist, but they consistently underperform browser-based ones because most customers won't install an app for a coffee.",
+                },
+                {
+                  q: "Can a QR code loyalty card be added to Apple Wallet or Google Wallet?",
+                  a: "Many QR code loyalty programs support Apple Wallet and Google Wallet passes. The customer scans the QR code, taps to add the pass, and the loyalty card sits next to their boarding passes and credit cards — handy, though not strictly required for a QR-based program to work.",
+                },
+                {
+                  q: "Where should I place the QR code in my coffee shop?",
+                  a: "At the register, on the counter where customers wait, and (if you do table service) on table talkers. The single best spot is wherever the transaction happens — within arm's reach when the customer's phone is already out.",
+                },
+                {
+                  q: "How much does a QR code loyalty program cost?",
+                  a: "Most QR code loyalty platforms have a free tier. Paid plans for small cafes typically run $5–15/month. Avoid platforms that charge per stamp or take a percentage of revenue — flat pricing scales better as the program grows.",
+                },
+                {
+                  q: "Are QR code loyalty programs secure?",
+                  a: "Yes — provided each stamp requires merchant approval. With approval-based stamping, customers cannot self-stamp by re-scanning the code. The merchant dashboard logs every stamp, so there's a full audit trail.",
+                },
+              ].map(({ q, a }) => (
+                <details
+                  key={q}
+                  className="group rounded-xl border border-stone-200 bg-white px-6 py-5"
+                >
+                  <summary className="flex cursor-pointer items-center justify-between font-semibold text-stone-900">
+                    {q}
+                    <span className="ml-4 text-stone-400 transition-transform group-open:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-stone-500">
+                    {a}
+                  </p>
+                </details>
+              ))}
+            </div>
           </section>
 
           {/* CTA */}
