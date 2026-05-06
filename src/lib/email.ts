@@ -420,6 +420,77 @@ export async function sendPaymentReceiptEmail({
   }
 }
 
+export async function sendCustomerConsentEmail({
+  to,
+  shopName,
+  location,
+}: {
+  to: string;
+  shopName: string;
+  location: string;
+}) {
+  const text = `Hi ${shopName} team,
+
+Mark from Brewstamp here — you'll know us as the team behind the loyalty card you're running.
+
+We're putting together a small "Trusted by cafes" section on the brewstamp.app homepage, and we'd love to include ${shopName} in it. Just the cafe name and your suburb — for example:
+
+  ${shopName} — ${location}
+
+— under a heading along the lines of "Independent cafes running real loyalty programs with us."
+
+No logos, no testimonial, no commitment. Just a low-key mention so prospective cafes can see we work with real shops in real places.
+
+If you're cool with it, just reply "yes." If you'd rather not, reply "no" and we'll quietly pass — no hard feelings, no follow-up.
+
+Cheers,
+Mark Bathie
+Founder / CEO, Brewstamp
+hello@brewstamp.app`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
+  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
+    <p style="margin: 0 0 16px;">Hi <strong>${shopName}</strong> team,</p>
+    <p style="margin: 0 0 16px;">Mark from Brewstamp here &mdash; you&rsquo;ll know us as the team behind the loyalty card you&rsquo;re running.</p>
+    <p style="margin: 0 0 16px;">We&rsquo;re putting together a small &ldquo;Trusted by cafes&rdquo; section on the <a href="https://brewstamp.app" style="color: #b45309;">brewstamp.app</a> homepage, and we&rsquo;d love to include <strong>${shopName}</strong> in it. Just the cafe name and your suburb &mdash; for example:</p>
+    <p style="margin: 0 0 16px; padding: 12px 16px; background-color: #fafaf9; border-left: 3px solid #d97706; border-radius: 4px; font-size: 15px;"><strong>${shopName}</strong> &mdash; ${location}</p>
+    <p style="margin: 0 0 16px;">&mdash; under a heading along the lines of &ldquo;Independent cafes running real loyalty programs with us.&rdquo;</p>
+    <p style="margin: 0 0 16px;">No logos, no testimonial, no commitment. Just a low-key mention so prospective cafes can see we work with real shops in real places.</p>
+    <p style="margin: 0 0 16px;">If you&rsquo;re cool with it, just reply &ldquo;yes.&rdquo; If you&rsquo;d rather not, reply &ldquo;no&rdquo; and we&rsquo;ll quietly pass &mdash; no hard feelings, no follow-up.</p>
+    <p style="margin: 24px 0 4px;">Cheers,</p>
+    <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Mark Bathie</strong></p>
+    <p style="margin: 0; font-size: 14px; color: #78716c;">Founder / CEO, Brewstamp</p>
+    <p style="margin: 4px 0 0; font-size: 14px; color: #78716c;">hello@brewstamp.app</p>
+  </div>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Quick ask — featuring ${shopName} on brewstamp.app?`,
+      text,
+      html,
+      headers: {
+        "X-Mailin-Tag": "customer-consent",
+        "List-Unsubscribe": LIST_UNSUBSCRIBE,
+      },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send customer consent email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendDay1WelcomeEmail({
   to,
   merchantName,
