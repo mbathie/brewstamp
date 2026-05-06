@@ -107,6 +107,7 @@ export async function GET(
       bgPattern: (shop as any).bgPattern,
       logo: !!(shop as any).logo,
       createdAt: (shop as any).createdAt,
+      dripDay1Sent: (shop as any).dripDay1Sent,
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,
       dripDay14Sent: (shop as any).dripDay14Sent,

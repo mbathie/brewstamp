@@ -420,6 +420,70 @@ export async function sendPaymentReceiptEmail({
   }
 }
 
+export async function sendDay1WelcomeEmail({
+  to,
+  merchantName,
+  shopName,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+}) {
+  const dashboardLink = utm("/dashboard", "drip-day1");
+
+  const text = `Hey ${merchantName},
+
+Mark from Brewstamp here. Just saw you signed ${shopName} up yesterday — welcome aboard.
+
+Quick heads-up: every scan of your QR code auto-creates a stamp request, so if you've been kicking the tyres your dashboard probably has a few "rejected" entries from your own testing. That's totally normal. If you'd like me to clear out the test data before your first real customer comes in, just reply.
+
+Anything else — questions, snags, feedback on the product — reply to this email and it lands straight in my inbox.
+
+Cheers,
+Mark Bathie
+Founder / CEO, Brewstamp
+${dashboardLink}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
+  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
+    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
+    <p style="margin: 0 0 16px;">Mark from Brewstamp here. Just saw you signed <strong>${shopName}</strong> up yesterday &mdash; welcome aboard.</p>
+    <p style="margin: 0 0 16px;">Quick heads-up: every scan of your QR code auto-creates a stamp request, so if you&rsquo;ve been kicking the tyres your dashboard probably has a few &ldquo;rejected&rdquo; entries from your own testing. That&rsquo;s totally normal. If you&rsquo;d like me to clear out the test data before your first real customer comes in, just reply.</p>
+    <p style="margin: 0 0 16px;">Anything else &mdash; questions, snags, feedback on the product &mdash; reply to this email and it lands straight in my inbox.</p>
+    <p style="margin: 24px 0 4px;">Cheers,</p>
+    <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Mark Bathie</strong></p>
+    <p style="margin: 0; font-size: 14px; color: #78716c;">Founder / CEO, Brewstamp</p>
+    <p style="margin: 4px 0 0;"><a href="${dashboardLink}" style="color: #b45309; font-size: 14px;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
+  </div>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: `How's the setup going at ${shopName}?`,
+      text,
+      html,
+      headers: {
+        "X-Mailin-Tag": "drip-day1",
+        "List-Unsubscribe": LIST_UNSUBSCRIBE,
+      },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send day 1 welcome email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendDay3NudgeEmail({
   to,
   merchantName,

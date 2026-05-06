@@ -15,6 +15,7 @@ const shopSchema = new mongoose.Schema(
     fgColor: { type: String, default: "amber-600" },
     bgPattern: { type: String, default: "none" },
     stripeCustomerId: { type: String },
+    dripDay1Sent: { type: Boolean, default: false },
     dripDay3Sent: { type: Boolean, default: false },
     dripDay7Sent: { type: Boolean, default: false },
     dripDay14Sent: { type: Boolean, default: false },

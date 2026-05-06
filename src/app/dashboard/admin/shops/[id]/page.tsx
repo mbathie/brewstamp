@@ -72,6 +72,7 @@ interface ShopDetail {
     bgPattern: string;
     logo: boolean;
     createdAt: string;
+    dripDay1Sent: boolean;
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
     dripDay14Sent: boolean;
@@ -435,6 +436,10 @@ export default function AdminShopDetailPage() {
 
       {/* Status badges */}
       <div className="flex flex-wrap gap-2">
+        <Badge variant={shop.dripDay1Sent ? "default" : "outline"} className={shop.dripDay1Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.dripDay1Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+          Day 1 drip
+        </Badge>
         <Badge variant={shop.dripDay3Sent ? "default" : "outline"} className={shop.dripDay3Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
           {shop.dripDay3Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 3 drip
