@@ -35,6 +35,17 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "bennett-st-dairy-bondi",
+    title:
+      "Bennett St Dairy in Bondi: How a Real Cafe Runs Its Coffee Loyalty Card",
+    description:
+      "How Bondi cafe Bennett St Dairy runs a digital coffee loyalty card on Brewstamp — QR code at the counter, buy 7 get 1 free, dozens of regulars enrolled.",
+    tag: "Customer story",
+    image:
+      "https://images.pexels.com/photos/16323069/pexels-photo-16323069.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Bondi Beach in Sydney, Australia",
+  },
+  {
     slug: "coffee-shop-loyalty-cards",
     title:
       "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer",

@@ -27,6 +27,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
     {
+      url: `${baseUrl}/blog/bennett-st-dairy-bondi`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/blog/coffee-shop-loyalty-cards`,
       lastModified: new Date(),
       priority: 0.8,
