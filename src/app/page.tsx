@@ -203,6 +203,62 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Trusted by cafes */}
+      <section className="border-b border-stone-200 bg-white py-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
+              Trusted by cafes
+            </p>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">
+              Independent cafes running real loyalty programs with us
+            </h2>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                name: "Thirty 7even",
+                location: "Macquarie Park, Sydney",
+              },
+              {
+                name: "Bennett St Dairy",
+                location: "Bondi, Sydney",
+              },
+              {
+                name: "Short Stop Coffee",
+                location: "Melbourne & Sydney",
+              },
+              {
+                name: "Tamping Ground",
+                location: "Sutherland Shire, Sydney",
+              },
+              {
+                name: "Baked since 95",
+                location: "Hillside, Melbourne",
+              },
+              {
+                name: "Brown Sugar Bakery",
+                location: "Forresters Beach, NSW",
+              },
+            ].map(({ name, location }) => (
+              <div
+                key={name}
+                className="flex flex-col items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 px-6 py-8 text-center transition-shadow hover:shadow-md"
+              >
+                <p className="text-lg font-bold tracking-tight text-stone-900">
+                  {name}
+                </p>
+                <p className="mt-1 text-xs text-stone-500">{location}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-stone-400">
+            Includes cafes on Brewstamp and on our long-running predecessor
+            platform StampyStamp.
+          </p>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section id="how-it-works" className="scroll-mt-20 bg-white py-24">
         <div className="mx-auto max-w-6xl px-6">
