@@ -235,7 +235,7 @@ export default function Home() {
               {
                 name: "Tamping Ground",
                 location: "Sutherland Shire, Sydney",
-                logo: "/customers/tamping-ground.jpg",
+                logo: "/customers/tamping-ground.png",
               },
               {
                 name: "Baked since 95",
@@ -245,7 +245,7 @@ export default function Home() {
               {
                 name: "Brown Sugar Bakery",
                 location: "Forresters Beach, NSW",
-                logo: "/customers/brown-sugar-bakery.jpg",
+                logo: "/customers/brown-sugar-bakery.png",
               },
             ].map(({ name, location, logo, logoClass }) => (
               <div
