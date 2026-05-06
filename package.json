@@ -2,6 +2,14 @@
   "name": "brewstamp",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    ">0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not dead",
+    "not ie 11",
+    "not op_mini all"
+  ],
   "scripts": {
     "dev": "ts-node --project tsconfig.server.json server.ts",
     "dev:next": "next dev",

@@ -18,6 +18,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   devIndicators: false,
   serverExternalPackages: ["mongoose", "bcrypt"],
+  experimental: {
+    inlineCss: true,
+  },
   images: {
     remotePatterns: [
       {
