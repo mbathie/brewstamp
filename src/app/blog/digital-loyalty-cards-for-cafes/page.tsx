@@ -51,6 +51,8 @@ const jsonLd = {
     logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/digital-loyalty-cards-for-cafes",
+  datePublished: "2026-02-27",
+  dateModified: "2026-05-05",
   image:
     "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -77,6 +79,10 @@ export default function BlogPost() {
               washing machine, or filed permanently inside a copy of <em>The
               Sopranos</em> box set. A digital coffee loyalty card fixes all of
               this — and it&apos;s easier to set up than you think.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-02-27">27 February 2026</time>
+              {" · "}Updated <time dateTime="2026-05-05">5 May 2026</time>
             </p>
           </header>
 

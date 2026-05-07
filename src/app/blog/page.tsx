@@ -44,6 +44,8 @@ const posts = [
     image:
       "/blog/thirty-7even-interior.jpg",
     imageAlt: "Thirty 7even cafe interior, Macquarie Park",
+    publishedAt: "2026-05-07",
+    publishedAtDisplay: "7 May 2026",
   },
   {
     slug: "bennett-st-dairy-bondi",
@@ -55,6 +57,8 @@ const posts = [
     image:
       "https://images.pexels.com/photos/16323069/pexels-photo-16323069.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Bondi Beach in Sydney, Australia",
+    publishedAt: "2026-05-06",
+    publishedAtDisplay: "6 May 2026",
   },
   {
     slug: "coffee-shop-loyalty-cards",
@@ -66,6 +70,8 @@ const posts = [
     image:
       "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Barista handing a coffee cup to a customer",
+    publishedAt: "2026-05-05",
+    publishedAtDisplay: "5 May 2026",
   },
   {
     slug: "digital-loyalty-cards-for-cafes",
@@ -76,6 +82,8 @@ const posts = [
     image:
       "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Barista preparing coffee in a modern cafe",
+    publishedAt: "2026-02-27",
+    publishedAtDisplay: "27 February 2026",
   },
   {
     slug: "qr-code-loyalty-program",
@@ -86,6 +94,8 @@ const posts = [
     image:
       "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Customer scanning a QR code with a smartphone",
+    publishedAt: "2026-02-27",
+    publishedAtDisplay: "27 February 2026",
   },
   {
     slug: "why-paper-loyalty-cards-dont-work",
@@ -96,6 +106,8 @@ const posts = [
     image:
       "https://images.pexels.com/photos/6632853/pexels-photo-6632853.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Crumpled paper balls on a flat surface",
+    publishedAt: "2026-02-27",
+    publishedAtDisplay: "27 February 2026",
   },
 ];
 
@@ -117,6 +129,7 @@ const jsonLd = {
     description: post.description,
     url: `https://brewstamp.app/blog/${post.slug}`,
     image: post.image,
+    datePublished: post.publishedAt,
   })),
 };
 
@@ -159,6 +172,12 @@ export default function BlogIndex() {
                   {post.title}
                 </h2>
                 <p className="mt-2 text-stone-500">{post.description}</p>
+                <p className="mt-3 text-xs text-stone-400">
+                  Published{" "}
+                  <time dateTime={post.publishedAt}>
+                    {post.publishedAtDisplay}
+                  </time>
+                </p>
               </div>
             </Link>
           ))}

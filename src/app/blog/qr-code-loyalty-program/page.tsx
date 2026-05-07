@@ -51,6 +51,8 @@ const jsonLd = {
     logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/qr-code-loyalty-program",
+  datePublished: "2026-02-27",
+  dateModified: "2026-05-05",
   image:
     "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -76,6 +78,10 @@ export default function BlogPost() {
               A QR code at the counter is the simplest way to run a loyalty
               program. Here&apos;s exactly how to set one up — from choosing a
               platform to getting your first regulars enrolled.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-02-27">27 February 2026</time>
+              {" · "}Updated <time dateTime="2026-05-05">5 May 2026</time>
             </p>
           </header>
 

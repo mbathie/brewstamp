@@ -54,6 +54,8 @@ const jsonLd = {
     },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/bennett-st-dairy-bondi",
+  datePublished: "2026-05-06",
+  dateModified: "2026-05-06",
   image:
     "https://images.pexels.com/photos/16323069/pexels-photo-16323069.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630",
   about: {
@@ -91,6 +93,9 @@ export default function BlogPost() {
               underneath — &ldquo;Buy 7 coffees, get 1 free&rdquo; — and dozens
               of Bondi regulars on a digital loyalty card. Here&rsquo;s what
               it actually looks like in the wild.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-05-06">6 May 2026</time>
             </p>
           </header>
 

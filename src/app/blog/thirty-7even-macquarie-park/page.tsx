@@ -53,6 +53,8 @@ const jsonLd = {
     },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/thirty-7even-macquarie-park",
+  datePublished: "2026-05-07",
+  dateModified: "2026-05-07",
   image: "https://brewstamp.app/blog/thirty-7even-interior.jpg",
   about: {
     "@type": "LocalBusiness",
@@ -88,6 +90,9 @@ export default function BlogPost() {
               digital loyalty program on Brewstamp the day they signed up.
               Ten weeks later: nearly two hundred regulars enrolled and the
               first batch of free coffees has already gone over the counter.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-05-07">7 May 2026</time>
             </p>
           </header>
 

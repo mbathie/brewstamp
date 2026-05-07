@@ -57,6 +57,8 @@ const jsonLd = {
     },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-cards",
+  datePublished: "2026-05-05",
+  dateModified: "2026-05-05",
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -84,6 +86,9 @@ export default function BlogPost() {
               a loyalty card for a coffee shop actually works, what rewards
               regulars respond to, and why that warped little punch card living
               in someone&apos;s back pocket is quietly costing you customers.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-05-05">5 May 2026</time>
             </p>
           </header>
 

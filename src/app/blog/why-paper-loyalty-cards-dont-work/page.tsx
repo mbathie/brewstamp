@@ -52,6 +52,8 @@ const jsonLd = {
     logo: { "@type": "ImageObject", url: "https://brewstamp.app/apple-touch-icon.png" },
   },
   mainEntityOfPage: "https://brewstamp.app/blog/why-paper-loyalty-cards-dont-work",
+  datePublished: "2026-02-27",
+  dateModified: "2026-05-05",
   image:
     "https://images.pexels.com/photos/6632853/pexels-photo-6632853.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -78,6 +80,10 @@ export default function BlogPost() {
               hundreds of them — usually in the same wallet that contains an
               expired Blockbuster card. Here&apos;s why the paper stamp card is
               costing you regulars, and what actually works in 2026.
+            </p>
+            <p className="mt-3 text-sm text-stone-400">
+              Published <time dateTime="2026-02-27">27 February 2026</time>
+              {" · "}Updated <time dateTime="2026-05-05">5 May 2026</time>
             </p>
           </header>
 
