@@ -35,6 +35,17 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "thirty-7even-macquarie-park",
+    title:
+      "Thirty 7even in Macquarie Park: 10 Weeks on Brewstamp",
+    description:
+      "How Asian-fusion cafe Thirty 7even runs its digital coffee loyalty card on Brewstamp — 180+ regulars, 600+ stamps, and a fully branded card from day one.",
+    tag: "Customer story",
+    image:
+      "/blog/thirty-7even-interior.jpg",
+    imageAlt: "Thirty 7even cafe interior, Macquarie Park",
+  },
+  {
     slug: "bennett-st-dairy-bondi",
     title:
       "Bennett St Dairy in Bondi: How a Real Cafe Runs Its Coffee Loyalty Card",

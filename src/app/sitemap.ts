@@ -27,6 +27,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
     {
+      url: `${baseUrl}/blog/thirty-7even-macquarie-park`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/blog/bennett-st-dairy-bondi`,
       lastModified: new Date(),
       priority: 0.7,
