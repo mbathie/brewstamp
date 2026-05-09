@@ -35,6 +35,18 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "set-up-your-brewstamp-shop",
+    title: "How to Set Up Your Brewstamp Shop in 5 Minutes",
+    description:
+      "Step-by-step setup walkthrough for new Brewstamp shops — print the QR code, run a test stamp, award your first real one.",
+    tag: "How-to",
+    image:
+      "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Customer scanning a QR code at a cafe counter",
+    publishedAt: "2026-05-10",
+    publishedAtDisplay: "10 May 2026",
+  },
+  {
     slug: "thirty-7even-macquarie-park",
     title:
       "Thirty 7even in Macquarie Park: 10 Weeks on Brewstamp",

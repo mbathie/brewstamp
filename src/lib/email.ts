@@ -491,6 +491,79 @@ hello@brewstamp.app`;
   }
 }
 
+export async function sendFirstCustomerEmail({
+  to,
+  merchantName,
+  shopName,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+}) {
+  const dashboardLink = utm("/dashboard", "first-customer");
+
+  const text = `Hey ${merchantName},
+
+You just stamped your first customer at ${shopName} — congrats. The hardest part of running a loyalty program is the first stamp; everything from here is repetition.
+
+A few things worth knowing now that you're live:
+
+- Every stamp shows up on your dashboard for approval before it lands. If a customer tries to scan twice for the same coffee, you can just hit reject.
+- The "Customers" tab will start filling up as more regulars scan in. After a couple of weeks you'll see who your most loyal customers are.
+- When someone hits your stamp threshold, they'll get a free-drink notification automatically — no extra step from you.
+
+If anything's confusing or you've got feedback on what could be better, hit reply — it goes straight to me.
+
+Cheers,
+Mark Bathie
+Founder / CEO, Brewstamp
+${dashboardLink}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
+  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
+    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
+    <p style="margin: 0 0 16px;">You just stamped your first customer at <strong>${shopName}</strong> &mdash; congrats. The hardest part of running a loyalty program is the first stamp; everything from here is repetition.</p>
+    <p style="margin: 0 0 8px;">A few things worth knowing now that you&rsquo;re live:</p>
+    <ul style="margin: 0 0 16px; padding-left: 20px;">
+      <li style="margin-bottom: 8px;">Every stamp shows up on your dashboard for approval before it lands. If a customer tries to scan twice for the same coffee, you can just hit reject.</li>
+      <li style="margin-bottom: 8px;">The &ldquo;Customers&rdquo; tab will start filling up as more regulars scan in. After a couple of weeks you&rsquo;ll see who your most loyal customers are.</li>
+      <li style="margin-bottom: 8px;">When someone hits your stamp threshold, they&rsquo;ll get a free-drink notification automatically &mdash; no extra step from you.</li>
+    </ul>
+    <p style="margin: 0 0 16px;">If anything&rsquo;s confusing or you&rsquo;ve got feedback on what could be better, hit reply &mdash; it goes straight to me.</p>
+    <p style="margin: 24px 0 4px;">Cheers,</p>
+    <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Mark Bathie</strong></p>
+    <p style="margin: 0; font-size: 14px; color: #78716c;">Founder / CEO, Brewstamp</p>
+    <p style="margin: 4px 0 0;"><a href="${dashboardLink}" style="color: #b45309; font-size: 14px;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
+  </div>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: `${shopName} just stamped its first customer 🎉`,
+      text,
+      html,
+      headers: {
+        "X-Mailin-Tag": "first-customer",
+        "List-Unsubscribe": LIST_UNSUBSCRIBE,
+      },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send first-customer email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendDay1WelcomeEmail({
   to,
   merchantName,

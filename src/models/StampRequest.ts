@@ -21,7 +21,7 @@ const stampRequestSchema = new mongoose.Schema(
     redeem: { type: Boolean, default: false },
     expiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + 5 * 60 * 1000),
+      default: () => new Date(Date.now() + 10 * 60 * 1000),
     },
   },
   { timestamps: true }

@@ -1,7 +1,7 @@
 import { getMerchant } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongoose";
-import { StampRequest } from "@/models";
+import { StampRequest, StampCard } from "@/models";
 import DashboardContent from "@/components/dashboard-content";
 
 export default async function DashboardPage({
@@ -16,7 +16,14 @@ export default async function DashboardPage({
   const { init } = await searchParams;
 
   await connectDB();
-  const hasActivity = await StampRequest.exists({ shop: merchant.shop._id });
+  const [hasActivity, earnedAgg] = await Promise.all([
+    StampRequest.exists({ shop: merchant.shop._id }),
+    StampCard.aggregate([
+      { $match: { shop: merchant.shop._id } },
+      { $group: { _id: null, total: { $sum: "$totalEarned" } } },
+    ]),
+  ]);
+  const hasEarnedStamps = (earnedAgg[0]?.total ?? 0) > 0;
 
   const needsProfileUpdate =
     !merchant.user.phone ||
@@ -29,6 +36,8 @@ export default async function DashboardPage({
       shopLogo={merchant.shop.logo || null}
       stampThreshold={merchant.shop.stampThreshold}
       isNewShop={init === "1" || !hasActivity}
+      hasEarnedStamps={hasEarnedStamps}
+      hasActivity={!!hasActivity}
       needsProfileUpdate={needsProfileUpdate}
     />
   );

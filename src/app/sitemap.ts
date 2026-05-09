@@ -42,6 +42,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
     {
+      url: `${baseUrl}/blog/set-up-your-brewstamp-shop`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/blog/thirty-7even-macquarie-park`,
       lastModified: new Date(),
       priority: 0.7,

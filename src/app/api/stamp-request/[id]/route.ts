@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
-import { StampRequest, StampCard, Shop, Subscription } from "@/models";
+import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
+import { sendFirstCustomerEmail } from "@/lib/email";
 
 export async function PATCH(
   req: Request,
@@ -70,6 +71,23 @@ export async function PATCH(
 
       await stampCard.save();
       await request.save();
+
+      // First-customer celebration: fire once when a shop's first stamp is awarded
+      if (awarded > 0 && shop && !shop.firstCustomerEmailSent) {
+        const owner = await User.findById(shop.owner);
+        if (owner?.email) {
+          shop.firstCustomerEmailSent = true;
+          await shop.save();
+          // Fire-and-forget; failures shouldn't block the stamp approval
+          sendFirstCustomerEmail({
+            to: owner.email,
+            merchantName: owner.name || owner.email.split("@")[0],
+            shopName: shop.name,
+          }).catch((e) =>
+            console.error("[Email] first-customer send error:", e)
+          );
+        }
+      }
 
       return NextResponse.json({
         request,

@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronRight, Download, Monitor, QrCode, UserPen } from "lucide-react";
+import { CalendarIcon, ChevronRight, Download, Monitor, QrCode, Smartphone, UserPen } from "lucide-react";
 import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -58,6 +58,8 @@ interface Props {
   shopLogo?: string | null;
   stampThreshold: number;
   isNewShop: boolean;
+  hasEarnedStamps?: boolean;
+  hasActivity?: boolean;
   needsProfileUpdate?: boolean;
 }
 
@@ -72,7 +74,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function DashboardContent({ shopName, shopCode, shopLogo, stampThreshold, isNewShop, needsProfileUpdate }: Props) {
+export default function DashboardContent({ shopName, shopCode, shopLogo, stampThreshold, isNewShop, hasEarnedStamps = false, hasActivity = false, needsProfileUpdate }: Props) {
   const [range, setRange] = useState<Range>("today");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [activeDates, setActiveDates] = useState<Set<string>>(new Set());
@@ -182,7 +184,10 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
     });
   }
 
-  const showSetup = isNewShop;
+  // Show the welcome / activation card until the shop earns its first stamp.
+  const showSetup = isNewShop || !hasEarnedStamps;
+  // Customers have been scanning but no stamp has actually been awarded yet.
+  const stuckOnActivation = !isNewShop && hasActivity && !hasEarnedStamps;
 
   return (
     <div className="space-y-6">
@@ -191,12 +196,16 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
           <Card className="border-amber-600/30 bg-amber-700/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg text-foreground">
-                Welcome! Let&apos;s get you set up
+                {stuckOnActivation
+                  ? "You're almost there — let's land your first stamp"
+                  : "Welcome! Let's get you set up"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="mb-6 text-sm text-muted-foreground">
-                Follow these three steps to start collecting stamps from your customers.
+                {stuckOnActivation
+                  ? "Customers have started scanning your QR code but no stamps have been approved yet. Walk through step 4 below to award your first one."
+                  : "Follow these four steps to start collecting stamps from your customers."}
               </p>
               <div className="space-y-5">
                 {needsProfileUpdate && (
@@ -267,13 +276,34 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                     </p>
                   </div>
                 </div>
+
+                <div className="flex gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-700 text-sm font-bold text-white">
+                    4
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-amber-700" />
+                      <p className="font-medium text-foreground">Try it yourself right now</p>
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Don&apos;t wait for a real customer — test the flow now so you know what to expect. Open the QR code from{" "}
+                      <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
+                        Settings
+                      </Link>{" "}
+                      on this device, point your phone&apos;s camera at the screen, complete the customer flow on your phone, then come back here and approve the stamp request when it appears. Once you&apos;ve done it once, you&apos;ll never second-guess a real one.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-6">
                 <Link href="/dashboard/settings">
                   <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
                     <Download className="mr-2 h-4 w-4" />
-                    Go to Settings to download your QR code
+                    {stuckOnActivation
+                      ? "Open your QR code"
+                      : "Go to Settings to download your QR code"}
                   </Button>
                 </Link>
               </div>
