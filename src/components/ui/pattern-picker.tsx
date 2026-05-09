@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { patterns, getPatternCSS } from "@/lib/patterns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, X } from "lucide-react";
+import { useState } from "react";
+import { patterns } from "@/lib/patterns";
+import { X } from "lucide-react";
 
 interface PatternPickerProps {
   value: string;
@@ -17,95 +11,105 @@ interface PatternPickerProps {
   previewBg?: string;
 }
 
+const QUICK_COUNT = 11; // shows None + 11 patterns = 12 total in a tidy grid
+
 export default function PatternPicker({
   value,
   onChange,
   previewColor = "#d97706",
   previewBg = "#292524",
 }: PatternPickerProps) {
-  const [selected, setSelected] = useState(value || "none");
-  const [open, setOpen] = useState(false);
+  const visiblePatterns = patterns.slice(0, QUICK_COUNT);
+  const hiddenPatterns = patterns.slice(QUICK_COUNT);
 
-  useEffect(() => {
-    setSelected(value || "none");
-  }, [value]);
-
-  const selectedLabel =
-    selected === "none"
-      ? "None"
-      : patterns.find((p) => p.key === selected)?.label || selected;
-
-  const previewBgImage = getPatternCSS(selected, previewColor, 0.4);
+  // Auto-expand if the selected pattern isn't in the quick set.
+  const selectedHidden = hiddenPatterns.some((p) => p.key === value);
+  const [expanded, setExpanded] = useState(selectedHidden);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-44 cursor-pointer justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="h-5 w-5 rounded border border-border"
-              style={{
-                backgroundColor: previewBg,
-                backgroundImage: previewBgImage || undefined,
-              }}
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {/* None option */}
+        <PatternThumb
+          label="None"
+          selected={value === "none"}
+          onClick={() => onChange("none")}
+          previewBg={previewBg}
+          previewColor={previewColor}
+        />
+        {visiblePatterns.map((p) => (
+          <PatternThumb
+            key={p.key}
+            label={p.label}
+            selected={value === p.key}
+            onClick={() => onChange(p.key)}
+            previewBg={previewBg}
+            previewColor={previewColor}
+            patternFn={p.fn}
+          />
+        ))}
+        {expanded &&
+          hiddenPatterns.map((p) => (
+            <PatternThumb
+              key={p.key}
+              label={p.label}
+              selected={value === p.key}
+              onClick={() => onChange(p.key)}
+              previewBg={previewBg}
+              previewColor={previewColor}
+              patternFn={p.fn}
             />
-            <span className="truncate text-sm">{selectedLabel}</span>
-          </div>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 bg-card p-2" align="start">
-        <div className="max-h-64 overflow-auto">
-          {/* None option */}
-          <button
-            onClick={() => {
-              setSelected("none");
-              onChange("none");
-              setOpen(false);
-            }}
-            className={`mb-1 flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent ${
-              selected === "none" ? "bg-accent" : ""
-            }`}
-          >
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded border border-border"
-              style={{ backgroundColor: previewBg }}
-            >
-              <X className="h-4 w-4 opacity-30" />
-            </div>
-            <span>None</span>
-          </button>
+          ))}
+      </div>
 
-          {/* Pattern grid */}
-          <div className="grid grid-cols-1 gap-1">
-            {patterns.map((p) => {
-              const css = p.fn(previewColor, 0.4);
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => {
-                    setSelected(p.key);
-                    onChange(p.key);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent ${
-                    selected === p.key ? "bg-accent" : ""
-                  }`}
-                >
-                  <div
-                    className="h-14 w-14 shrink-0 rounded border border-border"
-                    style={{
-                      backgroundColor: previewBg,
-                      backgroundImage: css,
-                    }}
-                  />
-                  <span>{p.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+      {hiddenPatterns.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+        >
+          {expanded
+            ? "Hide patterns"
+            : `Show ${hiddenPatterns.length} more patterns`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PatternThumb({
+  label,
+  selected,
+  onClick,
+  previewBg,
+  previewColor,
+  patternFn,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+  previewBg: string;
+  previewColor: string;
+  patternFn?: (color: string, opacity: number) => string;
+}) {
+  const bgImage = patternFn ? patternFn(previewColor, 0.4) : undefined;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={`flex size-14 cursor-pointer items-center justify-center rounded-lg border border-border transition-transform ${
+        selected
+          ? "ring-foreground ring-offset-background scale-105 ring-2 ring-offset-2"
+          : "hover:scale-105"
+      }`}
+      style={{
+        backgroundColor: previewBg,
+        backgroundImage: bgImage,
+      }}
+    >
+      {!patternFn && <X className="h-4 w-4 text-muted-foreground opacity-50" />}
+    </button>
   );
 }

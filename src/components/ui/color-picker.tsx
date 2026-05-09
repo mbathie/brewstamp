@@ -1,132 +1,97 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import colors, { getColorHex } from "@/lib/tailwind-colors";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import colors from "@/lib/tailwind-colors";
 
-const tailwindColors = [
+const HUES = [
   "red", "orange", "amber", "yellow", "lime",
   "green", "emerald", "teal", "cyan", "sky",
   "blue", "indigo", "violet", "purple", "fuchsia",
   "pink", "rose", "slate", "gray", "zinc",
   "neutral", "stone",
 ];
-
-const shades = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+const SHADES = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 interface ColorPickerProps {
   value: string;
   onChange: (colorKey: string) => void;
 }
 
-export default function ColorPicker({ value, onChange }: ColorPickerProps) {
-  const [selected, setSelected] = useState(value || "amber-600");
-  const [open, setOpen] = useState(false);
-  const selectedRef = useRef<HTMLDivElement>(null);
+function hueOf(value: string): string {
+  const [hue] = value.split("-");
+  return HUES.includes(hue) ? hue : "amber";
+}
 
+function shadeOf(value: string): number {
+  const [, shade] = value.split("-");
+  const n = Number(shade);
+  return SHADES.includes(n) ? n : 600;
+}
+
+export default function ColorPicker({ value, onChange }: ColorPickerProps) {
+  // The hue dropdown is a UI-only bit of state — the actual saved value is the
+  // full "hue-shade" key. We seed it from the saved value but let the user
+  // browse hues without committing until they pick a shade.
+  const [activeHue, setActiveHue] = useState(() => hueOf(value));
+
+  // If the saved value's hue changes externally (e.g. randomize), follow it.
   useEffect(() => {
-    setSelected(value || "amber-600");
+    setActiveHue(hueOf(value));
   }, [value]);
 
-  useEffect(() => {
-    if (open && selectedRef.current) {
-      selectedRef.current.scrollIntoView({
-        behavior: "auto",
-        block: "center",
-        inline: "center",
-      });
-    }
-  }, [open]);
-
-  const selectedHex = getColorHex(selected);
+  const currentShade = shadeOf(value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-44 cursor-pointer justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="h-5 w-5 rounded border border-border"
-              style={{ backgroundColor: selectedHex }}
+    <div className="space-y-3">
+      {/* Hue selector — single dot per Tailwind hue */}
+      <div className="flex flex-wrap gap-2">
+        {HUES.map((hue) => {
+          const isActive = activeHue === hue;
+          return (
+            <button
+              key={hue}
+              type="button"
+              aria-label={hue}
+              title={hue}
+              onClick={() => {
+                setActiveHue(hue);
+                // Keep the same shade level when switching hues so the saved
+                // value tracks user intent (e.g. amber-600 → blue-600).
+                onChange(`${hue}-${currentShade}`);
+              }}
+              className={`size-7 cursor-pointer rounded-md transition-transform ${
+                isActive
+                  ? "ring-foreground ring-offset-background scale-110 ring-2 ring-offset-2"
+                  : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: colors[hue][500] }}
             />
-            <span className="text-sm">{selected}</span>
-          </div>
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto bg-card p-2" align="start">
-        <div className="max-h-48 overflow-auto">
-          <div className="min-w-max">
-            <div className="flex flex-col">
-              {tailwindColors.map((color) => (
-                <div key={color} className="flex">
-                  {shades.map((shade) => (
-                    <div
-                      key={shade}
-                      ref={
-                        selected === `${color}-${shade}`
-                          ? selectedRef
-                          : null
-                      }
-                      onClick={() => {
-                        const colorKey = `${color}-${shade}`;
-                        setSelected(colorKey);
-                        onChange(colorKey);
-                        setOpen(false);
-                      }}
-                      className={`h-6 w-6 cursor-pointer transition-transform hover:scale-110 ${
-                        selected === `${color}-${shade}`
-                          ? "z-10 scale-110 ring-2 ring-white ring-offset-1 ring-offset-black"
-                          : ""
-                      }`}
-                      style={{
-                        backgroundColor: colors[color]?.[shade],
-                      }}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-            {/* White and Black */}
-            <div className="mt-2 flex gap-1 border-t border-border pt-2">
-              <div
-                ref={selected === "white" ? selectedRef : null}
-                onClick={() => {
-                  setSelected("white");
-                  onChange("white");
-                  setOpen(false);
-                }}
-                className={`h-6 w-6 cursor-pointer border border-border transition-transform hover:scale-110 ${
-                  selected === "white"
-                    ? "z-10 scale-110 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                    : ""
-                }`}
-                style={{ backgroundColor: "#ffffff" }}
-              />
-              <div
-                ref={selected === "black" ? selectedRef : null}
-                onClick={() => {
-                  setSelected("black");
-                  onChange("black");
-                  setOpen(false);
-                }}
-                className={`h-6 w-6 cursor-pointer transition-transform hover:scale-110 ${
-                  selected === "black"
-                    ? "z-10 scale-110 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                    : ""
-                }`}
-                style={{ backgroundColor: "#000000" }}
-              />
-            </div>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+          );
+        })}
+      </div>
+
+      {/* Shade selector — for the active hue */}
+      <div className="flex flex-wrap gap-2">
+        {SHADES.map((shade) => {
+          const colorKey = `${activeHue}-${shade}`;
+          const isSelected = value === colorKey;
+          return (
+            <button
+              key={shade}
+              type="button"
+              aria-label={colorKey}
+              title={colorKey}
+              onClick={() => onChange(colorKey)}
+              className={`size-14 cursor-pointer rounded-lg border border-border transition-transform ${
+                isSelected
+                  ? "ring-foreground ring-offset-background scale-105 ring-2 ring-offset-2"
+                  : "hover:scale-105"
+              }`}
+              style={{ backgroundColor: colors[activeHue][shade] }}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }

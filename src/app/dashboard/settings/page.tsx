@@ -173,65 +173,6 @@ export default function SettingsPage() {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Colors</Label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const { bgColor: bg, fgColor: fg } = getRandomColorPair();
-                    setBgColor(bg);
-                    setFgColor(fg);
-                  }}
-                  className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <Shuffle className="h-3 w-3" />
-                  Randomize
-                </button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Background</Label>
-                  <ColorPicker value={bgColor} onChange={setBgColor} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Foreground</Label>
-                  <ColorPicker value={fgColor} onChange={setFgColor} />
-                </div>
-              </div>
-              {(() => {
-                const ratio = getContrastRatio(getColorHex(bgColor), getColorHex(fgColor));
-                if (ratio < 1.5) return (
-                  <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
-                    <AlertTriangle className="size-4 shrink-0" />
-                    These colors are too similar — text will be invisible.
-                  </div>
-                );
-                if (ratio < 3) return (
-                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
-                    <AlertTriangle className="size-4 shrink-0" />
-                    Low contrast — text may be hard to read.
-                  </div>
-                );
-                return null;
-              })()}
-            </div>
-            <div className="space-y-2">
-              <Label>Background Pattern</Label>
-              <PatternPicker
-                value={bgPattern}
-                onChange={setBgPattern}
-                previewColor={getColorHex(fgColor)}
-                previewBg={getColorHex(bgColor)}
-              />
-            </div>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="cursor-pointer"
-            >
-              {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
-            </Button>
           </CardContent>
         </Card>
 
@@ -254,6 +195,66 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-lg">Card Design</CardTitle>
+          <button
+            type="button"
+            onClick={() => {
+              const { bgColor: bg, fgColor: fg } = getRandomColorPair();
+              setBgColor(bg);
+              setFgColor(fg);
+            }}
+            className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Shuffle className="h-3 w-3" />
+            Randomize
+          </button>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Background</Label>
+            <ColorPicker value={bgColor} onChange={setBgColor} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Foreground</Label>
+            <ColorPicker value={fgColor} onChange={setFgColor} />
+          </div>
+          {(() => {
+            const ratio = getContrastRatio(getColorHex(bgColor), getColorHex(fgColor));
+            if (ratio < 1.5) return (
+              <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                <AlertTriangle className="size-4 shrink-0" />
+                These colors are too similar — text will be invisible.
+              </div>
+            );
+            if (ratio < 3) return (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+                <AlertTriangle className="size-4 shrink-0" />
+                Low contrast — text may be hard to read.
+              </div>
+            );
+            return null;
+          })()}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Pattern</Label>
+            <PatternPicker
+              value={bgPattern}
+              onChange={setBgPattern}
+              previewColor={getColorHex(fgColor)}
+              previewBg={getColorHex(bgColor)}
+            />
+          </div>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="cursor-pointer"
+          >
+            {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
+          </Button>
+        </CardContent>
+      </Card>
 
       {rawImage && (
         <LogoEditor

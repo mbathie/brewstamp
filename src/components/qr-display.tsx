@@ -202,13 +202,18 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         </Button>
         <Button
           variant="outline"
-          asChild
+          onClick={() => {
+            // iPhone-ish portrait window so it lands as a popup, not a tab.
+            window.open(
+              `${appUrl}/s/${shopCode}`,
+              "_blank",
+              "width=420,height=820,noopener,noreferrer"
+            );
+          }}
           className="flex-1 cursor-pointer"
         >
-          <a href={`${appUrl}/s/${shopCode}`} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View
-          </a>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          View
         </Button>
       </div>
     </div>
