@@ -236,7 +236,14 @@ export default function BlogPost() {
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Not all digital loyalty platforms are built for small cafes. Many
               are designed for large chains and come with enterprise pricing to
-              match. Here&apos;s what matters for independent cafes:
+              match.{" "}
+              <Link
+                href="/alternatives"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                See how the popular platforms compare side by side
+              </Link>
+              . Here&apos;s what matters for independent cafes:
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {[

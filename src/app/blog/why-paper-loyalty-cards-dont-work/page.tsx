@@ -289,8 +289,15 @@ export default function BlogPost() {
               Making the switch
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              You don&apos;t need a dramatic cutover. Here&apos;s the simplest
-              approach:
+              You don&apos;t need a dramatic cutover. The hardest part is
+              picking a digital platform —{" "}
+              <Link
+                href="/alternatives"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                here&apos;s how the common cafe loyalty apps compare
+              </Link>
+              . Once you&apos;ve picked one, this is the simplest rollout:
             </p>
             <ol className="mt-6 space-y-4">
               {[

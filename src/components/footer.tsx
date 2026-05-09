@@ -37,6 +37,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/alternatives" className="transition-colors hover:text-stone-900">
+                  Compare
+                </Link>
+              </li>
+              <li>
                 <Link href="/blog" className="transition-colors hover:text-stone-900">
                   Blog
                 </Link>

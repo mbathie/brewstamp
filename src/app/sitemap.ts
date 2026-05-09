@@ -25,6 +25,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/alternatives/square-loyalty`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/alternatives/loyverse`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/alternatives/smile-io`,
+      lastModified: new Date(),
+      priority: 0.7,
+    },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
     {
       url: `${baseUrl}/blog/thirty-7even-macquarie-park`,

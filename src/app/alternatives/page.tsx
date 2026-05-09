@@ -6,7 +6,7 @@ import Footer from "@/components/footer";
 export const metadata: Metadata = {
   title: "Loyalty App Comparisons for Cafes",
   description:
-    "Compare Brewstamp to other digital loyalty apps for cafes — Stamp Me, Loopy Loyalty, and PunchPass. Honest pricing and feature breakdowns.",
+    "Compare Brewstamp to other digital loyalty apps for cafes — Stamp Me, Loopy Loyalty, PunchPass, Square Loyalty, Loyverse, and Smile.io. Honest pricing and feature breakdowns.",
   alternates: { canonical: "/alternatives" },
   openGraph: {
     type: "website",
@@ -61,6 +61,33 @@ const comparisons = [
     image:
       "https://images.pexels.com/photos/4787613/pexels-photo-4787613.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Pour-over coffee being prepared",
+  },
+  {
+    slug: "square-loyalty",
+    competitor: "Square Loyalty",
+    summary:
+      "Square Loyalty is a paid Square POS add-on. Brewstamp is the POS-agnostic, browser-based alternative — $5/month flat instead of around $45/month.",
+    image:
+      "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Cafe counter with espresso machine",
+  },
+  {
+    slug: "loyverse",
+    competitor: "Loyverse Loyalty",
+    summary:
+      "Loyverse's loyalty feature is free with their POS but asks customers to install the Loyverse app. Brewstamp keeps the card in the browser — no install, any POS.",
+    image:
+      "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Cafe counter with morning light",
+  },
+  {
+    slug: "smile-io",
+    competitor: "Smile.io",
+    summary:
+      "Smile.io is a powerful e-commerce loyalty platform. Brewstamp is the cafe-shaped alternative — stamp-based, counter-first, and free to start.",
+    image:
+      "https://images.pexels.com/photos/1907227/pexels-photo-1907227.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Latte art on a flat white at a cafe",
   },
 ];
 

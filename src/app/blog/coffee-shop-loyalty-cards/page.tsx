@@ -6,9 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Coffee Shop Loyalty Cards: How They Work (2026)",
+  title: "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
   description:
-    "How coffee shop loyalty cards work, the best rewards to offer, and why cafes are switching from paper punch cards to digital.",
+    "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
   alternates: {
     canonical: "/blog/coffee-shop-loyalty-cards",
   },
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     type: "article",
     url: "/blog/coffee-shop-loyalty-cards",
     title:
-      "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer (2026)",
+      "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
     description:
-      "How coffee shop loyalty cards work, the best coffee shop loyalty card rewards, and why cafes are switching from punch cards to digital.",
+      "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
     images: [
       {
         url: "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title:
-      "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer",
+      "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
     description:
-      "How coffee shop loyalty cards work, the best coffee shop loyalty card rewards, and why cafes are switching from punch cards to digital.",
+      "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
     images: [
       "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -44,9 +44,9 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline:
-    "Coffee Shop Loyalty Cards: How They Work and the Best Rewards to Offer (2026)",
+    "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
   description:
-    "How coffee shop loyalty cards work, the best coffee shop loyalty card rewards, and why cafes are switching from punch cards to digital.",
+    "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -78,8 +78,7 @@ export default function BlogPost() {
               Guide
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              Coffee Shop Loyalty Cards: How They Work and the Best Rewards to
-              Offer
+              Coffee Shop Loyalty Cards: Best Rewards & Setup Guide
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
               Everything you need to know about coffee shop loyalty cards — how
@@ -355,9 +354,15 @@ export default function BlogPost() {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Most digital loyalty platforms are built for chains with marketing
-              budgets and IT teams, not for independent coffee shops. Here&apos;s
-              what to look for in a coffee shop loyalty program if you&apos;re a
-              small business:
+              budgets and IT teams, not for independent coffee shops.{" "}
+              <Link
+                href="/alternatives"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                We compare the most common cafe loyalty platforms here
+              </Link>
+              . But before that, here&apos;s what to look for in a coffee shop
+              loyalty program if you&apos;re a small business:
             </p>
             <ul className="mt-6 space-y-4">
               {[
@@ -474,6 +479,72 @@ export default function BlogPost() {
                   />
                 </details>
               ))}
+            </div>
+          </section>
+
+          {/* Read next */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+              Read next
+            </h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <Link
+                href="/blog/why-paper-loyalty-cards-dont-work"
+                className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Guide
+                </p>
+                <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
+                  Why paper loyalty cards don&apos;t work anymore
+                </h3>
+                <p className="mt-2 text-sm text-stone-500">
+                  Lost cards, fraud, and zero data — the case for going digital.
+                </p>
+              </Link>
+              <Link
+                href="/blog/digital-loyalty-cards-for-cafes"
+                className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Guide
+                </p>
+                <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
+                  Digital loyalty cards for cafes
+                </h3>
+                <p className="mt-2 text-sm text-stone-500">
+                  How browser-based loyalty cards actually work in a busy cafe.
+                </p>
+              </Link>
+              <Link
+                href="/alternatives"
+                className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Compare
+                </p>
+                <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
+                  Brewstamp vs other loyalty apps
+                </h3>
+                <p className="mt-2 text-sm text-stone-500">
+                  Honest feature and pricing comparisons against Stamp Me,
+                  Loopy Loyalty, PunchPass, Square, Loyverse, and Smile.io.
+                </p>
+              </Link>
+              <Link
+                href="/blog/qr-code-loyalty-program"
+                className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Guide
+                </p>
+                <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
+                  How QR-code loyalty programs work
+                </h3>
+                <p className="mt-2 text-sm text-stone-500">
+                  The mechanic behind app-less loyalty: scan, approve, stamp.
+                </p>
+              </Link>
             </div>
           </section>
 

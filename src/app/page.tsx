@@ -58,7 +58,8 @@ const jsonLd = {
       url: "https://brewstamp.app",
       logo: "https://brewstamp.app/apple-touch-icon.png",
       description:
-        "Digital coffee loyalty cards and stamp rewards for cafes. No app download required.",
+        "Digital coffee loyalty cards and stamp rewards for cafes worldwide. No app download required.",
+      areaServed: { "@type": "Place", name: "Worldwide" },
     },
     {
       "@type": "SoftwareApplication",
@@ -72,7 +73,12 @@ const jsonLd = {
         priceCurrency: "USD",
       },
       description:
-        "Free digital coffee loyalty card for cafes. Customers scan a QR code to collect stamps and earn rewards.",
+        "Free digital coffee loyalty card for cafes worldwide. Customers scan a QR code to collect stamps and earn rewards.",
+      audience: {
+        "@type": "BusinessAudience",
+        name: "Cafes and coffee shops",
+        geographicArea: { "@type": "Place", name: "Worldwide" },
+      },
       aggregateRating: undefined,
     },
     {
