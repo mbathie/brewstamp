@@ -62,13 +62,17 @@ app.prepare().then(() => {
   server.on("upgrade", (req: IncomingMessage, socket: Socket, head: Buffer) => {
     const url = new URL(req.url!, `http://${req.headers.host}`);
 
-    // Only handle upgrades on our /_ws path — Turbopack won't touch this
     if (url.pathname === "/_ws") {
       wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit("connection", ws, req);
       });
+      return;
     }
-    // All other upgrades (HMR etc.) fall through to Next.js's own handler
+
+    // Hand any other upgrade (Turbopack/webpack HMR) to Next.js. Without this,
+    // Next 16's dev runtime treats the missing HMR socket as a fatal error and
+    // tears down the whole HTTP server — which closes our /_ws clients too.
+    upgrade(req, socket, head);
   });
 
   wss.on("connection", (ws, req) => {
