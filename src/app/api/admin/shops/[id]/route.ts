@@ -111,6 +111,8 @@ export async function GET(
       dripDay3Sent: (shop as any).dripDay3Sent,
       dripDay7Sent: (shop as any).dripDay7Sent,
       dripDay14Sent: (shop as any).dripDay14Sent,
+      firstCustomerEmailSent: !!(shop as any).firstCustomerEmailSent,
+      language: (shop as any).language || "en",
       owner: { ...(shop as any).owner, authMethods },
       isPro: !!activeSub,
     },

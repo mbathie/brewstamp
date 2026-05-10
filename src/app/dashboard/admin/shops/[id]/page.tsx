@@ -76,6 +76,8 @@ interface ShopDetail {
     dripDay3Sent: boolean;
     dripDay7Sent: boolean;
     dripDay14Sent: boolean;
+    firstCustomerEmailSent: boolean;
+    language: string;
     isPro: boolean;
     owner: { name: string; email: string; phone?: string; authMethods?: string[] };
   };
@@ -452,6 +454,19 @@ export default function AdminShopDetailPage() {
           {shop.dripDay14Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Day 14 drip
         </Badge>
+        <Badge variant={shop.firstCustomerEmailSent ? "default" : "outline"} className={shop.firstCustomerEmailSent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+          {shop.firstCustomerEmailSent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+          1st stamp email
+        </Badge>
+        {(() => {
+          const langChanged = shop.language && shop.language !== "en";
+          return (
+            <Badge variant={langChanged ? "default" : "outline"} className={langChanged ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
+              {langChanged ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
+              Language{langChanged ? `: ${shop.language}` : ""}
+            </Badge>
+          );
+        })()}
         <Badge variant={shop.logo ? "default" : "outline"} className={shop.logo ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
           {shop.logo ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
           Logo
