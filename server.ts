@@ -33,7 +33,6 @@ function getOrCreateChannel(shopCode: string): ShopChannel {
 
 app.prepare().then(() => {
   const handle = app.getRequestHandler();
-  const upgrade = app.getUpgradeHandler();
 
   const server = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
@@ -59,21 +58,29 @@ app.prepare().then(() => {
   // Use noServer mode so we control which upgrades go to ws vs Next.js HMR
   const wss = new WebSocketServer({ noServer: true });
 
-  server.on("upgrade", (req: IncomingMessage, socket: Socket, head: Buffer) => {
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-
-    if (url.pathname === "/_ws") {
-      wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit("connection", ws, req);
-      });
-      return;
+  // Next.js (esp. v16 dev mode) attaches its own `upgrade` listener lazily,
+  // sometimes before we add ours, sometimes after, and may re-attach during
+  // HMR. If both listeners run, Next's destroys the socket on unknown paths
+  // (including /_ws). Removing its listener once isn't enough. Instead we
+  // intercept at `server.emit` so /_ws upgrades are handled exclusively by
+  // us and never propagate to any other listener. Non-/_ws upgrades (HMR)
+  // pass through unchanged.
+  const origEmit = server.emit.bind(server);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (server as any).emit = function (event: string, ...args: unknown[]) {
+    if (event === "upgrade") {
+      const [req, socket, head] = args as [IncomingMessage, Socket, Buffer];
+      const url = new URL(req.url!, `http://${req.headers.host}`);
+      if (url.pathname === "/_ws") {
+        wss.handleUpgrade(req, socket, head, (ws) => {
+          wss.emit("connection", ws, req);
+        });
+        return true;
+      }
     }
-
-    // Hand any other upgrade (Turbopack/webpack HMR) to Next.js. Without this,
-    // Next 16's dev runtime treats the missing HMR socket as a fatal error and
-    // tears down the whole HTTP server — which closes our /_ws clients too.
-    upgrade(req, socket, head);
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (origEmit as any)(event, ...args);
+  };
 
   wss.on("connection", (ws, req) => {
     const url = new URL(req.url!, `http://${req.headers.host}`);
@@ -103,6 +110,7 @@ app.prepare().then(() => {
       }
     });
 
+    ws.on("error", (err) => console.error(`[ws] error ${role}/${shopCode}: ${err.message}`));
     ws.on("close", () => {
       // Only clear the reference if this socket is still the current one.
       // A newer connection may have already replaced it (e.g. React Strict
