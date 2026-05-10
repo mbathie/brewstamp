@@ -13,8 +13,6 @@ import {
   Users,
   Stamp,
   Gift,
-  Check,
-  X,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -438,56 +436,30 @@ export default function AdminShopDetailPage() {
 
       {/* Status badges */}
       <div className="flex flex-wrap gap-2">
-        <Badge variant={shop.dripDay1Sent ? "default" : "outline"} className={shop.dripDay1Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.dripDay1Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          Day 1 drip
-        </Badge>
-        <Badge variant={shop.dripDay3Sent ? "default" : "outline"} className={shop.dripDay3Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.dripDay3Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          Day 3 drip
-        </Badge>
-        <Badge variant={shop.dripDay7Sent ? "default" : "outline"} className={shop.dripDay7Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.dripDay7Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          Day 7 drip
-        </Badge>
-        <Badge variant={shop.dripDay14Sent ? "default" : "outline"} className={shop.dripDay14Sent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.dripDay14Sent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          Day 14 drip
-        </Badge>
-        <Badge variant={shop.firstCustomerEmailSent ? "default" : "outline"} className={shop.firstCustomerEmailSent ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.firstCustomerEmailSent ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          1st stamp email
-        </Badge>
         {(() => {
-          const langChanged = shop.language && shop.language !== "en";
-          return (
-            <Badge variant={langChanged ? "default" : "outline"} className={langChanged ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-              {langChanged ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-              Language{langChanged ? `: ${shop.language}` : ""}
-            </Badge>
-          );
-        })()}
-        <Badge variant={shop.logo ? "default" : "outline"} className={shop.logo ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-          {shop.logo ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-          Logo
-        </Badge>
-        {(() => {
+          const langChanged = !!shop.language && shop.language !== "en";
           const customColors = shop.bgColor !== "stone-800" || shop.fgColor !== "amber-600";
-          return (
-            <Badge variant={customColors ? "default" : "outline"} className={customColors ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-              {customColors ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-              Colors
+          const customPattern = !!shop.bgPattern && shop.bgPattern !== "none";
+          const items: { label: string; on: boolean }[] = [
+            { label: "Day 1 drip", on: !!shop.dripDay1Sent },
+            { label: "Day 3 drip", on: !!shop.dripDay3Sent },
+            { label: "Day 7 drip", on: !!shop.dripDay7Sent },
+            { label: "Day 14 drip", on: !!shop.dripDay14Sent },
+            { label: "1st stamp email", on: !!shop.firstCustomerEmailSent },
+            { label: `Language${langChanged ? `: ${shop.language}` : ""}`, on: langChanged },
+            { label: "Logo", on: !!shop.logo },
+            { label: "Colors", on: customColors },
+            { label: "Pattern", on: customPattern },
+          ];
+          return items.map(({ label, on }) => (
+            <Badge
+              key={label}
+              variant={on ? "default" : "outline"}
+              className={on ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}
+            >
+              {label}
             </Badge>
-          );
-        })()}
-        {(() => {
-          const customPattern = shop.bgPattern && shop.bgPattern !== "none";
-          return (
-            <Badge variant={customPattern ? "default" : "outline"} className={customPattern ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}>
-              {customPattern ? <Check className="mr-1 size-3" /> : <X className="mr-1 size-3" />}
-              Pattern
-            </Badge>
-          );
+          ));
         })()}
       </div>
 
