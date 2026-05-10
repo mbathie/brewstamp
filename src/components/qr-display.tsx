@@ -215,7 +215,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
       >
         <ExternalLink className="mr-2 h-4 w-4" />
-        View
+        Live preview
       </Button>
     </>
   );
