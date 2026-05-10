@@ -104,7 +104,7 @@ export default function CardPreview({
             </p>
           )}
         </div>
-        {children && <div>{children}</div>}
+        {children}
       </div>
     </div>
   );
