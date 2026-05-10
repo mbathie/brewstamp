@@ -16,6 +16,7 @@ import {
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import Testimonials from "@/components/testimonials";
+import { buildHreflangMap } from "@/lib/i18n/landing";
 
 export const metadata: Metadata = {
   title: {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   },
   description:
     "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
-  alternates: { canonical: "/" },
+  alternates: { canonical: "/", languages: buildHreflangMap() },
   keywords: [
     "coffee loyalty card",
     "coffee stamp card",
@@ -442,27 +443,28 @@ export default function Home() {
           </p>
           <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-2 text-sm">
             {[
-              ["🇺🇸", "English", "Hello"],
-              ["🇪🇸", "Español", "Hola"],
-              ["🇫🇷", "Français", "Bonjour"],
-              ["🇩🇪", "Deutsch", "Hallo"],
-              ["🇵🇹", "Português", "Olá"],
-              ["🇮🇹", "Italiano", "Ciao"],
-              ["🇨🇳", "中文", "你好"],
-              ["🇯🇵", "日本語", "こんにちは"],
-              ["🇰🇷", "한국어", "안녕하세요"],
-              ["🇸🇦", "العربية", "مرحبا"],
-              ["🇮🇳", "हिन्दी", "नमस्ते"],
-              ["🇮🇩", "Bahasa Indonesia", "Halo"],
-            ].map(([flag, name, hello]) => (
-              <span
+              ["/", "🇺🇸", "English", "Hello"],
+              ["/es", "🇪🇸", "Español", "Hola"],
+              ["/fr", "🇫🇷", "Français", "Bonjour"],
+              ["/de", "🇩🇪", "Deutsch", "Hallo"],
+              ["/pt", "🇵🇹", "Português", "Olá"],
+              ["/it", "🇮🇹", "Italiano", "Ciao"],
+              ["/zh", "🇨🇳", "中文", "你好"],
+              ["/ja", "🇯🇵", "日本語", "こんにちは"],
+              ["/ko", "🇰🇷", "한국어", "안녕하세요"],
+              ["/ar", "🇸🇦", "العربية", "مرحبا"],
+              ["/hi", "🇮🇳", "हिन्दी", "नमस्ते"],
+              ["/id", "🇮🇩", "Bahasa Indonesia", "Halo"],
+            ].map(([href, flag, name, hello]) => (
+              <Link
                 key={name}
-                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-stone-700"
+                href={href}
+                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-stone-700 transition-colors hover:border-amber-300 hover:bg-amber-50"
               >
                 <span aria-hidden>{flag}</span>
                 <span className="text-stone-400">{hello}</span>
                 <span className="font-medium">{name}</span>
-              </span>
+              </Link>
             ))}
           </div>
         </div>

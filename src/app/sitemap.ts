@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { LANDING_LANGS } from "@/lib/i18n/landing";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
@@ -6,6 +7,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: baseUrl, lastModified: new Date(), priority: 1 },
+    ...LANDING_LANGS.map((lang) => ({
+      url: `${baseUrl}/${lang}`,
+      lastModified: new Date(),
+      priority: 0.8,
+    })),
     { url: `${baseUrl}/try`, lastModified: new Date(), priority: 0.8 },
     { url: `${baseUrl}/register`, lastModified: new Date(), priority: 0.7 },
     { url: `${baseUrl}/login`, lastModified: new Date(), priority: 0.5 },
