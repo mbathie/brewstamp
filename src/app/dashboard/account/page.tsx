@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, X, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function AccountPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const initial = useRef({ name: "", email: "", phone: "" });
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -20,20 +24,43 @@ export default function AccountPage() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/account")
       .then((r) => r.json())
       .then((data) => {
-        setName(data.name || "");
-        setEmail(data.email || "");
-        setPhone(data.phone || "");
+        const n = data.name || "";
+        const e = data.email || "";
+        const p = data.phone || "";
+        setName(n);
+        setEmail(e);
+        setPhone(p);
+        initial.current = { name: n, email: e, phone: p };
         setLoading(false);
       });
   }, []);
 
+  const dirty =
+    name !== initial.current.name ||
+    email !== initial.current.email ||
+    phone !== initial.current.phone;
+
+  // Live password validity
+  const passwordsMatch =
+    confirmPassword.length > 0 && newPassword === confirmPassword;
+  const passwordsMismatch =
+    confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const passwordTooShort = newPassword.length > 0 && newPassword.length < 6;
+  const canSubmitPassword =
+    currentPassword.length > 0 &&
+    newPassword.length >= 6 &&
+    passwordsMatch &&
+    !savingPassword;
+
   async function handleSaveDetails(e: React.FormEvent) {
     e.preventDefault();
+    if (!dirty) return;
     setSaving(true);
     setError("");
     setMessage("");
@@ -52,7 +79,8 @@ export default function AccountPage() {
       return;
     }
 
-    setMessage("Details saved");
+    initial.current = { name, email, phone };
+    setMessage("Saved");
     setTimeout(() => setMessage(""), 2000);
   }
 
@@ -93,119 +121,184 @@ export default function AccountPage() {
     return <p className="text-sm text-muted-foreground">Loading...</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-xl font-semibold text-foreground">Account</h1>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Personal Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSaveDetails} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Phone Number{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {message && (
-                <p className="text-sm text-green-500">{message}</p>
-              )}
+      {/* Profile */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSaveDetails} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Used to sign in and for shop notifications.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">
+                Phone Number{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                We&apos;ll only use it for time-sensitive shop alerts.
+              </p>
+            </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <div className="flex items-center gap-3">
               <Button
                 type="submit"
-                disabled={saving}
+                disabled={!dirty || saving}
                 className="cursor-pointer"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+              {message && (
+                <span className="flex items-center gap-1 text-sm text-green-500">
+                  <Check className="size-4" />
+                  {message}
+                </span>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Change Password</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-4">
+      {/* Sign-in & security */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Sign-in &amp; security</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setPasswordOpen((o) => !o)}
+            className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-left text-sm transition-colors hover:bg-accent"
+          >
+            <div>
+              <p className="font-medium text-foreground">Password</p>
+              <p className="text-xs text-muted-foreground">
+                Change the password you use to sign in.
+              </p>
+            </div>
+            {passwordOpen ? (
+              <ChevronUp className="size-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="size-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {passwordOpen && (
+            <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
+                <Label htmlFor="currentPassword">Current password</Label>
                 <Input
                   id="currentPassword"
                   type="password"
+                  autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
                 />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">New password</Label>
                 <Input
                   id="newPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
                 />
+                {passwordTooShort && (
+                  <p className="flex items-center gap-1 text-xs text-amber-500">
+                    <X className="size-3" />
+                    Must be at least 6 characters.
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">Confirm new password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
                 />
+                {passwordsMatch && (
+                  <p className="flex items-center gap-1 text-xs text-green-500">
+                    <Check className="size-3" />
+                    Passwords match.
+                  </p>
+                )}
+                {passwordsMismatch && (
+                  <p className="flex items-center gap-1 text-xs text-destructive">
+                    <X className="size-3" />
+                    Passwords do not match.
+                  </p>
+                )}
               </div>
+
               {passwordError && (
                 <p className="text-sm text-destructive">{passwordError}</p>
               )}
-              {passwordMessage && (
-                <p className="text-sm text-green-500">{passwordMessage}</p>
-              )}
-              <Button
-                type="submit"
-                disabled={savingPassword}
-                className="cursor-pointer"
-              >
-                {savingPassword ? "Updating..." : "Update Password"}
-              </Button>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="submit"
+                  disabled={!canSubmitPassword}
+                  className="cursor-pointer"
+                >
+                  {savingPassword ? "Updating..." : "Update Password"}
+                </Button>
+                {passwordMessage && (
+                  <span className="flex items-center gap-1 text-sm text-green-500">
+                    <Check className="size-4" />
+                    {passwordMessage}
+                  </span>
+                )}
+              </div>
             </form>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

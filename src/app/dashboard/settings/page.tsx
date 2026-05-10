@@ -238,7 +238,7 @@ export default function SettingsPage() {
             return null;
           })()}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Pattern</Label>
+            <Label className="text-xs text-muted-foreground">Background Pattern</Label>
             <PatternPicker
               value={bgPattern}
               onChange={setBgPattern}
