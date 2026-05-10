@@ -10,10 +10,12 @@ const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
 
-// Explicitly pin Next's project dir to this file's directory so the workspace
-// root can't drift up to a parent (which was resolving `tailwindcss` from the
-// wrong place in dev).
-const app = next({ dev, hostname, port, dir: __dirname });
+// Explicitly pin Next's project dir so the workspace root can't drift up to
+// a parent (which was resolving `tailwindcss` from the wrong place in dev).
+// Use process.cwd() not __dirname — in production this file is compiled to
+// dist/server.js, where __dirname would point at <project>/dist instead of
+// the project root and Next.js wouldn't find the .next build output.
+const app = next({ dev, hostname, port, dir: process.cwd() });
 
 interface ShopChannel {
   merchant: WebSocket | null;
