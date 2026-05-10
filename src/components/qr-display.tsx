@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, ExternalLink, Copy, Check } from "lucide-react";
+import { Download, Printer, ExternalLink, Copy, Check, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { generateQRCodeWithLogo } from "@/lib/qr";
 import { jsPDF } from "jspdf";
@@ -181,8 +181,32 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     }
   }
 
+  async function handleDownloadQrImage() {
+    // Generate a high-res, transparent QR PNG so it scales nicely.
+    const hiResQr = await generateQRCodeWithLogo(
+      `${appUrl}/s/${shopCode}`,
+      { width: 1200, logoColor: fgHex }
+    );
+    const a = document.createElement("a");
+    a.href = hiResQr;
+    a.download = `brewstamp-${shopCode}-qr.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   const actionButtons = (
     <>
+      <Button
+        variant={variant === "compact" ? "default" : "outline"}
+        size={variant === "compact" ? "sm" : "default"}
+        onClick={handleDownloadQrImage}
+        disabled={!qrUrl}
+        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+      >
+        <QrCode className="mr-2 h-4 w-4" />
+        QR
+      </Button>
       <Button
         variant={variant === "compact" ? "default" : "outline"}
         size={variant === "compact" ? "sm" : "default"}
