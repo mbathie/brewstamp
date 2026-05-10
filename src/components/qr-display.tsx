@@ -59,10 +59,6 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
 
     const fgRgb = hexToRgb(getColorHex(fgColor));
 
-    // Font sizes
-    const SIZE_BODY = 11;
-    const SIZE_KAUSHAN = 13;
-
     // Helper: blend fg color with opacity against bg color
     function fgWithOpacity(opacity: number): [number, number, number] {
       return [
@@ -72,68 +68,88 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
       ];
     }
 
-    const fgMuted = fgWithOpacity(0.5);
+    const fgMuted = fgWithOpacity(0.55);
+    const fgDim = fgWithOpacity(0.7);
+    const fgFaint = fgWithOpacity(0.4);
 
     // Shared content width — logo and QR same width
     const contentW = 90;
     const contentX = (w - contentW) / 2;
     const qrPadding = 5;
+    const threshold = stampThreshold || 8;
 
-    let yPos = 20;
+    let yPos = 18;
 
     // Shop logo or fallback — same width as QR
     const logoH = contentW / 3; // 3:1 aspect ratio
-    if (shopLogo) {
-      try {
-        const roundedLogo = await roundImageCorners(shopLogo, 900, 300, 40);
-        pdf.addImage(roundedLogo, "PNG", contentX, yPos, contentW, logoH);
-      } catch {
-        drawFallbackLogo(pdf, (w - logoH) / 2, yPos, logoH, fgRgb);
-      }
-    } else {
+    const logoSrc = shopLogo || "/default-shop-banner.jpg";
+    try {
+      const roundedLogo = await roundImageCorners(logoSrc, 900, 300, 40);
+      pdf.addImage(roundedLogo, "PNG", contentX, yPos, contentW, logoH);
+    } catch {
       drawFallbackLogo(pdf, (w - logoH) / 2, yPos, logoH, fgRgb);
     }
-    yPos += logoH + 18;
+    yPos += logoH + 14;
 
-    // QR code with white background — same width as logo
-    const qrSize = 58;
+    // Eyebrow — small tracked label
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8);
+    pdf.setTextColor(fgMuted[0], fgMuted[1], fgMuted[2]);
+    const eyebrow = "LOYALTY CARD";
+    const eyebrowCharSpace = 1.4;
+    pdf.setCharSpace(eyebrowCharSpace);
+    // jsPDF's align:center doesn't account for charSpace, so compute x manually.
+    const eyebrowW = pdf.getTextWidth(eyebrow) + eyebrowCharSpace * (eyebrow.length - 1);
+    pdf.text(eyebrow, (w - eyebrowW) / 2, yPos);
+    pdf.setCharSpace(0);
+    yPos += 9;
+
+    // Hero reward headline — big, full fg
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(20);
+    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2]);
+    pdf.text(`Buy ${threshold}. Get one free.`, w / 2, yPos, { align: "center" });
+    yPos += 11;
+
+    // Pre-QR instruction — guides the customer's next action
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(fgDim[0], fgDim[1], fgDim[2]);
+    pdf.text("Scan with your phone camera", w / 2, yPos, { align: "center" });
+    yPos += 9;
+
+    // QR code — bigger for counter-distance scanning (58mm -> 72mm)
+    const qrSize = 72;
     const qrX = (w - qrSize) / 2;
     pdf.setFillColor(255, 255, 255);
     roundedRect(pdf, qrX - qrPadding, yPos - qrPadding, qrSize + qrPadding * 2, qrSize + qrPadding * 2, 4);
     pdf.addImage(hiResQr, "PNG", qrX, yPos, qrSize, qrSize);
-    yPos += qrSize + 20;
+    yPos += qrSize + 14;
 
-    // "BUY X COFFEES GET 1 FREE" - full fg color
-    const threshold = stampThreshold || 8;
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(15);
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2]);
-    pdf.text(`BUY ${threshold} COFFEES GET 1 FREE`, w / 2, yPos, { align: "center" });
-    yPos += 7;
-
-    // "No app needed" note - fg at 40% opacity
-    const fgDim = fgWithOpacity(0.4);
+    // Reassurance under the QR — kills the "do I need to download something?" worry
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(SIZE_BODY);
-    pdf.setTextColor(fgDim[0], fgDim[1], fgDim[2]);
-    pdf.text("No download required \u2022 Scan for your loyalty reward", w / 2, yPos, { align: "center" });
+    pdf.setFontSize(9);
+    pdf.setTextColor(fgFaint[0], fgFaint[1], fgFaint[2]);
+    pdf.text("No app required \u00b7 Works on any phone", w / 2, yPos, { align: "center" });
 
-    // Powered by Brewstamp at bottom - fg at 40% / 50% opacity
-    const bottomY = h - 12;
+    // Powered by Brewstamp \u2014 tucked at the bottom, smaller, less prominent
+    const bottomY = h - 10;
+    const POWERED_SIZE = 9;
+    const KAUSHAN_SIZE = 11;
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(SIZE_BODY);
-    pdf.setTextColor(fgDim[0], fgDim[1], fgDim[2]);
+    pdf.setFontSize(POWERED_SIZE);
+    pdf.setTextColor(fgFaint[0], fgFaint[1], fgFaint[2]);
     const poweredByWidth = pdf.getTextWidth("Powered by ");
     pdf.setFont("KaushanScript", "normal");
-    pdf.setFontSize(SIZE_KAUSHAN);
+    pdf.setFontSize(KAUSHAN_SIZE);
     const brewstampWidth = pdf.getTextWidth("Brewstamp");
     const totalWidth = poweredByWidth + brewstampWidth;
     const startX = (w - totalWidth) / 2;
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(SIZE_BODY);
+    pdf.setFontSize(POWERED_SIZE);
     pdf.text("Powered by ", startX, bottomY);
     pdf.setFont("KaushanScript", "normal");
-    pdf.setFontSize(SIZE_KAUSHAN);
+    pdf.setFontSize(KAUSHAN_SIZE);
     pdf.setTextColor(fgMuted[0], fgMuted[1], fgMuted[2]);
     pdf.text("Brewstamp", startX + poweredByWidth, bottomY);
 

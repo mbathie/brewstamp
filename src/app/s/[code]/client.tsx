@@ -267,20 +267,11 @@ export default function CustomerClient({
       <div className="relative z-10 w-full max-w-sm space-y-6">
         {/* Shop header */}
         <div>
-          {shopLogo ? (
-            <img
-              src={shopLogo}
-              alt={shopName}
-              className="aspect-[3/1] w-full rounded-2xl object-cover shadow-lg"
-            />
-          ) : (
-            <div
-              className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl shadow-lg"
-              style={{ backgroundColor: fgHex }}
-            >
-              <h1 className="text-2xl font-bold text-white">{shopName}</h1>
-            </div>
-          )}
+          <img
+            src={shopLogo || "/default-shop-banner.jpg"}
+            alt={shopName}
+            className="aspect-[3/1] w-full rounded-2xl object-cover shadow-lg"
+          />
         </div>
 
         {/* Stamp card */}
