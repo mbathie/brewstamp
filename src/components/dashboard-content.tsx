@@ -759,7 +759,11 @@ function KpiCard({ label, value, prevValue, loading, range, sparkline, color, su
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-end justify-between gap-4">
+        {/* Top row: number/delta on the left, sparkline pinned to its right.
+            Anchoring the sparkline to this row (not the whole content) keeps
+            it at the same vertical position on every card regardless of
+            whether a subline is present. */}
+        <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <p className="text-2xl font-bold leading-none text-foreground">
               {loading ? "..." : value}
@@ -784,14 +788,14 @@ function KpiCard({ label, value, prevValue, loading, range, sparkline, color, su
                 )}
               </div>
             )}
-            {subline && !loading && (
-              <p className="pt-1 text-xs text-muted-foreground">{subline}</p>
-            )}
           </div>
           {!loading && sparkline.length > 0 && sparkline.some((v) => v > 0) && (
             <Sparkline data={sparkline} color={color} width={88} height={32} />
           )}
         </div>
+        {subline && !loading && (
+          <p className="pt-2 text-xs text-muted-foreground">{subline}</p>
+        )}
       </CardContent>
     </Card>
   );
