@@ -44,6 +44,7 @@ interface CheckIn {
   redeem?: boolean;
   status: string;
   createdAt: string;
+  tags?: string[];
 }
 
 interface ChartPoint {
@@ -624,6 +625,24 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                                 {c.customer.email}
                               </p>
                             )}
+                            {(c.tags || []).length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {(c.tags || []).slice(0, 3).map((t) => (
+                                  <Badge
+                                    key={t}
+                                    variant="outline"
+                                    className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
+                                  >
+                                    {t}
+                                  </Badge>
+                                ))}
+                                {(c.tags || []).length > 3 && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    +{(c.tags || []).length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </TableCell>
@@ -683,18 +702,18 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
               </p>
               <div className="flex gap-1">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="cursor-pointer"
+                  className="cursor-pointer disabled:opacity-50"
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                 >
                   Previous
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="cursor-pointer"
+                  className="cursor-pointer disabled:opacity-50"
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 >

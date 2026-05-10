@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Stamp } from "lucide-react";
+import { Gift, Stamp } from "lucide-react";
 import StampRequestModal from "@/components/stamp-request-modal";
 import { toast } from "sonner";
 
@@ -30,21 +30,34 @@ export default function MerchantCheckin({
     stamps: number;
     threshold: number;
     redeem: boolean;
+    tags?: string[];
+    notes?: string;
   } | null>(null);
 
   async function startCheckin(redeem = false) {
-    const res = await fetch("/api/stamp-request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shopId, customerId, redeem }),
-    });
+    const [reqRes, notesRes] = await Promise.all([
+      fetch("/api/stamp-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shopId, customerId, redeem }),
+      }),
+      fetch(`/api/customers/${customerId}/notes`),
+    ]);
 
-    if (!res.ok) {
+    if (!reqRes.ok) {
       toast.error("Failed to create stamp request");
       return;
     }
 
-    const data = await res.json();
+    const data = await reqRes.json();
+    let tags: string[] | undefined;
+    let notes: string | undefined;
+    if (notesRes.ok) {
+      const n = await notesRes.json();
+      tags = n.tags || [];
+      notes = n.notes || "";
+    }
+
     setRequestData({
       requestId: data.request._id,
       customerId,
@@ -52,6 +65,8 @@ export default function MerchantCheckin({
       stamps,
       threshold,
       redeem,
+      tags,
+      notes,
     });
   }
 
@@ -95,21 +110,24 @@ export default function MerchantCheckin({
     []
   );
 
+  const canRedeem = stamps >= threshold;
+
   return (
     <>
       <Button
-        onClick={() => {
-          if (stamps >= threshold) {
-            // Let them choose via the modal — create as redeem
-            startCheckin(true);
-          } else {
-            startCheckin(false);
-          }
-        }}
-        className="cursor-pointer bg-amber-700 hover:bg-amber-800"
+        onClick={() => startCheckin(canRedeem)}
+        className={`cursor-pointer ${
+          canRedeem
+            ? "bg-emerald-600 hover:bg-emerald-700"
+            : "bg-amber-700 hover:bg-amber-800"
+        }`}
       >
-        <Stamp className="mr-2 h-4 w-4" />
-        Check in
+        {canRedeem ? (
+          <Gift className="mr-2 h-4 w-4" />
+        ) : (
+          <Stamp className="mr-2 h-4 w-4" />
+        )}
+        {canRedeem ? "Redeem free drink" : "Check in"}
       </Button>
       <StampRequestModal
         request={requestData}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -39,12 +39,16 @@ interface StampCardData {
   totalEarned: number;
   freeRedeemed: number;
   updatedAt: string;
+  tags?: string[];
+  notes?: string;
 }
 
 interface Props {
   stampCards: StampCardData[];
   threshold: number;
 }
+
+const PAGE_SIZE = 20;
 
 export default function CustomerSearch({ stampCards, threshold }: Props) {
   const router = useRouter();
@@ -54,6 +58,12 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
   const [email, setEmail] = useState("");
   const [adding, setAdding] = useState("");
   const [error, setError] = useState("");
+  const [page, setPage] = useState(0);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(0);
+  }, [query]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -82,15 +92,38 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
   }
 
   const validCards = stampCards.filter((card) => card.customer != null);
-  const filtered = query.trim()
-    ? validCards.filter((card) => {
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of validCards) (c.tags || []).forEach((t) => set.add(t));
+    return Array.from(set).sort();
+  }, [validCards]);
+
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+
+  const filtered = useMemo(
+    () =>
+      validCards.filter((card) => {
+        if (tagFilter && !(card.tags || []).includes(tagFilter)) return false;
+        if (!query.trim()) return true;
         const q = query.toLowerCase();
         const name = card.customer.name?.toLowerCase() || "";
         const email = card.customer.email?.toLowerCase() || "";
         const cookieId = card.customer.cookieId?.toLowerCase() || "";
-        return name.includes(q) || email.includes(q) || cookieId.includes(q);
-      })
-    : validCards;
+        const tagMatch = (card.tags || []).some((t) =>
+          t.toLowerCase().includes(q),
+        );
+        return (
+          name.includes(q) || email.includes(q) || cookieId.includes(q) || tagMatch
+        );
+      }),
+    [validCards, query, tagFilter],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageStart = page * PAGE_SIZE;
+  const pageEnd = pageStart + PAGE_SIZE;
+  const paged = filtered.slice(pageStart, pageEnd);
 
   return (
     <>
@@ -151,9 +184,41 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
           </DialogContent>
         </Dialog>
       </div>
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Filter by tag:</span>
+          <button
+            type="button"
+            onClick={() => setTagFilter(null)}
+            className={`cursor-pointer rounded-full border px-2 py-0.5 text-xs ${
+              tagFilter === null
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All
+          </button>
+          {allTags.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTagFilter(t === tagFilter ? null : t)}
+              className={`cursor-pointer rounded-full border px-2 py-0.5 text-xs ${
+                tagFilter === t
+                  ? "border-amber-500 bg-amber-500/15 text-amber-500"
+                  : "border-amber-500/50 text-amber-500/80 hover:text-amber-500"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {query.trim() ? "No customers match your search." : "No customers yet."}
+          {query.trim() || tagFilter
+            ? "No customers match your search."
+            : "No customers yet."}
         </p>
       ) : (
         <Table>
@@ -167,7 +232,7 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((card) => (
+            {paged.map((card) => (
               <TableRow key={card._id} className="relative cursor-pointer">
                 <TableCell>
                   <Link
@@ -182,6 +247,24 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
                       <p className="text-xs text-muted-foreground">
                         {card.customer.email}
                       </p>
+                    )}
+                    {(card.tags || []).length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {(card.tags || []).slice(0, 3).map((t) => (
+                          <Badge
+                            key={t}
+                            variant="outline"
+                            className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
+                          >
+                            {t}
+                          </Badge>
+                        ))}
+                        {(card.tags || []).length > 3 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            +{(card.tags || []).length - 3}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </TableCell>
@@ -203,6 +286,33 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
             ))}
           </TableBody>
         </Table>
+      )}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {pageStart + 1}–{Math.min(pageEnd, filtered.length)} of {filtered.length}
+          </p>
+          <div className="flex gap-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="cursor-pointer disabled:opacity-50"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="cursor-pointer disabled:opacity-50"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </>
   );

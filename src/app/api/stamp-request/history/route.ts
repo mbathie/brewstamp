@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { getMerchant } from "@/lib/auth";
-import { StampRequest } from "@/models";
+import { StampCard, StampRequest } from "@/models";
 
 export async function GET(req: Request) {
   const merchant = await getMerchant();
@@ -201,6 +201,32 @@ export async function GET(req: Request) {
     ]),
   ]);
 
+  // Hydrate each request with the merchant's per-customer tags so the dashboard
+  // can show them inline without a second round-trip per row.
+  const customerIds = Array.from(
+    new Set(
+      (requests as Array<{ customer?: { _id?: unknown } }>)
+        .map((r) => r.customer?._id?.toString?.())
+        .filter((x): x is string => !!x),
+    ),
+  );
+  const tagCards =
+    customerIds.length > 0
+      ? await StampCard.find({
+          shop: merchant.shop._id,
+          customer: { $in: customerIds },
+        })
+          .select("customer tags")
+          .lean<Array<{ customer: { toString(): string }; tags?: string[] }>>()
+      : [];
+  const tagMap = new Map<string, string[]>();
+  for (const c of tagCards) tagMap.set(c.customer.toString(), c.tags || []);
+  const requestsWithTags = (requests as Array<Record<string, unknown>>).map((r) => {
+    const cust = r.customer as { _id?: unknown } | undefined;
+    const cid = cust?._id?.toString?.();
+    return { ...r, tags: cid ? tagMap.get(cid) || [] : [] };
+  });
+
   const stats = {
     customers: statsAgg[0]?.uniqueCustomers?.length || 0,
     stamps: statsAgg[0]?.totalStamps || 0,
@@ -237,5 +263,11 @@ export async function GET(req: Request) {
     sparkline.redeems.push(entry.redeems);
   }
 
-  return NextResponse.json({ requests, stats, prevStats, chart: chartAgg, sparkline });
+  return NextResponse.json({
+    requests: requestsWithTags,
+    stats,
+    prevStats,
+    chart: chartAgg,
+    sparkline,
+  });
 }

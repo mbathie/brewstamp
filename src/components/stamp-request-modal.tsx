@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Gift } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, Gift, StickyNote } from "lucide-react";
 
 interface StampRequestData {
   requestId: string;
@@ -17,6 +18,8 @@ interface StampRequestData {
   stamps: number;
   threshold: number;
   redeem: boolean;
+  tags?: string[];
+  notes?: string;
 }
 
 interface Props {
@@ -50,6 +53,25 @@ export default function StampRequestModal({
           <p className="text-center text-sm text-muted-foreground">
             Current stamps: {request.stamps} / {request.threshold}
           </p>
+          {request.tags && request.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+              {request.tags.map((t) => (
+                <Badge
+                  key={t}
+                  variant="outline"
+                  className="border-amber-500/50 font-normal text-amber-500"
+                >
+                  {t}
+                </Badge>
+              ))}
+            </div>
+          )}
+          {request.notes && request.notes.trim() && (
+            <div className="mt-2 flex items-start gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-left text-sm text-muted-foreground">
+              <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <p className="line-clamp-3 leading-snug">{request.notes}</p>
+            </div>
+          )}
         </DialogHeader>
 
         {request.redeem ? (

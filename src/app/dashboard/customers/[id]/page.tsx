@@ -2,21 +2,16 @@ import { connectDB } from "@/lib/mongoose";
 import { getMerchant } from "@/lib/auth";
 import { Customer, StampCard, StampRequest } from "@/models";
 import { redirect, notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import StampDisplay from "@/components/stamp-display";
-import MerchantCheckin from "@/components/merchant-checkin";
 import { generateAnimalName } from "@/lib/animal-names";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import CustomerDetailContent from "@/components/customer-detail-content";
+
+interface RawRequest {
+  _id: { toString(): string };
+  createdAt: Date;
+  status: "approved" | "rejected";
+  stampsAwarded?: number;
+  redeem?: boolean;
+}
 
 export default async function CustomerDetailPage({
   params,
@@ -38,155 +33,79 @@ export default async function CustomerDetailPage({
     customer: customer._id,
   });
 
-  const requests = await StampRequest.find({
+  const requests = (await StampRequest.find({
     shop: shop._id,
     customer: customer._id,
     status: { $in: ["approved", "rejected"] },
   })
     .sort({ createdAt: -1 })
-    .limit(100);
+    .limit(200)
+    .lean()) as unknown as RawRequest[];
+
+  // Engagement signals
+  const approvedReqs = requests.filter((r) => r.status === "approved");
+  const lastVisit = approvedReqs[0]?.createdAt?.toISOString() || null;
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const visitsLast30d = approvedReqs.filter(
+    (r) => new Date(r.createdAt) >= thirtyDaysAgo,
+  ).length;
+
+  // 12-week cadence: count of approved visits per week, oldest first.
+  const weeklyVisits = Array(12).fill(0) as number[];
+  const weekZeroStart = new Date(now);
+  weekZeroStart.setHours(0, 0, 0, 0);
+  weekZeroStart.setDate(weekZeroStart.getDate() - 6); // start of current week-window
+  for (const r of approvedReqs) {
+    const d = new Date(r.createdAt);
+    const diffDays = Math.floor(
+      (weekZeroStart.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    // diffDays >= 0 means in past, before this week
+    if (diffDays < 0) {
+      // current week
+      weeklyVisits[11] += 1;
+    } else {
+      const weekIdx = 11 - 1 - Math.floor(diffDays / 7);
+      if (weekIdx >= 0 && weekIdx < 11) {
+        weeklyVisits[weekIdx] += 1;
+      }
+    }
+  }
+
+  const memberSince = (
+    stampCard?.createdAt instanceof Date
+      ? stampCard.createdAt
+      : new Date(stampCard?.createdAt || customer.createdAt || now)
+  ).toISOString();
+
+  const history = requests.map((r) => ({
+    id: r._id.toString(),
+    createdAt: new Date(r.createdAt).toISOString(),
+    status: r.status,
+    stampsAwarded: r.stampsAwarded || 0,
+    redeem: !!r.redeem,
+  }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/customers"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {customer.name || generateAnimalName(customer.cookieId)}
-            </h1>
-            {customer.email && (
-              <p className="text-sm text-muted-foreground">{customer.email}</p>
-            )}
-          </div>
-        </div>
-        {stampCard && (
-          <MerchantCheckin
-            shopId={shop._id.toString()}
-            customerId={customer._id.toString()}
-            customerName={customer.name || generateAnimalName(customer.cookieId)}
-            stamps={stampCard.stamps}
-            threshold={shop.stampThreshold}
-          />
-        )}
-      </div>
-
-      {stampCard && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Stamp Card</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="mx-auto max-w-xs">
-              <StampDisplay
-                stamps={stampCard.stamps}
-                threshold={shop.stampThreshold}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4 text-center text-sm">
-              <div>
-                <p className="font-medium text-foreground">{stampCard.stamps}</p>
-                <p className="text-muted-foreground">Current</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">{stampCard.totalEarned}</p>
-                <p className="text-muted-foreground">Total Earned</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">{stampCard.freeRedeemed}</p>
-                <p className="text-muted-foreground">Free Redeemed</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {requests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No history yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Stamps</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((req: any) => {
-                  const isRedeem = req.redeem;
-                  const awarded = req.stampsAwarded || 0;
-
-                  return (
-                    <TableRow key={req._id.toString()}>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(req.createdAt).toLocaleString("en-AU", {
-                          day: "numeric",
-                          month: "short",
-                          year: "2-digit",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {isRedeem ? (
-                          <Badge variant="outline" className="border-amber-500/50 text-amber-500">
-                            Redeem
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">
-                            Stamp
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {req.status === "approved" ? (
-                          isRedeem && awarded === 0 ? (
-                            <span className="text-muted-foreground">-{shop.stampThreshold}</span>
-                          ) : isRedeem && awarded > 0 ? (
-                            <span>
-                              <span className="text-muted-foreground">-{shop.stampThreshold}</span>
-                              {" "}
-                              <span className="text-amber-500">+{awarded}</span>
-                            </span>
-                          ) : (
-                            <span className="text-amber-500">+{awarded}</span>
-                          )
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge
-                          variant="outline"
-                          className={
-                            req.status === "approved"
-                              ? "border-green-500/50 text-green-500"
-                              : "border-red-400/50 text-red-400"
-                          }
-                        >
-                          {req.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <CustomerDetailContent
+      shopId={shop._id.toString()}
+      customerId={customer._id.toString()}
+      customerName={customer.name || generateAnimalName(customer.cookieId)}
+      customerEmail={customer.email || null}
+      stamps={stampCard?.stamps || 0}
+      totalEarned={stampCard?.totalEarned || 0}
+      freeRedeemed={stampCard?.freeRedeemed || 0}
+      threshold={shop.stampThreshold}
+      memberSince={memberSince}
+      lastVisit={lastVisit}
+      visitsLast30d={visitsLast30d}
+      weeklyVisits={weeklyVisits}
+      history={history}
+      initialNotes={stampCard?.notes || ""}
+      initialTags={stampCard?.tags || []}
+    />
   );
 }

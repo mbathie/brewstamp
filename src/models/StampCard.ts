@@ -15,6 +15,8 @@ const stampCardSchema = new mongoose.Schema(
     stamps: { type: Number, default: 0 },
     totalEarned: { type: Number, default: 0 },
     freeRedeemed: { type: Number, default: 0 },
+    notes: { type: String, default: "" },
+    tags: { type: [String], default: [] },
   },
   { timestamps: true }
 );

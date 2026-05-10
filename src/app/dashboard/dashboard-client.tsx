@@ -13,6 +13,8 @@ interface StampRequestData {
   stamps: number;
   threshold: number;
   redeem: boolean;
+  tags?: string[];
+  notes?: string;
 }
 
 interface Props {
@@ -59,6 +61,22 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
       }
 
       setCurrentRequest(request);
+
+      // Fetch merchant-side tags/notes for this customer (not exposed to the
+      // customer's browser, so we hydrate after the modal opens).
+      if (msg.customerId) {
+        fetch(`/api/customers/${msg.customerId}/notes`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (!data) return;
+            setCurrentRequest((curr) =>
+              curr && curr.requestId === msg.requestId
+                ? { ...curr, tags: data.tags || [], notes: data.notes || "" }
+                : curr
+            );
+          })
+          .catch(() => {});
+      }
     });
 
     return unsub;
