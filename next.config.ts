@@ -17,6 +17,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  // Pin Turbopack's root to this project so it ignores the stray
+  // /Users/markbathie/package-lock.json one directory up.
+  turbopack: {
+    root: process.cwd(),
+  },
   serverExternalPackages: ["mongoose", "bcrypt"],
   experimental: {
     inlineCss: true,
