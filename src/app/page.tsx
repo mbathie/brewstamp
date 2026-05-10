@@ -444,17 +444,17 @@ export default function Home() {
           <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-2 text-sm">
             {[
               ["/", "🇺🇸", "English", "Hello"],
-              ["/es", "🇪🇸", "Español", "Hola"],
+              ["/ar", "🇸🇦", "العربية", "مرحبا"],
               ["/fr", "🇫🇷", "Français", "Bonjour"],
               ["/de", "🇩🇪", "Deutsch", "Hallo"],
-              ["/pt", "🇵🇹", "Português", "Olá"],
-              ["/it", "🇮🇹", "Italiano", "Ciao"],
-              ["/zh", "🇨🇳", "中文", "你好"],
-              ["/ja", "🇯🇵", "日本語", "こんにちは"],
-              ["/ko", "🇰🇷", "한국어", "안녕하세요"],
-              ["/ar", "🇸🇦", "العربية", "مرحبا"],
               ["/hi", "🇮🇳", "हिन्दी", "नमस्ते"],
               ["/id", "🇮🇩", "Bahasa Indonesia", "Halo"],
+              ["/it", "🇮🇹", "Italiano", "Ciao"],
+              ["/ja", "🇯🇵", "日本語", "こんにちは"],
+              ["/ko", "🇰🇷", "한국어", "안녕하세요"],
+              ["/zh", "🇨🇳", "中文", "你好"],
+              ["/pt", "🇵🇹", "Português", "Olá"],
+              ["/es", "🇪🇸", "Español", "Hola"],
             ].map(([href, flag, name, hello]) => (
               <Link
                 key={name}

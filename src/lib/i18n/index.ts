@@ -11,19 +11,20 @@ import ar from "./ar";
 import hi from "./hi";
 import id from "./id";
 
+// Order: English first (canonical default), then alphabetical by English name.
 export const SUPPORTED_LANGUAGES = [
   "en",
-  "es",
+  "ar",
   "fr",
   "de",
-  "pt",
-  "it",
-  "zh",
-  "ja",
-  "ko",
-  "ar",
   "hi",
   "id",
+  "it",
+  "ja",
+  "ko",
+  "zh",
+  "pt",
+  "es",
 ] as const;
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];

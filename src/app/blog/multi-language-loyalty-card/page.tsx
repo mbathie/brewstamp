@@ -60,17 +60,17 @@ const jsonLd = {
 
 const LANGUAGES: Array<{ flag: string; name: string; native: string; hello: string }> = [
   { flag: "🇺🇸", name: "English", native: "English", hello: "Hello" },
-  { flag: "🇪🇸", name: "Spanish", native: "Español", hello: "Hola" },
+  { flag: "🇸🇦", name: "Arabic", native: "العربية", hello: "مرحبا" },
   { flag: "🇫🇷", name: "French", native: "Français", hello: "Bonjour" },
   { flag: "🇩🇪", name: "German", native: "Deutsch", hello: "Hallo" },
-  { flag: "🇵🇹", name: "Portuguese", native: "Português", hello: "Olá" },
-  { flag: "🇮🇹", name: "Italian", native: "Italiano", hello: "Ciao" },
-  { flag: "🇨🇳", name: "Mandarin Chinese", native: "中文", hello: "你好" },
-  { flag: "🇯🇵", name: "Japanese", native: "日本語", hello: "こんにちは" },
-  { flag: "🇰🇷", name: "Korean", native: "한국어", hello: "안녕하세요" },
-  { flag: "🇸🇦", name: "Arabic", native: "العربية", hello: "مرحبا" },
   { flag: "🇮🇳", name: "Hindi", native: "हिन्दी", hello: "नमस्ते" },
   { flag: "🇮🇩", name: "Indonesian", native: "Bahasa Indonesia", hello: "Halo" },
+  { flag: "🇮🇹", name: "Italian", native: "Italiano", hello: "Ciao" },
+  { flag: "🇯🇵", name: "Japanese", native: "日本語", hello: "こんにちは" },
+  { flag: "🇰🇷", name: "Korean", native: "한국어", hello: "안녕하세요" },
+  { flag: "🇨🇳", name: "Mandarin Chinese", native: "中文", hello: "你好" },
+  { flag: "🇵🇹", name: "Portuguese", native: "Português", hello: "Olá" },
+  { flag: "🇪🇸", name: "Spanish", native: "Español", hello: "Hola" },
 ];
 
 export default function BlogPost() {
