@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { getMerchant } from "@/lib/auth";
+import { isLanguage } from "@/lib/i18n";
 
 export async function GET() {
   const merchant = await getMerchant();
@@ -17,7 +18,7 @@ export async function PATCH(req: Request) {
   }
 
   await connectDB();
-  const { name, stampThreshold, logo, bgColor, fgColor, bgPattern } = await req.json();
+  const { name, stampThreshold, logo, bgColor, fgColor, bgPattern, language } = await req.json();
 
   if (name) merchant.shop.name = name;
   if (stampThreshold) merchant.shop.stampThreshold = stampThreshold;
@@ -25,6 +26,7 @@ export async function PATCH(req: Request) {
   if (bgColor !== undefined) merchant.shop.bgColor = bgColor;
   if (fgColor !== undefined) merchant.shop.fgColor = fgColor;
   if (bgPattern !== undefined) merchant.shop.bgPattern = bgPattern;
+  if (language !== undefined && isLanguage(language)) merchant.shop.language = language;
 
   await merchant.shop.save();
   return NextResponse.json({ shop: merchant.shop });

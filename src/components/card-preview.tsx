@@ -3,6 +3,7 @@
 import StampDisplay from "@/components/stamp-display";
 import { getColorHex } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
+import { LANGUAGE_META, resolveLanguage, t } from "@/lib/i18n";
 
 interface Props {
   shopName: string;
@@ -16,6 +17,7 @@ interface Props {
   bgPattern: string;
   displayName?: string | null;
   animate?: boolean;
+  language?: string;
   /** When true, fills parent container instead of min-h-screen — use in previews. */
   fitToParent?: boolean;
   /** Slot for the action button(s) below the card. */
@@ -34,6 +36,7 @@ export default function CardPreview({
   bgPattern,
   displayName,
   animate,
+  language,
   fitToParent,
   children,
 }: Props) {
@@ -41,13 +44,19 @@ export default function CardPreview({
   const fgHex = getColorHex(fgColor);
   const patternCSS = getPatternCSS(bgPattern, fgHex, 0.05);
   const remaining = threshold - stamps;
+  const lang = resolveLanguage(language);
+  const isRtl = LANGUAGE_META[lang].rtl ?? false;
 
   const containerClass = fitToParent
     ? "relative flex w-full flex-col items-center overflow-hidden rounded-2xl p-6"
     : "relative flex min-h-screen flex-col items-center p-4 pt-4 md:justify-center";
 
   return (
-    <div className={containerClass} style={{ backgroundColor: bgHex }}>
+    <div
+      className={containerClass}
+      style={{ backgroundColor: bgHex }}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       {patternCSS && (
         <div
           className="pointer-events-none absolute inset-0"
@@ -81,26 +90,36 @@ export default function CardPreview({
           style={{ backgroundColor: fgHex + "38", border: `1px solid ${fgHex}50` }}
         >
           <p className="mb-4 text-center text-sm font-medium" style={{ color: fgHex }}>
-            {shopName} <span style={{ opacity: 0.6 }}>&middot; Loyalty Card</span>
+            {shopName} <span style={{ opacity: 0.6 }}>&middot; {t(lang, "loyaltyCard")}</span>
           </p>
           <StampDisplay
             stamps={stamps}
             threshold={threshold}
             fgColor={fgHex}
             animate={animate}
+            language={lang}
           />
           {remaining > 0 && displayName ? (
             <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              {displayName}, you&apos;re {remaining} stamp{remaining > 1 ? "s" : ""} away from a free one!
+              {t(lang, "stampsAwayPersonal", {
+                name: displayName,
+                n: remaining,
+                s: remaining > 1 ? "s" : "",
+                s2: remaining > 1 ? "n" : "",
+                si: remaining > 1 ? "i" : "o",
+              })}
             </p>
           ) : remaining > 0 ? (
             <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              Collect {threshold} stamps to earn 1 free
+              {t(lang, "stampsAwayGeneric", { n: threshold })}
             </p>
           ) : null}
           {totalEarned !== undefined && freeRedeemed !== undefined && (
             <p className="mt-1 text-center text-xs" style={{ color: fgHex }}>
-              {totalEarned} stamps earned &middot; {freeRedeemed} rewards redeemed
+              {t(lang, "stampsEarnedRedeemed", {
+                earned: totalEarned,
+                redeemed: freeRedeemed,
+              })}
             </p>
           )}
         </div>

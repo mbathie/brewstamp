@@ -420,6 +420,57 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Languages */}
+      <section className="relative overflow-hidden border-y border-stone-200 bg-stone-50 py-20">
+        <img
+          src="/world-map.svg"
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 grayscale"
+          loading="lazy"
+        />
+        <div className="relative mx-auto max-w-4xl px-6 text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
+            Available worldwide
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
+            Your customer card in 10 languages
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-stone-500">
+            Pick the language that matches your customers — the loyalty card and
+            printable QR code translate automatically. Your dashboard stays in
+            English so you don&apos;t have to switch contexts.
+          </p>
+          <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-2 text-sm">
+            {[
+              ["🇺🇸", "English", "Hello"],
+              ["🇪🇸", "Español", "Hola"],
+              ["🇫🇷", "Français", "Bonjour"],
+              ["🇩🇪", "Deutsch", "Hallo"],
+              ["🇵🇹", "Português", "Olá"],
+              ["🇮🇹", "Italiano", "Ciao"],
+              ["🇨🇳", "中文", "你好"],
+              ["🇯🇵", "日本語", "こんにちは"],
+              ["🇰🇷", "한국어", "안녕하세요"],
+              ["🇸🇦", "العربية", "مرحبا"],
+            ].map(([flag, name, hello]) => (
+              <span
+                key={name}
+                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-stone-700"
+              >
+                <span aria-hidden>{flag}</span>
+                <span className="text-stone-400">{hello}</span>
+                <span className="font-medium">{name}</span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-6 text-xs text-stone-400">
+            Language selectable from your shop settings. Right-to-left support
+            for Arabic.
+          </p>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <Testimonials />
 

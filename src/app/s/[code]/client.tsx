@@ -18,6 +18,7 @@ import {
 import CustomerWaiting from "@/components/customer-waiting";
 import CardPreview from "@/components/card-preview";
 import { getColorHex } from "@/lib/tailwind-colors";
+import { resolveLanguage, t } from "@/lib/i18n";
 
 interface OtherShop {
   name: string;
@@ -43,6 +44,7 @@ interface Props {
   bgColor: string;
   fgColor: string;
   bgPattern: string;
+  language?: string;
   animalName: string;
   otherShops: OtherShop[];
 }
@@ -65,11 +67,13 @@ export default function CustomerClient({
   bgColor,
   fgColor,
   bgPattern,
+  language,
   animalName,
   otherShops,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
+  const lang = resolveLanguage(language);
   const [status, setStatus] = useState<Status>("idle");
   const [stamps, setStamps] = useState(initialStamps);
   const [totalEarned, setTotalEarned] = useState(initialTotal);
@@ -260,6 +264,7 @@ export default function CustomerClient({
       bgPattern={bgPattern}
       displayName={displayName}
       animate={status === "approved"}
+      language={lang}
     >
         {/* Actions */}
         <div>
@@ -277,14 +282,14 @@ export default function CustomerClient({
               disabled={!connected}
               style={{ backgroundColor: fgHex, color: bgHex }}
             >
-              {connected ? "Request Stamp" : "Connecting..."}
+              {connected ? t(lang, "requestStamp") : t(lang, "connecting")}
             </Button>
           )}
 
           {status === "choosing" && (
             <div className="space-y-3">
               <p className="text-center text-sm font-medium" style={{ color: fgHex }}>
-                You have a reward available!
+                {t(lang, "rewardAvailable")}
               </p>
               <Button
                 onClick={() => requestStamp(true)}
@@ -293,7 +298,7 @@ export default function CustomerClient({
                 size="lg"
               >
                 <Gift className="mr-2 h-5 w-5" />
-                Redeem Reward
+                {t(lang, "redeemReward")}
               </Button>
               <Button
                 onClick={() => requestStamp(false)}
@@ -302,7 +307,7 @@ export default function CustomerClient({
                 size="lg"
               >
                 <Stamp className="mr-2 h-5 w-5" />
-                Get Another Stamp
+                {t(lang, "getAnotherStamp")}
               </Button>
             </div>
           )}
@@ -310,11 +315,11 @@ export default function CustomerClient({
           {status === "requesting" && (
             <Button className="w-full"
               style={{ backgroundColor: fgHex + "20", color: fgHex, border: `1px solid ${fgHex}40` }} size="lg" disabled>
-              Sending request...
+              {t(lang, "sendingRequest")}
             </Button>
           )}
 
-          {status === "waiting" && <CustomerWaiting fgColor={fgHex} />}
+          {status === "waiting" && <CustomerWaiting fgColor={fgHex} language={lang} />}
 
           {status === "approved" && showDetailsPrompt && (
             <div className="space-y-3">
@@ -322,7 +327,7 @@ export default function CustomerClient({
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={t(lang, "yourName")}
                   style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                   className="placeholder-inherit"
                 />
@@ -333,7 +338,7 @@ export default function CustomerClient({
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
-                    placeholder="Your email"
+                    placeholder={t(lang, "yourEmail")}
                     style={{ borderColor: emailError ? undefined : fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                     className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
                   />
@@ -345,7 +350,7 @@ export default function CustomerClient({
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Set a password"
+                  placeholder={t(lang, "setPassword")}
                   style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                   className="placeholder-inherit"
                 />
@@ -355,7 +360,7 @@ export default function CustomerClient({
                   <DialogTrigger asChild>
                     <button className="flex cursor-pointer items-center gap-1.5" type="button">
                       <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
-                        Why save your details?
+                        {t(lang, "whySaveDetails")}
                       </p>
                       <span style={{ color: fgHex, opacity: 0.4 }}>
                         <HelpCircle className="h-3.5 w-3.5" />
@@ -364,7 +369,7 @@ export default function CustomerClient({
                   </DialogTrigger>
                     <DialogContent className="max-w-xs">
                       <DialogHeader>
-                        <DialogTitle>Why save your details?</DialogTitle>
+                        <DialogTitle>{t(lang, "whySaveDetails")}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-3 text-sm text-muted-foreground">
                         <p>
@@ -393,14 +398,14 @@ export default function CustomerClient({
                     className="flex-1 cursor-pointer hover:opacity-90"
                     style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
                   >
-                    Remain anonymous
+                    {t(lang, "remainAnonymous")}
                   </Button>
                   <Button
                     onClick={saveDetails}
                     className="flex-1 cursor-pointer hover:opacity-90"
                     style={{ backgroundColor: fgHex, color: bgHex }}
                   >
-                    Save
+                    {t(lang, "save")}
                   </Button>
                 </div>
               ) : (
@@ -422,7 +427,7 @@ export default function CustomerClient({
                     className="flex-1 cursor-pointer hover:opacity-90"
                     style={{ backgroundColor: fgHex, color: bgHex }}
                   >
-                    Save
+                    {t(lang, "save")}
                   </Button>
                 </div>
               )}
@@ -442,7 +447,7 @@ export default function CustomerClient({
                 style={{ backgroundColor: fgHex, color: bgHex }}
               >
                 <LogIn className="mr-1.5 h-4 w-4" />
-                Have an existing account? Log in
+                {t(lang, "haveExistingAccount")}
               </Button>
             ) : (
               <div className="space-y-3">
@@ -450,7 +455,7 @@ export default function CustomerClient({
                   type="email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="Email"
+                  placeholder={t(lang, "email")}
                   style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                   className="placeholder-inherit"
                 />
@@ -458,7 +463,7 @@ export default function CustomerClient({
                   type="password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Password"
+                  placeholder={t(lang, "password")}
                   style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
                   className="placeholder-inherit"
                 />
@@ -472,7 +477,7 @@ export default function CustomerClient({
                     className="flex-1 cursor-pointer hover:opacity-90"
                     style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
                   >
-                    Cancel
+                    {t(lang, "cancel")}
                   </Button>
                   <Button
                     onClick={handleLogin}
@@ -480,7 +485,7 @@ export default function CustomerClient({
                     className="flex-1 cursor-pointer hover:opacity-90"
                     style={{ backgroundColor: fgHex, color: bgHex }}
                   >
-                    {loginLoading ? "Logging in..." : "Log in"}
+                    {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
                   </Button>
                 </div>
               </div>
@@ -497,7 +502,7 @@ export default function CustomerClient({
               style={{ color: fgHex, opacity: 0.5 }}
             >
               <ArrowRightLeft className="h-3 w-3" />
-              Switch shop
+              {t(lang, "switchShop")}
             </button>
 
             {showShopSwitcher && (

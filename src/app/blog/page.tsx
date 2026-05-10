@@ -35,6 +35,18 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "multi-language-loyalty-card",
+    title: "Multi-Language Loyalty Cards: 10 Languages, Same QR Code",
+    description:
+      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 10 languages — pick the one that matches your customers.",
+    tag: "Product update",
+    image: "/world-map.svg",
+    imageAlt: "World map illustrating Brewstamp's 10 supported languages",
+    imageBg: "stone-100",
+    publishedAt: "2026-05-10",
+    publishedAtDisplay: "10 May 2026",
+  },
+  {
     slug: "set-up-your-brewstamp-shop",
     title: "How to Set Up Your Brewstamp Shop in 5 Minutes",
     description:
@@ -173,7 +185,11 @@ export default function BlogIndex() {
                   src={post.image}
                   alt={post.imageAlt}
                   loading="lazy"
-                  className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-full"
+                  className={`h-48 w-full transition-transform duration-300 group-hover:scale-105 sm:h-full ${
+                    post.image.endsWith(".svg")
+                      ? "object-contain p-4 opacity-70"
+                      : "object-cover"
+                  }`}
                 />
               </div>
               <div className="flex-1 p-6">

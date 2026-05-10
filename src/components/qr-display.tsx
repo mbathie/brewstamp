@@ -9,6 +9,7 @@ import { jsPDF } from "jspdf";
 import { kaushanScriptBase64 } from "@/lib/fonts/kaushan-script";
 import { getColorHex, hexToRgb } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
+import { t } from "@/lib/i18n";
 
 interface Props {
   shopCode: string;
@@ -18,11 +19,12 @@ interface Props {
   bgColor?: string;
   fgColor?: string;
   bgPattern?: string;
+  language?: string;
   /** "full" (default) shows QR image + URL + 3 buttons; "compact" shows only the 3 action buttons. */
   variant?: "full" | "compact";
 }
 
-export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold, bgColor = "stone-800", fgColor = "amber-600", bgPattern = "none", variant = "full" }: Props) {
+export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold, bgColor = "stone-800", fgColor = "amber-600", bgPattern = "none", language, variant = "full" }: Props) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -99,7 +101,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
     pdf.setTextColor(fgMuted[0], fgMuted[1], fgMuted[2]);
-    const eyebrow = "LOYALTY CARD";
+    const eyebrow = t(language, "loyaltyCardEyebrow");
     const eyebrowCharSpace = 1.4;
     pdf.setCharSpace(eyebrowCharSpace);
     // jsPDF's align:center doesn't account for charSpace, so compute x manually.
@@ -112,14 +114,14 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(20);
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2]);
-    pdf.text(`Buy ${threshold}. Get one free.`, w / 2, yPos, { align: "center" });
+    pdf.text(t(language, "buyXGetFree", { n: threshold }), w / 2, yPos, { align: "center" });
     yPos += 11;
 
     // Pre-QR instruction — guides the customer's next action
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(11);
     pdf.setTextColor(fgDim[0], fgDim[1], fgDim[2]);
-    pdf.text("Scan with your phone camera", w / 2, yPos, { align: "center" });
+    pdf.text(t(language, "scanWithCamera"), w / 2, yPos, { align: "center" });
     yPos += 9;
 
     // QR code — bigger for counter-distance scanning (58mm -> 72mm)
@@ -134,7 +136,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(fgFaint[0], fgFaint[1], fgFaint[2]);
-    pdf.text("No app required \u00b7 Works on any phone", w / 2, yPos, { align: "center" });
+    pdf.text(t(language, "noAppRequired"), w / 2, yPos, { align: "center" });
 
     // Powered by Brewstamp \u2014 tucked at the bottom, smaller, less prominent
     const bottomY = h - 10;

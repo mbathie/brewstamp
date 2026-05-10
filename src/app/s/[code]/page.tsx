@@ -109,6 +109,7 @@ export default async function CustomerScanPage({
       bgColor={shop.bgColor || "stone-800"}
       fgColor={shop.fgColor || "amber-600"}
       bgPattern={shop.bgPattern || "none"}
+      language={shop.language || "en"}
       otherShops={otherShops}
     />
   );

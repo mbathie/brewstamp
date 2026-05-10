@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Shuffle, AlertTriangle, Check, Loader2 } from "lucide-react";
 import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
@@ -15,6 +15,8 @@ import ColorPicker from "@/components/ui/color-picker";
 import PatternPicker from "@/components/ui/pattern-picker";
 import { getColorHex, getContrastRatio } from "@/lib/tailwind-colors";
 import { getRandomColorPair } from "@/lib/random-colors";
+import { patterns } from "@/lib/patterns";
+import { LANGUAGE_META, SUPPORTED_LANGUAGES, resolveLanguage, t } from "@/lib/i18n";
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved";
 
@@ -28,12 +30,13 @@ export default function SettingsPage() {
   const [bgColor, setBgColor] = useState("stone-800");
   const [fgColor, setFgColor] = useState("amber-600");
   const [bgPattern, setBgPattern] = useState("none");
+  const [language, setLanguage] = useState<string>("en");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [rawImage, setRawImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isInitialLoadRef = useRef(true);
+  const lastSavedRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -41,21 +44,35 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((data) => {
         setShop(data.shop);
-        setName(data.shop.name);
-        setThreshold(data.shop.stampThreshold);
+        const initial = {
+          name: data.shop.name ?? "",
+          threshold: data.shop.stampThreshold ?? 8,
+          bgColor: data.shop.bgColor || "stone-800",
+          fgColor: data.shop.fgColor || "amber-600",
+          bgPattern: data.shop.bgPattern || "none",
+          language: resolveLanguage(data.shop.language),
+        };
+        setName(initial.name);
+        setThreshold(initial.threshold);
         setLogo(data.shop.logo || null);
-        setBgColor(data.shop.bgColor || "stone-800");
-        setFgColor(data.shop.fgColor || "amber-600");
-        setBgPattern(data.shop.bgPattern || "none");
-        // Skip the autosave effect that fires from this initial state hydration
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 0);
+        setBgColor(initial.bgColor);
+        setFgColor(initial.fgColor);
+        setBgPattern(initial.bgPattern);
+        setLanguage(initial.language);
+        lastSavedRef.current = JSON.stringify(initial);
       });
   }, []);
 
   const saveChanges = useCallback(async () => {
     setSaveStatus("saving");
+    const snapshot = JSON.stringify({
+      name,
+      threshold,
+      bgColor,
+      fgColor,
+      bgPattern,
+      language,
+    });
     try {
       await fetch("/api/shop", {
         method: "PATCH",
@@ -66,8 +83,10 @@ export default function SettingsPage() {
           bgColor,
           fgColor,
           bgPattern,
+          language,
         }),
       });
+      lastSavedRef.current = snapshot;
       setSaveStatus("saved");
       setTimeout(() => {
         setSaveStatus((s) => (s === "saved" ? "idle" : s));
@@ -75,11 +94,20 @@ export default function SettingsPage() {
     } catch {
       setSaveStatus("idle");
     }
-  }, [name, threshold, bgColor, fgColor, bgPattern]);
+  }, [name, threshold, bgColor, fgColor, bgPattern, language]);
 
-  // Auto-save: debounced 3s after the last change to any tracked field.
+  // Auto-save: debounced 3s after a real change (current state differs from last saved snapshot).
   useEffect(() => {
-    if (isInitialLoadRef.current) return;
+    if (lastSavedRef.current === null) return; // not hydrated yet
+    const current = JSON.stringify({
+      name,
+      threshold,
+      bgColor,
+      fgColor,
+      bgPattern,
+      language,
+    });
+    if (current === lastSavedRef.current) return; // nothing changed
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setSaveStatus("pending");
     autoSaveTimerRef.current = setTimeout(() => {
@@ -88,7 +116,7 @@ export default function SettingsPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [name, threshold, bgColor, fgColor, bgPattern, saveChanges]);
+  }, [name, threshold, bgColor, fgColor, bgPattern, language, saveChanges]);
 
   async function handleSaveClick() {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -160,6 +188,7 @@ export default function SettingsPage() {
           bgColor={bgColor}
           fgColor={fgColor}
           bgPattern={bgPattern}
+          language={language}
           variant="compact"
         />
       </div>
@@ -233,6 +262,27 @@ export default function SettingsPage() {
                   onChange={(v) => setThreshold(v)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="language">Customer-facing language</Label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  {SUPPORTED_LANGUAGES.map((code) => {
+                    const meta = LANGUAGE_META[code];
+                    return (
+                      <option key={code} value={code}>
+                        {meta.flag} {meta.nativeName} ({meta.englishName})
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Applies to your customer&apos;s loyalty card and the printed QR PDF. Your dashboard stays in English.
+                </p>
+              </div>
             </section>
 
             {/* Card Design */}
@@ -245,6 +295,8 @@ export default function SettingsPage() {
                     const { bgColor: bg, fgColor: fg } = getRandomColorPair();
                     setBgColor(bg);
                     setFgColor(fg);
+                    const pick = patterns[Math.floor(Math.random() * patterns.length)];
+                    setBgPattern(pick.key);
                   }}
                   className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
@@ -288,10 +340,8 @@ export default function SettingsPage() {
 
         {/* RIGHT: live preview */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Customer Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4 p-6">
+            <h2 className="text-base font-semibold text-foreground">Customer Preview</h2>
             <CardPreview
               shopName={name || "Your Shop"}
               shopLogo={logo}
@@ -303,6 +353,7 @@ export default function SettingsPage() {
               fgColor={fgColor}
               bgPattern={bgPattern}
               displayName="Sam"
+              language={language}
               fitToParent
             >
               <div
@@ -312,7 +363,7 @@ export default function SettingsPage() {
                   color: getColorHex(bgColor),
                 }}
               >
-                Request Stamp
+                {t(language, "requestStamp")}
               </div>
             </CardPreview>
             <p className="mt-3 text-center text-xs text-muted-foreground">

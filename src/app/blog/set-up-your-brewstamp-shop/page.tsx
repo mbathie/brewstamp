@@ -162,13 +162,13 @@ export default function BlogPost() {
 
           <figure className="mb-14">
             <img
-              src="https://images.pexels.com/photos/4350099/pexels-photo-4350099.jpeg?auto=compress&cs=tinysrgb&h=600&w=940"
-              alt="Tablet on a cafe counter with the dashboard open"
+              src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg"
+              alt="Brewstamp QR code printed and placed on a cafe counter"
               className="w-full rounded-2xl"
               loading="lazy"
             />
             <figcaption className="mt-2 text-xs text-stone-400">
-              Keep the dashboard open on a tablet, laptop, or phone at the counter.
+              Print the QR code and place it where customers will see it at the counter.
             </figcaption>
           </figure>
 
@@ -233,13 +233,13 @@ export default function BlogPost() {
 
           <figure className="mb-14">
             <img
-              src="https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=600&w=940"
-              alt="Barista handing a takeaway coffee cup to a customer"
-              className="w-full rounded-2xl"
+              src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-loyalty-card.png"
+              alt="A Brewstamp loyalty card on a customer's phone"
+              className="mx-auto w-full max-w-md rounded-2xl shadow-lg"
               loading="lazy"
             />
-            <figcaption className="mt-2 text-xs text-stone-400">
-              Real customers scanning is what comes next.
+            <figcaption className="mt-2 text-center text-xs text-stone-400">
+              What lands on your customer&apos;s phone after you tap Approve.
             </figcaption>
           </figure>
 

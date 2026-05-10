@@ -1,15 +1,17 @@
 "use client";
 
 import { Coffee, Check } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface Props {
   stamps: number;
   threshold: number;
   fgColor?: string;
   animate?: boolean;
+  language?: string;
 }
 
-export default function StampDisplay({ stamps, threshold, fgColor, animate }: Props) {
+export default function StampDisplay({ stamps, threshold, fgColor, animate, language }: Props) {
   const fg = fgColor || "#d97706";
   const remaining = threshold - stamps;
 
@@ -18,16 +20,16 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate }: Pr
       {/* Progress text */}
       <div className="flex items-center justify-between px-1">
         <p className="text-sm font-medium" style={{ color: fg }}>
-          {stamps} of {threshold} stamps
+          {t(language, "stampsOf", { stamps, threshold })}
         </p>
         {remaining > 0 && (
           <p className="text-xs" style={{ color: fg }}>
-            {remaining} to go
+            {t(language, "toGo", { remaining })}
           </p>
         )}
         {remaining <= 0 && (
           <p className="text-xs font-medium" style={{ color: fg }}>
-            Reward ready!
+            {t(language, "rewardReady")}
           </p>
         )}
       </div>

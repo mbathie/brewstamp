@@ -1,0 +1,87 @@
+import en from "./en";
+import es from "./es";
+import fr from "./fr";
+import de from "./de";
+import pt from "./pt";
+import it from "./it";
+import zh from "./zh";
+import ja from "./ja";
+import ko from "./ko";
+import ar from "./ar";
+
+export const SUPPORTED_LANGUAGES = [
+  "en",
+  "es",
+  "fr",
+  "de",
+  "pt",
+  "it",
+  "zh",
+  "ja",
+  "ko",
+  "ar",
+] as const;
+
+export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+
+export interface LanguageMeta {
+  code: Language;
+  englishName: string;
+  nativeName: string;
+  flag: string;
+  rtl?: boolean;
+}
+
+export const LANGUAGE_META: Record<Language, LanguageMeta> = {
+  en: { code: "en", englishName: "English", nativeName: "English", flag: "🇺🇸" },
+  es: { code: "es", englishName: "Spanish", nativeName: "Español", flag: "🇪🇸" },
+  fr: { code: "fr", englishName: "French", nativeName: "Français", flag: "🇫🇷" },
+  de: { code: "de", englishName: "German", nativeName: "Deutsch", flag: "🇩🇪" },
+  pt: { code: "pt", englishName: "Portuguese", nativeName: "Português", flag: "🇵🇹" },
+  it: { code: "it", englishName: "Italian", nativeName: "Italiano", flag: "🇮🇹" },
+  zh: { code: "zh", englishName: "Mandarin Chinese", nativeName: "中文", flag: "🇨🇳" },
+  ja: { code: "ja", englishName: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
+  ko: { code: "ko", englishName: "Korean", nativeName: "한국어", flag: "🇰🇷" },
+  ar: { code: "ar", englishName: "Arabic", nativeName: "العربية", flag: "🇸🇦", rtl: true },
+};
+
+export type TranslationKey = keyof typeof en;
+
+const dictionaries: Record<Language, Record<string, string>> = {
+  en,
+  es,
+  fr,
+  de,
+  pt,
+  it,
+  zh,
+  ja,
+  ko,
+  ar,
+};
+
+export function isLanguage(code: string | undefined | null): code is Language {
+  return !!code && (SUPPORTED_LANGUAGES as readonly string[]).includes(code);
+}
+
+export function resolveLanguage(code: string | undefined | null): Language {
+  return isLanguage(code) ? code : "en";
+}
+
+/**
+ * Translate a key for the given language, with optional `{name}` parameter substitution.
+ * Falls back to English if the key is missing in the target language.
+ */
+export function t(
+  lang: Language | string | undefined | null,
+  key: TranslationKey,
+  params: Record<string, string | number> = {}
+): string {
+  const resolved = resolveLanguage(lang);
+  const dict = dictionaries[resolved];
+  let str = dict[key] ?? dictionaries.en[key] ?? String(key);
+  for (const [k, v] of Object.entries(params)) {
+    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+  }
+  return str;
+}
