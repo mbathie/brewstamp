@@ -29,6 +29,16 @@ export default async function DashboardPage({
     !merchant.user.phone ||
     merchant.user.name === merchant.user.email.split("@")[0];
 
+  // Setup is "complete" when the cafe has personalised at least one of:
+  // logo, colors (away from default), or pattern (non-none).
+  const customColors =
+    merchant.shop.bgColor !== "stone-800" ||
+    merchant.shop.fgColor !== "amber-600";
+  const customPattern =
+    !!merchant.shop.bgPattern && merchant.shop.bgPattern !== "none";
+  const setupComplete =
+    !!merchant.shop.logo || customColors || customPattern;
+
   return (
     <DashboardContent
       shopName={merchant.shop.name}
@@ -39,6 +49,7 @@ export default async function DashboardPage({
       hasEarnedStamps={hasEarnedStamps}
       hasActivity={!!hasActivity}
       needsProfileUpdate={needsProfileUpdate}
+      setupComplete={setupComplete}
     />
   );
 }
