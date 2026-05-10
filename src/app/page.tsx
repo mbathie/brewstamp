@@ -438,8 +438,7 @@ export default function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-stone-500">
             Pick the language that matches your customers — the loyalty card and
-            printable QR code translate automatically. Your dashboard stays in
-            English so you don&apos;t have to switch contexts.
+            printable QR code translate automatically.
           </p>
           <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-2 text-sm">
             {[
