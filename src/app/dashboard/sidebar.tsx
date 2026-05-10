@@ -41,10 +41,10 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
+  { title: "Shop Setup", href: "/dashboard/settings", icon: Settings },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { title: "Referrals", href: "/dashboard/referrals", icon: Gift },
-  { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 const adminItems = [

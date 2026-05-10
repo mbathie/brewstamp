@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronRight, Download, Monitor, QrCode, Smartphone, UserPen } from "lucide-react";
+import { CalendarIcon, ChevronRight, Download, Monitor, QrCode, Settings as SettingsIcon, Smartphone, UserPen } from "lucide-react";
 import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -220,7 +220,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                       <p className="mt-1 text-sm text-muted-foreground">
                         Add your name and contact info in{" "}
                         <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
-                          Settings
+                          Shop Setup
                         </Link>{" "}
                         so customers know who you are.
                       </p>
@@ -240,7 +240,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                     <p className="mt-1 text-sm text-muted-foreground">
                       Go to{" "}
                       <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
-                        Settings
+                        Shop Setup
                       </Link>{" "}
                       to download a printable PDF with your shop&apos;s unique QR code. Print it out and place it where customers can easily scan it — at the register, on the counter, or next to the menu.
                     </p>
@@ -289,7 +289,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                     <p className="mt-1 text-sm text-muted-foreground">
                       Don&apos;t wait for a real customer — test the flow now so you know what to expect. Open the QR code from{" "}
                       <Link href="/dashboard/settings" className="font-medium text-amber-700 hover:underline">
-                        Settings
+                        Shop Setup
                       </Link>{" "}
                       on this device, point your phone&apos;s camera at the screen, complete the customer flow on your phone, then come back here and approve the stamp request when it appears. Once you&apos;ve done it once, you&apos;ll never second-guess a real one.
                     </p>
@@ -303,7 +303,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                     <Download className="mr-2 h-4 w-4" />
                     {stuckOnActivation
                       ? "Open your QR code"
-                      : "Go to Settings to download your QR code"}
+                      : "Go to Shop Setup to download your QR code"}
                   </Button>
                 </Link>
               </div>
@@ -312,8 +312,16 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-foreground">{shopName} Dashboard</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold text-foreground">{shopName} Dashboard</h1>
+              <Link href="/dashboard/settings">
+                <Button size="sm" className="cursor-pointer">
+                  <SettingsIcon className="mr-1.5 h-3.5 w-3.5" />
+                  Shop Setup
+                </Button>
+              </Link>
+            </div>
             <div className="flex gap-1 rounded-lg border p-1">
               {(["today", "week", "month"] as Range[]).map((r) => (
                 <Button

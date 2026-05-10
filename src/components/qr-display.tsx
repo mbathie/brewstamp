@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Download, Printer, ExternalLink, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { generateQRCodeWithLogo } from "@/lib/qr";
@@ -19,9 +18,11 @@ interface Props {
   bgColor?: string;
   fgColor?: string;
   bgPattern?: string;
+  /** "full" (default) shows QR image + URL + 3 buttons; "compact" shows only the 3 action buttons. */
+  variant?: "full" | "compact";
 }
 
-export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold, bgColor = "stone-800", fgColor = "amber-600", bgPattern = "none" }: Props) {
+export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold, bgColor = "stone-800", fgColor = "amber-600", bgPattern = "none", variant = "full" }: Props) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -82,12 +83,15 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
 
     // Shop logo or fallback — same width as QR
     const logoH = contentW / 3; // 3:1 aspect ratio
-    const logoSrc = shopLogo || "/default-shop-banner.jpg";
-    try {
-      const roundedLogo = await roundImageCorners(logoSrc, 900, 300, 40);
-      pdf.addImage(roundedLogo, "PNG", contentX, yPos, contentW, logoH);
-    } catch {
-      drawFallbackLogo(pdf, (w - logoH) / 2, yPos, logoH, fgRgb);
+    if (shopLogo) {
+      try {
+        const roundedLogo = await roundImageCorners(shopLogo, 900, 300, 40);
+        pdf.addImage(roundedLogo, "PNG", contentX, yPos, contentW, logoH);
+      } catch {
+        drawShopNameBanner(pdf, contentX, yPos, contentW, logoH, fgRgb, bgRgb, shopName ?? "");
+      }
+    } else {
+      drawShopNameBanner(pdf, contentX, yPos, contentW, logoH, fgRgb, bgRgb, shopName ?? "");
     }
     yPos += logoH + 14;
 
@@ -175,9 +179,53 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     }
   }
 
+  const actionButtons = (
+    <>
+      <Button
+        variant={variant === "compact" ? "default" : "outline"}
+        size={variant === "compact" ? "sm" : "default"}
+        onClick={handleDownload}
+        disabled={!qrUrl}
+        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+      >
+        <Download className="mr-2 h-4 w-4" />
+        PDF
+      </Button>
+      <Button
+        variant={variant === "compact" ? "default" : "outline"}
+        size={variant === "compact" ? "sm" : "default"}
+        onClick={handlePrint}
+        disabled={!qrUrl}
+        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+      >
+        <Printer className="mr-2 h-4 w-4" />
+        Print
+      </Button>
+      <Button
+        variant={variant === "compact" ? "default" : "outline"}
+        size={variant === "compact" ? "sm" : "default"}
+        onClick={() => {
+          // iPhone-ish portrait window so it lands as a popup, not a tab.
+          window.open(
+            `${appUrl}/s/${shopCode}`,
+            "_blank",
+            "width=420,height=820,noopener,noreferrer"
+          );
+        }}
+        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+      >
+        <ExternalLink className="mr-2 h-4 w-4" />
+        View
+      </Button>
+    </>
+  );
+
+  if (variant === "compact") {
+    return <div className="flex gap-2">{actionButtons}</div>;
+  }
+
   return (
     <div className="space-y-4 pb-2">
-      <Label>Customer QR Code</Label>
       <div className="mx-auto aspect-square w-full max-w-[12rem] overflow-hidden rounded-lg border bg-white p-3 sm:max-w-[14rem] sm:p-4">
         {qrUrl ? (
           <img src={qrUrl} alt="Shop QR Code" className="h-full w-full" />
@@ -198,42 +246,41 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         <Copy className="size-3" />
       </button>
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={handleDownload}
-          disabled={!qrUrl}
-          className="flex-1 cursor-pointer"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          PDF
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handlePrint}
-          disabled={!qrUrl}
-          className="flex-1 cursor-pointer"
-        >
-          <Printer className="mr-2 h-4 w-4" />
-          Print
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            // iPhone-ish portrait window so it lands as a popup, not a tab.
-            window.open(
-              `${appUrl}/s/${shopCode}`,
-              "_blank",
-              "width=420,height=820,noopener,noreferrer"
-            );
-          }}
-          className="flex-1 cursor-pointer"
-        >
-          <ExternalLink className="mr-2 h-4 w-4" />
-          View
-        </Button>
+        {actionButtons}
       </div>
     </div>
   );
+}
+
+function drawShopNameBanner(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fgRgb: [number, number, number],
+  bgRgb: [number, number, number],
+  shopName: string,
+) {
+  // Solid fg-colored rounded rectangle as the banner background
+  pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2]);
+  roundedRect(pdf, x, y, w, h, 4);
+
+  if (!shopName) return;
+
+  // Fit the shop name to width: start at 14pt, shrink if needed
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(bgRgb[0], bgRgb[1], bgRgb[2]);
+  let fontSize = 14;
+  pdf.setFontSize(fontSize);
+  const padding = 6;
+  const maxW = w - padding * 2;
+  while (pdf.getTextWidth(shopName) > maxW && fontSize > 6) {
+    fontSize -= 1;
+    pdf.setFontSize(fontSize);
+  }
+  // jsPDF default baseline is bottom; nudge so text sits visually centered
+  pdf.text(shopName, x + w / 2, y + h / 2 + fontSize * 0.18, { align: "center" });
 }
 
 function drawFallbackLogo(pdf: jsPDF, x: number, y: number, size: number, fgRgb: [number, number, number] = [217, 119, 6]) {

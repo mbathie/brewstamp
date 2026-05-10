@@ -16,9 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import CustomerWaiting from "@/components/customer-waiting";
-import StampDisplay from "@/components/stamp-display";
+import CardPreview from "@/components/card-preview";
 import { getColorHex } from "@/lib/tailwind-colors";
-import { getPatternCSS } from "@/lib/patterns";
 
 interface OtherShop {
   name: string;
@@ -246,57 +245,22 @@ export default function CustomerClient({
     }
   }
 
-  const patternCSS = getPatternCSS(bgPattern, fgHex, 0.05);
   const displayName = name || customerName || animalName;
-  const remaining = threshold - stamps;
 
   return (
-    <div
-      className="relative flex min-h-screen flex-col items-center p-4 pt-4 md:justify-center"
-      style={{ backgroundColor: bgHex }}
+    <CardPreview
+      shopName={shopName}
+      shopLogo={shopLogo}
+      stamps={stamps}
+      threshold={threshold}
+      totalEarned={totalEarned}
+      freeRedeemed={freeRedeemed}
+      bgColor={bgColor}
+      fgColor={fgColor}
+      bgPattern={bgPattern}
+      displayName={displayName}
+      animate={status === "approved"}
     >
-      {/* Background pattern */}
-      {patternCSS && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundImage: patternCSS }}
-        />
-      )}
-
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-sm space-y-6">
-        {/* Shop header */}
-        <div>
-          <img
-            src={shopLogo || "/default-shop-banner.jpg"}
-            alt={shopName}
-            className="aspect-[3/1] w-full rounded-2xl object-cover shadow-lg"
-          />
-        </div>
-
-        {/* Stamp card */}
-        <div className="rounded-2xl p-6" style={{ backgroundColor: fgHex + "38", border: `1px solid ${fgHex}50` }}>
-          <p className="mb-4 text-center text-sm font-medium" style={{ color: fgHex }}>
-            {shopName} <span style={{ opacity: 0.6 }}>&middot; Loyalty Card</span>
-          </p>
-          <StampDisplay stamps={stamps} threshold={threshold} fgColor={fgHex} animate={status === "approved"} />
-
-          {/* Personalized progress */}
-          {remaining > 0 && displayName ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              {displayName}, you&apos;re {remaining} stamp{remaining > 1 ? "s" : ""} away from a free one!
-            </p>
-          ) : remaining > 0 ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
-              Collect {threshold} stamps to earn 1 free
-            </p>
-          ) : null}
-
-          <p className="mt-1 text-center text-xs" style={{ color: fgHex}}>
-            {totalEarned} stamps earned &middot; {freeRedeemed} rewards redeemed
-          </p>
-        </div>
-
         {/* Actions */}
         <div>
           {status === "idle" && (
@@ -582,7 +546,6 @@ export default function CustomerClient({
             </span>
           </a>
         </div>
-      </div>
-    </div>
+    </CardPreview>
   );
 }
