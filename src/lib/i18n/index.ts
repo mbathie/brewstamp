@@ -8,6 +8,8 @@ import zh from "./zh";
 import ja from "./ja";
 import ko from "./ko";
 import ar from "./ar";
+import hi from "./hi";
+import id from "./id";
 
 export const SUPPORTED_LANGUAGES = [
   "en",
@@ -20,6 +22,8 @@ export const SUPPORTED_LANGUAGES = [
   "ja",
   "ko",
   "ar",
+  "hi",
+  "id",
 ] as const;
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
@@ -43,6 +47,8 @@ export const LANGUAGE_META: Record<Language, LanguageMeta> = {
   ja: { code: "ja", englishName: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
   ko: { code: "ko", englishName: "Korean", nativeName: "한국어", flag: "🇰🇷" },
   ar: { code: "ar", englishName: "Arabic", nativeName: "العربية", flag: "🇸🇦", rtl: true },
+  hi: { code: "hi", englishName: "Hindi", nativeName: "हिन्दी", flag: "🇮🇳" },
+  id: { code: "id", englishName: "Indonesian", nativeName: "Bahasa Indonesia", flag: "🇮🇩" },
 };
 
 export type TranslationKey = keyof typeof en;
@@ -58,6 +64,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
   ja,
   ko,
   ar,
+  hi,
+  id,
 };
 
 export function isLanguage(code: string | undefined | null): code is Language {

@@ -434,7 +434,7 @@ export default function Home() {
             Available worldwide
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-            Your customer card in 10 languages
+            Your customer card in 12 languages
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-stone-500">
             Pick the language that matches your customers — the loyalty card and
@@ -452,6 +452,8 @@ export default function Home() {
               ["🇯🇵", "日本語", "こんにちは"],
               ["🇰🇷", "한국어", "안녕하세요"],
               ["🇸🇦", "العربية", "مرحبا"],
+              ["🇮🇳", "हिन्दी", "नमस्ते"],
+              ["🇮🇩", "Bahasa Indonesia", "Halo"],
             ].map(([flag, name, hello]) => (
               <span
                 key={name}
@@ -463,10 +465,6 @@ export default function Home() {
               </span>
             ))}
           </div>
-          <p className="mt-6 text-xs text-stone-400">
-            Language selectable from your shop settings. Right-to-left support
-            for Arabic.
-          </p>
         </div>
       </section>
 

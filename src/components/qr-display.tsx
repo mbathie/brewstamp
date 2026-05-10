@@ -98,30 +98,30 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     yPos += logoH + 14;
 
     // Eyebrow — small tracked label
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
-    pdf.setTextColor(fgMuted[0], fgMuted[1], fgMuted[2]);
-    const eyebrow = t(language, "loyaltyCardEyebrow");
-    const eyebrowCharSpace = 1.4;
-    pdf.setCharSpace(eyebrowCharSpace);
-    // jsPDF's align:center doesn't account for charSpace, so compute x manually.
-    const eyebrowW = pdf.getTextWidth(eyebrow) + eyebrowCharSpace * (eyebrow.length - 1);
-    pdf.text(eyebrow, (w - eyebrowW) / 2, yPos);
-    pdf.setCharSpace(0);
+    drawText(pdf, t(language, "loyaltyCardEyebrow"), w / 2, yPos, {
+      fontSize: 8,
+      fontWeight: "bold",
+      color: fgMuted,
+      align: "center",
+      letterSpacing: 1.4,
+    });
     yPos += 9;
 
     // Hero reward headline — big, full fg
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(20);
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2]);
-    pdf.text(t(language, "buyXGetFree", { n: threshold }), w / 2, yPos, { align: "center" });
+    drawText(pdf, t(language, "buyXGetFree", { n: threshold }), w / 2, yPos, {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: fgRgb,
+      align: "center",
+    });
     yPos += 11;
 
     // Pre-QR instruction — guides the customer's next action
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(11);
-    pdf.setTextColor(fgDim[0], fgDim[1], fgDim[2]);
-    pdf.text(t(language, "scanWithCamera"), w / 2, yPos, { align: "center" });
+    drawText(pdf, t(language, "scanWithCamera"), w / 2, yPos, {
+      fontSize: 11,
+      color: fgDim,
+      align: "center",
+    });
     yPos += 9;
 
     // QR code — bigger for counter-distance scanning (58mm -> 72mm)
@@ -133,10 +133,11 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     yPos += qrSize + 14;
 
     // Reassurance under the QR — kills the "do I need to download something?" worry
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
-    pdf.setTextColor(fgFaint[0], fgFaint[1], fgFaint[2]);
-    pdf.text(t(language, "noAppRequired"), w / 2, yPos, { align: "center" });
+    drawText(pdf, t(language, "noAppRequired"), w / 2, yPos, {
+      fontSize: 9,
+      color: fgFaint,
+      align: "center",
+    });
 
     // Powered by Brewstamp \u2014 tucked at the bottom, smaller, less prominent
     const bottomY = h - 10;
@@ -302,9 +303,11 @@ function drawShopNameBanner(
 
   if (!shopName) return;
 
-  // Fit the shop name to width: start at 14pt, shrink if needed
+  // Fit the shop name to width: start at 14pt, shrink if needed.
+  // Width measurement uses helvetica even for non-Latin — it's a rough fit
+  // bound, and the canvas-rendered text is generally not wider than helvetica
+  // at the same point size.
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(bgRgb[0], bgRgb[1], bgRgb[2]);
   let fontSize = 14;
   pdf.setFontSize(fontSize);
   const padding = 6;
@@ -314,7 +317,12 @@ function drawShopNameBanner(
     pdf.setFontSize(fontSize);
   }
   // jsPDF default baseline is bottom; nudge so text sits visually centered
-  pdf.text(shopName, x + w / 2, y + h / 2 + fontSize * 0.18, { align: "center" });
+  drawText(pdf, shopName, x + w / 2, y + h / 2 + fontSize * 0.18, {
+    fontSize,
+    fontWeight: "bold",
+    color: bgRgb,
+    align: "center",
+  });
 }
 
 function drawFallbackLogo(pdf: jsPDF, x: number, y: number, size: number, fgRgb: [number, number, number] = [217, 119, 6]) {
@@ -342,6 +350,145 @@ function drawFallbackLogo(pdf: jsPDF, x: number, y: number, size: number, fgRgb:
 
 function roundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number, r: number) {
   pdf.roundedRect(x, y, w, h, r, r, "F");
+}
+
+// Sans-serif stack with broad coverage for CJK, Thai, Cyrillic, Arabic, Hebrew, etc.
+// The browser picks the first family that has a glyph for each character.
+const PDF_TEXT_FONT_STACK = [
+  "-apple-system",
+  "BlinkMacSystemFont",
+  '"Helvetica Neue"',
+  "Helvetica",
+  "Arial",
+  '"Hiragino Sans"',
+  '"Hiragino Kaku Gothic ProN"',
+  '"Yu Gothic"',
+  '"Noto Sans JP"',
+  '"Noto Sans KR"',
+  '"Noto Sans SC"',
+  '"Noto Sans TC"',
+  '"Apple SD Gothic Neo"',
+  '"Malgun Gothic"',
+  '"Microsoft YaHei"',
+  '"PingFang SC"',
+  '"Noto Sans Thai"',
+  '"Noto Sans Arabic"',
+  '"Noto Sans Hebrew"',
+  "sans-serif",
+].join(", ");
+
+function isLatin1(text: string): boolean {
+  return !/[^ -ÿ]/.test(text);
+}
+
+interface DrawTextOpts {
+  fontSize: number;            // pt
+  fontWeight?: "normal" | "bold";
+  color: [number, number, number];
+  align?: "left" | "center";   // default "left"
+  letterSpacing?: number;      // mm (matches jsPDF's setCharSpace under unit:"mm")
+}
+
+// Draws text into the PDF, falling back to a rasterized canvas image for any
+// string with non-Latin-1 characters (jsPDF's built-in Helvetica only encodes
+// WinAnsi/Latin-1, so CJK, Cyrillic, Thai, Arabic, etc. would otherwise appear
+// as garbled glyphs).
+function drawText(
+  pdf: jsPDF,
+  text: string,
+  x: number,
+  baselineY: number,
+  opts: DrawTextOpts,
+) {
+  const weight = opts.fontWeight || "normal";
+  const align = opts.align || "left";
+
+  if (isLatin1(text)) {
+    pdf.setFont("helvetica", weight);
+    pdf.setFontSize(opts.fontSize);
+    pdf.setTextColor(opts.color[0], opts.color[1], opts.color[2]);
+    if (opts.letterSpacing) {
+      pdf.setCharSpace(opts.letterSpacing);
+      if (align === "center") {
+        // jsPDF's align:"center" doesn't compensate for charSpace, so position manually.
+        const tw = pdf.getTextWidth(text) + opts.letterSpacing * (text.length - 1);
+        pdf.text(text, x - tw / 2, baselineY);
+      } else {
+        pdf.text(text, x, baselineY);
+      }
+      pdf.setCharSpace(0);
+    } else {
+      if (align === "center") {
+        pdf.text(text, x, baselineY, { align: "center" });
+      } else {
+        pdf.text(text, x, baselineY);
+      }
+    }
+    return;
+  }
+
+  // Non-Latin path: render onto a high-DPI canvas and embed the result as a PNG.
+  const dpr = 4;
+  const PX_PER_PT = 96 / 72;
+  const MM_PER_PX = 25.4 / 96;
+  const fontSizePx = opts.fontSize * PX_PER_PT * dpr;
+  const letterSpacingPx = opts.letterSpacing
+    ? (opts.letterSpacing / MM_PER_PX) * dpr
+    : 0;
+
+  const fontStr = `${weight} ${fontSizePx}px ${PDF_TEXT_FONT_STACK}`;
+  const measureCtx = document.createElement("canvas").getContext("2d")!;
+  measureCtx.font = fontStr;
+
+  const chars = Array.from(text); // grapheme-aware iteration for surrogate pairs
+  let textWidthPx = 0;
+  if (letterSpacingPx) {
+    for (let i = 0; i < chars.length; i++) {
+      textWidthPx += measureCtx.measureText(chars[i]).width;
+      if (i < chars.length - 1) textWidthPx += letterSpacingPx;
+    }
+  } else {
+    textWidthPx = measureCtx.measureText(text).width;
+  }
+
+  const padPx = fontSizePx * 0.4;
+  const ascentPx = fontSizePx * 0.95; // generous to fit accents and CJK glyph extents
+  const descentPx = fontSizePx * 0.3;
+  const wPx = Math.ceil(textWidthPx + padPx * 2);
+  const hPx = Math.ceil(ascentPx + descentPx + padPx * 2);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = wPx;
+  canvas.height = hPx;
+  const ctx = canvas.getContext("2d")!;
+  ctx.font = fontStr;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = `rgb(${opts.color[0]}, ${opts.color[1]}, ${opts.color[2]})`;
+
+  const baselineYPx = padPx + ascentPx;
+  if (letterSpacingPx) {
+    let cx = padPx;
+    for (const ch of chars) {
+      ctx.fillText(ch, cx, baselineYPx);
+      cx += ctx.measureText(ch).width + letterSpacingPx;
+    }
+  } else {
+    ctx.fillText(text, padPx, baselineYPx);
+  }
+
+  const widthMm = (wPx / dpr) * MM_PER_PX;
+  const heightMm = (hPx / dpr) * MM_PER_PX;
+  const baselineFromTopMm = (baselineYPx / dpr) * MM_PER_PX;
+
+  const drawX = align === "center" ? x - widthMm / 2 : x;
+  pdf.addImage(
+    canvas.toDataURL("image/png"),
+    "PNG",
+    drawX,
+    baselineY - baselineFromTopMm,
+    widthMm,
+    heightMm,
+  );
 }
 
 async function generatePatternImage(patternKey: string, fgColor: string): Promise<string | null> {
