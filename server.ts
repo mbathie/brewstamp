@@ -10,7 +10,10 @@ const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
 
-const app = next({ dev, hostname, port });
+// Explicitly pin Next's project dir to this file's directory so the workspace
+// root can't drift up to a parent (which was resolving `tailwindcss` from the
+// wrong place in dev).
+const app = next({ dev, hostname, port, dir: __dirname });
 
 interface ShopChannel {
   merchant: WebSocket | null;
