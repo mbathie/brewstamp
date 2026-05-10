@@ -165,7 +165,11 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
   async function handleDownload() {
     if (!qrUrl) return;
     const pdf = await generatePdf();
-    pdf.save(`brewstamp-${shopCode}.pdf`);
+    const filename = `brewstamp-${shopCode}.pdf`;
+    pdf.save(filename);
+    toast.success(`${filename} downloaded`, {
+      description: "Check your Downloads folder.",
+    });
   }
 
   async function handlePrint() {
@@ -187,12 +191,16 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
       `${appUrl}/s/${shopCode}`,
       { width: 1200, logoColor: fgHex }
     );
+    const filename = `brewstamp-${shopCode}-qr.png`;
     const a = document.createElement("a");
     a.href = hiResQr;
-    a.download = `brewstamp-${shopCode}-qr.png`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    toast.success(`${filename} downloaded`, {
+      description: "Check your Downloads folder.",
+    });
   }
 
   const actionButtons = (
