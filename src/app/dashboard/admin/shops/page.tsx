@@ -480,8 +480,7 @@ export default function AdminShopsPage() {
       )}
 
       {/* All shops table */}
-      <section id="all" className="scroll-mt-16 space-y-2">
-        <h2 className="text-sm font-medium">All shops</h2>
+      <section id="all" className="scroll-mt-16">
         <div className="rounded-md border">
           <Table>
             <TableHeader>
