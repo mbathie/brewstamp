@@ -87,7 +87,9 @@ export async function GET(
 
   // Determine auth methods for shop owner
   const ownerId = (shop as any).owner._id;
-  const ownerDoc = await User.findById(ownerId).select("hash").lean();
+  const ownerDoc = await User.findById(ownerId)
+    .select("hash signupReferrer signupLandingPage")
+    .lean();
   const accounts = await Account.find({ userId: ownerId }).select("provider").lean();
   const authMethods: string[] = [];
   if ((ownerDoc as any)?.hash) authMethods.push("password");
@@ -95,6 +97,9 @@ export async function GET(
     authMethods.push((acc as any).provider);
   }
   if (authMethods.length === 0) authMethods.push("magic-link");
+
+  const signupReferrer = (ownerDoc as any)?.signupReferrer || "";
+  const signupLandingPage = (ownerDoc as any)?.signupLandingPage || "";
 
   return NextResponse.json({
     shop: {
@@ -113,7 +118,7 @@ export async function GET(
       dripDay14Sent: (shop as any).dripDay14Sent,
       firstCustomerEmailSent: !!(shop as any).firstCustomerEmailSent,
       language: (shop as any).language || "en",
-      owner: { ...(shop as any).owner, authMethods },
+      owner: { ...(shop as any).owner, authMethods, signupReferrer, signupLandingPage },
       isPro: !!activeSub,
     },
     customers: stampCards.map((sc: any) => ({

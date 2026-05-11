@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/mongoose";
 import { User } from "@/models";
+import { readSignupAttribution } from "@/lib/signup-attr";
 
 export async function POST(req: Request) {
   await connectDB();
@@ -21,7 +22,8 @@ export async function POST(req: Request) {
   }
 
   const hash = await bcrypt.hash(password, 10);
-  await User.create({ name: email.split("@")[0], email, hash });
+  const attr = await readSignupAttribution();
+  await User.create({ name: email.split("@")[0], email, hash, ...attr });
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

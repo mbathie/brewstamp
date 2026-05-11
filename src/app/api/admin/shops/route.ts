@@ -5,6 +5,10 @@ import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
+// Single Stripe Pro price. Update here if the listed price ever changes — it
+// drives the MRR figure on the admin dashboard.
+const PRO_PRICE_USD = 5;
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
@@ -119,6 +123,7 @@ export async function GET() {
   return NextResponse.json({
     shops: result,
     proCount: proShopIds.size,
+    mrrUsd: proShopIds.size * PRO_PRICE_USD,
     charts: {
       dailyStamps,
       dailyCustomers,

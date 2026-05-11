@@ -10,15 +10,17 @@ import {
   ArrowDown,
   ArrowUpDown,
   ExternalLink,
-  Users,
-  Stamp,
-  Gift,
-  Clock,
   ChevronLeft,
   ChevronRight,
   Zap,
   Search,
+  Check,
+  Circle,
+  Globe,
+  Compass,
+  Gift,
 } from "lucide-react";
+import { Sparkline } from "@/components/sparkline";
 import {
   Table,
   TableBody,
@@ -27,12 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,14 +46,26 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
+import { Area, AreaChart, XAxis, CartesianGrid } from "recharts";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
+type ActivityMetric = "stamps" | "visits" | "redeems";
+
+const ACTIVITY_LABEL: Record<ActivityMetric, string> = {
+  stamps: "Stamps",
+  visits: "Visits",
+  redeems: "Redeems",
+};
+
+const ACTIVITY_COLOR: Record<ActivityMetric, string> = {
+  stamps: "var(--chart-2)",
+  visits: "var(--chart-1)",
+  redeems: "var(--chart-3)",
+};
+
 const activityChartConfig = {
-  visits: { label: "Visits", color: "var(--chart-1)" },
-  stamps: { label: "Stamps", color: "var(--chart-2)" },
-  redeems: { label: "Redeems", color: "var(--chart-3)" },
+  value: { label: "Value", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
 interface ShopDetail {
@@ -77,7 +86,14 @@ interface ShopDetail {
     firstCustomerEmailSent: boolean;
     language: string;
     isPro: boolean;
-    owner: { name: string; email: string; phone?: string; authMethods?: string[] };
+    owner: {
+      name: string;
+      email: string;
+      phone?: string;
+      authMethods?: string[];
+      signupReferrer?: string;
+      signupLandingPage?: string;
+    };
   };
   customers: {
     name: string | null;
@@ -153,6 +169,8 @@ export default function AdminShopDetailPage() {
   const [reqSortKey, setReqSortKey] = useState<ReqSortKey>("createdAt");
   const [reqSortDir, setReqSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
+
+  const [activityMetric, setActivityMetric] = useState<ActivityMetric>("stamps");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -315,6 +333,49 @@ export default function AdminShopDetailPage() {
       : <ArrowDown className="ml-1 inline size-3" />;
   }
 
+  // 14-day sparklines for the KPI cards. dailyActivity may only contain days
+  // that had activity, so we backfill zeros for missing dates.
+  const sparks = useMemo(() => {
+    const empty = { stamps: [0], visits: [0], redeems: [0] };
+    if (!data) return empty;
+    const byDay = new Map(data.dailyActivity.map((d) => [d._id, d]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const stamps: number[] = [];
+    const visits: number[] = [];
+    const redeems: number[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const row = byDay.get(key);
+      stamps.push(row?.stamps ?? 0);
+      visits.push(row?.visits ?? 0);
+      redeems.push(row?.redeems ?? 0);
+    }
+    return { stamps, visits, redeems };
+  }, [data]);
+
+  // Activity chart series — last 30 days of the selected metric.
+  const activitySeries = useMemo(() => {
+    if (!data) return [] as Array<{ date: string; value: number }>;
+    const byDay = new Map(data.dailyActivity.map((d) => [d._id, d]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const series: Array<{ date: string; value: number }> = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const row = byDay.get(key);
+      series.push({
+        date: d.toLocaleDateString("en-AU", { day: "numeric", month: "short" }),
+        value: row?.[activityMetric] ?? 0,
+      });
+    }
+    return series;
+  }, [data, activityMetric]);
+
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -333,6 +394,28 @@ export default function AdminShopDetailPage() {
 
   const { shop, customers, stats, dailyActivity } = data;
 
+  const customColors = shop.bgColor !== "stone-800" || shop.fgColor !== "amber-600";
+  const customPattern = !!shop.bgPattern && shop.bgPattern !== "none";
+  const langChanged = !!shop.language && shop.language !== "en";
+
+  const setupItems: Array<{ label: string; on: boolean }> = [
+    { label: "Logo", on: !!shop.logo },
+    { label: "Colors", on: customColors },
+    { label: "Pattern", on: customPattern },
+    { label: langChanged ? `Language · ${shop.language}` : "Language", on: langChanged },
+  ];
+  const outreachItems: Array<{ label: string; on: boolean }> = [
+    { label: "1st-stamp email", on: !!shop.firstCustomerEmailSent },
+    { label: "Day 1 drip", on: !!shop.dripDay1Sent },
+    { label: "Day 3 drip", on: !!shop.dripDay3Sent },
+    { label: "Day 7 drip", on: !!shop.dripDay7Sent },
+    { label: "Day 14 drip", on: !!shop.dripDay14Sent },
+  ];
+
+  const referrer = shop.owner.signupReferrer || "";
+  const landing = shop.owner.signupLandingPage || "";
+  const referrerHost = referrer ? safeHost(referrer) : "";
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -343,11 +426,9 @@ export default function AdminShopDetailPage() {
         >
           <ArrowLeft className="size-5" />
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-foreground">
-              {shop.name}
-            </h1>
+        <div className="flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-xl font-semibold text-foreground">{shop.name}</h1>
             {shop.isPro ? (
               <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs px-2 py-0.5">
                 <Zap className="mr-1 size-3" />
@@ -363,6 +444,7 @@ export default function AdminShopDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground"
+              title="Open customer view"
             >
               <ExternalLink className="size-4" />
             </a>
@@ -371,100 +453,101 @@ export default function AdminShopDetailPage() {
             {shop.owner.name} &middot; {shop.owner.email}
             {shop.owner.phone && ` · ${shop.owner.phone}`}
             {shop.owner.authMethods && shop.owner.authMethods.length > 0 && (
-              <> &middot; Auth: {shop.owner.authMethods.join(", ")}</>
+              <> &middot; {shop.owner.authMethods.join(", ")}</>
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            Code: <span className="font-mono">{shop.code}</span> &middot;
-            Threshold: {shop.stampThreshold} stamps &middot; Signed up{" "}
-            {new Date(shop.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}
+            <span className="font-mono">{shop.code}</span>
+            {" · "}
+            Threshold {shop.stampThreshold}
+            {" · "}
+            Signed up{" "}
+            {new Date(shop.createdAt).toLocaleDateString("en-AU", {
+              day: "numeric",
+              month: "short",
+              year: "2-digit",
+            })}
           </p>
+          {(referrer || landing) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
+              {landing && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Compass className="size-3 text-amber-500" />
+                  <span>
+                    Landed on{" "}
+                    <span className="font-mono text-foreground">{landing}</span>
+                  </span>
+                </span>
+              )}
+              {referrer && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Globe className="size-3 text-amber-500" />
+                  <span>
+                    From{" "}
+                    <a
+                      href={referrer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-foreground underline-offset-2 hover:underline"
+                    >
+                      {referrerHost || referrer}
+                    </a>
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Customers
-            </CardTitle>
-            <Users className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalCustomers}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Stamps Given
-            </CardTitle>
-            <Stamp className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalStampsAwarded}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Free Drinks Redeemed
-            </CardTitle>
-            <Gift className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalRedeems}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Last Activity
-            </CardTitle>
-            <Clock className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {stats.lastActivity
-                ? timeAgo(new Date(stats.lastActivity))
-                : "Never"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Anchor pill nav */}
+      <nav className="sticky top-0 z-10 -mx-6 flex flex-wrap gap-2 border-b border-border/40 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <AnchorPill href="#overview" label="Overview" />
+        <AnchorPill href="#activity" label="Activity" />
+        <AnchorPill href="#customers" label="Customers" />
+        {data.recentRequests.length > 0 && (
+          <AnchorPill href="#requests" label="Requests" />
+        )}
+      </nav>
 
-      {/* Status badges */}
-      <div className="flex flex-wrap gap-2">
-        {(() => {
-          const langChanged = !!shop.language && shop.language !== "en";
-          const customColors = shop.bgColor !== "stone-800" || shop.fgColor !== "amber-600";
-          const customPattern = !!shop.bgPattern && shop.bgPattern !== "none";
-          const items: { label: string; on: boolean }[] = [
-            { label: "Day 1 drip", on: !!shop.dripDay1Sent },
-            { label: "Day 3 drip", on: !!shop.dripDay3Sent },
-            { label: "Day 7 drip", on: !!shop.dripDay7Sent },
-            { label: "Day 14 drip", on: !!shop.dripDay14Sent },
-            { label: "1st stamp email", on: !!shop.firstCustomerEmailSent },
-            { label: `Language${langChanged ? `: ${shop.language}` : ""}`, on: langChanged },
-            { label: "Logo", on: !!shop.logo },
-            { label: "Colors", on: customColors },
-            { label: "Pattern", on: customPattern },
-          ];
-          return items.map(({ label, on }) => (
-            <Badge
-              key={label}
-              variant={on ? "default" : "outline"}
-              className={on ? "bg-green-600 hover:bg-green-600" : "border-red-400/50 text-red-400"}
-            >
-              {label}
-            </Badge>
-          ));
-        })()}
-      </div>
+      {/* Overview — compact KPI cards */}
+      <section id="overview" className="scroll-mt-16 space-y-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <KpiCard
+            label="Customers"
+            value={stats.totalCustomers}
+            spark={sparks.visits}
+            color="var(--chart-1)"
+          />
+          <KpiCard
+            label="Stamps given"
+            value={stats.totalStampsAwarded}
+            spark={sparks.stamps}
+            color="var(--chart-2)"
+          />
+          <KpiCard
+            label="Free drinks redeemed"
+            value={stats.totalRedeems}
+            spark={sparks.redeems}
+            color="var(--chart-3)"
+          />
+          <KpiCard
+            label="Last activity"
+            textValue={stats.lastActivity ? timeAgo(new Date(stats.lastActivity)) : "Never"}
+            spark={sparks.stamps}
+            color="var(--chart-2)"
+          />
+        </div>
+
+        {/* Setup & outreach checklist — replaces the old red/green badge wall */}
+        <div className="grid gap-3 md:grid-cols-2">
+          <ChecklistCard title="Setup" items={setupItems} />
+          <ChecklistCard title="Outreach emails" items={outreachItems} />
+        </div>
+      </section>
 
       {/* Customers table */}
-      <div>
+      <section id="customers" className="scroll-mt-16">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             Customers ({sortedCustomers.length}{custSearch.trim() ? ` of ${customers.length}` : ""})
@@ -570,41 +653,75 @@ export default function AdminShopDetailPage() {
             </div>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Daily activity chart */}
+      {/* Activity chart — metric switcher over a 30d area chart */}
       {dailyActivity.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Daily Activity (Last 30 Days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={activityChartConfig} className="h-[250px] w-full">
-              <BarChart
-                data={[...dailyActivity].reverse().map((day) => ({
-                  date: new Date(day._id + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short" }),
-                  visits: day.visits,
-                  stamps: day.stamps,
-                  redeems: day.redeems,
-                }))}
-                margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
-              >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10 }} allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="visits" fill="var(--color-visits)" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="stamps" fill="var(--color-stamps)" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="redeems" fill="var(--color-redeems)" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <section id="activity" className="scroll-mt-16">
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">
+                    Daily activity
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Last 30 days</p>
+                </div>
+                <div className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5">
+                  {(["stamps", "visits", "redeems"] as ActivityMetric[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setActivityMetric(m)}
+                      className={`cursor-pointer rounded-md px-3 py-1 text-xs transition-colors ${
+                        activityMetric === m
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {ACTIVITY_LABEL[m]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <ChartContainer config={activityChartConfig} className="h-[220px] w-full">
+                <AreaChart
+                  data={activitySeries}
+                  margin={{ top: 4, right: 4, bottom: 0, left: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="activityFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={ACTIVITY_COLOR[activityMetric]} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={ACTIVITY_COLOR[activityMetric]} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 10 }}
+                    minTickGap={24}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={ACTIVITY_COLOR[activityMetric]}
+                    strokeWidth={2}
+                    fill="url(#activityFill)"
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </section>
       )}
 
       {/* Requests table */}
       {data.recentRequests.length > 0 && (
-        <div>
+        <section id="requests" className="scroll-mt-16">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">
               Requests ({filteredRequests.length})
@@ -733,8 +850,83 @@ export default function AdminShopDetailPage() {
               </div>
             </div>
           )}
-        </div>
+        </section>
       )}
     </div>
+  );
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+function AnchorPill({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-7 items-center rounded-full bg-muted/50 px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      {label}
+    </a>
+  );
+}
+
+interface KpiCardProps {
+  label: string;
+  value?: number;
+  textValue?: string;
+  spark: number[];
+  color: string;
+}
+
+function KpiCard({ label, value, textValue, spark, color }: KpiCardProps) {
+  return (
+    <Card>
+      <CardContent className="space-y-2 px-4 py-3">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <div className="flex items-end justify-between gap-3">
+          <p className="text-2xl font-bold leading-none text-foreground">
+            {textValue ?? (value ?? 0).toLocaleString()}
+          </p>
+          <Sparkline data={spark} color={color} width={64} height={24} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChecklistCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{ label: string; on: boolean }>;
+}) {
+  return (
+    <Card>
+      <CardContent className="space-y-3 px-4 py-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </p>
+        <ul className="space-y-1.5">
+          {items.map(({ label, on }) => (
+            <li key={label} className="flex items-center gap-2 text-sm">
+              {on ? (
+                <Check className="size-4 shrink-0 text-emerald-500" />
+              ) : (
+                <Circle className="size-4 shrink-0 text-muted-foreground/40" />
+              )}
+              <span className={on ? "text-foreground" : "text-muted-foreground"}>
+                {label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

@@ -162,6 +162,7 @@ export default function AdminShopsPage() {
   const { data: session, status } = useSession();
   const [shops, setShops] = useState<ShopRow[]>([]);
   const [proCount, setProCount] = useState(0);
+  const [mrrUsd, setMrrUsd] = useState(0);
   const [charts, setCharts] = useState<{
     dailyStamps: ChartPoint[];
     dailyCustomers: ChartPoint[];
@@ -185,6 +186,7 @@ export default function AdminShopsPage() {
       .then((data) => {
         setShops(data.shops || data);
         setProCount(data.proCount || 0);
+        setMrrUsd(data.mrrUsd || 0);
         if (data.charts) setCharts(data.charts);
         setLoading(false);
       })
@@ -309,9 +311,9 @@ export default function AdminShopsPage() {
         <AnchorPill href="#all" label="All shops" />
       </nav>
 
-      {/* Overview — 4 compact KPI cards (2x2 on mobile, 4x1 on desktop) */}
+      {/* Overview — 5 compact KPI cards (2x2 on mobile, 5x1 on desktop) */}
       <section id="overview" className="scroll-mt-16">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <KpiCard
             label="Stamps"
             value={totalStamps}
@@ -336,6 +338,14 @@ export default function AdminShopsPage() {
             spark={upgradesSpark}
             color={METRIC_COLORS.upgrades}
             valueSuffix={shops.length > 0 ? ` (${Math.round((proCount / shops.length) * 100)}%)` : ""}
+          />
+          <KpiCard
+            label="MRR"
+            value={mrrUsd}
+            valuePrefix="$"
+            valueSuffix=" /mo"
+            spark={upgradesSpark}
+            color={METRIC_COLORS.upgrades}
           />
         </div>
       </section>
@@ -620,16 +630,18 @@ interface KpiCardProps {
   value: number;
   spark: number[];
   color: string;
+  valuePrefix?: string;
   valueSuffix?: string;
 }
 
-function KpiCard({ label, value, spark, color, valueSuffix }: KpiCardProps) {
+function KpiCard({ label, value, spark, color, valuePrefix, valueSuffix }: KpiCardProps) {
   return (
     <Card>
       <CardContent className="space-y-2 px-4 py-3">
         <p className="text-xs text-muted-foreground">{label}</p>
         <div className="flex items-end justify-between gap-3">
           <p className="text-2xl font-bold leading-none text-foreground">
+            {valuePrefix}
             {value.toLocaleString()}
             {valueSuffix && (
               <span className="ml-1 text-xs font-normal text-muted-foreground">

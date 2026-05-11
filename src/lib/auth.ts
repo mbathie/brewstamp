@@ -5,6 +5,7 @@ import Nodemailer from "next-auth/providers/nodemailer";
 import bcrypt from "bcrypt";
 import { connectDB } from "./mongoose";
 import { User, Shop, Account, VerificationToken } from "@/models";
+import { readSignupAttribution } from "./signup-attr";
 
 // Custom MongoDB adapter (only the methods NextAuth needs)
 const MongoDBAdapter = {
@@ -24,10 +25,12 @@ const MongoDBAdapter = {
       };
     }
     // New user via OAuth/magic link — create without hash
+    const attr = await readSignupAttribution();
     const newUser = await User.create({
       name: user.name || user.email?.split("@")[0] || "User",
       email: user.email,
       emailVerified: user.emailVerified,
+      ...attr,
     });
     return {
       id: newUser._id.toString(),

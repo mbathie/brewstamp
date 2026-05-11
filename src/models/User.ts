@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Shop",
     },
+    // First-touch attribution captured at user creation. Lets us see where
+    // new shop owners come from (Google search → /es, direct → /, referral,
+    // etc.). Both fields are best-effort and may be empty.
+    signupReferrer: { type: String },
+    signupLandingPage: { type: String },
   },
   { timestamps: true }
 );
