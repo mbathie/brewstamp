@@ -22,6 +22,11 @@ interface Props {
   fitToParent?: boolean;
   /** Slot for the action button(s) below the card. */
   children?: React.ReactNode;
+  /** Optional second face (e.g. account-edit form) that slides in from the
+   *  right when `showAltFace` flips to true. Whole content column slides as a
+   *  unit, so the alternate face gets the full vertical space — no cramming. */
+  altFace?: React.ReactNode;
+  showAltFace?: boolean;
 }
 
 export default function CardPreview({
@@ -39,6 +44,8 @@ export default function CardPreview({
   language,
   fitToParent,
   children,
+  altFace,
+  showAltFace,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
@@ -63,76 +70,118 @@ export default function CardPreview({
           style={{ backgroundImage: patternCSS }}
         />
       )}
-      <div className="relative z-10 w-full max-w-sm space-y-6">
-        <div>
-          {shopLogo ? (
-            <img
-              src={shopLogo}
-              alt={shopName}
-              className="aspect-[3/1] w-full rounded-2xl object-cover shadow-lg"
-            />
-          ) : (
-            <div
-              className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl px-6 text-center shadow-lg"
-              style={{ backgroundColor: fgHex }}
-            >
-              <h2
-                className="text-2xl font-bold leading-tight"
-                style={{ color: bgHex }}
-              >
-                {shopName}
-              </h2>
+      {(() => {
+        const cardContent = (
+          <div className="w-full space-y-6">
+            <div>
+              {shopLogo ? (
+                <img
+                  src={shopLogo}
+                  alt={shopName}
+                  className="aspect-[3/1] w-full rounded-2xl object-cover shadow-lg"
+                />
+              ) : (
+                <div
+                  className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl px-6 text-center shadow-lg"
+                  style={{ backgroundColor: fgHex }}
+                >
+                  <h2
+                    className="text-2xl font-bold leading-tight"
+                    style={{ color: bgHex }}
+                  >
+                    {shopName}
+                  </h2>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div
-          className="rounded-2xl p-6"
-          style={{
-            // Solid bg base masks the patterned backdrop behind text, then a
-            // translucent fg tint sits on top for the brand-coloured wash.
-            // Without the solid base the pattern shows through and competes
-            // with the body copy on mobile.
-            backgroundColor: bgHex,
-            backgroundImage: `linear-gradient(${fgHex}38, ${fgHex}38)`,
-            border: `1px solid ${fgHex}50`,
-          }}
-        >
-          <p className="mb-4 text-center text-base font-semibold" style={{ color: fgHex }}>
-            {shopName} <span style={{ opacity: 0.6 }}>&middot; {t(lang, "loyaltyCard")}</span>
-          </p>
-          <StampDisplay
-            stamps={stamps}
-            threshold={threshold}
-            fgColor={fgHex}
-            animate={animate}
-            language={lang}
-          />
-          {remaining > 0 && displayName ? (
-            <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
-              {t(lang, "stampsAwayPersonal", {
-                name: displayName,
-                n: remaining,
-                s: remaining > 1 ? "s" : "",
-                s2: remaining > 1 ? "n" : "",
-                si: remaining > 1 ? "i" : "o",
-              })}
-            </p>
-          ) : remaining > 0 ? (
-            <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
-              {t(lang, "stampsAwayGeneric", { n: threshold })}
-            </p>
-          ) : null}
-          {totalEarned !== undefined && freeRedeemed !== undefined && (
-            <p className="mt-1 text-center text-sm" style={{ color: fgHex }}>
-              {t(lang, "stampsEarnedRedeemed", {
-                earned: totalEarned,
-                redeemed: freeRedeemed,
-              })}
-            </p>
-          )}
-        </div>
-        {children}
-      </div>
+            <div
+              className="rounded-2xl p-6"
+              style={{
+                // Solid bg base masks the patterned backdrop behind text, then
+                // a translucent fg tint sits on top for the brand-coloured
+                // wash. Without the solid base the pattern shows through and
+                // competes with the body copy on mobile.
+                backgroundColor: bgHex,
+                backgroundImage: `linear-gradient(${fgHex}38, ${fgHex}38)`,
+                border: `1px solid ${fgHex}50`,
+              }}
+            >
+              <p className="mb-4 text-center text-base font-semibold" style={{ color: fgHex }}>
+                {shopName} <span style={{ opacity: 0.6 }}>&middot; {t(lang, "loyaltyCard")}</span>
+              </p>
+              <StampDisplay
+                stamps={stamps}
+                threshold={threshold}
+                fgColor={fgHex}
+                animate={animate}
+                language={lang}
+              />
+              {remaining > 0 && displayName ? (
+                <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
+                  {t(lang, "stampsAwayPersonal", {
+                    name: displayName,
+                    n: remaining,
+                    s: remaining > 1 ? "s" : "",
+                    s2: remaining > 1 ? "n" : "",
+                    si: remaining > 1 ? "i" : "o",
+                  })}
+                </p>
+              ) : remaining > 0 ? (
+                <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
+                  {t(lang, "stampsAwayGeneric", { n: threshold })}
+                </p>
+              ) : null}
+              {totalEarned !== undefined && freeRedeemed !== undefined && (
+                <p className="mt-1 text-center text-sm" style={{ color: fgHex }}>
+                  {t(lang, "stampsEarnedRedeemed", {
+                    earned: totalEarned,
+                    redeemed: freeRedeemed,
+                  })}
+                </p>
+              )}
+            </div>
+            {children}
+          </div>
+        );
+
+        // No alt face → render the card content as before.
+        if (!altFace) {
+          return (
+            <div className="relative z-10 w-full max-w-sm space-y-6">
+              {cardContent}
+            </div>
+          );
+        }
+
+        // Two-face slider: the whole content column (logo + stamps + actions)
+        // slides off-screen and the alt face slides in, full vertical room.
+        return (
+          <div className="relative z-10 w-full max-w-sm overflow-hidden">
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{
+                width: "200%",
+                transform: showAltFace ? "translateX(-50%)" : "translateX(0)",
+              }}
+            >
+              <div
+                className="w-1/2 pr-2"
+                aria-hidden={showAltFace}
+                style={{ visibility: showAltFace ? "hidden" : "visible" }}
+              >
+                {cardContent}
+              </div>
+              <div
+                className="flex w-1/2 flex-col justify-center pl-2"
+                aria-hidden={!showAltFace}
+                style={{ visibility: showAltFace ? "visible" : "hidden" }}
+              >
+                {altFace}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

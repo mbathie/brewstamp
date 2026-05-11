@@ -6,7 +6,7 @@ import { useWebSocket } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Coffee, Gift, Stamp, ArrowRightLeft, HelpCircle, LogIn } from "lucide-react";
+import { Coffee, Gift, Stamp, ArrowRightLeft, HelpCircle, LogIn, Pencil, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -93,6 +93,14 @@ export default function CustomerClient({
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [view, setView] = useState<"card" | "edit">("card");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  // Set true when the customer fills in their details inline (so we can flip
+  // the UI from "anonymous" to "signed in" without reloading the page — the
+  // customerName prop comes from the server and stays stale until next visit).
+  const [accountCreated, setAccountCreated] = useState(false);
+  const hasAccount = !!customerName || accountCreated;
 
   const searchParams = useSearchParams();
   const viewOnly = searchParams.get("checkin") === "0";
@@ -220,11 +228,41 @@ export default function CustomerClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(update),
       });
+      if (update.name) setAccountCreated(true);
     }
     setDetailsSaved(true);
     setShowDetailsPrompt(false);
     setStatus("idle");
     setFreedEarned(false);
+  }
+
+  async function saveEditedDetails() {
+    setEditError("");
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEditError(t(lang, "invalidEmail"));
+      return;
+    }
+    setEditSaving(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const update: any = {};
+      if (name.trim()) update.name = name.trim();
+      if (email.trim()) update.email = email.trim();
+      if (password.trim()) update.password = password.trim();
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(update),
+      });
+      if (!res.ok) throw new Error("save-failed");
+      setPassword("");
+      toast.success(t(lang, "detailsUpdated"));
+      setView("card");
+    } catch {
+      setEditError(t(lang, "couldNotSave"));
+    } finally {
+      setEditSaving(false);
+    }
   }
 
   async function handleLogin() {
@@ -265,6 +303,80 @@ export default function CustomerClient({
       displayName={displayName}
       animate={status === "approved"}
       language={lang}
+      showAltFace={view === "edit"}
+      altFace={
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setView("card");
+                setEditError("");
+                setPassword("");
+              }}
+              className="flex cursor-pointer items-center gap-1.5 text-sm hover:opacity-80"
+              style={{ color: fgHex }}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t(lang, "back")}
+            </button>
+            <p className="text-base font-semibold" style={{ color: fgHex }}>
+              {t(lang, "yourDetails")}
+            </p>
+            <span className="w-12" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+              {t(lang, "yourName")}
+            </Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t(lang, "yourName")}
+              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+              className="placeholder-inherit"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+              {t(lang, "yourEmail")}
+            </Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setEditError(""); }}
+              placeholder={t(lang, "yourEmail")}
+              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+              className="placeholder-inherit"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+              {t(lang, "setPassword")}
+            </Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
+              className="placeholder-inherit"
+            />
+          </div>
+          {editError && (
+            <p className="text-xs text-red-400">{editError}</p>
+          )}
+          <Button
+            type="button"
+            onClick={saveEditedDetails}
+            disabled={editSaving}
+            className="w-full cursor-pointer hover:opacity-90"
+            style={{ backgroundColor: fgHex, color: bgHex }}
+          >
+            {editSaving ? t(lang, "saving") : t(lang, "saveChanges")}
+          </Button>
+        </div>
+      }
     >
         {/* Actions */}
         <div>
@@ -436,8 +548,9 @@ export default function CustomerClient({
 
         </div>
 
-        {/* Login for returning customers */}
-        {!customerName && (
+        {/* Login for returning customers — only show to true anonymous
+            visitors. If they just created an account inline, hide it. */}
+        {!hasAccount && (
           <div className="text-center">
             {!showLogin ? (
               <Button
@@ -493,62 +606,85 @@ export default function CustomerClient({
           </div>
         )}
 
-        {/* Switch shop */}
-        {otherShops.length > 0 && (
-          <>
-            <button
-              onClick={() => setShowShopSwitcher(!showShopSwitcher)}
-              className="mx-auto flex cursor-pointer items-center gap-1.5 text-xs hover:opacity-80"
-              style={{ color: fgHex, opacity: 0.5 }}
-            >
-              <ArrowRightLeft className="h-3 w-3" />
-              {t(lang, "switchShop")}
-            </button>
-
-            {showShopSwitcher && (
-              <div className="space-y-2">
-                {otherShops.map((s) => (
-                  <a
-                    key={s.code}
-                    href={`/s/${s.code}`}
-                    className="flex items-center gap-3 rounded-xl p-3 transition-colors"
-                    style={{ backgroundColor: fgHex + "10", border: `1px solid ${fgHex}20` }}
-                  >
-                    {s.logo ? (
-                      <img
-                        src={s.logo}
-                        alt={s.name}
-                        className="h-10 w-10 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-700">
-                        <Coffee className="h-5 w-5 text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium" style={{ color: fgHex }}>{s.name}</p>
-                      <p className="text-xs" style={{ color: fgHex, opacity: 0.5 }}>
-                        {s.stamps} / {s.threshold} stamps
-                      </p>
-                    </div>
-                  </a>
-                ))}
-              </div>
+        {/* Switch shop + Update details — half-width row when both are
+            available, full-width otherwise. Update details only shows for
+            authenticated customers (they have a name on record). */}
+        {(otherShops.length > 0 || hasAccount) && (
+          <div className="flex gap-2">
+            {otherShops.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowShopSwitcher(!showShopSwitcher)}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
+              >
+                <ArrowRightLeft className="mr-1.5 h-4 w-4" />
+                {t(lang, "switchShop")}
+              </Button>
             )}
-          </>
+            {hasAccount && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setView("edit")}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
+              >
+                <Pencil className="mr-1.5 h-4 w-4" />
+                {t(lang, "updateDetails")}
+              </Button>
+            )}
+          </div>
         )}
 
-        {/* Powered by — pinned to bottom centre of the viewport */}
-        <a
-          href="/"
-          className="fixed bottom-4 left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-4 py-1.5 text-sm shadow-sm backdrop-blur-md transition-opacity hover:opacity-80"
-          style={{ backgroundColor: fgHex + "20", color: fgHex }}
-        >
-          Powered by{" "}
-          <span className="font-[family-name:var(--font-logo)] text-base tracking-wide" style={{ opacity: 1 }}>
-            Brewstamp
-          </span>
-        </a>
+        {showShopSwitcher && otherShops.length > 0 && (
+          <div className="space-y-2">
+            {otherShops.map((s) => (
+              <a
+                key={s.code}
+                href={`/s/${s.code}`}
+                className="flex items-center gap-3 rounded-xl p-3 transition-colors"
+                style={{ backgroundColor: fgHex + "10", border: `1px solid ${fgHex}20` }}
+              >
+                {s.logo ? (
+                  <img
+                    src={s.logo}
+                    alt={s.name}
+                    className="h-10 w-10 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-700">
+                    <Coffee className="h-5 w-5 text-white" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: fgHex }}>{s.name}</p>
+                  <p className="text-xs" style={{ color: fgHex, opacity: 0.5 }}>
+                    {s.stamps} / {s.threshold} stamps
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* Powered by — sits at the natural end of the content, right-aligned
+            and small. No fixed positioning so it can't overlap action buttons
+            on tall pages. */}
+        <div className="flex justify-end">
+          <a
+            href="/"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs transition-opacity hover:opacity-80"
+            style={{ backgroundColor: fgHex + "15", color: fgHex }}
+          >
+            Powered by{" "}
+            <span className="font-[family-name:var(--font-logo)] tracking-wide" style={{ opacity: 1 }}>
+              Brewstamp
+            </span>
+          </a>
+        </div>
+
     </CardPreview>
   );
 }

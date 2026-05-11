@@ -47,8 +47,14 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Area, AreaChart, XAxis, CartesianGrid } from "recharts";
+import { LANGUAGE_META } from "@/lib/i18n";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
+
+function langFlag(code: string): string {
+  const key = code as keyof typeof LANGUAGE_META;
+  return LANGUAGE_META[key]?.flag ?? "🏳";
+}
 
 type ActivityMetric = "stamps" | "visits" | "redeems";
 
@@ -398,11 +404,18 @@ export default function AdminShopDetailPage() {
   const customPattern = !!shop.bgPattern && shop.bgPattern !== "none";
   const langChanged = !!shop.language && shop.language !== "en";
 
-  const setupItems: Array<{ label: string; on: boolean }> = [
+  const setupItems: Array<{ label: string; on: boolean; icon?: string }> = [
     { label: "Logo", on: !!shop.logo },
     { label: "Colors", on: customColors },
     { label: "Pattern", on: customPattern },
-    { label: langChanged ? `Language · ${shop.language}` : "Language", on: langChanged },
+    {
+      // Language always counts as configured — even English is a valid
+      // choice. Surface the flag in the indicator slot so the merchant can
+      // see at a glance which language the customer card is in.
+      label: `Language · ${(shop.language || "en").toUpperCase()}`,
+      on: true,
+      icon: langFlag(shop.language || "en"),
+    },
   ];
   const outreachItems: Array<{ label: string; on: boolean }> = [
     { label: "1st-stamp email", on: !!shop.firstCustomerEmailSent },
@@ -904,7 +917,7 @@ function ChecklistCard({
   items,
 }: {
   title: string;
-  items: Array<{ label: string; on: boolean }>;
+  items: Array<{ label: string; on: boolean; icon?: string }>;
 }) {
   return (
     <Card>
@@ -913,9 +926,13 @@ function ChecklistCard({
           {title}
         </p>
         <ul className="space-y-1.5">
-          {items.map(({ label, on }) => (
+          {items.map(({ label, on, icon }) => (
             <li key={label} className="flex items-center gap-2 text-sm">
-              {on ? (
+              {icon ? (
+                <span className="inline-flex size-4 shrink-0 items-center justify-center text-base leading-none">
+                  {icon}
+                </span>
+              ) : on ? (
                 <Check className="size-4 shrink-0 text-emerald-500" />
               ) : (
                 <Circle className="size-4 shrink-0 text-muted-foreground/40" />

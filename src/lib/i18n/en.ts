@@ -42,6 +42,13 @@ const en = {
 
   // Switch shop
   switchShop: "Switch shop",
+  updateDetails: "Update details",
+  yourDetails: "Your details",
+  back: "Back",
+  saveChanges: "Save changes",
+  saving: "Saving…",
+  detailsUpdated: "Details updated",
+  couldNotSave: "Couldn't save changes — try again.",
   stampsOutOfThreshold: "{stamps} / {threshold} stamps",
 
   // Approved feedback (in-place toasts/messages)
