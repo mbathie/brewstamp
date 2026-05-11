@@ -2,6 +2,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { Coffee, Heart } from "lucide-react";
 
+const LANGUAGES: Array<{ code: string; label: string }> = [
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "pt", label: "Português" },
+  { code: "it", label: "Italiano" },
+  { code: "zh", label: "中文" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "ar", label: "العربية" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "id", label: "Bahasa" },
+];
+
 export default function Footer() {
   return (
     <footer className="border-t border-stone-200 bg-white">
@@ -90,7 +104,34 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-stone-100 pt-6 text-center text-xs text-stone-500">
+        {/* Languages — keeps internal links to localized landings so Google
+            (and humans) can discover them from any page. */}
+        <div className="mt-10 border-t border-stone-100 pt-6">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
+            Languages
+          </h3>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-stone-500">
+            <Link
+              href="/"
+              hrefLang="en"
+              className="transition-colors hover:text-stone-900"
+            >
+              English
+            </Link>
+            {LANGUAGES.map((lang) => (
+              <Link
+                key={lang.code}
+                href={`/${lang.code}`}
+                hrefLang={lang.code}
+                className="transition-colors hover:text-stone-900"
+              >
+                {lang.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-stone-100 pt-6 text-center text-xs text-stone-500">
           Made with <Heart className="inline h-3 w-3 fill-red-500 text-red-500" /> in Brunswick Heads, Australia 2026
         </div>
       </div>

@@ -35,6 +35,19 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "cafe-loyalty-programs-for-customers",
+    title:
+      "Does This Cafe Have a Loyalty Program? How Digital Stamp Cards Work",
+    description:
+      "Most cafes now run digital loyalty programs — scan a QR code, collect stamps, redeem free coffee. Here's how to spot them and start earning rewards.",
+    tag: "For customers",
+    image:
+      "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Customer scanning a QR code at a cafe counter",
+    publishedAt: "2026-05-11",
+    publishedAtDisplay: "11 May 2026",
+  },
+  {
     slug: "multi-language-loyalty-card",
     title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
     description:

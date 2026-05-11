@@ -20,13 +20,15 @@ import { buildHreflangMap } from "@/lib/i18n/landing";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+    absolute:
+      "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards | Brewstamp",
   },
   description:
-    "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
+    "The free coffee loyalty card app for cafes. Customers scan a QR code, earn stamps, and redeem free drinks — no customer app to download. Set up in 2 minutes.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
   keywords: [
     "coffee loyalty card",
+    "coffee loyalty card app",
     "coffee stamp card",
     "coffee rewards card",
     "digital loyalty card",
@@ -38,15 +40,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    title: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+    title: "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards",
     description:
-      "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
+      "The free coffee loyalty card app for cafes. Customers scan a QR code, earn stamps, and redeem free drinks — no customer app to download.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brewstamp — Digital Coffee Loyalty Card for Cafes",
+    title: "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards",
     description:
-      "Brewstamp powers digital coffee loyalty cards at cafes. See how stamps and free-drink rewards work — or set up a free loyalty card for your shop.",
+      "The free coffee loyalty card app for cafes. Scan a QR code, earn stamps, redeem free drinks — no customer app to download.",
   },
 };
 

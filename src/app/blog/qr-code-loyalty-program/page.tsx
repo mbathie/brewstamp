@@ -6,9 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "How to Set Up a QR Code Loyalty Program",
+  title: "QR Code Loyalty Program: How to Set One Up for Your Cafe (Free)",
   description:
-    "Step-by-step guide to launching a QR code loyalty program at your cafe. No app needed, free to start, works on any phone.",
+    "Step-by-step guide to launching a free QR code loyalty program at your cafe. No customer app needed, works on any phone, set up in under 5 minutes.",
   alternates: {
     canonical: "/blog/qr-code-loyalty-program",
   },
