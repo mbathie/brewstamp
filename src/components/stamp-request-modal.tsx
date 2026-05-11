@@ -39,13 +39,17 @@ export default function StampRequestModal({
   if (!request) return null;
 
   return (
-    <Dialog
-      open={!!request}
-      onOpenChange={() => {
-        onReject(request.requestId);
-      }}
-    >
-      <DialogContent className="sm:max-w-sm">
+    <Dialog open={!!request}>
+      <DialogContent
+        className="sm:max-w-sm"
+        showCloseButton={false}
+        // Force the merchant to make an explicit Approve/Decline choice.
+        // Without these guards an accidental click outside the modal — or
+        // an Escape press — would silently reject the customer's stamp.
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader className="pb-2">
           <DialogTitle className="text-center text-xl">
             {request.customerName}
