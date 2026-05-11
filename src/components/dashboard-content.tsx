@@ -26,6 +26,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ArrowDown, ArrowUp, CalendarIcon, Download, Monitor, QrCode, Settings as SettingsIcon, Smartphone, UserPen } from "lucide-react";
+import type { DateRange } from "react-day-picker";
+
+function toIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function fmtRangeLabel(r: DateRange | undefined): string {
+  if (!r?.from) return "";
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "2-digit" };
+  const from = r.from.toLocaleDateString("en-AU", opts);
+  if (!r.to || r.from.toDateString() === r.to.toDateString()) return from;
+  const to = r.to.toLocaleDateString("en-AU", opts);
+  return `${from} – ${to}`;
+}
 import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 import { Sparkline } from "@/components/sparkline";
@@ -79,7 +96,7 @@ const chartConfig = {
 
 export default function DashboardContent({ shopName, shopCode, shopLogo, stampThreshold, isNewShop, hasEarnedStamps = false, hasActivity = false, needsProfileUpdate, setupComplete = false }: Props) {
   const [range, setRange] = useState<Range>("today");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [activeDates, setActiveDates] = useState<Set<string>>(new Set());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
@@ -99,7 +116,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
   // Reset to first page when range/date filter changes
   useEffect(() => {
     setPage(0);
-  }, [range, selectedDate]);
+  }, [range, selectedRange]);
 
   // Fetch active dates for the calendar
   useEffect(() => {
@@ -114,11 +131,10 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (range === "date" && selectedDate) {
-      const y = selectedDate.getFullYear();
-      const m = String(selectedDate.getMonth() + 1).padStart(2, "0");
-      const d = String(selectedDate.getDate()).padStart(2, "0");
-      params.set("date", `${y}-${m}-${d}`);
+    if (range === "date" && selectedRange?.from) {
+      const to = selectedRange.to ?? selectedRange.from;
+      params.set("from", toIsoDate(selectedRange.from));
+      params.set("to", toIsoDate(to));
     } else {
       params.set("range", range === "date" ? "today" : range);
     }
@@ -133,7 +149,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [range, selectedDate, refreshKey]);
+  }, [range, selectedRange, refreshKey]);
 
   // Listen for stamp approvals to auto-refresh
   useEffect(() => {
@@ -143,8 +159,14 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
   }, []);
 
   const chartData = useMemo(() => {
-    if (range === "today" || range === "date") {
-      const isToday = range === "today" || (selectedDate && selectedDate.toDateString() === new Date().toDateString());
+    // Custom range covering more than one day → fall through to the daily
+    // binning path below so the chart shows one bar per day.
+    const isMultiDay = range === "date" && !!selectedRange?.from && !!selectedRange?.to
+      && selectedRange.from.toDateString() !== selectedRange.to.toDateString();
+
+    if (!isMultiDay && (range === "today" || range === "date")) {
+      const targetDay = range === "date" ? selectedRange?.from : undefined;
+      const isToday = range === "today" || (targetDay && targetDay.toDateString() === new Date().toDateString());
       const currentHour = isToday ? new Date().getHours() : 23;
       const hours: Record<number, ChartPoint> = {};
       for (let h = 0; h <= currentHour; h++) {
@@ -203,14 +225,23 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
         };
       });
     } else {
-      const now = new Date();
-      const days = range === "week" ? 7 : 30;
+      // week, month, or custom multi-day range — bin by day
+      let startDate: Date;
+      let endDate: Date;
+      if (range === "date" && selectedRange?.from) {
+        startDate = new Date(selectedRange.from);
+        endDate = new Date(selectedRange.to ?? selectedRange.from);
+      } else {
+        endDate = new Date();
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - (range === "week" ? 7 : 30));
+      }
       const dateMap: Record<string, ChartPoint> = {};
-      for (let i = days; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        const key = d.toISOString().slice(0, 10);
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const key = toIsoDate(cursor);
         dateMap[key] = { _id: key, stamps: 0, checkins: 0, redeems: 0 };
+        cursor.setDate(cursor.getDate() + 1);
       }
       for (const p of chartRaw) {
         const key = String(p._id);
@@ -218,21 +249,27 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
           dateMap[key] = p;
         }
       }
+      const spanDays = Math.round((endDate.getTime() - startDate.getTime()) / 86400000) + 1;
+      // Short labels for ≤ ~10-day spans (weekday name), numeric day-of-month
+      // otherwise so longer ranges stay readable.
       const fmt: Intl.DateTimeFormatOptions =
-        range === "month"
+        spanDays > 10
           ? { day: "numeric" }
           : { weekday: "short" };
       return Object.values(dateMap).map((p) => ({
-        label: new Date(String(p._id)).toLocaleDateString("en-AU", fmt),
+        label: new Date(String(p._id) + "T00:00:00").toLocaleDateString("en-AU", fmt),
         stamps: p.stamps,
         redeems: p.redeems,
       }));
     }
-  }, [chartRaw, range, selectedDate]);
+  }, [chartRaw, range, selectedRange]);
 
   function formatTime(dateStr: string) {
     const d = new Date(dateStr);
-    const isToday = range === "today" || (range === "date" && selectedDate && d.toDateString() === selectedDate.toDateString());
+    const singleDay = range === "date"
+      && selectedRange?.from
+      && (!selectedRange.to || selectedRange.from.toDateString() === selectedRange.to.toDateString());
+    const isToday = range === "today" || (singleDay && d.toDateString() === selectedRange!.from!.toDateString());
     if (isToday) {
       return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     }
@@ -425,7 +462,7 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                   key={r}
                   variant={range === r ? "default" : "ghost"}
                   size="xs"
-                  onClick={() => { setRange(r); setSelectedDate(undefined); }}
+                  onClick={() => { setRange(r); setSelectedRange(undefined); }}
                   className={`cursor-pointer capitalize ${range !== r ? "text-muted-foreground" : ""}`}
                 >
                   {r}
@@ -439,34 +476,26 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                     className={`cursor-pointer gap-1.5 ${range !== "date" ? "text-muted-foreground" : ""}`}
                   >
                     <CalendarIcon className="h-3.5 w-3.5" />
-                    {range === "date" && selectedDate
-                      ? selectedDate.toLocaleDateString("en-AU", {
-                          day: "numeric",
-                          month: "short",
-                          year: "2-digit",
-                        })
-                      : null}
+                    {range === "date" ? fmtRangeLabel(selectedRange) || null : null}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
                   <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setSelectedDate(date);
+                    mode="range"
+                    numberOfMonths={2}
+                    selected={selectedRange}
+                    onSelect={(r) => {
+                      setSelectedRange(r);
+                      if (r?.from) {
                         setRange("date");
-                        setCalendarOpen(false);
+                        // Close once the user picks a complete range (or
+                        // explicitly selects a single day by clicking the same
+                        // date twice).
+                        if (r.to) setCalendarOpen(false);
                       }
                     }}
-                    disabled={(date) => {
-                      if (date > new Date()) return true;
-                      const y = date.getFullYear();
-                      const m = String(date.getMonth() + 1).padStart(2, "0");
-                      const d = String(date.getDate()).padStart(2, "0");
-                      return !activeDates.has(`${y}-${m}-${d}`);
-                    }}
-                    defaultMonth={selectedDate || new Date()}
+                    disabled={(date) => date > new Date()}
+                    defaultMonth={selectedRange?.from || new Date()}
                     captionLayout="dropdown"
                     startMonth={
                       activeDates.size > 0
@@ -560,8 +589,8 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
           ) : checkins.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No check-ins{" "}
-              {range === "date" && selectedDate
-                ? `on ${selectedDate.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}`
+              {range === "date" && selectedRange?.from
+                ? `for ${fmtRangeLabel(selectedRange)}`
                 : range === "today"
                   ? "today"
                   : `this ${range}`}.

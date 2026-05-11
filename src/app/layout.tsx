@@ -69,7 +69,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kaushanScript.variable} antialiased`}
+        className={`dark ${geistSans.variable} ${geistMono.variable} ${kaushanScript.variable} antialiased`}
       >
         <SessionProvider>
           <TooltipProvider>{children}</TooltipProvider>

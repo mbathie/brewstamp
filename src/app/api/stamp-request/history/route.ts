@@ -13,14 +13,21 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const range = url.searchParams.get("range") || "today";
-  const dateParam = url.searchParams.get("date"); // YYYY-MM-DD
+  const dateParam = url.searchParams.get("date"); // YYYY-MM-DD (legacy single)
+  const fromParam = url.searchParams.get("from"); // YYYY-MM-DD
+  const toParam = url.searchParams.get("to");     // YYYY-MM-DD (inclusive)
 
   const now = new Date();
   let since: Date | undefined;
   let until: Date | undefined;
-  const isAll = range === "all" && !dateParam;
+  const isAll = range === "all" && !dateParam && !fromParam;
 
-  if (dateParam) {
+  if (fromParam && toParam) {
+    const [fy, fm, fd] = fromParam.split("-").map(Number);
+    const [ty, tm, td] = toParam.split("-").map(Number);
+    since = new Date(fy, fm - 1, fd);
+    until = new Date(ty, tm - 1, td + 1); // end-of-day exclusive
+  } else if (dateParam) {
     const [y, m, d] = dateParam.split("-").map(Number);
     since = new Date(y, m - 1, d);
     until = new Date(y, m - 1, d + 1);
@@ -133,7 +140,10 @@ export async function GET(req: Request) {
       {
         $group: {
           _id:
-            range === "today" || dateParam
+            // Hour binning for single-day windows (today, legacy ?date=, or
+            // from==to). Day binning otherwise — including multi-day custom
+            // ranges. Month binning only for "all" with no explicit date.
+            range === "today" || dateParam || (fromParam && fromParam === toParam)
               ? { $hour: "$createdAt" }
               : isAll
                 ? {
