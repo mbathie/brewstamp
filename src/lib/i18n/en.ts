@@ -7,8 +7,7 @@ const en = {
   stampsOf: "{stamps} of {threshold} stamps",
   toGo: "{remaining} to go",
   rewardReady: "Reward ready!",
-  stampsAwayPersonal:
-    "{name}, you're {n} stamp{s} away from a free one!",
+  stampsAwayPersonal: "{name}, {n} more for a free one!",
   stampsAwayGeneric: "Collect {n} stamps to earn 1 free",
   stampsEarnedRedeemed:
     "{earned} stamps earned · {redeemed} rewards redeemed",

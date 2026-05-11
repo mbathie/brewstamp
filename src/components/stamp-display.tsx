@@ -19,16 +19,16 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate, lang
     <div className="space-y-3">
       {/* Progress text */}
       <div className="flex items-center justify-between px-1">
-        <p className="text-sm font-medium" style={{ color: fg }}>
+        <p className="text-base font-semibold" style={{ color: fg }}>
           {t(language, "stampsOf", { stamps, threshold })}
         </p>
         {remaining > 0 && (
-          <p className="text-xs" style={{ color: fg }}>
+          <p className="text-sm" style={{ color: fg }}>
             {t(language, "toGo", { remaining })}
           </p>
         )}
         {remaining <= 0 && (
-          <p className="text-xs font-medium" style={{ color: fg }}>
+          <p className="text-sm font-medium" style={{ color: fg }}>
             {t(language, "rewardReady")}
           </p>
         )}

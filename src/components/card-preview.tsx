@@ -87,9 +87,17 @@ export default function CardPreview({
         </div>
         <div
           className="rounded-2xl p-6"
-          style={{ backgroundColor: fgHex + "38", border: `1px solid ${fgHex}50` }}
+          style={{
+            // Solid bg base masks the patterned backdrop behind text, then a
+            // translucent fg tint sits on top for the brand-coloured wash.
+            // Without the solid base the pattern shows through and competes
+            // with the body copy on mobile.
+            backgroundColor: bgHex,
+            backgroundImage: `linear-gradient(${fgHex}38, ${fgHex}38)`,
+            border: `1px solid ${fgHex}50`,
+          }}
         >
-          <p className="mb-4 text-center text-sm font-medium" style={{ color: fgHex }}>
+          <p className="mb-4 text-center text-base font-semibold" style={{ color: fgHex }}>
             {shopName} <span style={{ opacity: 0.6 }}>&middot; {t(lang, "loyaltyCard")}</span>
           </p>
           <StampDisplay
@@ -100,7 +108,7 @@ export default function CardPreview({
             language={lang}
           />
           {remaining > 0 && displayName ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
+            <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
               {t(lang, "stampsAwayPersonal", {
                 name: displayName,
                 n: remaining,
@@ -110,12 +118,12 @@ export default function CardPreview({
               })}
             </p>
           ) : remaining > 0 ? (
-            <p className="mt-3 text-center text-xs" style={{ color: fgHex }}>
+            <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
               {t(lang, "stampsAwayGeneric", { n: threshold })}
             </p>
           ) : null}
           {totalEarned !== undefined && freeRedeemed !== undefined && (
-            <p className="mt-1 text-center text-xs" style={{ color: fgHex }}>
+            <p className="mt-1 text-center text-sm" style={{ color: fgHex }}>
               {t(lang, "stampsEarnedRedeemed", {
                 earned: totalEarned,
                 redeemed: freeRedeemed,

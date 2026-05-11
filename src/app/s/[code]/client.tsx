@@ -542,11 +542,11 @@ export default function CustomerClient({
         <div className="flex justify-end">
           <a
             href="/"
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs transition-opacity hover:opacity-80"
+            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-opacity hover:opacity-80"
             style={{ backgroundColor: fgHex + "15", color: fgHex }}
           >
             Powered by{" "}
-            <span className="font-[family-name:var(--font-logo)] tracking-wide" style={{ opacity: 1 }}>
+            <span className="font-[family-name:var(--font-logo)] text-base tracking-wide" style={{ opacity: 1 }}>
               Brewstamp
             </span>
           </a>
