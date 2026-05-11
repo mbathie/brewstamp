@@ -63,14 +63,14 @@ export async function GET() {
     isPro: proShopIds.has(shop._id.toString()),
   }));
 
-  // Growth charts: daily stamps, new customers, shop signups
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  // Growth charts: pull 90 days so client-side can compute weekly/monthly
+  // aggregations and 7-day deltas without re-fetching.
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
   const [dailyStamps, dailyCustomers] = await Promise.all([
-    // Daily stamps (approved requests)
     StampRequest.aggregate([
-      { $match: { status: "approved", createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { status: "approved", createdAt: { $gte: ninetyDaysAgo } } },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -79,9 +79,8 @@ export async function GET() {
       },
       { $sort: { _id: 1 } },
     ]),
-    // Daily new customers (stamp cards created with activity)
     StampCard.aggregate([
-      { $match: { totalEarned: { $gt: 0 }, createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { totalEarned: { $gt: 0 }, createdAt: { $gte: ninetyDaysAgo } } },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -92,22 +91,39 @@ export async function GET() {
     ]),
   ]);
 
-  // Shop signups by date (from shops array, no extra query needed)
+  // Shop signups by date (entire history — gives us a long signup curve)
   const shopsByDate: Record<string, number> = {};
   for (const shop of shops) {
-    const d = new Date((shop as any).createdAt).toISOString().slice(0, 10);
+    const d = new Date((shop as { createdAt: Date }).createdAt)
+      .toISOString()
+      .slice(0, 10);
     shopsByDate[d] = (shopsByDate[d] || 0) + 1;
   }
   const dailyShops = Object.entries(shopsByDate)
     .map(([date, count]) => ({ _id: date, shops: count }))
     .sort((a, b) => a._id.localeCompare(b._id));
 
+  // Subscription upgrades by date (active subs only — captures genuine
+  // conversions, not cancelled trials).
+  const allActiveSubsByDate: Record<string, number> = {};
+  for (const sub of activeSubs) {
+    const d = new Date((sub as { createdAt: Date }).createdAt)
+      .toISOString()
+      .slice(0, 10);
+    allActiveSubsByDate[d] = (allActiveSubsByDate[d] || 0) + 1;
+  }
+  const dailyUpgrades = Object.entries(allActiveSubsByDate)
+    .map(([date, count]) => ({ _id: date, upgrades: count }))
+    .sort((a, b) => a._id.localeCompare(b._id));
+
   return NextResponse.json({
     shops: result,
+    proCount: proShopIds.size,
     charts: {
       dailyStamps,
       dailyCustomers,
       dailyShops,
+      dailyUpgrades,
     },
   });
 }
