@@ -538,19 +538,17 @@ export default function CustomerClient({
           </>
         )}
 
-        {/* Powered by */}
-        <div className="flex justify-end">
-          <a
-            href="/"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-opacity hover:opacity-80"
-            style={{ backgroundColor: fgHex + "15", color: fgHex }}
-          >
-            Powered by{" "}
-            <span className="font-[family-name:var(--font-logo)] text-base tracking-wide" style={{ opacity: 1 }}>
-              Brewstamp
-            </span>
-          </a>
-        </div>
+        {/* Powered by — pinned to bottom centre of the viewport */}
+        <a
+          href="/"
+          className="fixed bottom-4 left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-4 py-1.5 text-sm shadow-sm backdrop-blur-md transition-opacity hover:opacity-80"
+          style={{ backgroundColor: fgHex + "20", color: fgHex }}
+        >
+          Powered by{" "}
+          <span className="font-[family-name:var(--font-logo)] text-base tracking-wide" style={{ opacity: 1 }}>
+            Brewstamp
+          </span>
+        </a>
     </CardPreview>
   );
 }
