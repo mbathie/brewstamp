@@ -61,18 +61,58 @@ export async function runDripEmails() {
     ...day14Shops.map((s: any) => s._id),
   ];
 
-  // Batch aggregate total stamps per shop
+  // Batch aggregate total stamps + customer count per shop. Customers is
+  // the count of stamp-card documents for the shop with totalEarned > 0
+  // (excludes anonymous cookies that never actually got a stamp).
   const stampCounts = await StampCard.aggregate([
     { $match: { shop: { $in: allShopIds } } },
-    { $group: { _id: "$shop", total: { $sum: "$totalEarned" } } },
+    {
+      $group: {
+        _id: "$shop",
+        total: { $sum: "$totalEarned" },
+        customers: {
+          $sum: { $cond: [{ $gt: ["$totalEarned", 0] }, 1, 0] },
+        },
+      },
+    },
   ]);
-  const stampMap = new Map<string, number>(
-    stampCounts.map((s: any) => [s._id.toString(), s.total])
+  const statsMap = new Map<string, { stamps: number; customers: number }>(
+    stampCounts.map((s: any) => [
+      s._id.toString(),
+      { stamps: s.total, customers: s.customers },
+    ])
+  );
+
+  // Active Pro subscriptions — used to suppress drips once a shop pays.
+  // We re-check at send time (not at signup) so a shop that upgrades between
+  // Day 1 and Day 14 still gets the earlier drips but stops after upgrading.
+  const proShopIds = new Set(
+    (
+      await Subscription.find({
+        shop: { $in: allShopIds },
+        status: "active",
+      }).select("shop")
+    ).map((s: any) => s.shop.toString())
   );
 
   const isDev =
     process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? false;
   const EXCLUDED_EMAILS = ["mbathie@gmail.com"];
+
+  // Single source of truth for "is this shop active enough that the drip
+  // would be noise rather than helpful?" — any one signal suppresses.
+  //  · Pro: they've paid; onboarding drips read as spam.
+  //  · customers ≥ 10: multiple distinct people scanning = real adoption.
+  //  · stamps ≥ 50: high-volume activity catches the rare case where the
+  //    customer count looks off but the shop is clearly running.
+  function isEngaged(shopId: string): boolean {
+    if (proShopIds.has(shopId)) return true;
+    const s = statsMap.get(shopId);
+    if (!s) return false;
+    if (s.customers >= 10) return true;
+    if (s.stamps >= 50) return true;
+    return false;
+  }
 
   // Process Day 1 emails
   for (const shop of day1Shops) {
@@ -82,13 +122,13 @@ export async function runDripEmails() {
       continue;
     }
 
-    const stamps = stampMap.get(shop._id.toString()) || 0;
+    const engaged = isEngaged(shop._id.toString());
 
     // Mark as sent regardless (avoids re-evaluating daily)
     await Shop.updateOne({ _id: shop._id }, { dripDay1Sent: true });
 
-    // Only send email if stamp count <= 10 and not excluded
-    if (stamps <= 10 && !EXCLUDED_EMAILS.includes(owner.email)) {
+    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
+    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
       const to = isDev ? "mbathie@gmail.com" : owner.email;
       await sendDay1WelcomeEmail({
         to,
@@ -109,13 +149,13 @@ export async function runDripEmails() {
       continue;
     }
 
-    const stamps = stampMap.get(shop._id.toString()) || 0;
+    const engaged = isEngaged(shop._id.toString());
 
     // Mark as sent regardless (avoids re-evaluating daily)
     await Shop.updateOne({ _id: shop._id }, { dripDay3Sent: true });
 
-    // Only send email if stamp count <= 10 and not excluded
-    if (stamps <= 10 && !EXCLUDED_EMAILS.includes(owner.email)) {
+    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
+    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
       const to = isDev ? "mbathie@gmail.com" : owner.email;
       await sendDay3NudgeEmail({
         to,
@@ -136,13 +176,15 @@ export async function runDripEmails() {
       continue;
     }
 
-    const stamps = stampMap.get(shop._id.toString()) || 0;
+    const stats = statsMap.get(shop._id.toString());
+    const stamps = stats?.stamps ?? 0;
+    const engaged = isEngaged(shop._id.toString());
 
     // Mark as sent regardless
     await Shop.updateOne({ _id: shop._id }, { dripDay7Sent: true });
 
-    // Only send email if stamp count <= 10 and not excluded
-    if (stamps <= 10 && !EXCLUDED_EMAILS.includes(owner.email)) {
+    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
+    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
       const to = isDev ? "mbathie@gmail.com" : owner.email;
       await sendDay7FollowUpEmail({
         to,
@@ -164,13 +206,15 @@ export async function runDripEmails() {
       continue;
     }
 
-    const stamps = stampMap.get(shop._id.toString()) || 0;
+    const stats = statsMap.get(shop._id.toString());
+    const stamps = stats?.stamps ?? 0;
+    const engaged = isEngaged(shop._id.toString());
 
     // Mark as sent regardless
     await Shop.updateOne({ _id: shop._id }, { dripDay14Sent: true });
 
-    // Only send email if stamp count <= 10 and not excluded
-    if (stamps <= 10 && !EXCLUDED_EMAILS.includes(owner.email)) {
+    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
+    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
       const to = isDev ? "mbathie@gmail.com" : owner.email;
       await sendDay14ReengagementEmail({
         to,
