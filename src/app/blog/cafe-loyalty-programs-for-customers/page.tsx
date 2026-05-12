@@ -6,17 +6,20 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
+  // SERP-tuned: lead with the implicit answer ("Yes —") and the payoff
+  // ("free coffee") to pull clicks at the page-1 position the post already
+  // holds. Description doubles down without burying the lede.
   title:
-    "Does This Cafe Have a Loyalty Program? How Digital Stamp Cards Work",
+    "Does This Cafe Have a Loyalty Program? Yes — Here's How to Find It and Earn Free Coffee",
   description:
-    "Most cafes now run digital loyalty programs — scan a QR code, collect stamps, redeem free coffee. Here's how to spot them, sign up, and earn rewards.",
+    "Most cafes now run a digital loyalty card. Look for a QR code at the counter, scan it with your phone — no app needed — and start collecting stamps toward a free drink. Here's exactly how it works.",
   alternates: { canonical: "/blog/cafe-loyalty-programs-for-customers" },
   openGraph: {
     type: "article",
     url: "/blog/cafe-loyalty-programs-for-customers",
-    title: "Does This Cafe Have a Loyalty Program? How Digital Stamp Cards Work",
+    title: "Does This Cafe Have a Loyalty Program? Yes — Here's How to Find It and Earn Free Coffee",
     description:
-      "Most cafes now run digital loyalty programs — scan a QR code, collect stamps, redeem free coffee. Here's how they work for customers.",
+      "Look for a QR code at the counter, scan it with your phone (no app needed), and start collecting stamps toward a free drink. Here's exactly how it works.",
     images: [
       {
         url: "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -28,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Does This Cafe Have a Loyalty Program? How Stamp Cards Work",
+    title: "Does This Cafe Have a Loyalty Program? Yes — Here's How to Earn Free Coffee",
     description:
-      "Most cafes now run digital loyalty programs — scan a QR code, collect stamps, redeem free coffee.",
+      "Scan the QR code at the counter, no app needed, start collecting stamps toward a free drink.",
     images: [
       "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],

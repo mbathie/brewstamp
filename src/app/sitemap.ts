@@ -48,6 +48,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
     {
+      url: `${baseUrl}/blog/how-many-stamps-for-a-free-coffee`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/blog/cafe-loyalty-programs-for-customers`,
       lastModified: new Date(),
       priority: 0.8,

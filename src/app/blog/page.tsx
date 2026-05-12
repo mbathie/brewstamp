@@ -35,11 +35,24 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "how-many-stamps-for-a-free-coffee",
+    title:
+      "How Many Stamps for a Free Coffee? Loyalty Card Thresholds Explained",
+    description:
+      "Most cafes set their loyalty card between 6 and 10 stamps. Here's why the number matters, what the typical rewards look like, and what to watch out for.",
+    tag: "For customers",
+    image:
+      "https://images.unsplash.com/photo-1726666339581-07d2c51baeeb?w=600&h=400&q=70&auto=format&fit=crop",
+    imageAlt: "Cappuccino served on a wooden tray with a loyalty card",
+    publishedAt: "2026-05-13",
+    publishedAtDisplay: "13 May 2026",
+  },
+  {
     slug: "cafe-loyalty-programs-for-customers",
     title:
-      "Does This Cafe Have a Loyalty Program? How Digital Stamp Cards Work",
+      "Does This Cafe Have a Loyalty Program? Yes — Here's How to Find It and Earn Free Coffee",
     description:
-      "Most cafes now run digital loyalty programs — scan a QR code, collect stamps, redeem free coffee. Here's how to spot them and start earning rewards.",
+      "Look for a QR code at the counter, scan it with your phone (no app needed), and start collecting stamps toward a free drink. Here's exactly how it works.",
     tag: "For customers",
     image:
       "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
