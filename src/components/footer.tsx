@@ -14,6 +14,7 @@ const LANGUAGES: Array<{ code: string; label: string }> = [
   { code: "ar", label: "العربية" },
   { code: "hi", label: "हिन्दी" },
   { code: "id", label: "Bahasa" },
+  { code: "fil", label: "Filipino" },
 ];
 
 export default function Footer() {

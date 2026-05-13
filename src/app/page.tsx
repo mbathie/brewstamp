@@ -437,7 +437,7 @@ export default function Home() {
             Available worldwide
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-            Your customer card in 12 languages
+            Your customer card in 13 languages
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-stone-500">
             Pick the language that matches your customers — the loyalty card and
@@ -447,6 +447,7 @@ export default function Home() {
             {[
               ["/", "🇺🇸", "English", "Hello"],
               ["/ar", "🇸🇦", "العربية", "مرحبا"],
+              ["/fil", "🇵🇭", "Filipino", "Kumusta"],
               ["/fr", "🇫🇷", "Français", "Bonjour"],
               ["/de", "🇩🇪", "Deutsch", "Hallo"],
               ["/hi", "🇮🇳", "हिन्दी", "नमस्ते"],

@@ -10,11 +10,13 @@ import ko from "./ko";
 import ar from "./ar";
 import hi from "./hi";
 import id from "./id";
+import fil from "./fil";
 
 // Order: English first (canonical default), then alphabetical by English name.
 export const SUPPORTED_LANGUAGES = [
   "en",
   "ar",
+  "fil",
   "fr",
   "de",
   "hi",
@@ -50,6 +52,7 @@ export const LANGUAGE_META: Record<Language, LanguageMeta> = {
   ar: { code: "ar", englishName: "Arabic", nativeName: "العربية", flag: "🇸🇦", rtl: true },
   hi: { code: "hi", englishName: "Hindi", nativeName: "हिन्दी", flag: "🇮🇳" },
   id: { code: "id", englishName: "Indonesian", nativeName: "Bahasa Indonesia", flag: "🇮🇩" },
+  fil: { code: "fil", englishName: "Filipino", nativeName: "Filipino", flag: "🇵🇭" },
 };
 
 export type TranslationKey = keyof typeof en;
@@ -67,6 +70,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
   ar,
   hi,
   id,
+  fil,
 };
 
 export function isLanguage(code: string | undefined | null): code is Language {

@@ -8,14 +8,14 @@ import Footer from "@/components/footer";
 export const metadata: Metadata = {
   title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
   description:
-    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 12 languages — English, Spanish, French, German, Portuguese, Italian, Mandarin, Japanese, Korean, Arabic, Hindi, and Indonesian.",
+    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages — English, Spanish, French, German, Portuguese, Italian, Mandarin, Japanese, Korean, Arabic, Hindi, Indonesian, and Filipino.",
   alternates: { canonical: "/blog/multi-language-loyalty-card" },
   openGraph: {
     type: "article",
     url: "/blog/multi-language-loyalty-card",
     title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
     description:
-      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 12 languages.",
+      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages.",
     images: [
       {
         url: "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
     description:
-      "Brewstamp now translates your customer-facing loyalty card into 12 languages.",
+      "Brewstamp now translates your customer-facing loyalty card into 13 languages.",
     images: [
       "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -39,9 +39,9 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
+  headline: "Multi-Language Loyalty Cards: 13 Languages, Same QR Code",
   description:
-    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 12 languages.",
+    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -53,7 +53,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/multi-language-loyalty-card",
   datePublished: "2026-05-10",
-  dateModified: "2026-05-10",
+  dateModified: "2026-05-14",
   image:
     "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -61,6 +61,7 @@ const jsonLd = {
 const LANGUAGES: Array<{ flag: string; name: string; native: string; hello: string }> = [
   { flag: "🇺🇸", name: "English", native: "English", hello: "Hello" },
   { flag: "🇸🇦", name: "Arabic", native: "العربية", hello: "مرحبا" },
+  { flag: "🇵🇭", name: "Filipino", native: "Filipino", hello: "Kumusta" },
   { flag: "🇫🇷", name: "French", native: "Français", hello: "Bonjour" },
   { flag: "🇩🇪", name: "German", native: "Deutsch", hello: "Hallo" },
   { flag: "🇮🇳", name: "Hindi", native: "हिन्दी", hello: "नमस्ते" },
@@ -88,11 +89,11 @@ export default function BlogPost() {
               Product update
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              12 languages, same QR code
+              13 languages, same QR code
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
               Your customer-facing loyalty card and your printable QR PDF
-              now translate into twelve languages — flip a single setting in
+              now translate into thirteen languages — flip a single setting in
               Shop Setup and the entire customer experience switches over.
             </p>
             <p className="mt-3 text-sm text-stone-400">
@@ -126,7 +127,7 @@ export default function BlogPost() {
 
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              The 12 languages
+              The 13 languages
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               We picked the languages that cover the largest share of cafe

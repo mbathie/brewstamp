@@ -400,6 +400,39 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     finalCtaSubtitle: "Tanpa kartu kredit. Live dalam 2 menit.",
     finalCtaButton: "Setup kafe saya",
   },
+  fil: {
+    metaTitle: "Digital na QR loyalty card para sa cafes",
+    metaDescription:
+      "QR loyalty card para sa mga cafe at coffee shop. Walang app na ida-download ng customer. Libre hanggang 100 stamp. Set up sa 2 minuto.",
+    heroTitle: "Digital na loyalty card para sa mga cafe",
+    heroSubtitle:
+      "Walang app — i-scan lang ng customer mo ang QR sa counter, tapos na.",
+    ctaPrimary: "Mag-start libre",
+    ctaSecondary: "Paano ito gumagana",
+    dashboardNote:
+      "English pa rin ang dashboard mo — Tagalog lang ang customer card.",
+    benefit1Title: "Walang app na ida-download",
+    benefit1Body:
+      "I-scan lang ng customer mo ang QR gamit ang camera ng phone, at bubukas agad ang stamp card sa browser.",
+    benefit2Title: "Libre hanggang 100 stamp",
+    benefit2Body:
+      "Walang credit card kailangan. Subukan mo muna ng ilang linggo bago magbayad.",
+    benefit3Title: "Set up sa 2 minuto",
+    benefit3Body: "I-print ang QR, ilagay sa counter, at handa na.",
+    howItWorksTitle: "Paano ito gumagana",
+    step1Title: "I-print at ilagay ang QR",
+    step1Body:
+      "I-download ang printable PDF mula sa dashboard at ilagay kung saan makikita ng customer.",
+    step2Title: "Customer scans gamit ang phone",
+    step2Body:
+      "Camera → tap sa link. Walang app, walang download, walang form.",
+    step3Title: "Ikaw ang nag-aapruba ng stamp",
+    step3Body:
+      "Lalabas ang request sa dashboard. Tap Approve. Ang stamp ay magpapakita sa kanilang card.",
+    finalCtaTitle: "Magsimula ng libreng loyalty card",
+    finalCtaSubtitle: "Walang credit card. Live sa 2 minuto.",
+    finalCtaButton: "I-setup ang cafe ko",
+  },
 };
 
 export const LANDING_LANGS = Object.keys(LANDING_COPY);

@@ -62,9 +62,9 @@ const posts = [
   },
   {
     slug: "multi-language-loyalty-card",
-    title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
+    title: "Multi-Language Loyalty Cards: 13 Languages, Same QR Code",
     description:
-      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 12 languages — pick the one that matches your customers.",
+      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages — pick the one that matches your customers.",
     tag: "Product update",
     image: "/world-map.svg",
     imageAlt: "World map illustrating Brewstamp's 12 supported languages",
