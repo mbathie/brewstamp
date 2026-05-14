@@ -35,6 +35,19 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "coffee-shop-loyalty-card-printing",
+    title:
+      "Coffee Shop Loyalty Card Printing: Print One QR Code, Skip the Stack of Paper Cards",
+    description:
+      "How to print a coffee shop loyalty card the modern way — one A4 sheet with a QR code, not boxes of punch cards. Free PDF, prints on any printer, set up in 2 minutes.",
+    tag: "Guide",
+    image:
+      "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Cafe counter with a printed QR loyalty card",
+    publishedAt: "2026-05-14",
+    publishedAtDisplay: "14 May 2026",
+  },
+  {
     slug: "how-many-stamps-for-a-free-coffee",
     title:
       "How Many Stamps for a Free Coffee? Loyalty Card Thresholds Explained",

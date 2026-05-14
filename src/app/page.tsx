@@ -89,6 +89,14 @@ const jsonLd = {
       mainEntity: [
         {
           "@type": "Question",
+          name: "Does this cafe have a loyalty program?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "If the cafe is on Brewstamp, look for a small QR code at the counter labelled 'loyalty card', 'stamp card', or 'rewards'. Scan it with your phone's camera — no app needed — and start collecting stamps toward a free drink. Read the full guide for customers.",
+          },
+        },
+        {
+          "@type": "Question",
           name: "What is a digital coffee loyalty card?",
           acceptedAnswer: {
             "@type": "Answer",
@@ -577,7 +585,26 @@ export default function Home() {
             </h2>
           </div>
           <div className="mt-12 space-y-6">
-            {[
+            {([
+              {
+                q: "Does this cafe have a loyalty program?",
+                a: (
+                  <>
+                    If the cafe is on Brewstamp, look for a small QR code at
+                    the counter labelled &ldquo;loyalty card&rdquo;,
+                    &ldquo;stamp card&rdquo;, or &ldquo;rewards&rdquo;. Scan
+                    it with your phone&rsquo;s camera — no app needed — and
+                    start collecting stamps toward a free drink.{" "}
+                    <Link
+                      href="/blog/cafe-loyalty-programs-for-customers"
+                      className="font-medium text-amber-700 underline hover:text-amber-800"
+                    >
+                      Read the full guide for customers
+                    </Link>
+                    .
+                  </>
+                ),
+              },
               {
                 q: "What is a digital coffee loyalty card?",
                 a: "A digital coffee loyalty card replaces paper stamp cards with a phone-based version. Customers scan a QR code at your counter to collect stamps and earn free drinks — no app download required.",
@@ -598,7 +625,7 @@ export default function Home() {
                 q: "How long does it take to set up a coffee shop loyalty program?",
                 a: "Less than 2 minutes. Create your shop, customise your card, print your QR code, and start stamping. No technical knowledge required.",
               },
-            ].map(({ q, a }) => (
+            ] as Array<{ q: string; a: React.ReactNode }>).map(({ q, a }) => (
               <details
                 key={q}
                 className="group rounded-xl border border-stone-200 bg-stone-50 px-6 py-5"
