@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
 import { generateAnimalName } from "@/lib/animal-names";
 
 interface Customer {
@@ -49,6 +49,57 @@ interface Props {
 }
 
 const PAGE_SIZE = 20;
+
+/**
+ * Escape a single CSV cell — wrap in quotes if it contains a comma, quote, or
+ * newline, and double up any embedded quotes per RFC 4180.
+ */
+function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const s = String(value);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function downloadCsv(rows: StampCardData[]) {
+  const header = [
+    "Name",
+    "Email",
+    "Tags",
+    "Notes",
+    "Current Stamps",
+    "Total Earned",
+    "Free Drinks Redeemed",
+    "Last Visit",
+  ];
+  const lines = [header.map(csvCell).join(",")];
+  for (const c of rows) {
+    const name = c.customer.name?.trim() || generateAnimalName(c.customer.cookieId);
+    lines.push(
+      [
+        csvCell(name),
+        csvCell(c.customer.email || ""),
+        csvCell((c.tags || []).join("; ")),
+        csvCell((c.notes || "").replace(/\s+/g, " ").trim()),
+        csvCell(c.stamps),
+        csvCell(c.totalEarned),
+        csvCell(c.freeRedeemed),
+        csvCell(new Date(c.updatedAt).toISOString()),
+      ].join(","),
+    );
+  }
+  const csv = lines.join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `brewstamp-customers-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export default function CustomerSearch({ stampCards, threshold }: Props) {
   const router = useRouter();
@@ -137,6 +188,16 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          onClick={() => downloadCsv(filtered)}
+          disabled={filtered.length === 0}
+          className="cursor-pointer"
+          title="Download visible customers as CSV"
+        >
+          <Download className="mr-1 size-4" />
+          Export CSV
+        </Button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">

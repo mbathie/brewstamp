@@ -21,6 +21,14 @@ export default function PublicHeader({
           </span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/features" className="hidden sm:block">
+            <Button
+              variant="ghost"
+              className="cursor-pointer text-stone-300 hover:bg-white/10 hover:text-white"
+            >
+              Features
+            </Button>
+          </Link>
           <Link href="/alternatives" className="hidden sm:block">
             <Button
               variant="ghost"
