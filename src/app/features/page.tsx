@@ -23,30 +23,41 @@ import FeaturesCardCarousel from "@/components/features-card-carousel";
 import { patterns } from "@/lib/patterns";
 
 export const metadata: Metadata = {
-  title: "Features — A Coffee Loyalty Card Without the Bloat",
+  title:
+    "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    "Everything Brewstamp does — no app for your customers, fully customisable card design (free), 13 languages, real-time stamp approval, CSV export, drip-email lifecycle, and a $5/mo Pro plan that doesn't gate features behind tiers.",
+    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 13 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $5/mo unlimited — no premium tier gating.",
   alternates: { canonical: "/features" },
+  keywords: [
+    "loyalty card features",
+    "coffee loyalty card no app",
+    "QR code loyalty program",
+    "customisable digital stamp card",
+    "branded loyalty card",
+    "cafe loyalty card design",
+    "multi-language loyalty card",
+    "no-app stamp card",
+  ],
   openGraph: {
     type: "website",
     url: "/features",
-    title: "Brewstamp Features — Coffee Loyalty Without the Bloat",
+    title: "Brewstamp Features — Free, Customisable, No App Required",
     description:
-      "No customer app. Free card customisation. 13 languages. Real-time approval. CSV export. One $5/mo plan — no feature gating.",
+      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 13 languages. Real-time stamp approval. CSV export. One $5/mo plan — no feature gating.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&h=630&q=70&auto=format&fit=crop",
         width: 1200,
         height: 630,
-        alt: "Cafe counter with espresso machine",
+        alt: "Cafe counter with espresso machine — Brewstamp loyalty card features",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brewstamp Features — Coffee Loyalty Without the Bloat",
+    title: "Brewstamp Features — Free Customisable Loyalty Card",
     description:
-      "No customer app. Free card customisation. 13 languages. One $5/mo plan.",
+      "No customer app. Branded card design free. 13 languages. One $5/mo plan, no feature gating.",
   },
 };
 
@@ -101,7 +112,10 @@ const HUE_SWATCHES: Array<{ name: string; hex: string }> = [
 
 const PATTERN_SWATCHES = patterns.slice(0, 8); // first eight for visual variety
 
-// Comparison-style features table grouped by category.
+// Comparison-style features table grouped by category. Kept intentionally
+// short — every row should be either a differentiator vs competitors or a
+// signal a prospect actually cares about. Internal niceties (date filters,
+// activity charts, etc.) live elsewhere on the page, not here.
 const FEATURE_TABLE: Array<{
   category: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -113,51 +127,26 @@ const FEATURE_TABLE: Array<{
     rows: [
       { label: "No app to download — opens in any phone browser", free: true, pro: true },
       { label: "Stamps follow them across devices (optional login)", free: true, pro: true },
-      { label: "Switch shop UI for customers at multiple cafes", free: true, pro: true },
-      { label: "Customer-facing language auto-translates", free: true, pro: true },
-      { label: "Customer can edit their own name / email / password", free: true, pro: true },
+      { label: "Auto-translates to their language (13 supported)", free: true, pro: true },
     ],
   },
   {
     category: "Card design",
     icon: Palette,
     rows: [
-      { label: "Background & foreground colour (198 combinations)", free: true, pro: true },
-      { label: "36 background patterns", free: true, pro: true },
-      { label: "Logo upload (or auto-generated brand banner)", free: true, pro: true },
-      { label: "Live preview while you customise", free: true, pro: true },
-      { label: "Auto-applies to the printable QR PDF", free: true, pro: true },
+      { label: "198 colour combinations + 36 patterns", free: true, pro: true },
+      { label: "Upload your own logo", free: true, pro: true },
+      { label: "Same design on the printable QR PDF", free: true, pro: true },
     ],
   },
   {
-    category: "For you (the cafe)",
+    category: "For you",
     icon: Coffee,
     rows: [
       { label: "Real-time stamp approval (no separate stamper app)", free: true, pro: true },
-      { label: "Branded printable QR code PDF", free: true, pro: true },
       { label: "Customer list with notes + tags", free: true, pro: true },
-      { label: "Configurable reward threshold (1–20 stamps)", free: true, pro: true },
-      { label: "Customer detail page with stamp history", free: true, pro: true },
-    ],
-  },
-  {
-    category: "Analytics & data",
-    icon: BarChart3,
-    rows: [
-      { label: "Live dashboard — stamps, customers, redeems", free: true, pro: true },
-      { label: "Date-range filter (today / week / month / custom)", free: true, pro: true },
-      { label: "Daily activity chart", free: true, pro: true },
-      { label: "CSV export of customers", free: true, pro: true },
-    ],
-  },
-  {
-    category: "Lifecycle & messaging",
-    icon: Mail,
-    rows: [
-      { label: "Welcome email to customer on first stamp", free: true, pro: true },
-      { label: "Drip emails to you during activation", free: true, pro: true },
-      { label: "Automatic upgrade nudge when nearing free-tier cap", free: true, pro: true },
-      { label: "13 languages — Arabic (RTL), Mandarin, Japanese, etc.", free: true, pro: true },
+      { label: "CSV export of your customers", free: true, pro: true },
+      { label: "Built-in lifecycle emails to you and your customers", free: true, pro: true },
     ],
   },
   {
@@ -165,8 +154,7 @@ const FEATURE_TABLE: Array<{
     icon: Tag,
     rows: [
       { label: "Stamps included", free: "100 lifetime", pro: "Unlimited" },
-      { label: "Price", free: "$0", pro: "$5/month" },
-      { label: "Credit card required", free: "No", pro: "Yes (Stripe)" },
+      { label: "Monthly price", free: "$0", pro: "$5" },
       { label: "Feature gating", free: "None", pro: "None" },
     ],
   },
@@ -282,20 +270,19 @@ export default function FeaturesPage() {
                   The customer card
                 </p>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-                  Built for coffee. Works for any shop.
+                  Coffee, bakery, barber, brewery — make it yours.
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-stone-600">
-                  Brewstamp was made for cafes, but the card itself is
-                  vertical-agnostic. The same QR-scan flow works just as well
-                  for a bakery, a barber, a brewery, or a juice bar — bring
-                  your own colours, threshold, and reward.
+                  Pick from a riot of colours and patterns until the card
+                  feels unmistakably <em>you</em>. Built for cafes, just as
+                  happy on a bakery, a barber, a brewery, or a juice bar —
+                  same QR flow, your style.
                 </p>
                 <ul className="mt-6 space-y-3 text-base text-stone-700">
                   {[
-                    "Logo banner that auto-generates if no logo uploaded",
                     "Live progress bar + animated stamp drop on approval",
                     "Reward countdown personalised by customer name",
-                    "Switch-shop list for customers at multiple shops",
+                    "Switch-shop list for customers who scan at multiple shops",
                   ].map((t) => (
                     <li key={t} className="flex gap-2">
                       <Check className="mt-0.5 size-5 shrink-0 text-amber-700" />
@@ -304,7 +291,7 @@ export default function FeaturesPage() {
                   ))}
                 </ul>
                 <p className="mt-6 text-sm italic text-stone-500">
-                  → Watch the card auto-rotate through 5 example shops.
+                  → Watch the card flick through 5 example shops over there.
                 </p>
               </div>
               {/* Auto-rotating CardPreview across 5 shop verticals */}
@@ -373,27 +360,18 @@ export default function FeaturesPage() {
               </div>
             </div>
 
-            {/* Brand banner example */}
+            {/* Brand banner example — real Byron Bay Brewz logo from prod */}
             <div className="mt-10">
               <p className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-                Upload a logo (or skip — we&apos;ll make one)
+                Upload your shop&apos;s logo
               </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div
-                  className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl px-6 text-center shadow-sm"
-                  style={{ backgroundColor: "#fbbf24" }}
-                >
-                  <span
-                    className="text-xl font-bold leading-tight"
-                    style={{ color: "#4f46e5" }}
-                  >
-                    Bay Brews
-                  </span>
-                </div>
-                <div className="flex aspect-[3/1] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 px-6 text-center text-sm text-stone-500">
-                  <QrCode className="size-5" />
-                  Or upload your own (3:1 ratio)
-                </div>
+              <div className="mt-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/sample-logos/byron-bay-brewz.png"
+                  alt="Example shop logo — Byron Bay Brewz"
+                  className="block aspect-[3/1] w-full max-w-md rounded-2xl object-cover shadow-sm"
+                />
               </div>
             </div>
           </div>
@@ -518,34 +496,52 @@ export default function FeaturesPage() {
 
         {/* ───────── FINAL CTA ───────── */}
         <section className="bg-stone-50 py-20">
-          <div className="mx-auto max-w-3xl px-6 text-center">
-            <div className="rounded-2xl border border-stone-200 bg-white p-10">
-              <h2 className="text-2xl font-bold text-stone-900 md:text-3xl">
-                Set up your loyalty card in 2 minutes.
-              </h2>
-              <p className="mt-3 text-stone-500">
-                Free up to 100 stamps. No credit card required. Live in any
-                phone browser, in any language.
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/register">
-                  <Button
-                    size="lg"
-                    className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
-                  >
-                    Set up your shop
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/alternatives">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="cursor-pointer border-stone-300 px-8 text-base"
-                  >
-                    See how we compare
-                  </Button>
-                </Link>
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 px-8 py-16 shadow-xl md:px-16">
+              {/* Soft amber glow in the corner for a bit of depth */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-amber-700/10 blur-3xl"
+              />
+              <div className="relative text-center">
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-200 backdrop-blur-sm">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Live in 2 minutes
+                </span>
+                <h2 className="mt-6 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                  Set up your shop&apos;s loyalty card.
+                </h2>
+                <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-stone-300 md:text-lg">
+                  Free up to 100 stamps. No credit card required. Live in any
+                  phone browser, in any of 13 languages.
+                </p>
+                <div className="mt-10 flex flex-wrap justify-center gap-3">
+                  <Link href="/register">
+                    <Button
+                      size="lg"
+                      className="cursor-pointer bg-amber-700 px-8 text-base !text-white hover:bg-amber-800"
+                    >
+                      Set up your shop
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/alternatives">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="cursor-pointer border-white/25 bg-white/10 px-8 text-base !text-white backdrop-blur-sm hover:bg-white/20 hover:!text-white"
+                    >
+                      See how we compare
+                    </Button>
+                  </Link>
+                </div>
+                <p className="mt-8 text-xs text-stone-400">
+                  No app to download. No feature gating. Cancel anytime.
+                </p>
               </div>
             </div>
           </div>

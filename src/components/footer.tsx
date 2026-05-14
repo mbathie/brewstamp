@@ -2,19 +2,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { Coffee, Heart } from "lucide-react";
 
-const LANGUAGES: Array<{ code: string; label: string }> = [
-  { code: "es", label: "Español" },
-  { code: "fr", label: "Français" },
-  { code: "de", label: "Deutsch" },
-  { code: "pt", label: "Português" },
-  { code: "it", label: "Italiano" },
-  { code: "zh", label: "中文" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
-  { code: "ar", label: "العربية" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "id", label: "Bahasa" },
-  { code: "fil", label: "Filipino" },
+const LANGUAGES: Array<{ code: string; label: string; flag: string }> = [
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "zh", label: "中文", flag: "🇨🇳" },
+  { code: "ja", label: "日本語", flag: "🇯🇵" },
+  { code: "ko", label: "한국어", flag: "🇰🇷" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+  { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
+  { code: "id", label: "Bahasa", flag: "🇮🇩" },
+  { code: "fil", label: "Filipino", flag: "🇵🇭" },
 ];
 
 export default function Footer() {
@@ -115,8 +115,9 @@ export default function Footer() {
             <Link
               href="/"
               hrefLang="en"
-              className="transition-colors hover:text-stone-900"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-stone-900"
             >
+              <span aria-hidden>🇺🇸</span>
               English
             </Link>
             {LANGUAGES.map((lang) => (
@@ -124,8 +125,9 @@ export default function Footer() {
                 key={lang.code}
                 href={`/${lang.code}`}
                 hrefLang={lang.code}
-                className="transition-colors hover:text-stone-900"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-stone-900"
               >
+                <span aria-hidden>{lang.flag}</span>
                 {lang.label}
               </Link>
             ))}

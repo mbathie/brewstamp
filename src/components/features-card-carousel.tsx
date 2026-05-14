@@ -6,6 +6,7 @@ import CardPreview from "@/components/card-preview";
 interface CardSample {
   vertical: string;
   shopName: string;
+  shopLogo: string;
   displayName: string;
   bgColor: string;
   fgColor: string;
@@ -16,70 +17,66 @@ interface CardSample {
   freeRedeemed: number;
 }
 
-// Five sample designs across different verticals. The auto-generated brand
-// banner inside CardPreview gives each a distinct look without needing real
-// logos. Pattern + colour combos are chosen to look reasonably on-brand for
-// each vertical (warm orange for a bakery, deep blue + cream for a brewery,
-// etc.).
+// Sample designs across different shop styles. Each entry pairs a real
+// hand-designed logo PNG with card colours + pattern that complement it.
+// Stamp counts are capped at 8 (threshold ≤ 8) so the 4-col grid never
+// grows past 2 rows mid-rotation — otherwise the section below shifts.
 const SAMPLES: CardSample[] = [
   {
-    vertical: "Coffee",
-    shopName: "Bay Brews",
+    vertical: "Coffee shop",
+    shopName: "The Rusty Mug",
+    shopLogo: "/sample-logos/the-rusty-mug.png",
     displayName: "Sam",
-    bgColor: "indigo-700",
+    bgColor: "stone-800",
     fgColor: "amber-300",
-    bgPattern: "diagonalStripes",
-    stamps: 3,
+    bgPattern: "topography",
+    stamps: 4,
     threshold: 8,
-    totalEarned: 9,
-    freeRedeemed: 1,
-  },
-  {
-    vertical: "Bakery",
-    shopName: "Knead",
-    displayName: "Mia",
-    bgColor: "orange-700",
-    fgColor: "amber-100",
-    bgPattern: "plus",
-    stamps: 5,
-    threshold: 6,
     totalEarned: 11,
     freeRedeemed: 1,
   },
   {
-    vertical: "Barber",
-    shopName: "Cuts & Co.",
-    displayName: "Jay",
-    bgColor: "stone-900",
-    fgColor: "rose-300",
-    bgPattern: "hexagons",
-    stamps: 6,
-    threshold: 10,
-    totalEarned: 6,
-    freeRedeemed: 0,
-  },
-  {
-    vertical: "Brewery",
-    shopName: "Tap Room 12",
-    displayName: "Alex",
-    bgColor: "teal-800",
-    fgColor: "lime-300",
+    vertical: "Surf-side cafe",
+    shopName: "Byron Bay Brewz",
+    shopLogo: "/sample-logos/byron-bay-brewz.png",
+    displayName: "Riley",
+    bgColor: "teal-900",
+    fgColor: "orange-200",
     bgPattern: "polkaDots",
-    stamps: 4,
-    threshold: 8,
-    totalEarned: 12,
+    stamps: 2,
+    threshold: 7,
+    totalEarned: 9,
     freeRedeemed: 1,
   },
   {
-    vertical: "Juice bar",
-    shopName: "Smoothie Lab",
-    displayName: "Riley",
-    bgColor: "pink-700",
-    fgColor: "yellow-200",
-    bgPattern: "diagonalLines",
-    stamps: 2,
-    threshold: 5,
-    totalEarned: 7,
+    vertical: "Barber shop",
+    shopName: "Cutthroat Barber Shop",
+    shopLogo: "/sample-logos/cutthroat-barber-shop.png",
+    displayName: "Jay",
+    // Logo palette is cream + gold + black — pair the dark card with an
+    // amber/gold foreground so the stamps area picks up the lightning-bolt
+    // accents in the logo.
+    bgColor: "stone-900",
+    fgColor: "amber-400",
+    bgPattern: "hexagons",
+    stamps: 3,
+    threshold: 8,
+    totalEarned: 3,
+    freeRedeemed: 0,
+  },
+  {
+    vertical: "Bakery & cafe",
+    shopName: "Belle Bean Coffee",
+    shopLogo: "/sample-logos/belle-bean.png",
+    displayName: "Ava",
+    // Soft floral logo (rose + peach + cream). Pair with a warm pink card
+    // and creamy fg so the stamps area picks up the rose wordmark colour.
+    bgColor: "pink-900",
+    fgColor: "rose-200",
+    bgPattern: "leaf",
+    stamps: 5,
+    threshold: 8,
+    totalEarned: 13,
     freeRedeemed: 1,
   },
 ];
@@ -105,7 +102,9 @@ export default function FeaturesCardCarousel() {
     return () => clearInterval(id);
   }, []);
 
-  const current = SAMPLES[index];
+  // Read modulo length so a stale `index` (e.g. left over from a longer
+  // SAMPLES array during HMR) never lands on `undefined`.
+  const current = SAMPLES[index % SAMPLES.length];
 
   return (
     <div className="mx-auto w-full max-w-sm">
@@ -122,7 +121,7 @@ export default function FeaturesCardCarousel() {
         ))}
       </div>
       <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-amber-700">
-        For a {current.vertical.toLowerCase()} shop
+        For a {current.vertical.toLowerCase()}
       </p>
       <div
         className="transition-opacity duration-500 ease-out"
@@ -130,7 +129,7 @@ export default function FeaturesCardCarousel() {
       >
         <CardPreview
           shopName={current.shopName}
-          shopLogo={null}
+          shopLogo={current.shopLogo}
           stamps={current.stamps}
           threshold={current.threshold}
           totalEarned={current.totalEarned}

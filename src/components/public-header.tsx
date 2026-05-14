@@ -54,7 +54,7 @@ export default function PublicHeader({
             </Button>
           </Link>
           <Link href="/register">
-            <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
+            <Button className="cursor-pointer bg-amber-700 !text-white hover:bg-amber-800">
               Get Started Free
             </Button>
           </Link>
