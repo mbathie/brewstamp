@@ -88,7 +88,9 @@ const jsonLd = {
   ],
 };
 
-// Compact preview swatches for the card-design section.
+// Compact preview swatches for the card-design section. All 22 Tailwind
+// hues are shown — the headline calls out "22 hues × 9 shades = 198", so
+// the visible swatch count needs to line up with the maths.
 const HUE_SWATCHES: Array<{ name: string; hex: string }> = [
   { name: "red", hex: "#dc2626" },
   { name: "orange", hex: "#ea580c" },
@@ -107,10 +109,45 @@ const HUE_SWATCHES: Array<{ name: string; hex: string }> = [
   { name: "fuchsia", hex: "#c026d3" },
   { name: "pink", hex: "#db2777" },
   { name: "rose", hex: "#e11d48" },
+  { name: "slate", hex: "#475569" },
+  { name: "gray", hex: "#4b5563" },
+  { name: "zinc", hex: "#52525b" },
+  { name: "neutral", hex: "#525252" },
   { name: "stone", hex: "#57534e" },
 ];
 
-const PATTERN_SWATCHES = patterns.slice(0, 8); // first eight for visual variety
+// Each pattern thumbnail gets its own bg/fg pairing so the strip isn't
+// monotone. Pairings echo what an actual shop might pick — warm-on-dark,
+// cool-on-light, brand-leaning combos.
+const PATTERN_SWATCH_COUNT = 16;
+const PATTERN_SWATCHES: Array<{
+  key: string;
+  label: string;
+  bg: string;
+  fg: string;
+  fn: (color: string, opacity: number) => string;
+}> = patterns.slice(0, PATTERN_SWATCH_COUNT).map((p, i) => {
+  const palette: Array<[string, string]> = [
+    ["#4f46e5", "#fbbf24"], // indigo + amber
+    ["#0f766e", "#bef264"], // teal + lime
+    ["#b91c1c", "#fde047"], // red + yellow
+    ["#7c3aed", "#f9a8d4"], // violet + pink
+    ["#059669", "#a7f3d0"], // emerald + mint
+    ["#0369a1", "#67e8f9"], // sky + cyan
+    ["#be123c", "#fcd34d"], // rose + amber
+    ["#1c1917", "#fb923c"], // stone-900 + orange
+    ["#831843", "#fbcfe8"], // pink-900 + pink-200
+    ["#1e3a8a", "#fde68a"], // blue-900 + amber-200
+    ["#854d0e", "#fef3c7"], // yellow-800 + cream
+    ["#365314", "#bbf7d0"], // lime-900 + mint
+    ["#581c87", "#f3e8ff"], // purple-900 + lavender
+    ["#9a3412", "#fed7aa"], // orange-900 + peach
+    ["#164e63", "#a5f3fc"], // cyan-900 + ice
+    ["#3f3f46", "#fde047"], // zinc-800 + yellow
+  ];
+  const [bg, fg] = palette[i % palette.length];
+  return { key: p.key, label: p.label, fn: p.fn, bg, fg };
+});
 
 // Comparison-style features table grouped by category. Kept intentionally
 // short — every row should be either a differentiator vs competitors or a
@@ -308,19 +345,21 @@ export default function FeaturesPage() {
                 Card design
               </p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-                198 colour combinations. 36 patterns. Zero upcharge.
+                22 hues × 9 shades. 36 patterns. Zero upcharge.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-                The full design system ships on every plan. Pick a hue, pick a
-                shade, drop in a pattern, upload your logo. Live preview while
-                you tweak.
+                The full design system ships on every plan — that&apos;s{" "}
+                <strong className="text-stone-900">198 colours</strong> for
+                each of foreground and background. Pick a hue, pick a shade,
+                drop in a pattern, upload your logo. Live preview while you
+                tweak.
               </p>
             </div>
 
-            {/* Colour swatches */}
+            {/* Colour swatches — all 22 hues shown so the maths above is honest */}
             <div className="mt-12">
               <p className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-                Pick a colour
+                Pick a hue (22)
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {HUE_SWATCHES.map((c) => (
@@ -331,16 +370,17 @@ export default function FeaturesPage() {
                     style={{ backgroundColor: c.hex }}
                   />
                 ))}
-                <span className="inline-flex size-9 items-center justify-center rounded-md bg-stone-100 text-xs text-stone-500">
-                  +5
-                </span>
               </div>
+              <p className="mt-2 text-xs text-stone-400">
+                Each hue × 9 shades = 198 colours per slot.
+              </p>
             </div>
 
-            {/* Pattern swatches */}
+            {/* Pattern swatches — each gets its own colour pair so the strip
+                doesn't read as monotone */}
             <div className="mt-10">
               <p className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-                Pick a pattern
+                Pick a pattern (36)
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {PATTERN_SWATCHES.map((p) => (
@@ -349,13 +389,13 @@ export default function FeaturesPage() {
                     title={p.label}
                     className="size-14 rounded-lg ring-1 ring-stone-200"
                     style={{
-                      backgroundColor: "#4f46e5",
-                      backgroundImage: p.fn("#fbbf24", 0.35),
+                      backgroundColor: p.bg,
+                      backgroundImage: p.fn(p.fg, 0.35),
                     }}
                   />
                 ))}
                 <span className="inline-flex size-14 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500">
-                  +28
+                  +{36 - PATTERN_SWATCH_COUNT}
                 </span>
               </div>
             </div>
