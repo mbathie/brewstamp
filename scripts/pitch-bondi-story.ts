@@ -7,10 +7,10 @@
  *
  * Setup
  * -----
- * 1. mark@brewstamp.app must be a VERIFIED sender in Brevo. If it isn't, add
- *    it via Brevo dashboard → Senders → Add a new sender (you'll receive a
- *    one-time confirmation email). The script uses this as the From: header;
- *    Brevo rejects unverified From addresses with 550.
+ * 1. hello@brewstamp.app must be a VERIFIED sender in Brevo. If it isn't,
+ *    add it via Brevo dashboard → Senders → Add a new sender (you'll
+ *    receive a one-time confirmation email). The script uses this as the
+ *    From: header; Brevo rejects unverified From addresses with 550.
  *
  * 2. Create ~/.config/brewstamp/pitch-targets.json:
  *
@@ -61,9 +61,9 @@ const CONFIG_PATH = join(homedir(), ".config/brewstamp/pitch-targets.json");
 const LOG_PATH = join(homedir(), ".config/brewstamp/pitch-log.jsonl");
 
 const FROM_NAME = "Mark Bathie";
-const FROM_ADDR = "mark@brewstamp.app";
+const FROM_ADDR = "hello@brewstamp.app";
 const FROM = `"${FROM_NAME}" <${FROM_ADDR}>`;
-const REPLY_TO = "mark@brewstamp.app";
+const REPLY_TO = "hello@brewstamp.app";
 const POST_URL = "https://brewstamp.app/blog/bennett-st-dairy-bondi";
 
 const isDryRun = process.argv.includes("--dry-run");
@@ -128,7 +128,7 @@ Happy to slow this down if it doesn't fit your editorial calendar.
 
 Mark
 Brewstamp · brewstamp.app
-mark@brewstamp.app
+hello@brewstamp.app
 `;
 }
 
