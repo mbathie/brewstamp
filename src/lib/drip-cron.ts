@@ -259,8 +259,11 @@ export async function runDripEmails() {
     const shopIdStr = shop._id.toString();
     const stamps = upgradeStampMap.get(shopIdStr) || 0;
 
-    // Skip if under 80 stamps or already on Pro
-    if (stamps < 80 || activeSubShopIds.has(shopIdStr)) continue;
+    // Skip if under 60 stamps or already on Pro. 60 (rather than 80) gives
+    // shop owners more breathing room to react before they hit the 100-stamp
+    // free-tier ceiling — important because nothing in-app currently blocks
+    // them from going over.
+    if (stamps < 60 || activeSubShopIds.has(shopIdStr)) continue;
 
     const owner = shop.owner as any;
     await Shop.updateOne({ _id: shop._id }, { upgradeNudgeSent: true });
