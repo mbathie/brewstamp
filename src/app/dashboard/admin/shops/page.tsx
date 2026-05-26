@@ -8,7 +8,6 @@ import {
   ArrowDown,
   ArrowUpDown,
   ChevronRight,
-  AlertTriangle,
   Trophy,
   Zap,
 } from "lucide-react";
@@ -568,18 +567,7 @@ export default function AdminShopsPage() {
                     </TableCell>
                     <TableCell>{shop.ownerEmail}</TableCell>
                     <TableCell className="text-right">
-                      <span className="inline-flex items-center justify-end gap-1.5">
-                        {shop.totalStamps >= 100 && (
-                          <Badge
-                            variant="outline"
-                            className="border-amber-500/50 px-1 py-0 text-[10px] text-amber-500"
-                          >
-                            <AlertTriangle className="mr-0.5 size-2.5" />
-                            limit
-                          </Badge>
-                        )}
-                        {shop.totalStamps}
-                      </span>
+                      {shop.totalStamps}
                     </TableCell>
                     <TableCell className="text-right">{shop.customers}</TableCell>
                     <TableCell>
