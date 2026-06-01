@@ -85,7 +85,7 @@ export const PLANS: PlanConfig[] = [
     hasCsvExport: true,
     hasStaffLogins: true,
     hasAnalytics: true,
-    hasCrossShopReporting: false,
+    hasCrossShopReporting: true,
     prioritySupport: true,
     dedicatedSupport: false,
     features: [
@@ -93,6 +93,7 @@ export const PLANS: PlanConfig[] = [
       "Up to 3 shops",
       "Unlimited staff logins",
       "CSV customer exports",
+      "Cross-shop reporting",
     ],
   },
   {

@@ -365,7 +365,7 @@ export default function BlogPost() {
                 },
                 {
                   q: "What's cross-shop rollup reporting?",
-                  a: "On Max, the dashboard 'All shops' view shows totals across every cafe you own — customers, stamps, rewards redeemed — plus a per-shop breakdown table. Useful for comparing locations or seeing how the brand is performing as a whole.",
+                  a: "On Plus and Max, the dashboard 'All shops' view shows totals across every cafe you own — customers, stamps, rewards redeemed — plus a per-shop breakdown table. Useful for comparing locations or seeing how the brand is performing as a whole.",
                 },
               ].map(({ q, a }) => (
                 <details

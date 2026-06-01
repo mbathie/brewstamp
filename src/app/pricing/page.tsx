@@ -53,6 +53,7 @@ const PLANS: Plan[] = [
       "Up to 3 shops",
       "Unlimited staff logins",
       "CSV customer exports",
+      "Cross-shop reporting",
     ],
   },
   {
@@ -85,7 +86,7 @@ const FEATURES: FeatureRow[] = [
   { label: "Customer insights & analytics", free: false, starter: true, roast: true, reserve: true },
   { label: "Staff & manager logins", free: false, starter: false, roast: "Unlimited", reserve: "Unlimited" },
   { label: "CSV customer exports", free: false, starter: false, roast: true, reserve: true },
-  { label: "Cross-shop rollup reporting", free: false, starter: false, roast: false, reserve: true },
+  { label: "Cross-shop rollup reporting", free: false, starter: false, roast: true, reserve: true },
   { label: "Email support", free: true, starter: true, roast: true, reserve: true },
   { label: "Priority support", free: false, starter: true, roast: true, reserve: true },
   { label: "Dedicated account support", free: false, starter: false, roast: false, reserve: true },

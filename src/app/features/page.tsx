@@ -197,7 +197,7 @@ const FEATURE_TABLE: Array<{
     rows: [
       { label: "Multiple shops under one account", free: "1 shop", pro: "Up to 10" },
       { label: "Manager & staff logins", free: "—", pro: "Plus & Max" },
-      { label: "Cross-shop rollup reporting", free: "—", pro: "Max only" },
+      { label: "Cross-shop rollup reporting", free: "—", pro: "Plus & Max" },
     ],
   },
   {

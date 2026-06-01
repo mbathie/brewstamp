@@ -607,6 +607,10 @@ export default function Home() {
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   CSV customer exports
                 </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Cross-shop reporting
+                </li>
               </ul>
               <Link href="/register" className="mt-8">
                 <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
