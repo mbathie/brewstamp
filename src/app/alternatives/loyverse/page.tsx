@@ -19,14 +19,14 @@ import Testimonials from "@/components/testimonials";
 export const metadata: Metadata = {
   title: "Loyverse Loyalty Alternative — No Customer App",
   description:
-    "Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to 100 stamps, $5/month flat after.",
+    "Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to 100 stamps, $7/mo flat after.",
   alternates: { canonical: "/alternatives/loyverse" },
   openGraph: {
     type: "website",
     url: "/alternatives/loyverse",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      "A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to 100 stamps, $5/month flat.",
+      "A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to 100 stamps, $7/mo flat.",
     images: [
       {
         url: "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      "A Loyverse Loyalty alternative your customers don't have to download. Free to 100 stamps, $5/month flat.",
+      "A Loyverse Loyalty alternative your customers don't have to download. Free to 100 stamps, $7/mo flat.",
     images: [
       "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -151,7 +151,7 @@ export default function LoyverseAlternative() {
             <strong>with no app at all</strong> — the card lives at a URL the
             customer scans into. The other big differences:{" "}
             <strong>POS independence</strong> and a{" "}
-            <strong>flat $5/month price</strong> (vs Loyverse&apos;s
+            <strong>flat $7/mo price</strong> (vs Loyverse&apos;s
             paid POS add-ons for advanced features).
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function LoyverseAlternative() {
                   },
                   {
                     feature: "Public pricing",
-                    brewstamp: { good: true, text: "$5/month flat (after free tier)" },
+                    brewstamp: { good: true, text: "$7/mo flat (after free tier)" },
                     loyverse: { good: null, text: "Free + paid add-ons (per outlet)" },
                   },
                   {
@@ -270,7 +270,7 @@ export default function LoyverseAlternative() {
               {
                 icon: DollarSign,
                 title: "One flat price",
-                desc: "Loyverse's loyalty basics are free, but real reporting and multi-outlet support sit behind paid Loyverse add-ons charged per outlet per month. Brewstamp is $5/month flat. No add-ons. No surprises.",
+                desc: "Loyverse's loyalty basics are free, but real reporting and multi-outlet support sit behind paid Loyverse add-ons charged per outlet per month. Brewstamp is $7/mo flat. No add-ons. No surprises.",
               },
               {
                 icon: Eye,
@@ -319,8 +319,8 @@ export default function LoyverseAlternative() {
                 text: "Loyverse runs a points-per-dollar system. Brewstamp runs a stamp-per-visit system. If your average ticket varies a lot — coffee plus pastry plus brunch — points may map to your business better.",
               },
               {
-                bold: "You have multiple outlets sharing one customer base.",
-                text: "Loyverse handles multi-location loyalty natively. Brewstamp's multi-shop story is simpler — better for independent cafes than chains.",
+                bold: "You need a shared customer wallet across locations.",
+                text: "Loyverse pools customer points across all your outlets natively. Brewstamp supports up to 10 shops under one account (Plus & Max plans) but each shop keeps its own stamp card — better when each cafe has its own identity.",
               },
             ].map(({ bold, text }) => (
               <li
@@ -350,7 +350,7 @@ export default function LoyverseAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to 100 stamps. $5/month flat after. No customer app, no
+              Free up to 100 stamps. $7/mo flat after. No customer app, no
               POS lock-in.
             </p>
           </div>
@@ -389,7 +389,7 @@ export default function LoyverseAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$5</span>
+                <span className="text-4xl font-bold text-stone-900">$7</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -413,6 +413,15 @@ export default function LoyverseAlternative() {
               </Link>
             </div>
           </div>
+          <div className="mt-10 text-center">
+            <p className="text-sm text-stone-500">
+              Need multi-shop, team logins, or CSV exports? Plus & Max
+              plans go from $19–$29/mo.{" "}
+              <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
+                See full plan comparison →
+              </a>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -431,7 +440,7 @@ export default function LoyverseAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Loyverse Loyalty alternative?",
-                a: "Yes. Brewstamp is free up to 100 stamps total, then $5/month for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.",
+                a: "Yes. Brewstamp is free up to 100 stamps total, then $7/mo for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.",
               },
               {
                 q: "Do my customers need to download an app to use Brewstamp?",
@@ -443,7 +452,7 @@ export default function LoyverseAlternative() {
               },
               {
                 q: "How is Brewstamp different from Loyverse Loyalty?",
-                a: "Loyverse ties loyalty to its own POS and customer app. Brewstamp is POS-agnostic and runs in the browser — no apps anywhere. The pricing model is also flatter: $5/month flat instead of free-but-with-paid-add-ons priced per outlet.",
+                a: "Loyverse ties loyalty to its own POS and customer app. Brewstamp is POS-agnostic and runs in the browser — no apps anywhere. The pricing model is also flatter: $7/mo flat instead of free-but-with-paid-add-ons priced per outlet.",
               },
               {
                 q: "Can I switch from Loyverse to Brewstamp?",

@@ -7,7 +7,6 @@ import { randomUUID } from "crypto";
 import { startDripCron } from "./src/lib/drip-cron";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
 
 // Explicitly pin Next's project dir so the workspace root can't drift up to
@@ -15,7 +14,13 @@ const port = parseInt(process.env.PORT || "3000", 10);
 // Use process.cwd() not __dirname — in production this file is compiled to
 // dist/server.js, where __dirname would point at <project>/dist instead of
 // the project root and Next.js wouldn't find the .next build output.
-const app = next({ dev, hostname, port, dir: process.cwd() });
+//
+// Note: don't pass `hostname` to next(). It sets Next's canonical hostname
+// used to reconstruct URLs from req.url, and pinning it to 0.0.0.0 caused
+// post-login redirects to land on 0.0.0.0:3000 instead of localhost:3000.
+// The HTTP server still binds to all interfaces by default (see listen
+// below) so phones on the same LAN can still reach the dev server.
+const app = next({ dev, port, dir: process.cwd() });
 
 interface ShopChannel {
   merchant: WebSocket | null;
@@ -29,6 +34,18 @@ function getOrCreateChannel(shopCode: string): ShopChannel {
     channels.set(shopCode, { merchant: null, customers: new Map() });
   }
   return channels.get(shopCode)!;
+}
+
+// Broadcast merchant online/offline state to every customer connected to
+// this shop's channel. The customer UI uses this to surface "shop is
+// offline right now" instead of having stamp requests silently hang.
+function broadcastMerchantPresence(shopCode: string, online: boolean) {
+  const channel = channels.get(shopCode);
+  if (!channel) return;
+  const payload = JSON.stringify({ type: "presence", merchant: online });
+  for (const ws of channel.customers.values()) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+  }
 }
 
 app.prepare().then(() => {
@@ -97,6 +114,8 @@ app.prepare().then(() => {
 
     if (role === "merchant") {
       channel.merchant = ws;
+      // Tell any waiting customers the shop just came online.
+      broadcastMerchantPresence(shopCode, true);
     } else if (role === "customer" && clientId) {
       channel.customers.set(clientId, ws);
     }
@@ -158,6 +177,15 @@ app.prepare().then(() => {
         }
         break;
       }
+
+      case "stamp-request:cancelled-by-customer":
+        // Customer closed their tab / navigated away while waiting for the
+        // attendant — let the merchant clear the modal instead of staring at
+        // a request that will never resolve.
+        if (channel.merchant && channel.merchant.readyState === WebSocket.OPEN) {
+          channel.merchant.send(JSON.stringify(msg));
+        }
+        break;
     }
   }
 

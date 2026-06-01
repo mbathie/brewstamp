@@ -9,11 +9,12 @@ import {
   Gift,
   Home,
   Users,
+  Users2,
   Settings,
   LogOut,
   ChevronUp,
-  Store,
   UserCog,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,21 +40,38 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
+// `ownerOnly` items are hidden from staff/manager — the matching API routes
+// enforce the same gate server-side, this just avoids showing a link that
+// would 403. Billing is owner-only; Referrals rewards the owner's account.
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Shop Setup", href: "/dashboard/settings", icon: Settings },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
-  { title: "Billing", href: "/dashboard/billing", icon: CreditCard },
-  { title: "Referrals", href: "/dashboard/referrals", icon: Gift },
+  { title: "Team", href: "/dashboard/team", icon: Users2 },
+  { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
+  { title: "Referrals", href: "/dashboard/referrals", icon: Gift, ownerOnly: true },
 ];
 
 const adminItems = [
-  { title: "Shops", href: "/dashboard/admin/shops", icon: Store },
+  { title: "Stats", href: "/dashboard/admin/shops", icon: BarChart3 },
 ];
 
-export function DashboardSidebar({ userName, shopName, userEmail }: { userName: string; shopName: string; userEmail: string }) {
+export function DashboardSidebar({
+  userName,
+  shopName,
+  userEmail,
+  canManageBilling = true,
+}: {
+  userName: string;
+  shopName: string;
+  userEmail: string;
+  canManageBilling?: boolean;
+}) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
+  const visibleNavItems = navItems.filter(
+    (item) => !item.ownerOnly || canManageBilling
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -82,7 +100,7 @@ export function DashboardSidebar({ userName, shopName, userEmail }: { userName: 
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

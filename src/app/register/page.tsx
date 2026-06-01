@@ -35,11 +35,18 @@ function ReferralBanner() {
 
 function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"password" | "magic-link">("password");
+  // Carry callbackUrl through registration so invitees (/invite/<token>)
+  // land back on the invite page after their account is created. Same-origin
+  // paths only, to avoid open redirects.
+  const rawCallback = searchParams.get("callbackUrl");
+  const callbackUrl =
+    rawCallback && rawCallback.startsWith("/") ? rawCallback : "/dashboard";
 
   async function handlePasswordRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,29 +76,39 @@ function RegisterForm() {
     setLoading(false);
 
     if (result?.error) {
-      router.push("/login?registered=true");
+      router.push(
+        `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
       return;
     }
 
-    router.push("/dashboard");
+    router.push(callbackUrl);
   }
 
   async function handleMagicLinkRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    await signIn("nodemailer", { email, callbackUrl: "/dashboard" });
+    await signIn("nodemailer", { email, callbackUrl });
     setLoading(false);
   }
 
   return (
     <Card className="w-full border-stone-200 shadow-xl">
       <CardHeader className="px-8 pt-10 pb-0 text-center">
-        <Link href="/" className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700">
-          <Coffee className="h-5 w-5 text-white" />
+        <Link
+          href="/"
+          className="mx-auto mb-4 flex items-center gap-2.5"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700">
+            <Coffee className="h-5 w-5 text-white" />
+          </div>
+          <span className="font-[family-name:var(--font-logo)] text-3xl tracking-wide text-foreground">
+            Brewstamp
+          </span>
         </Link>
-        <CardTitle className="text-xl text-stone-900">Create your <span className="font-[family-name:var(--font-logo)] tracking-wide">Brewstamp</span> account</CardTitle>
-        <p className="text-sm text-stone-500">
+        <CardTitle className="text-xl text-foreground">Create your account</CardTitle>
+        <p className="text-sm text-muted-foreground">
           Set up your shop and start rewarding customers
         </p>
       </CardHeader>
@@ -100,7 +117,7 @@ function RegisterForm() {
         <Button
           variant="outline"
           className="w-full cursor-pointer"
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          onClick={() => signIn("google", { callbackUrl })}
         >
           <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -114,10 +131,10 @@ function RegisterForm() {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-stone-200" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-stone-400">Or continue with email</span>
+            <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
           </div>
         </div>
 
@@ -232,7 +249,9 @@ export default function RegisterPage() {
       </Link>
       <div className="relative z-10 w-full max-w-xl">
         <ReferralBanner />
-        <RegisterForm />
+        <Suspense>
+          <RegisterForm />
+        </Suspense>
       </div>
     </div>
   );

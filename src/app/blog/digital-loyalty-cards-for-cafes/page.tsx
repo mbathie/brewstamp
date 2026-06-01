@@ -291,7 +291,7 @@ export default function BlogPost() {
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Brewstamp, for example, is a free coffee loyalty card for your
               first 100 stamps — enough to test if a loyalty program works for
-              your shop. After that, it&apos;s $5/month for unlimited stamps.
+              your shop. After that, it&apos;s $7/month for unlimited stamps.
             </p>
           </section>
 

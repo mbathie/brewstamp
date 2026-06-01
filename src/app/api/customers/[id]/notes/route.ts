@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { getMerchant } from "@/lib/auth";
 import { StampCard } from "@/models";
+import { isTopCustomer } from "@/lib/top-customers";
 
 export async function GET(
   _req: Request,
@@ -19,9 +20,11 @@ export async function GET(
   })
     .select("notes tags")
     .lean<{ notes?: string; tags?: string[] }>();
+  const topCustomer = await isTopCustomer(merchant.shop._id, id);
   return NextResponse.json({
     notes: card?.notes || "",
     tags: card?.tags || [],
+    isTopCustomer: topCustomer,
   });
 }
 

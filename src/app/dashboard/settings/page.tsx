@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Shuffle, AlertTriangle, Check, Loader2 } from "lucide-react";
+import { Upload, Shuffle, AlertTriangle, Check, Loader2, Store } from "lucide-react";
 import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
 import CardPreview from "@/components/card-preview";
@@ -24,6 +24,13 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   void session;
   const [shop, setShop] = useState<any>(null);
+  // True when the top-bar switcher is on "All shops" — there's no single shop
+  // to edit, so we show a "pick a shop" prompt instead of the setup form.
+  const [aggregate, setAggregate] = useState(false);
+  const [pickerShops, setPickerShops] = useState<
+    { shopId: string; shopName: string; role: string }[]
+  >([]);
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [threshold, setThreshold] = useState<number | null>(8);
   const [logo, setLogo] = useState<string | null>(null);
@@ -43,6 +50,12 @@ export default function SettingsPage() {
     fetch("/api/shop")
       .then((r) => r.json())
       .then((data) => {
+        if (data.aggregate) {
+          setAggregate(true);
+          setPickerShops(data.shops || []);
+          return;
+        }
+        if (!data.shop) return;
         setShop(data.shop);
         const initial = {
           name: data.shop.name ?? "",
@@ -123,6 +136,27 @@ export default function SettingsPage() {
     await saveChanges();
   }
 
+  // From the "All shops" empty state, drop into a single shop's setup: set the
+  // active-shop cookie, then reload so the whole dashboard (sidebar, top bar,
+  // this page) re-scopes to the chosen shop.
+  async function switchToShop(shopId: string) {
+    setSwitchingTo(shopId);
+    try {
+      const res = await fetch("/api/shop-context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: shopId }),
+      });
+      if (!res.ok) {
+        setSwitchingTo(null);
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setSwitchingTo(null);
+    }
+  }
+
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -165,6 +199,59 @@ export default function SettingsPage() {
     if (res.ok) setLogo(null);
     setUploadingLogo(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  if (aggregate) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-xl font-semibold text-foreground">Shop Setup</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
+              <Store className="size-6" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Pick a shop to edit
+            </h2>
+            <p className="max-w-md text-sm text-muted-foreground">
+              You&apos;re viewing <strong>All shops</strong>. Shop setup —
+              branding, loyalty, and card design — applies to one shop at a
+              time. Choose a shop below to edit its setup.
+            </p>
+
+            {pickerShops.length > 0 && (
+              <div className="mt-4 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
+                {pickerShops.map((s) => (
+                  <button
+                    key={s.shopId}
+                    type="button"
+                    disabled={!!switchingTo}
+                    onClick={() => switchToShop(s.shopId)}
+                    className="group flex cursor-pointer items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition hover:border-amber-500 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground/80">
+                      {switchingTo === s.shopId ? (
+                        <Loader2 className="size-5 animate-spin" />
+                      ) : (
+                        <Store className="size-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold text-foreground">
+                        {s.shopName}
+                      </div>
+                      <div className="text-sm capitalize text-muted-foreground">
+                        {s.role}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!shop) return <p className="text-sm text-muted-foreground">Loading...</p>;

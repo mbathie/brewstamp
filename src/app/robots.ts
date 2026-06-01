@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      allow: ["/", "/api/og"],
       disallow: ["/dashboard", "/api"],
     },
     sitemap: `${process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app"}/sitemap.xml`,

@@ -155,6 +155,8 @@ export default function CustomerClient({
     };
   }, [on, customerName, customerEmail, freeRedeemed, detailsSaved]);
 
+  const pendingRequestIdRef = useRef<string | null>(null);
+
   const requestStamp = useCallback(async (redeem = false) => {
     setStatus("requesting");
     try {
@@ -181,11 +183,41 @@ export default function CustomerClient({
         redeem,
       });
 
+      pendingRequestIdRef.current = data.request._id;
       setStatus("waiting");
     } catch {
       setStatus("idle");
     }
   }, [shopId, customerId, name, customerName, animalName, stamps, threshold, send]);
+
+  // Tell the merchant if the customer closes / navigates away while waiting,
+  // so they aren't stuck staring at a stamp-request modal that will never
+  // resolve. We use pagehide rather than beforeunload because it fires for
+  // mobile Safari tab-switch + back-forward navigation as well.
+  useEffect(() => {
+    function cancelPending() {
+      const reqId = pendingRequestIdRef.current;
+      if (!reqId) return;
+      pendingRequestIdRef.current = null;
+      send({
+        type: "stamp-request:cancelled-by-customer",
+        requestId: reqId,
+        customerId,
+      });
+    }
+    window.addEventListener("pagehide", cancelPending);
+    return () => {
+      window.removeEventListener("pagehide", cancelPending);
+    };
+  }, [send, customerId]);
+
+  // When a request resolves, clear the pending marker so a future close
+  // doesn't try to cancel a request that's already been actioned.
+  useEffect(() => {
+    if (status === "idle" || status === "approved" || status === "rejected") {
+      pendingRequestIdRef.current = null;
+    }
+  }, [status]);
 
   // Timeout after 3 minutes of waiting
   useEffect(() => {

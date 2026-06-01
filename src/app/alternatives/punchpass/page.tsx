@@ -19,14 +19,14 @@ import Testimonials from "@/components/testimonials";
 export const metadata: Metadata = {
   title: "PunchPass Alternative — Free Stamp Card",
   description:
-    "Brewstamp is a free PunchPass alternative — transparent free tier (100 stamps), $5/month flat after, and a public roadmap.",
+    "Brewstamp is a free PunchPass alternative — transparent free tier (100 stamps), $7/mo flat after, and a public roadmap.",
   alternates: { canonical: "/alternatives/punchpass" },
   openGraph: {
     type: "website",
     url: "/alternatives/punchpass",
     title: "PunchPass Alternative — Brewstamp",
     description:
-      "A PunchPass alternative with a free tier and transparent pricing. Free up to 100 stamps, $5/month flat after.",
+      "A PunchPass alternative with a free tier and transparent pricing. Free up to 100 stamps, $7/mo flat after.",
     images: [
       {
         url: "https://images.pexels.com/photos/4787613/pexels-photo-4787613.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PunchPass Alternative — Brewstamp",
     description:
-      "A PunchPass alternative with a free tier. Free up to 100 stamps, $5/month flat.",
+      "A PunchPass alternative with a free tier. Free up to 100 stamps, $7/mo flat.",
     images: [
       "https://images.pexels.com/photos/4787613/pexels-photo-4787613.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -52,7 +52,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "PunchPass Alternative — Brewstamp",
   description:
-    "Brewstamp is a PunchPass alternative for independent cafes — a digital coffee loyalty card with a transparent free tier and flat $5/month pricing.",
+    "Brewstamp is a PunchPass alternative for independent cafes — a digital coffee loyalty card with a transparent free tier and flat $7/mo pricing.",
   url: "https://brewstamp.app/alternatives/punchpass",
   about: {
     "@type": "SoftwareApplication",
@@ -198,7 +198,7 @@ export default function PunchPassAlternative() {
                   },
                   {
                     feature: "Public pricing",
-                    brewstamp: { good: true, text: "$5/month flat" },
+                    brewstamp: { good: true, text: "$7/mo flat" },
                     punchpass: { good: null, text: "Contact for pricing" },
                   },
                   {
@@ -262,7 +262,7 @@ export default function PunchPassAlternative() {
               {
                 icon: Eye,
                 title: "Pricing on the website",
-                desc: "We list our $5/month price publicly. No demo call required, no email gate, no quoted price that changes by region. What you see is what you pay.",
+                desc: "We list our $7/mo price publicly. No demo call required, no email gate, no quoted price that changes by region. What you see is what you pay.",
               },
               {
                 icon: Shield,
@@ -344,7 +344,7 @@ export default function PunchPassAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to 100 stamps. $5/month flat after. No demos, no calls.
+              Free up to 100 stamps. $7/mo flat after. No demos, no calls.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -382,7 +382,7 @@ export default function PunchPassAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$5</span>
+                <span className="text-4xl font-bold text-stone-900">$7</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -406,6 +406,15 @@ export default function PunchPassAlternative() {
               </Link>
             </div>
           </div>
+          <div className="mt-10 text-center">
+            <p className="text-sm text-stone-500">
+              Need multi-shop, team logins, or CSV exports? Plus & Max
+              plans go from $19–$29/mo.{" "}
+              <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
+                See full plan comparison →
+              </a>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -424,7 +433,7 @@ export default function PunchPassAlternative() {
             {[
               {
                 q: "Is Brewstamp a free PunchPass alternative?",
-                a: "Yes — Brewstamp has a public free tier covering your first 100 stamps total. After that it's $5/month for unlimited stamps. PunchPass doesn't publicly list a free tier on its site at the time of writing.",
+                a: "Yes — Brewstamp has a public free tier covering your first 100 stamps total. After that it's $7/mo for unlimited stamps. PunchPass doesn't publicly list a free tier on its site at the time of writing.",
               },
               {
                 q: "How is Brewstamp different from PunchPass?",
@@ -436,7 +445,7 @@ export default function PunchPassAlternative() {
               },
               {
                 q: "Which is cheaper, Brewstamp or PunchPass?",
-                a: "Brewstamp publishes its pricing — free up to 100 stamps, then $5/month. PunchPass doesn't list a public price; you'd need to contact them for a quote.",
+                a: "Brewstamp publishes its pricing — free up to 100 stamps, then $7/mo. PunchPass doesn't list a public price; you'd need to contact them for a quote.",
               },
               {
                 q: "Is PunchPass a good loyalty app?",

@@ -123,6 +123,23 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Dark-amber surfaces always want white text — defaults to it so we
+     don't have to sprinkle `!text-white` on every CTA. Uses !important
+     so it beats Tailwind utilities like `text-primary-foreground` that
+     shadcn's Button defaults to. Targets buttons + links specifically so
+     it doesn't sweep over containers that happen to use amber bgs. */
+  button.bg-amber-500,
+  button.bg-amber-600,
+  button.bg-amber-700,
+  button.bg-amber-800,
+  button.bg-amber-900,
+  a.bg-amber-500,
+  a.bg-amber-600,
+  a.bg-amber-700,
+  a.bg-amber-800,
+  a.bg-amber-900 {
+    color: white !important;
+  }
 }
 
 @keyframes stamp-pop {

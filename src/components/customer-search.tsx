@@ -22,7 +22,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, Download } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Search, Plus, Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { generateAnimalName } from "@/lib/animal-names";
 
 interface Customer {
@@ -32,9 +37,16 @@ interface Customer {
   cookieId: string;
 }
 
+interface ShopRef {
+  _id: string;
+  name: string;
+  stampThreshold?: number;
+}
+
 interface StampCardData {
   _id: string;
   customer: Customer;
+  shop?: ShopRef;
   stamps: number;
   totalEarned: number;
   freeRedeemed: number;
@@ -46,6 +58,15 @@ interface StampCardData {
 interface Props {
   stampCards: StampCardData[];
   threshold: number;
+  // When true the user is viewing "All shops" — render a Shop column so
+  // each row makes sense without context, and per-row threshold comes
+  // from the populated shop ref instead of the page-level prop.
+  aggregate?: boolean;
+  // CSV export is a Plus+ feature. On lower plans we still render the
+  // button (so customers know the capability exists) but disable it and
+  // surface a tooltip nudging them to upgrade.
+  canExportCsv?: boolean;
+  planLabel?: string;
 }
 
 const PAGE_SIZE = 20;
@@ -61,8 +82,9 @@ function csvCell(value: string | number | null | undefined): string {
   return s;
 }
 
-function downloadCsv(rows: StampCardData[]) {
+function downloadCsv(rows: StampCardData[], aggregate: boolean) {
   const header = [
+    ...(aggregate ? ["Shop"] : []),
     "Name",
     "Email",
     "Tags",
@@ -77,6 +99,7 @@ function downloadCsv(rows: StampCardData[]) {
     const name = c.customer.name?.trim() || generateAnimalName(c.customer.cookieId);
     lines.push(
       [
+        ...(aggregate ? [csvCell(c.shop?.name || "")] : []),
         csvCell(name),
         csvCell(c.customer.email || ""),
         csvCell((c.tags || []).join("; ")),
@@ -101,7 +124,13 @@ function downloadCsv(rows: StampCardData[]) {
   URL.revokeObjectURL(url);
 }
 
-export default function CustomerSearch({ stampCards, threshold }: Props) {
+export default function CustomerSearch({
+  stampCards,
+  threshold,
+  aggregate = false,
+  canExportCsv = true,
+  planLabel,
+}: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -152,24 +181,83 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
 
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      validCards.filter((card) => {
-        if (tagFilter && !(card.tags || []).includes(tagFilter)) return false;
-        if (!query.trim()) return true;
-        const q = query.toLowerCase();
-        const name = card.customer.name?.toLowerCase() || "";
-        const email = card.customer.email?.toLowerCase() || "";
-        const cookieId = card.customer.cookieId?.toLowerCase() || "";
-        const tagMatch = (card.tags || []).some((t) =>
-          t.toLowerCase().includes(q),
-        );
-        return (
-          name.includes(q) || email.includes(q) || cookieId.includes(q) || tagMatch
-        );
-      }),
-    [validCards, query, tagFilter],
-  );
+  type SortKey =
+    | "customer"
+    | "shop"
+    | "stamps"
+    | "totalEarned"
+    | "freeRedeemed"
+    | "lastVisit";
+  const [sortKey, setSortKey] = useState<SortKey>("lastVisit");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // Click a header: toggle dir if it's the active column, otherwise switch
+  // to that column with a sensible default (strings ascending, numbers/
+  // dates descending — most-recent / largest first).
+  function toggleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "customer" || key === "shop" ? "asc" : "desc");
+    }
+  }
+
+  const filtered = useMemo(() => {
+    const list = validCards.filter((card) => {
+      if (tagFilter && !(card.tags || []).includes(tagFilter)) return false;
+      if (!query.trim()) return true;
+      const q = query.toLowerCase();
+      const name = card.customer.name?.toLowerCase() || "";
+      const email = card.customer.email?.toLowerCase() || "";
+      const cookieId = card.customer.cookieId?.toLowerCase() || "";
+      const tagMatch = (card.tags || []).some((t) =>
+        t.toLowerCase().includes(q),
+      );
+      return (
+        name.includes(q) || email.includes(q) || cookieId.includes(q) || tagMatch
+      );
+    });
+
+    const mul = sortDir === "asc" ? 1 : -1;
+    const compare = (a: StampCardData, b: StampCardData): number => {
+      switch (sortKey) {
+        case "customer": {
+          const an = (
+            a.customer.name ||
+            a.customer.email ||
+            a.customer.cookieId ||
+            ""
+          ).toLowerCase();
+          const bn = (
+            b.customer.name ||
+            b.customer.email ||
+            b.customer.cookieId ||
+            ""
+          ).toLowerCase();
+          return an.localeCompare(bn) * mul;
+        }
+        case "shop": {
+          const an = (a.shop?.name || "").toLowerCase();
+          const bn = (b.shop?.name || "").toLowerCase();
+          return an.localeCompare(bn) * mul;
+        }
+        case "stamps":
+          return (a.stamps - b.stamps) * mul;
+        case "totalEarned":
+          return (a.totalEarned - b.totalEarned) * mul;
+        case "freeRedeemed":
+          return (a.freeRedeemed - b.freeRedeemed) * mul;
+        case "lastVisit":
+          return (
+            (new Date(a.updatedAt).getTime() -
+              new Date(b.updatedAt).getTime()) *
+            mul
+          );
+      }
+    };
+    return [...list].sort(compare);
+  }, [validCards, query, tagFilter, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageStart = page * PAGE_SIZE;
@@ -188,16 +276,45 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
             className="pl-9"
           />
         </div>
-        <Button
-          variant="outline"
-          onClick={() => downloadCsv(filtered)}
-          disabled={filtered.length === 0}
-          className="cursor-pointer"
-          title="Download visible customers as CSV"
-        >
-          <Download className="mr-1 size-4" />
-          Export CSV
-        </Button>
+        {canExportCsv ? (
+          <Button
+            variant="outline"
+            onClick={() => downloadCsv(filtered, aggregate)}
+            disabled={filtered.length === 0}
+            className="cursor-pointer"
+            title="Download visible customers as CSV"
+          >
+            <Download className="mr-1 size-4" />
+            Export CSV
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* Wrapper span so the tooltip still fires on a disabled
+                  button (disabled elements don't emit pointer events). */}
+              <span tabIndex={0}>
+                <Button
+                  variant="outline"
+                  disabled
+                  className="pointer-events-none opacity-60"
+                >
+                  <Download className="mr-1 size-4" />
+                  Export CSV
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              CSV export is available on Plus and Max plans.
+              {planLabel ? ` You're on ${planLabel}.` : ""}{" "}
+              <a
+                href="/dashboard/billing"
+                className="underline underline-offset-2"
+              >
+                Upgrade
+              </a>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
@@ -285,66 +402,114 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead>Current Stamps</TableHead>
-              <TableHead>Total Earned</TableHead>
-              <TableHead>Free Redeemed</TableHead>
-              <TableHead className="text-right">Last Visit</TableHead>
+              <SortHeader
+                label="Customer"
+                k="customer"
+                activeKey={sortKey}
+                dir={sortDir}
+                onClick={toggleSort}
+              />
+              {aggregate && (
+                <SortHeader
+                  label="Shop"
+                  k="shop"
+                  activeKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+              )}
+              <SortHeader
+                label="Current Stamps"
+                k="stamps"
+                activeKey={sortKey}
+                dir={sortDir}
+                onClick={toggleSort}
+              />
+              <SortHeader
+                label="Total Earned"
+                k="totalEarned"
+                activeKey={sortKey}
+                dir={sortDir}
+                onClick={toggleSort}
+              />
+              <SortHeader
+                label="Free Redeemed"
+                k="freeRedeemed"
+                activeKey={sortKey}
+                dir={sortDir}
+                onClick={toggleSort}
+              />
+              <SortHeader
+                label="Last Visit"
+                k="lastVisit"
+                activeKey={sortKey}
+                dir={sortDir}
+                onClick={toggleSort}
+                align="right"
+              />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.map((card) => (
-              <TableRow key={card._id} className="relative cursor-pointer">
-                <TableCell>
-                  <Link
-                    href={`/dashboard/customers/${card.customer._id}`}
-                    className="absolute inset-0"
-                  />
-                  <div>
-                    <p className="font-medium">
-                      {card.customer.name || generateAnimalName(card.customer.cookieId)}
-                    </p>
-                    {card.customer.email && (
-                      <p className="text-xs text-muted-foreground">
-                        {card.customer.email}
+            {paged.map((card) => {
+              const rowThreshold = card.shop?.stampThreshold ?? threshold;
+              return (
+                <TableRow key={card._id} className="relative cursor-pointer">
+                  <TableCell className="max-w-[220px]">
+                    <Link
+                      href={`/dashboard/customers/${card.customer._id}`}
+                      className="absolute inset-0"
+                    />
+                    <div>
+                      <p className="font-medium">
+                        {card.customer.name || generateAnimalName(card.customer.cookieId)}
                       </p>
-                    )}
-                    {(card.tags || []).length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {(card.tags || []).slice(0, 3).map((t) => (
-                          <Badge
-                            key={t}
-                            variant="outline"
-                            className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
-                          >
-                            {t}
-                          </Badge>
-                        ))}
-                        {(card.tags || []).length > 3 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            +{(card.tags || []).length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    {card.stamps} / {threshold}
-                  </Badge>
-                </TableCell>
-                <TableCell>{card.totalEarned}</TableCell>
-                <TableCell>{card.freeRedeemed}</TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {new Date(card.updatedAt).toLocaleDateString("en-AU", {
-                    day: "numeric",
-                    month: "short",
-                    year: "2-digit",
-                  })}
-                </TableCell>
-              </TableRow>
-            ))}
+                      {card.customer.email && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {card.customer.email}
+                        </p>
+                      )}
+                      {(card.tags || []).length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(card.tags || []).slice(0, 3).map((t) => (
+                            <Badge
+                              key={t}
+                              variant="outline"
+                              className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
+                            >
+                              {t}
+                            </Badge>
+                          ))}
+                          {(card.tags || []).length > 3 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              +{(card.tags || []).length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  {aggregate && (
+                    <TableCell className="text-sm text-muted-foreground">
+                      {card.shop?.name || "—"}
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <Badge variant="outline">
+                      {card.stamps} / {rowThreshold}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{card.totalEarned}</TableCell>
+                  <TableCell>{card.freeRedeemed}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {new Date(card.updatedAt).toLocaleDateString("en-AU", {
+                      day: "numeric",
+                      month: "short",
+                      year: "2-digit",
+                    })}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
@@ -376,5 +541,45 @@ export default function CustomerSearch({ stampCards, threshold }: Props) {
         </div>
       )}
     </>
+  );
+}
+
+function SortHeader<K extends string>({
+  label,
+  k,
+  activeKey,
+  dir,
+  onClick,
+  align,
+}: {
+  label: string;
+  k: K;
+  activeKey: K;
+  dir: "asc" | "desc";
+  onClick: (k: K) => void;
+  align?: "right";
+}) {
+  const active = activeKey === k;
+  return (
+    <TableHead className={align === "right" ? "text-right" : undefined}>
+      <button
+        type="button"
+        onClick={() => onClick(k)}
+        className={`group inline-flex cursor-pointer items-center gap-1 ${
+          align === "right" ? "ml-auto" : ""
+        } ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        <span>{label}</span>
+        {active ? (
+          dir === "asc" ? (
+            <ArrowUp className="size-3" />
+          ) : (
+            <ArrowDown className="size-3" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3 opacity-40 transition-opacity group-hover:opacity-80" />
+        )}
+      </button>
+    </TableHead>
   );
 }

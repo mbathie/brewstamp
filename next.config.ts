@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // "/home" isn't a route — the marketing homepage lives at "/". Alias it
+      // so bookmarks/autocomplete/old links land on the homepage, not a 404.
+      { source: "/home", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

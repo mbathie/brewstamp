@@ -193,7 +193,10 @@ export default function ReferralsPage() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center">
-            <Gift className="mx-auto mb-3 size-10 text-muted-foreground/50" />
+            <Gift
+              className="mx-auto mb-3 size-10 text-muted-foreground"
+              strokeWidth={1.5}
+            />
             <p className="text-lg font-medium text-foreground">
               No referrals yet
             </p>

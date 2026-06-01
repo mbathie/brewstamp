@@ -16,6 +16,7 @@ import {
   Languages,
   Tag,
   Lock,
+  Users,
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   title:
     "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 13 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $5/mo unlimited — no premium tier gating.",
+    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 13 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $7/mo unlimited — no premium tier gating.",
   alternates: { canonical: "/features" },
   keywords: [
     "loyalty card features",
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     url: "/features",
     title: "Brewstamp Features — Free, Customisable, No App Required",
     description:
-      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 13 languages. Real-time stamp approval. CSV export. One $5/mo plan — no feature gating.",
+      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 13 languages. Real-time stamp approval. CSV export. One $7/mo plan — no feature gating.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&h=630&q=70&auto=format&fit=crop",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brewstamp Features — Free Customisable Loyalty Card",
     description:
-      "No customer app. Branded card design free. 13 languages. One $5/mo plan, no feature gating.",
+      "No customer app. Branded card design free. 13 languages. One $7/mo plan, no feature gating.",
   },
 };
 
@@ -72,7 +73,7 @@ const jsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
-    description: "Free up to 100 stamps. $5/month for unlimited stamps.",
+    description: "Free up to 100 stamps. $7/month for unlimited stamps.",
   },
   featureList: [
     "No app download for customers — opens in any phone browser",
@@ -153,6 +154,10 @@ const PATTERN_SWATCHES: Array<{
 // short — every row should be either a differentiator vs competitors or a
 // signal a prospect actually cares about. Internal niceties (date filters,
 // activity charts, etc.) live elsewhere on the page, not here.
+//
+// Column 1 = "every plan" (includes Free) — what you get on day one.
+// Column 2 = "paid plan upgrades" — what unlocks as you move up. Detailed
+// per-tier limits live on /pricing.
 const FEATURE_TABLE: Array<{
   category: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -182,17 +187,25 @@ const FEATURE_TABLE: Array<{
     rows: [
       { label: "Real-time stamp approval (no separate stamper app)", free: true, pro: true },
       { label: "Customer list with notes + tags", free: true, pro: true },
-      { label: "CSV export of your customers", free: true, pro: true },
       { label: "Built-in lifecycle emails to you and your customers", free: true, pro: true },
+      { label: "CSV export of your customers", free: "—", pro: "Plus & Max" },
     ],
   },
   {
-    category: "Pricing & plan",
+    category: "Team & scale",
+    icon: Users,
+    rows: [
+      { label: "Multiple shops under one account", free: "1 shop", pro: "Up to 10" },
+      { label: "Manager & staff logins", free: "—", pro: "Plus & Max" },
+      { label: "Cross-shop rollup reporting", free: "—", pro: "Max only" },
+    ],
+  },
+  {
+    category: "Pricing",
     icon: Tag,
     rows: [
       { label: "Stamps included", free: "100 lifetime", pro: "Unlimited" },
-      { label: "Monthly price", free: "$0", pro: "$5" },
-      { label: "Feature gating", free: "None", pro: "None" },
+      { label: "Monthly price", free: "$0", pro: "From $7" },
     ],
   },
 ];
@@ -273,9 +286,9 @@ export default function FeaturesPage() {
                 },
                 {
                   icon: Lock,
-                  title: "No feature gating",
+                  title: "Built to scale with you",
                   body:
-                    "Free and Pro share every feature. The only difference is the stamps quota.",
+                    "Start free with the full single-shop experience. Upgrade for multi-shop, unlimited staff logins, and CSV exports when your business grows.",
                 },
               ].map(({ icon: Icon, title, body }) => (
                 <div
@@ -425,12 +438,18 @@ export default function FeaturesPage() {
                 Everything you get
               </p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-                Same feature set on Free and Pro.
+                Everything you get on every plan.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-                The only difference between the tiers is the stamps quota.
-                Everything else — design, languages, analytics, lifecycle —
-                ships on both.
+                Branding, languages, analytics, and lifecycle ship on Free —
+                even before you upgrade. Paid plans unlock more shops, team
+                logins, and customer exports.{" "}
+                <a
+                  href="/pricing"
+                  className="text-amber-700 underline-offset-2 hover:underline"
+                >
+                  See full plan comparison →
+                </a>
               </p>
             </div>
 
@@ -444,7 +463,7 @@ export default function FeaturesPage() {
                   Free
                 </span>
                 <span className="text-center text-xs font-semibold uppercase tracking-widest text-stone-500">
-                  Pro
+                  Paid plans
                 </span>
               </div>
 

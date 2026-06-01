@@ -2,11 +2,18 @@ import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { StampCard, Subscription } from "@/models";
 import { stripe } from "@/lib/stripe";
+import { getPlanByPriceId } from "@/lib/plans";
 
 export async function GET() {
   const merchant = await getMerchant();
   if (!merchant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (merchant.role !== "owner") {
+    return NextResponse.json(
+      { error: "Only the shop owner can view billing." },
+      { status: 403 }
+    );
   }
 
   const shopId = merchant.shop._id;
@@ -41,6 +48,21 @@ export async function GET() {
     }
   }
 
+  // Resolve current plan slug from the subscription's stripePriceId so the
+  // billing UI can mark the active plan in its grid. Fall back to planLabel
+  // (set on seed accounts) when the price ID doesn't match a known plan.
+  let currentPlanSlug: string | null = null;
+  if (subscription) {
+    if (subscription.stripePriceId) {
+      const plan = getPlanByPriceId(subscription.stripePriceId);
+      if (plan) currentPlanSlug = plan.slug;
+    }
+    if (!currentPlanSlug && subscription.planLabel) {
+      currentPlanSlug = subscription.planLabel.toLowerCase();
+    }
+  }
+  const isSeed = !!subscription?.stripeSubscriptionId?.startsWith("sub_seed_");
+
   return NextResponse.json({
     totalStamps,
     limit: 100,
@@ -48,6 +70,10 @@ export async function GET() {
       ? {
           status: subscription.status,
           currentPeriodEnd: subscription.currentPeriodEnd,
+          planSlug: currentPlanSlug,
+          planLabel: subscription.planLabel || null,
+          cancelAtPeriodEnd: !!subscription.cancelAtPeriodEnd,
+          isSeed,
         }
       : null,
     invoices,

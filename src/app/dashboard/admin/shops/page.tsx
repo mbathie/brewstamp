@@ -175,6 +175,47 @@ export default function AdminShopsPage() {
   const [metric, setMetric] = useState<Metric>("stamps");
   const router = useRouter();
 
+  // Restore sort + tab from last visit. Tab is held in the URL hash, which
+  // also drives the on-page scroll anchor — so persisting the hash brings
+  // the admin back to the same section, not just the same tab label.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("brewstamp.admin-shops");
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved.sortKey) setSortKey(saved.sortKey);
+      if (saved.sortDir) setSortDir(saved.sortDir);
+      if (saved.hash && !window.location.hash) {
+        window.location.hash = saved.hash;
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "brewstamp.admin-shops",
+        JSON.stringify({ sortKey, sortDir, hash: window.location.hash }),
+      );
+    } catch {}
+  }, [sortKey, sortDir]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      try {
+        const raw = localStorage.getItem("brewstamp.admin-shops");
+        const saved = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          "brewstamp.admin-shops",
+          JSON.stringify({ ...saved, hash: window.location.hash }),
+        );
+      } catch {}
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
   useEffect(() => {
     if (status === "loading") return;
     if (session?.user?.email !== ADMIN_EMAIL) {

@@ -6,9 +6,14 @@ import { Zap } from "lucide-react";
 interface Props {
   totalStamps: number;
   hasSubscription: boolean;
+  planLabel?: string;
 }
 
-export function StampUsageIndicator({ totalStamps, hasSubscription }: Props) {
+export function StampUsageIndicator({
+  totalStamps,
+  hasSubscription,
+  planLabel,
+}: Props) {
   if (hasSubscription) {
     return (
       <Link
@@ -16,7 +21,7 @@ export function StampUsageIndicator({ totalStamps, hasSubscription }: Props) {
         className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/25"
       >
         <Zap className="size-3" />
-        Pro
+        {planLabel || "Pro"}
       </Link>
     );
   }

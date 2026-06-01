@@ -12,6 +12,7 @@ import {
   TrendingUp,
   CheckCircle2,
   ArrowRight,
+  Users,
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
@@ -21,16 +22,17 @@ import { buildHreflangMap } from "@/lib/i18n/landing";
 export const metadata: Metadata = {
   title: {
     absolute:
-      "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards | Brewstamp",
+      "Coffee Loyalty Card App — Free, No Customer App | Brewstamp",
   },
   description:
-    "The free coffee loyalty card app for cafes. Customers scan a QR code, earn stamps, and redeem free drinks — no customer app to download. Set up in 2 minutes.",
+    "A digital coffee loyalty card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free for your first 100 stamps.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
   keywords: [
     "coffee loyalty card",
     "coffee loyalty card app",
     "coffee stamp card",
     "coffee rewards card",
+    "coffee rewards app",
     "digital loyalty card",
     "cafe loyalty program",
     "coffee shop loyalty app",
@@ -40,15 +42,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    title: "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards",
+    title: "Coffee Loyalty Card App — Free, No Customer App | Brewstamp",
     description:
-      "The free coffee loyalty card app for cafes. Customers scan a QR code, earn stamps, and redeem free drinks — no customer app to download.",
+      "A digital coffee loyalty card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Coffee Loyalty Card App for Cafes — Free Digital Stamp Cards",
+    title: "Coffee Loyalty Card App — Free, No Customer App",
     description:
-      "The free coffee loyalty card app for cafes. Scan a QR code, earn stamps, redeem free drinks — no customer app to download.",
+      "A digital coffee loyalty card for your cafe. Scan a QR code — no app, no signup — and collect stamps toward a free coffee.",
   },
 };
 
@@ -89,10 +91,10 @@ const jsonLd = {
       mainEntity: [
         {
           "@type": "Question",
-          name: "Does this cafe have a loyalty program?",
+          name: "What's the best loyalty program for a coffee shop?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "If the cafe is on Brewstamp, look for a small QR code at the counter labelled 'loyalty card', 'stamp card', or 'rewards'. Scan it with your phone's camera — no app needed — and start collecting stamps toward a free drink. Read the full guide for customers.",
+            text: "A digital loyalty card with a free-coffee-after-8-stamps reward beats paper punch cards on every measurable front: lower fraud, no lost cards, real customer data, and zero ongoing printing cost. See the full guide to coffee shop loyalty cards for what rewards work, the 8-stamp rule, and how to launch one in under 2 minutes.",
           },
         },
         {
@@ -124,7 +126,7 @@ const jsonLd = {
           name: "How much does a digital loyalty card for cafes cost?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $5/month for unlimited stamps.",
+            text: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.",
           },
         },
         {
@@ -387,18 +389,29 @@ export default function Home() {
                 title: "Fully customisable",
                 desc: "Set your own stamp threshold. 6 coffees for a free one? 10? Your shop, your rules.",
               },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="rounded-xl border border-stone-200 bg-white p-6 transition-shadow hover:shadow-md"
-              >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-                  <Icon className="h-5 w-5 text-amber-700" />
+              {
+                icon: Users,
+                title: "Multi-shop support",
+                desc: "Support up to 10 shops under one account, and multiple team members.",
+              },
+            ].map(({ icon: Icon, title, desc }, i, arr) => {
+              const isLastOrphan =
+                i === arr.length - 1 && arr.length % 3 === 1;
+              return (
+                <div
+                  key={title}
+                  className={`rounded-xl border border-stone-200 bg-white p-6 transition-shadow hover:shadow-md ${
+                    isLastOrphan ? "lg:col-start-2" : ""
+                  }`}
+                >
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                    <Icon className="h-5 w-5 text-amber-700" />
+                  </div>
+                  <h3 className="mb-1.5 font-semibold text-stone-900">{title}</h3>
+                  <p className="text-sm leading-relaxed text-stone-500">{desc}</p>
                 </div>
-                <h3 className="mb-1.5 font-semibold text-stone-900">{title}</h3>
-                <p className="text-sm leading-relaxed text-stone-500">{desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -418,7 +431,7 @@ export default function Home() {
             {[
               { value: "< 5s", label: "Customer setup time" },
               { value: "0", label: "Apps to download" },
-              { value: "$5", label: "Per month after 100 total stamps" },
+              { value: "$7", label: "Per month after 100 total stamps" },
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="text-3xl font-bold text-amber-700 md:text-4xl">
@@ -486,7 +499,7 @@ export default function Home() {
 
       {/* Pricing */}
       <section className="border-t border-stone-200 bg-stone-50 py-24">
-        <div className="mx-auto max-w-4xl px-6">
+        <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
               Pricing
@@ -495,80 +508,153 @@ export default function Home() {
               Simple, honest pricing
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Start free — your first 100 stamps are on us. Only pay when
-              your loyalty program is taking off.
+              Start free — your first 100 stamps are on us. Upgrade as your
+              shop, your team, or your number of locations grows.
             </p>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-stone-200 bg-white p-8">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Free */}
+            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
               <h3 className="text-lg font-semibold text-stone-900">Free</h3>
-              <p className="mt-1 text-sm text-stone-500">
-                Perfect to try it out
-              </p>
-              <p className="mt-6">
+              <p className="mt-1 text-sm text-stone-500">Try it out</p>
+              <p className="mt-5">
                 <span className="text-4xl font-bold text-stone-900">$0</span>
                 <span className="text-stone-500"> /month</span>
               </p>
-              <ul className="mt-6 space-y-3 text-sm text-stone-600">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Up to 100 stamps total
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  QR code generation
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  1 shop
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  Real-time stamp approvals
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  QR codes &amp; real-time approvals
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Customer dashboard
                 </li>
               </ul>
-              <Link href="/register">
-                <Button variant="outline" className="mt-8 w-full cursor-pointer">
+              <Link href="/register" className="mt-8">
+                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                   Get started
                 </Button>
               </Link>
             </div>
-            <div className="relative rounded-2xl border-2 border-amber-600 bg-white p-8">
-              <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
-                Most popular
-              </div>
+
+            {/* Pro */}
+            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
-              <p className="mt-1 text-sm text-stone-500">
-                For busy shops
-              </p>
-              <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$5</span>
+              <p className="mt-1 text-sm text-stone-500">For a single busy shop</p>
+              <p className="mt-5">
+                <span className="text-4xl font-bold text-stone-900">$7</span>
                 <span className="text-stone-500"> /month</span>
               </p>
-              <ul className="mt-6 space-y-3 text-sm text-stone-600">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Unlimited stamps
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  Everything in Free
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  1 shop
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Customer insights &amp; analytics
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Priority support
                 </li>
               </ul>
-              <Link href="/register">
-                <Button className="mt-8 w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
+              <Link href="/register" className="mt-8">
+                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
                   Get started
                 </Button>
               </Link>
             </div>
+
+            {/* Plus — most popular */}
+            <div className="relative flex flex-col rounded-2xl border-2 border-amber-600 bg-white p-6 shadow-sm">
+              <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
+                Most popular
+              </div>
+              <h3 className="text-lg font-semibold text-stone-900">Plus</h3>
+              <p className="mt-1 text-sm text-stone-500">Growing brands</p>
+              <p className="mt-5">
+                <span className="text-4xl font-bold text-stone-900">$19</span>
+                <span className="text-stone-500"> /month</span>
+              </p>
+              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Everything in Pro
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Up to 3 shops
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Unlimited staff logins
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  CSV customer exports
+                </li>
+              </ul>
+              <Link href="/register" className="mt-8">
+                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
+                  Get started
+                </Button>
+              </Link>
+            </div>
+
+            {/* Max */}
+            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
+              <h3 className="text-lg font-semibold text-stone-900">Max</h3>
+              <p className="mt-1 text-sm text-stone-500">Multi-location chains</p>
+              <p className="mt-5">
+                <span className="text-4xl font-bold text-stone-900">$29</span>
+                <span className="text-stone-500"> /month</span>
+              </p>
+              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Everything in Plus
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Up to 10 shops
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Cross-shop reporting
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Priority + dedicated support
+                </li>
+              </ul>
+              <Link href="/register" className="mt-8">
+                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
+                  Get started
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-amber-700 hover:text-amber-800 hover:underline"
+            >
+              See full plan comparison →
+            </Link>
           </div>
         </div>
       </section>
@@ -587,21 +673,21 @@ export default function Home() {
           <div className="mt-12 space-y-6">
             {([
               {
-                q: "Does this cafe have a loyalty program?",
+                q: "What's the best loyalty program for a coffee shop?",
                 a: (
                   <>
-                    If the cafe is on Brewstamp, look for a small QR code at
-                    the counter labelled &ldquo;loyalty card&rdquo;,
-                    &ldquo;stamp card&rdquo;, or &ldquo;rewards&rdquo;. Scan
-                    it with your phone&rsquo;s camera — no app needed — and
-                    start collecting stamps toward a free drink.{" "}
+                    A digital loyalty card with a free-coffee-after-8-stamps
+                    reward beats paper punch cards on every measurable front:
+                    lower fraud, no lost cards, real customer data, and zero
+                    ongoing printing cost.{" "}
                     <Link
-                      href="/blog/cafe-loyalty-programs-for-customers"
+                      href="/blog/coffee-shop-loyalty-cards"
                       className="font-medium text-amber-700 underline hover:text-amber-800"
                     >
-                      Read the full guide for customers
-                    </Link>
-                    .
+                      See the full guide to coffee shop loyalty cards
+                    </Link>{" "}
+                    for what rewards work, the 8-stamp rule, and how to launch
+                    one in under 2 minutes.
                   </>
                 ),
               },
@@ -619,7 +705,7 @@ export default function Home() {
               },
               {
                 q: "How much does a digital loyalty card for cafes cost?",
-                a: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $5/month for unlimited stamps.",
+                a: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.",
               },
               {
                 q: "How long does it take to set up a coffee shop loyalty program?",

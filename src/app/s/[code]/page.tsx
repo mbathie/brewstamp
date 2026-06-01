@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard } from "@/models";
+import { Shop, StampCard, Customer } from "@/models";
 import { getOrCreateCustomer } from "@/lib/cookies";
 import { notFound } from "next/navigation";
 import { generateAnimalName } from "@/lib/animal-names";
@@ -51,16 +51,31 @@ export async function generateMetadata({
 
 export default async function CustomerScanPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ cust?: string }>;
 }) {
   const { code } = await params;
+  const { cust } = await searchParams;
   await connectDB();
 
   const shop = await Shop.findOne({ code });
   if (!shop) notFound();
 
-  const customer = await getOrCreateCustomer();
+  // Dev-only impersonation: ?cust=<customerId> loads that customer's card
+  // without touching cookies — used to verify the "Top customer" badge and
+  // other merchant-side signals on demand. Production must never honour
+  // this; otherwise anyone with a customer _id could spoof identity.
+  let customer = null;
+  if (cust && process.env.NODE_ENV !== "production") {
+    if (/^[0-9a-fA-F]{24}$/.test(cust)) {
+      customer = await Customer.findById(cust);
+    }
+  }
+  if (!customer) {
+    customer = await getOrCreateCustomer();
+  }
 
   // Find or create stamp card for this customer + shop
   let stampCard = await StampCard.findOne({

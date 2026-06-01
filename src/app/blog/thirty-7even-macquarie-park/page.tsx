@@ -198,7 +198,7 @@ export default function BlogPost() {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Thirty 7even joined Brewstamp on 27 February 2026 and went
-              straight onto the Pro plan ($5/month, unlimited stamps). The
+              straight onto the Pro plan ($7/month, unlimited stamps). The
               snapshot from their merchant dashboard:
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-3">

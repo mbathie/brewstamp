@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getPlanBySlug } from "./plans";
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_SERVER_HOST,
@@ -65,7 +66,7 @@ export async function sendResetEmail({
     <!-- CTA -->
     <tr>
       <td style="padding: 0 24px 32px; text-align: center;">
-        <a href="${resetLink}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Reset Password</a>
+        <a href="${resetLink}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Reset Password</span></a>
       </td>
     </tr>
 
@@ -147,7 +148,7 @@ export async function sendWelcomeEmail({
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print and display your QR code</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard, print it out and place it at your point of sale so customers can easily scan it on their phones.</p>
                     <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg" alt="QR code printed out on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
-                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Download QR Code &rarr;</a>
+                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;"><span style="color: #ffffff;">Download QR Code &rarr;</span></a>
                   </td>
                 </tr>
               </table>
@@ -168,7 +169,7 @@ export async function sendWelcomeEmail({
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Customise your branding</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Add your logo, pick your brand colours, and set how many stamps earn a free drink. Make it yours.</p>
                     <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-loyalty-card.png" alt="Example branded loyalty card" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
-                    <a href="${utm("/dashboard/settings", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Customise Settings &rarr;</a>
+                    <a href="${utm("/dashboard/settings", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;"><span style="color: #ffffff;">Customise Settings &rarr;</span></a>
                   </td>
                 </tr>
               </table>
@@ -217,7 +218,7 @@ export async function sendWelcomeEmail({
                         </td>
                       </tr>
                     </table>
-                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;">Open Dashboard &rarr;</a>
+                    <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;"><span style="color: #ffffff;">Open Dashboard &rarr;</span></a>
                   </td>
                 </tr>
               </table>
@@ -235,7 +236,7 @@ export async function sendWelcomeEmail({
             <td style="padding: 20px;">
               <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #1c1917;">Pricing</h3>
               <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
-                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first 100 stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$5/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
+                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first 100 stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$7/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
               </p>
             </td>
           </tr>
@@ -246,7 +247,7 @@ export async function sendWelcomeEmail({
     <!-- CTA -->
     <tr>
       <td style="padding: 0 24px 32px; text-align: center;">
-        <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to your Dashboard</a>
+        <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Go to your Dashboard</span></a>
       </td>
     </tr>
 
@@ -845,75 +846,48 @@ export async function sendUpgradeNudgeEmail({
   shopName: string;
   stampsUsed: number;
 }) {
-  const stampsRemaining = 100 - stampsUsed;
-  const html = `
-<!DOCTYPE html>
+  const freePlan = getPlanBySlug("free")!;
+  const proPlan = getPlanBySlug("pro")!;
+  const freeStampLimit = freePlan.stampLimit as number;
+  const proPriceLabel = proPlan.priceLabel;
+  const stampsRemaining = freeStampLimit - stampsUsed;
+  const billingLink = utm("/dashboard/billing", "drip-upgrade");
+
+  const text = `Hey ${merchantName},
+
+Quick heads-up \u2014 ${shopName} has used ${stampsUsed} of ${freeStampLimit} free stamps. You've got ${stampsRemaining} left before new stamp requests get paused.
+
+${stampsUsed} stamps means customers are coming back, which is great. To keep things running without interruption, you can switch to the unlimited plan (${proPriceLabel}/mo) from your billing page:
+
+${billingLink}
+
+No rush \u2014 everything keeps working until you hit ${freeStampLimit}. Just didn't want you caught off guard.
+
+Cheers,
+Mark
+Brewstamp`;
+
+  const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stamp limit update</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <!-- Header -->
-    <tr>
-      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
-        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
-      </td>
-    </tr>
-
-    <!-- Body -->
-    <tr>
-      <td style="padding: 32px 24px 24px;">
-        <p style="margin: 0 0 16px; font-size: 16px; color: #1c1917; line-height: 1.6;">
-          Hi ${merchantName},
-        </p>
-        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
-          Just a heads up &mdash; <strong>${shopName}</strong> has used <strong>${stampsUsed} of 100</strong> free stamps. You have <strong>${stampsRemaining} left</strong> before new stamp requests are paused.
-        </p>
-        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
-          ${stampsUsed} stamps means customers are coming back &mdash; your loyalty card is doing its job. To keep things running without interruption, you can switch to the unlimited plan ($5/mo) from your billing page:
-        </p>
-        <p style="margin: 0 0 24px; font-size: 16px;">
-          <a href="${utm("/dashboard/billing", "drip-upgrade")}" style="color: #d97706; text-decoration: underline;">${APP_URL}/dashboard/billing</a>
-        </p>
-        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
-          No rush &mdash; everything keeps working until you hit 100. Just wanted to make sure you&rsquo;re not caught off guard.
-        </p>
-        <p style="margin: 0; font-size: 16px; color: #57534e; line-height: 1.6;">
-          Cheers,<br/>The Brewstamp team
-        </p>
-      </td>
-    </tr>
-
-    <!-- Footer -->
-    <tr>
-      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
-      </td>
-    </tr>
-  </table>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
+  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
+    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
+    <p style="margin: 0 0 16px;">Quick heads-up &mdash; <strong>${shopName}</strong> has used <strong>${stampsUsed} of ${freeStampLimit}</strong> free stamps. You&rsquo;ve got <strong>${stampsRemaining} left</strong> before new stamp requests get paused.</p>
+    <p style="margin: 0 0 16px;">${stampsUsed} stamps means customers are coming back, which is great. To keep things running without interruption, you can switch to the unlimited plan (${proPriceLabel}/mo) from your billing page:</p>
+    <p style="margin: 0 0 16px;"><a href="${billingLink}" style="color: #b45309;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard/billing</a></p>
+    <p style="margin: 0 0 16px;">No rush &mdash; everything keeps working until you hit ${freeStampLimit}. Just didn&rsquo;t want you caught off guard.</p>
+    <p style="margin: 0 0 4px;">Cheers,<br/>Mark<br/><span style="color: #78716c; font-size: 14px;">Brewstamp</span></p>
+  </div>
 </body>
 </html>`;
 
-  const text = `Hi ${merchantName},
-
-Just a heads up \u2014 ${shopName} has used ${stampsUsed} of 100 free stamps. You have ${stampsRemaining} left before new stamp requests are paused.
-
-${stampsUsed} stamps means customers are coming back \u2014 your loyalty card is doing its job. To keep things running without interruption, you can switch to the unlimited plan ($5/mo) from your billing page:
-
-${utm("/dashboard/billing", "drip-upgrade")}
-
-No rush \u2014 everything keeps working until you hit 100. Just wanted to make sure you're not caught off guard.
-
-Cheers,
-The Brewstamp team`;
-
   try {
     const info = await transporter.sendMail({
-      from: FROM,
+      from: FROM_PERSONAL,
       replyTo: REPLY_TO,
       to,
       subject: `${shopName} \u2014 ${stampsRemaining} free stamps remaining`,
@@ -927,6 +901,96 @@ The Brewstamp team`;
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("[Email] Failed to send upgrade nudge email:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendTeamInviteEmail({
+  to,
+  shopName,
+  inviterName,
+  role,
+  token,
+}: {
+  to: string;
+  shopName: string;
+  inviterName: string;
+  role: "manager" | "staff";
+  token: string;
+}) {
+  const acceptLink = `${APP_URL}/invite/${encodeURIComponent(token)}`;
+  const roleLabel = role === "manager" ? "manager" : "staff member";
+
+  const text = `Hi,
+
+${inviterName} has invited you to join ${shopName} on Brewstamp as a ${roleLabel}.
+
+Accept the invite by clicking the link below — you'll be asked to sign in (or create an account) with this email address (${to}):
+
+${acceptLink}
+
+This invite expires in 7 days.
+
+Cheers,
+The Brewstamp team`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join ${shopName} on Brewstamp</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 24px 8px;">
+        <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">You&rsquo;ve been invited</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          <strong>${inviterName}</strong> has invited you to join <strong>${shopName}</strong> on Brewstamp as a <strong>${roleLabel}</strong>.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 15px; color: #78716c; line-height: 1.6;">
+          Accept the invite below &mdash; you&rsquo;ll be asked to sign in (or create an account) with this email address (${to}).
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 24px 32px; text-align: center;">
+        <a href="${acceptLink}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Accept Invite</span></a>
+        <p style="margin: 16px 0 0; font-size: 12px; color: #a8a29e;">This invite expires in 7 days.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `${inviterName} invited you to join ${shopName} on Brewstamp`,
+      text,
+      html,
+      headers: {
+        "X-Mailin-Tag": "team-invite",
+        "List-Unsubscribe": LIST_UNSUBSCRIBE,
+      },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send team invite email:", error);
     return { success: false, error };
   }
 }

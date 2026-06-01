@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Subscription, Shop, User } from "@/models";
 import { stripe } from "@/lib/stripe";
+import { getPlanByPriceId } from "@/lib/plans";
 import { sendPaymentReceiptEmail, sendReferralRewardEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
@@ -53,13 +54,18 @@ export async function POST(req: Request) {
       );
       const period = getPeriodDates(sub);
 
+      const priceId = sub.items.data[0]?.price.id;
+      const planLabel = priceId ? getPlanByPriceId(priceId)?.label : undefined;
+
       await Subscription.findOneAndUpdate(
         { shop: shopId },
         {
           shop: shopId,
           stripeCustomerId: session.customer as string,
           stripeSubscriptionId: sub.id,
-          stripePriceId: sub.items.data[0]?.price.id,
+          stripePriceId: priceId,
+          ...(planLabel ? { planLabel } : {}),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
           status: "active",
           ...period,
         },
@@ -168,10 +174,20 @@ export async function POST(req: Request) {
       };
       const mappedStatus = statusMap[sub.status] || sub.status;
       const period = getPeriodDates(sub);
+      // Subscription.updated fires on plan changes — keep priceId + label in
+      // sync so the top-bar badge follows the live tier.
+      const priceId = sub.items.data[0]?.price.id;
+      const planLabel = priceId ? getPlanByPriceId(priceId)?.label : undefined;
 
       await Subscription.findOneAndUpdate(
         { stripeSubscriptionId: sub.id },
-        { status: mappedStatus, ...period }
+        {
+          status: mappedStatus,
+          ...(priceId ? { stripePriceId: priceId } : {}),
+          ...(planLabel ? { planLabel } : {}),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          ...period,
+        }
       );
       break;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -20,7 +20,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Zap, Loader2, Mail, ExternalLink } from "lucide-react";
+import {
+  Check,
+  Minus,
+  Loader2,
+  Mail,
+  ExternalLink,
+  AlertTriangle,
+} from "lucide-react";
+import { PLANS, getPlanRank, type PlanSlug } from "@/lib/plans";
 
 interface BillingData {
   totalStamps: number;
@@ -28,6 +36,10 @@ interface BillingData {
   subscription: {
     status: string;
     currentPeriodEnd: string;
+    planSlug: string | null;
+    planLabel: string | null;
+    cancelAtPeriodEnd: boolean;
+    isSeed: boolean;
   } | null;
   invoices: {
     id: string;
@@ -42,15 +54,17 @@ export default function BillingPage() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [switchingTo, setSwitchingTo] = useState<PlanSlug | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
-      toast.success("Subscription activated! You now have unlimited stamps.");
+      toast.success("Subscription activated!");
     }
   }, [searchParams]);
+
+  const hitShopLimit = searchParams.get("limit") === "1";
 
   useEffect(() => {
     fetch("/api/billing")
@@ -59,33 +73,83 @@ export default function BillingPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch {
-      toast.error("Failed to start checkout");
-    } finally {
-      setCheckoutLoading(false);
+  const currentSlug: PlanSlug = useMemo(() => {
+    const slug = data?.subscription?.planSlug;
+    if (slug === "pro" || slug === "plus" || slug === "max") {
+      return slug;
     }
-  };
+    return "free";
+  }, [data]);
 
-  const handlePortal = async () => {
+  const currentRank = useMemo(() => getPlanRank(currentSlug), [currentSlug]);
+  const isSeed = data?.subscription?.isSeed ?? false;
+
+  async function handleSwitch(target: PlanSlug) {
+    setSwitchingTo(target);
+    try {
+      if (target === "free") {
+        const ok = window.confirm(
+          "Downgrade to Free? Your current paid plan keeps working until the end of the period, then cancels."
+        );
+        if (!ok) return;
+      }
+
+      // Free → Paid uses checkout; everything else uses the switch endpoint.
+      const endpoint = currentSlug === "free" ? "/api/billing/checkout" : "/api/billing/switch";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: target }),
+      });
+      const result = await res.json();
+
+      if (!res.ok) {
+        toast.error(result.error || "Failed to switch plan");
+        return;
+      }
+
+      if (result.url) {
+        window.location.href = result.url;
+        return;
+      }
+
+      if (target === "free") {
+        toast.success("Plan will cancel at the end of your current period.");
+      } else {
+        toast.success(
+          `Switched to ${PLANS.find((p) => p.slug === target)?.label}. Prorated credit applied to your next invoice.`
+        );
+      }
+
+      // Refresh local state.
+      fetch("/api/billing")
+        .then((r) => r.json())
+        .then(setData);
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setSwitchingTo(null);
+    }
+  }
+
+  async function handlePortal() {
     setPortalLoading(true);
     try {
       const res = await fetch("/api/billing/portal", { method: "POST" });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        toast.error(error || "Failed to open billing portal");
+      }
     } catch {
       toast.error("Failed to open billing portal");
     } finally {
       setPortalLoading(false);
     }
-  };
+  }
 
-  const handleResendReceipt = async (invoiceId: string) => {
+  async function handleResendReceipt(invoiceId: string) {
     setResendingId(invoiceId);
     try {
       const res = await fetch("/api/billing/resend-receipt", {
@@ -93,17 +157,14 @@ export default function BillingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invoiceId }),
       });
-      if (res.ok) {
-        toast.success("Receipt sent to your email");
-      } else {
-        toast.error("Failed to send receipt");
-      }
+      if (res.ok) toast.success("Receipt sent to your email");
+      else toast.error("Failed to send receipt");
     } catch {
       toast.error("Failed to send receipt");
     } finally {
       setResendingId(null);
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -112,86 +173,218 @@ export default function BillingPage() {
       </div>
     );
   }
-
   if (!data) return null;
 
-  const isSubscribed = data.subscription?.status === "active";
-  const usagePercent = Math.min((data.totalStamps / data.limit) * 100, 100);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Billing</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Billing
+        </h1>
         <p className="text-muted-foreground">
-          Manage your subscription and view transaction history.
+          You&apos;re currently on the{" "}
+          <span className="font-medium text-foreground">
+            {PLANS.find((p) => p.slug === currentSlug)?.label}
+          </span>{" "}
+          plan. Switch tiers anytime — unused time is prorated as a credit on
+          your next invoice.
         </p>
+        {hitShopLimit && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/15 p-3 text-sm text-amber-200">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              You&apos;ve hit the shop limit on your current plan. Upgrade
+              below to add another shop — your existing shops keep working.
+            </span>
+          </div>
+        )}
+        {isSeed && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              This is a seeded test subscription. Plan switching and the
+              Stripe billing portal are disabled until the shop has a real
+              Stripe-backed subscription.
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Current Plan */}
+      {/* Plan grid */}
+      <div className="grid gap-4 lg:grid-cols-4">
+        {PLANS.map((plan) => {
+          const isCurrent = plan.slug === currentSlug;
+          const targetRank = getPlanRank(plan.slug);
+          const isUpgrade = targetRank > currentRank;
+          const isDowngrade = targetRank < currentRank;
+
+          let ctaLabel: string;
+          if (isCurrent) ctaLabel = "Current plan";
+          else if (plan.slug === "free") ctaLabel = "Cancel paid plan";
+          else if (isUpgrade) ctaLabel = `Upgrade to ${plan.label}`;
+          else if (isDowngrade) ctaLabel = `Downgrade to ${plan.label}`;
+          else ctaLabel = `Switch to ${plan.label}`;
+
+          return (
+            <Card
+              key={plan.slug}
+              className={`relative flex flex-col ${
+                isCurrent ? "border-2 border-emerald-500/60" : ""
+              }`}
+            >
+              {isCurrent && (
+                <div className="absolute -top-2.5 left-4 rounded-full bg-emerald-500 px-2.5 py-0.5 text-xs font-medium text-white">
+                  Active
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{plan.label}</span>
+                  <span className="text-base font-normal text-muted-foreground">
+                    {plan.priceLabel}/mo
+                  </span>
+                </CardTitle>
+                <CardDescription>{plan.tagline}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-4">
+                <ul className="flex-1 space-y-2 text-sm">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+                      <span className="text-muted-foreground">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={`w-full cursor-pointer ${
+                    isUpgrade && !isCurrent
+                      ? "bg-amber-700 hover:bg-amber-800"
+                      : ""
+                  }`}
+                  variant={isCurrent || isDowngrade ? "outline" : "default"}
+                  disabled={isCurrent || isSeed || !!switchingTo}
+                  onClick={() => handleSwitch(plan.slug)}
+                >
+                  {switchingTo === plan.slug ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : null}
+                  {ctaLabel}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Feature matrix */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Compare every plan</CardTitle>
+          <CardDescription>
+            What you get at each tier, side by side.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[260px]">Feature</TableHead>
+                  {PLANS.map((p) => (
+                    <TableHead
+                      key={p.slug}
+                      className={`text-center ${
+                        p.slug === currentSlug ? "text-emerald-400" : ""
+                      }`}
+                    >
+                      {p.label}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <FeatureRow
+                  label="Shops"
+                  values={PLANS.map((p) =>
+                    p.shopLimit === 1 ? "1" : `Up to ${p.shopLimit}`
+                  )}
+                />
+                <FeatureRow
+                  label="Stamps per month"
+                  values={PLANS.map((p) =>
+                    p.stampLimit === "unlimited"
+                      ? "Unlimited"
+                      : `${p.stampLimit} total`
+                  )}
+                />
+                <FeatureRow
+                  label="Customer analytics"
+                  values={PLANS.map((p) => p.hasAnalytics)}
+                />
+                <FeatureRow
+                  label="Staff & manager logins"
+                  values={PLANS.map((p) =>
+                    p.hasStaffLogins ? "Unlimited" : false
+                  )}
+                />
+                <FeatureRow
+                  label="CSV customer exports"
+                  values={PLANS.map((p) => p.hasCsvExport)}
+                />
+                <FeatureRow
+                  label="Cross-shop reporting"
+                  values={PLANS.map((p) => p.hasCrossShopReporting)}
+                />
+                <FeatureRow
+                  label="Priority support"
+                  values={PLANS.map((p) => p.prioritySupport)}
+                />
+                <FeatureRow
+                  label="Dedicated support"
+                  values={PLANS.map((p) => p.dedicatedSupport)}
+                />
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Manage subscription */}
+      {data.subscription && !isSeed && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="size-5" />
-              Current Plan
-            </CardTitle>
+            <CardTitle>Manage subscription</CardTitle>
             <CardDescription>
-              {isSubscribed
-                ? "You're on the Pro plan with unlimited stamps."
-                : "You're on the free plan with 100 stamps."}
+              Update payment method, view invoices, or cancel from Stripe&apos;s
+              billing portal.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-lg font-semibold">
-                  {isSubscribed ? "Pro" : "Free"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {isSubscribed ? "$5/month" : "100 stamps included"}
-                </p>
-              </div>
-              <Badge
-                variant={isSubscribed ? "default" : "secondary"}
-                className={
-                  isSubscribed
-                    ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
-                    : ""
-                }
-              >
-                {isSubscribed ? "Active" : "Free Tier"}
-              </Badge>
-            </div>
-
-            {!isSubscribed && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Stamp usage</span>
-                  <span>
-                    {data.totalStamps} / {data.limit}
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      usagePercent >= 90
-                        ? "bg-red-500"
-                        : usagePercent >= 80
-                          ? "bg-orange-500"
-                          : usagePercent >= 50
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
-                    }`}
-                    style={{ width: `${usagePercent}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {isSubscribed && data.subscription?.currentPeriodEnd && (
-              <p className="text-sm text-muted-foreground">
-                Next billing date:{" "}
-                <span className="text-foreground">
+          <CardContent>
+            <Button
+              onClick={handlePortal}
+              disabled={portalLoading}
+              variant="outline"
+              className="cursor-pointer"
+            >
+              {portalLoading ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <ExternalLink className="mr-2 size-4" />
+              )}
+              Open Billing Portal
+            </Button>
+            {data.subscription.currentPeriodEnd && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {data.subscription.cancelAtPeriodEnd
+                  ? "Cancels on: "
+                  : "Next billing date: "}
+                <span
+                  className={
+                    data.subscription.cancelAtPeriodEnd
+                      ? "text-amber-400"
+                      : "text-foreground"
+                  }
+                >
                   {new Date(
                     data.subscription.currentPeriodEnd
                   ).toLocaleDateString("en-AU", {
@@ -200,74 +393,18 @@ export default function BillingPage() {
                     year: "numeric",
                   })}
                 </span>
+                {data.subscription.cancelAtPeriodEnd && (
+                  <span className="ml-1">
+                    — your plan reverts to Free then.
+                  </span>
+                )}
               </p>
             )}
           </CardContent>
         </Card>
+      )}
 
-        {/* Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="size-5" />
-              {isSubscribed ? "Manage Subscription" : "Upgrade to Pro"}
-            </CardTitle>
-            <CardDescription>
-              {isSubscribed
-                ? "Update payment method, cancel, or view invoices."
-                : "Unlock unlimited stamps for your shop."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isSubscribed ? (
-              <Button
-                onClick={handlePortal}
-                disabled={portalLoading}
-                variant="outline"
-                className="w-full"
-              >
-                {portalLoading ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <ExternalLink className="mr-2 size-4" />
-                )}
-                Open Billing Portal
-              </Button>
-            ) : (
-              <>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Unlimited stamps
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Priority support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Cancel anytime
-                  </li>
-                </ul>
-                <Button
-                  onClick={handleCheckout}
-                  disabled={checkoutLoading}
-                  className="w-full bg-amber-700 hover:bg-amber-800"
-                >
-                  {checkoutLoading ? (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  ) : (
-                    <Zap className="mr-2 size-4" />
-                  )}
-                  Upgrade to Pro — $5/month
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Transaction History */}
+      {/* Transaction history */}
       {data.invoices.length > 0 && (
         <Card>
           <CardHeader>
@@ -338,5 +475,30 @@ export default function BillingPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+function FeatureRow({
+  label,
+  values,
+}: {
+  label: string;
+  values: Array<string | boolean>;
+}) {
+  return (
+    <TableRow>
+      <TableCell className="font-medium text-foreground">{label}</TableCell>
+      {values.map((v, i) => (
+        <TableCell key={i} className="text-center">
+          {v === true ? (
+            <Check className="mx-auto size-4 text-emerald-500" />
+          ) : v === false ? (
+            <Minus className="mx-auto size-4 text-stone-500" />
+          ) : (
+            <span className="text-sm text-muted-foreground">{v}</span>
+          )}
+        </TableCell>
+      ))}
+    </TableRow>
   );
 }

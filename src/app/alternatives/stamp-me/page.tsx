@@ -20,14 +20,14 @@ import Testimonials from "@/components/testimonials";
 export const metadata: Metadata = {
   title: "Stamp Me Alternative — Free Loyalty Card",
   description:
-    "Brewstamp is a free Stamp Me alternative — no customer app, no per-stamp fees, $5/month flat after your first 100 stamps.",
+    "Brewstamp is a free Stamp Me alternative — no customer app, no per-stamp fees, $7/mo flat after your first 100 stamps.",
   alternates: { canonical: "/alternatives/stamp-me" },
   openGraph: {
     type: "website",
     url: "/alternatives/stamp-me",
     title: "Stamp Me Alternative — Brewstamp",
     description:
-      "A simpler, cheaper Stamp Me alternative. Free up to 100 stamps, $5/month after that, and no app for your customers to download.",
+      "A simpler, cheaper Stamp Me alternative. Free up to 100 stamps, $7/mo after that, and no app for your customers to download.",
     images: [
       {
         url: "https://images.pexels.com/photos/30294330/pexels-photo-30294330.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Stamp Me Alternative — Brewstamp",
     description:
-      "A simpler, cheaper Stamp Me alternative. No customer app, free up to 100 stamps, $5/month flat after.",
+      "A simpler, cheaper Stamp Me alternative. No customer app, free up to 100 stamps, $7/mo flat after.",
     images: [
       "https://images.pexels.com/photos/30294330/pexels-photo-30294330.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -53,7 +53,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Stamp Me Alternative — Brewstamp",
   description:
-    "Brewstamp is a Stamp Me alternative for independent cafes — a digital coffee loyalty card with no customer app, free up to 100 stamps, and flat $5/month pricing.",
+    "Brewstamp is a Stamp Me alternative for independent cafes — a digital coffee loyalty card with no customer app, free up to 100 stamps, and flat $7/mo pricing.",
   url: "https://brewstamp.app/alternatives/stamp-me",
   about: {
     "@type": "SoftwareApplication",
@@ -98,7 +98,7 @@ export default function StampMeAlternative() {
               Brewstamp is a digital coffee loyalty card built for small cafes
               that don&apos;t want to ask their customers to download an app —
               or pay $29–79 a month before serving a single coffee. Free up to
-              100 stamps, $5/month flat after that.
+              100 stamps, $7/mo flat after that.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
@@ -131,7 +131,7 @@ export default function StampMeAlternative() {
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
-                Flat $5/month
+                Flat $7/mo
               </span>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function StampMeAlternative() {
                     feature: "Full-featured plan",
                     brewstamp: {
                       good: true,
-                      text: "$5/month flat (unlimited stamps)",
+                      text: "$7/mo flat (unlimited stamps)",
                     },
                     stampMe: { good: false, text: "$49–79/month" },
                   },
@@ -215,14 +215,14 @@ export default function StampMeAlternative() {
                   },
                   {
                     feature: "Push notifications / SMS",
-                    brewstamp: { good: false, text: "Not yet" },
+                    brewstamp: { good: null, text: "Email-only — works with your existing tools" },
                     stampMe: { good: true, text: "Yes (Pro & Elite)" },
                   },
                   {
                     feature: "Hardware option",
                     brewstamp: {
-                      good: null,
-                      text: "Print QR code yourself",
+                      good: true,
+                      text: "Print & display — no extra hardware to buy",
                     },
                     stampMe: { good: true, text: "StampPod tap device" },
                   },
@@ -272,7 +272,7 @@ export default function StampMeAlternative() {
               {
                 icon: Coffee,
                 title: "Pricing that fits a small cafe",
-                desc: "Brewstamp's free tier covers your first 100 stamps — a real test, not a 30-day countdown. After that, $5/month flat. Stamp Me's Lite plan is $29/month before you've decided whether the program works.",
+                desc: "Brewstamp's free tier covers your first 100 stamps — a real test, not a 30-day countdown. After that, $7/mo flat. Stamp Me's Lite plan is $29/month before you've decided whether the program works.",
               },
               {
                 icon: Zap,
@@ -398,7 +398,7 @@ export default function StampMeAlternative() {
                 For busy shops
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$5</span>
+                <span className="text-4xl font-bold text-stone-900">$7</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -422,6 +422,15 @@ export default function StampMeAlternative() {
               </Link>
             </div>
           </div>
+          <div className="mt-10 text-center">
+            <p className="text-sm text-stone-500">
+              Need multi-shop, team logins, or CSV exports? Plus & Max
+              plans go from $19–$29/mo.{" "}
+              <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
+                See full plan comparison →
+              </a>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -440,7 +449,7 @@ export default function StampMeAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Stamp Me alternative?",
-                a: "Yes — Brewstamp is free for your first 100 stamps total (not a 30-day window). After that it's $5/month for unlimited stamps, which is roughly one-sixth the cost of Stamp Me's Lite plan.",
+                a: "Yes — Brewstamp is free for your first 100 stamps total (not a 30-day window). After that it's $7/mo for unlimited stamps, which is roughly one-sixth the cost of Stamp Me's Lite plan.",
               },
               {
                 q: "Do my customers need to download a Brewstamp app?",

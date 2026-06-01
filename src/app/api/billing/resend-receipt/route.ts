@@ -9,6 +9,12 @@ export async function POST(req: Request) {
   if (!merchant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (merchant.role !== "owner") {
+    return NextResponse.json(
+      { error: "Only the shop owner can access billing receipts." },
+      { status: 403 }
+    );
+  }
 
   const { invoiceId } = await req.json();
   if (!invoiceId) {

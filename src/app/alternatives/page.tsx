@@ -66,7 +66,7 @@ const comparisons = [
     slug: "square-loyalty",
     competitor: "Square Loyalty",
     summary:
-      "Square Loyalty is a paid Square POS add-on. Brewstamp is the POS-agnostic, browser-based alternative — $5/month flat instead of around $45/month.",
+      "Square Loyalty is a paid Square POS add-on. Brewstamp is the POS-agnostic, browser-based alternative — from $7/mo instead of around $45/month.",
     image:
       "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
     imageAlt: "Cafe counter with espresso machine",

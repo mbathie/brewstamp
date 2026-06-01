@@ -7,6 +7,12 @@ export async function POST() {
   if (!merchant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (merchant.role !== "owner") {
+    return NextResponse.json(
+      { error: "Only the shop owner can manage billing." },
+      { status: 403 }
+    );
+  }
 
   const customerId = merchant.shop.stripeCustomerId;
   if (!customerId) {

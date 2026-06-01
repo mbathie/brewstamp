@@ -15,6 +15,7 @@ interface StampRequestData {
   redeem: boolean;
   tags?: string[];
   notes?: string;
+  isTopCustomer?: boolean;
 }
 
 interface Props {
@@ -71,7 +72,12 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
             if (!data) return;
             setCurrentRequest((curr) =>
               curr && curr.requestId === msg.requestId
-                ? { ...curr, tags: data.tags || [], notes: data.notes || "" }
+                ? {
+                    ...curr,
+                    tags: data.tags || [],
+                    notes: data.notes || "",
+                    isTopCustomer: !!data.isTopCustomer,
+                  }
                 : curr
             );
           })
@@ -79,7 +85,27 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
       }
     });
 
-    return unsub;
+    // Customer closed their tab / navigated away before we acted — drop the
+    // modal so the attendant isn't left staring at a stale request.
+    const unsubCancel = on("stamp-request:cancelled-by-customer", (msg: any) => {
+      const curr = currentRequestRef.current;
+      if (!curr || curr.requestId !== msg.requestId) return;
+      // Persist as rejected so the DB doesn't carry the stale pending row.
+      fetch(`/api/stamp-request/${curr.requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "rejected" }),
+      }).catch(() => {});
+      toast.message("Customer left before approval", {
+        description: curr.customerName,
+      });
+      setCurrentRequest(null);
+    });
+
+    return () => {
+      unsub();
+      unsubCancel();
+    };
   }, [on, threshold, send]);
 
   const handleApprove = useCallback(

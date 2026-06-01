@@ -3,9 +3,20 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Nodemailer from "next-auth/providers/nodemailer";
 import bcrypt from "bcrypt";
+import { cookies } from "next/headers";
 import { connectDB } from "./mongoose";
-import { User, Shop, Account, VerificationToken } from "@/models";
+import {
+  User,
+  Shop,
+  ShopMembership,
+  Account,
+  VerificationToken,
+} from "@/models";
 import { readSignupAttribution } from "./signup-attr";
+
+// Cookie name kept inline (vs. importing from ./shop-context) to avoid a
+// circular import — shop-context.ts depends on auth().
+const CURRENT_SHOP_COOKIE = "bs_current_shop";
 
 // Custom MongoDB adapter (only the methods NextAuth needs)
 const MongoDBAdapter = {
@@ -226,12 +237,65 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 });
 
+// Returns the active shop context for the signed-in user. `shop` is the
+// cookie-selected shop when set and the user has membership on it; otherwise
+// it falls back to a primary owned shop. In aggregate ("All shops") mode the
+// fallback applies so single-shop-aware callers still get a usable doc —
+// aggregate-aware pages should branch on getCurrentShopContext() instead.
 export async function getMerchant() {
   const session = await auth();
   if (!session?.user) return null;
   await connectDB();
   const user = await User.findById((session.user as any).id);
   if (!user) return null;
-  const shop = await Shop.findById(user.shopId);
-  return { user, shop };
+
+  const cookieStore = await cookies();
+  const cookieVal = cookieStore.get(CURRENT_SHOP_COOKIE)?.value;
+
+  let shopId: string | null = null;
+
+  if (cookieVal && cookieVal !== "all") {
+    const ms = await ShopMembership.exists({
+      user: user._id,
+      shop: cookieVal,
+    });
+    if (ms) shopId = cookieVal;
+  }
+
+  if (!shopId) {
+    // Aggregate mode OR no cookie — fall back to a shop the user owns so
+    // legacy callers see a usable Shop doc. Prefer the user.shopId pointer
+    // if it's still membership-valid, otherwise pick any owned membership.
+    if (user.shopId) {
+      const has = await ShopMembership.exists({
+        user: user._id,
+        shop: user.shopId,
+      });
+      if (has) shopId = user.shopId.toString();
+    }
+    if (!shopId) {
+      const owned = await ShopMembership.findOne({
+        user: user._id,
+        role: "owner",
+      });
+      if (owned) shopId = owned.shop.toString();
+    }
+  }
+
+  const shop = shopId ? await Shop.findById(shopId) : null;
+
+  // The caller's role on the resolved shop. Billing/owner-only routes gate
+  // on this — getMerchant now resolves shops the user is merely staff/manager
+  // on (via the active-shop cookie), so "has a shop" no longer implies "owns
+  // it". `null` when there's no shop or no membership row.
+  let role: "owner" | "manager" | "staff" | null = null;
+  if (shop) {
+    const membership = await ShopMembership.findOne({
+      user: user._id,
+      shop: shop._id,
+    }).select("role");
+    role = (membership?.role as "owner" | "manager" | "staff") || null;
+  }
+
+  return { user, shop, role };
 }

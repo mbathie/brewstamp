@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Gift, StickyNote } from "lucide-react";
+import { Minus, Plus, Gift, StickyNote, Crown } from "lucide-react";
 
 interface StampRequestData {
   requestId: string;
@@ -20,6 +20,7 @@ interface StampRequestData {
   redeem: boolean;
   tags?: string[];
   notes?: string;
+  isTopCustomer?: boolean;
 }
 
 interface Props {
@@ -57,6 +58,14 @@ export default function StampRequestModal({
           <p className="text-center text-sm text-muted-foreground">
             Current stamps: {request.stamps} / {request.threshold}
           </p>
+          {request.isTopCustomer && (
+            <div className="mt-2 flex justify-center">
+              <Badge className="border-amber-500/40 bg-amber-500/15 font-medium text-amber-500 hover:bg-amber-500/15">
+                <Crown className="mr-1 h-3.5 w-3.5" />
+                Top customer
+              </Badge>
+            </div>
+          )}
           {request.tags && request.tags.length > 0 && (
             <div className="mt-2 flex flex-wrap justify-center gap-1.5">
               {request.tags.map((t) => (

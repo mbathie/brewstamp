@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import { User, Shop } from "@/models";
+import { User, Shop, ShopMembership } from "@/models";
 import { sendWelcomeEmail } from "@/lib/email";
 import { cookies } from "next/headers";
 
@@ -51,6 +51,16 @@ export async function POST(req: Request) {
     owner: user._id,
     code,
     ...(referredBy ? { referredBy } : {}),
+  });
+
+  // Mint the owner membership so the new shop is visible to the multi-shop
+  // picker/switcher from day one. Existing accounts get backfilled via
+  // scripts/migrate-shop-memberships.ts.
+  await ShopMembership.create({
+    user: user._id,
+    shop: shop._id,
+    role: "owner",
+    acceptedAt: new Date(),
   });
 
   user.shopId = shop._id;

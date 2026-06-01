@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ArrowDown, ArrowUp, CalendarIcon, Download, Monitor, QrCode, Settings as SettingsIcon, Smartphone, UserPen } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Crown, Download, Monitor, QrCode, Settings as SettingsIcon, Smartphone, UserPen } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 function toIsoDate(d: Date): string {
@@ -62,6 +62,18 @@ interface CheckIn {
   status: string;
   createdAt: string;
   tags?: string[];
+}
+
+interface TopCustomer {
+  rank: number;
+  id: string;
+  name: string | null;
+  email: string | null;
+  cookieId: string;
+  stamps: number;
+  totalEarned: number;
+  freeRedeemed: number;
+  lastSeenAt: string;
 }
 
 interface ChartPoint {
@@ -110,6 +122,8 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
   const [chartRaw, setChartRaw] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+  const [topLoading, setTopLoading] = useState(true);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -157,6 +171,20 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
     window.addEventListener("stamp-approved", handler);
     return () => window.removeEventListener("stamp-approved", handler);
   }, []);
+
+  // Top customers — lifetime ranking, doesn't depend on the date filter so
+  // we fetch independently. Refreshes when a stamp is approved so the list
+  // can shift in real time.
+  useEffect(() => {
+    setTopLoading(true);
+    fetch("/api/customers/top?limit=5")
+      .then((r) => r.json())
+      .then((data) => {
+        setTopCustomers(data.customers || []);
+        setTopLoading(false);
+      })
+      .catch(() => setTopLoading(false));
+  }, [refreshKey]);
 
   const chartData = useMemo(() => {
     // Custom range covering more than one day → fall through to the daily
@@ -574,6 +602,59 @@ export default function DashboardContent({ shopName, shopCode, shopLogo, stampTh
                 />
               </BarChart>
             </ChartContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top customers — lifetime view, surfaces the regulars the shop wants
+          to know on sight. Hidden until at least one customer qualifies
+          (top N by stamps AND has redeemed at least once). */}
+      {!topLoading && topCustomers.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Crown className="h-4 w-4 text-amber-500" />
+              Top Customers
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Lifetime · most-stamped first</p>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8">#</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead className="text-right">Stamps</TableHead>
+                  <TableHead className="text-right">Rewards</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {topCustomers.map((c) => {
+                  const displayName = c.name || generateAnimalName(c.cookieId || "");
+                  return (
+                    <TableRow
+                      key={c.id}
+                      className="cursor-pointer transition-colors hover:bg-muted/40"
+                      onClick={() =>
+                        (window.location.href = `/dashboard/customers/${c.id}`)
+                      }
+                    >
+                      <TableCell className="text-muted-foreground">{c.rank}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{displayName}</span>
+                          {c.email && (
+                            <span className="text-xs text-muted-foreground">{c.email}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{c.totalEarned}</TableCell>
+                      <TableCell className="text-right">{c.freeRedeemed}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
