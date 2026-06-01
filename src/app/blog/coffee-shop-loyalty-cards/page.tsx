@@ -571,6 +571,21 @@ export default function BlogPost() {
             </h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Link
+                href="/coffee-rewards-app"
+                className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Product
+                </p>
+                <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
+                  The coffee rewards app for cafes
+                </h3>
+                <p className="mt-2 text-sm text-stone-500">
+                  A digital rewards card with no app to download — scan, stamp,
+                  free coffee.
+                </p>
+              </Link>
+              <Link
                 href="/blog/why-paper-loyalty-cards-dont-work"
                 className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
               >
