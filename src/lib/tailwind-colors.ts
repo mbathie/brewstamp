@@ -94,6 +94,16 @@ const colors: Record<string, Record<number, string>> = {
 
 export function getColorHex(colorKey: string | null | undefined): string {
   if (!colorKey) return '#d97706'; // amber-600 default
+  // Custom hex from the fine-control input. Normalize #abc → #aabbcc and
+  // lowercase so every downstream consumer (preview, QR PDF, hexToRgb) gets a
+  // canonical 6-digit value.
+  if (colorKey[0] === '#') {
+    const h = colorKey.slice(1);
+    if (/^[0-9a-f]{6}$/i.test(h)) return `#${h.toLowerCase()}`;
+    if (/^[0-9a-f]{3}$/i.test(h))
+      return `#${h.split('').map((c) => c + c).join('').toLowerCase()}`;
+    return '#d97706';
+  }
   if (colorKey === 'white') return '#ffffff';
   if (colorKey === 'black') return '#000000';
   if (!colorKey.includes('-')) {

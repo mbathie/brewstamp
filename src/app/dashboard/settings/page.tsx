@@ -284,91 +284,96 @@ export default function SettingsPage() {
         {/* LEFT: all the controls */}
         <Card>
           <CardContent className="space-y-8 p-6">
-            {/* Branding */}
+            {/* Branding + Loyalty — laid out 2-up so the block stays compact
+                without shrinking the individual controls. */}
             <section className="space-y-4">
               <h2 className="text-base font-semibold text-foreground">Branding</h2>
-              <div className="space-y-2">
-                <Label>Brand Logo</Label>
-                <div
-                  onClick={() => !uploadingLogo && fileInputRef.current?.click()}
-                  className="group relative h-16 w-48 cursor-pointer overflow-hidden rounded-lg"
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoChange}
-                    className="hidden"
-                    disabled={uploadingLogo}
-                  />
-                  {logo ? (
-                    <>
-                      <img src={logo} alt="Logo" className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Upload className="h-5 w-5 text-white" />
+              <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+                <div className="space-y-2">
+                  <Label>Brand Logo</Label>
+                  <div
+                    onClick={() => !uploadingLogo && fileInputRef.current?.click()}
+                    className="group relative h-16 w-48 cursor-pointer overflow-hidden rounded-lg"
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      disabled={uploadingLogo}
+                    />
+                    {logo ? (
+                      <>
+                        <img src={logo} alt="Logo" className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Upload className="h-5 w-5 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-stone-700 text-sm text-muted-foreground transition-colors group-hover:border-stone-500 group-hover:text-foreground">
+                        <Upload className="h-4 w-4" />
+                        Click to upload
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-stone-700 text-sm text-muted-foreground transition-colors group-hover:border-stone-500 group-hover:text-foreground">
-                      <Upload className="h-4 w-4" />
-                      Click to upload
-                    </div>
+                    )}
+                  </div>
+                  {logo && (
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={handleLogoRemove}
+                      className="cursor-pointer"
+                    >
+                      Delete
+                    </Button>
                   )}
                 </div>
-                {logo && (
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={handleLogoRemove}
-                    className="cursor-pointer"
-                  >
-                    Delete
-                  </Button>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Shop Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="name">Shop Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
               </div>
             </section>
 
             {/* Loyalty */}
             <section className="space-y-4">
               <h2 className="text-base font-semibold text-foreground">Loyalty</h2>
-              <div className="space-y-2">
-                <Label htmlFor="threshold">Stamps for a free reward</Label>
-                <NumberInput
-                  id="threshold"
-                  min={1}
-                  max={20}
-                  value={threshold}
-                  onChange={(v) => setThreshold(v)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="language">Customer-facing language</Label>
-                <select
-                  id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {SUPPORTED_LANGUAGES.map((code) => {
-                    const meta = LANGUAGE_META[code];
-                    return (
-                      <option key={code} value={code}>
-                        {meta.flag} {meta.nativeName} ({meta.englishName})
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Applies to your customer&apos;s loyalty card and the printed QR PDF. Your dashboard stays in English.
-                </p>
+              <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+                <div className="space-y-2">
+                  <Label htmlFor="threshold">Stamps for a free reward</Label>
+                  <NumberInput
+                    id="threshold"
+                    min={1}
+                    max={20}
+                    value={threshold}
+                    onChange={(v) => setThreshold(v)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="language">Customer-facing language</Label>
+                  <select
+                    id="language"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {SUPPORTED_LANGUAGES.map((code) => {
+                      const meta = LANGUAGE_META[code];
+                      return (
+                        <option key={code} value={code}>
+                          {meta.flag} {meta.nativeName} ({meta.englishName})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Applies to your customer&apos;s loyalty card and the printed QR PDF.
+                  </p>
+                </div>
               </div>
             </section>
 
