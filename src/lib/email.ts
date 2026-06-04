@@ -421,6 +421,83 @@ export async function sendPaymentReceiptEmail({
   }
 }
 
+// Sent when a subscription has been unpaid past the grace period and the
+// billing cron has dropped the shop back to the Free plan.
+export async function sendSubscriptionDowngradedEmail({
+  to,
+  merchantName,
+  shopName,
+  daysOverdue,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  daysOverdue: number;
+}) {
+  const billingUrl = utm("/dashboard/billing", "subscription-downgraded");
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Brewstamp plan was paused</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 24px 16px;">
+        <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">Your plan has been paused</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Hi ${merchantName}, we tried to renew the Brewstamp subscription for
+          <strong>${shopName}</strong> but the payment didn&rsquo;t go through, and
+          it&rsquo;s now been outstanding for ${daysOverdue} days. We&rsquo;ve moved
+          the shop back to the <strong>Free plan</strong> for now.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Your shop, customers, and stamps are all safe &mdash; nothing has been
+          deleted. To restore your paid features, just update your payment method
+          and re-subscribe.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 24px 32px; text-align: center;">
+        <a href="${billingUrl}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Restore my plan</span></a>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Your Brewstamp plan for ${shopName} has been paused`,
+      html,
+      headers: { "X-Mailin-Tag": "downgrade" },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send downgrade email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendCustomerConsentEmail({
   to,
   shopName,
