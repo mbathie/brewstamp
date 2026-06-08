@@ -243,7 +243,14 @@ export default function BlogPost() {
               >
                 See how the popular platforms compare side by side
               </Link>
-              . Here&apos;s what matters for independent cafes:
+              , or read how a simple{" "}
+              <Link
+                href="/coffee-rewards-app"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee rewards app
+              </Link>{" "}
+              works. Here&apos;s what matters for independent cafes:
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {[

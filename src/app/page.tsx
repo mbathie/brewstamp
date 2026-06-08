@@ -424,8 +424,14 @@ export default function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-stone-500">
             Paper cards get lost, apps get deleted, but a QR code at the counter
-            is always there. Brewstamp keeps your regulars coming back with
-            zero effort on their part.
+            is always there. Brewstamp is a{" "}
+            <Link
+              href="/coffee-rewards-app"
+              className="text-amber-700 underline-offset-2 hover:underline"
+            >
+              coffee rewards app
+            </Link>{" "}
+            that keeps your regulars coming back with zero effort on their part.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-8">
             {[

@@ -57,6 +57,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/coffee-rewards-app" className="transition-colors hover:text-stone-900">
+                  Coffee Rewards App
+                </Link>
+              </li>
+              <li>
                 <Link href="/alternatives" className="transition-colors hover:text-stone-900">
                   Compare
                 </Link>

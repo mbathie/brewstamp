@@ -224,7 +224,15 @@ export default function BlogPost() {
               Customers point their phone camera at the QR. Their stamp card
               opens in their phone&rsquo;s browser — no app, no install, no
               account-creation form. They tap &ldquo;Request stamp&rdquo;,
-              you approve from the dashboard, the stamp lands.
+              you approve from the dashboard, the stamp lands. It&rsquo;s a
+              full{" "}
+              <Link
+                href="/coffee-rewards-app"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee rewards app
+              </Link>{" "}
+              with nothing to print but that one poster.
             </p>
           </section>
 
