@@ -1,0 +1,34 @@
+# Brewstamp
+
+> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 100 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, in 13+ customer-facing languages, worldwide.
+
+## Product
+- [Coffee loyalty card app (home)](https://brewstamp.app/): What Brewstamp is, how it works, and why digital beats paper punch cards.
+- [Coffee rewards app](https://brewstamp.app/coffee-rewards-app): The coffee rewards card with no app to download — scan, stamp, free coffee.
+- [Features](https://brewstamp.app/features): Full feature list across the Free, Pro, Plus, and Max plans.
+- [Pricing](https://brewstamp.app/pricing): Free, Pro ($7), Plus ($19), and Max ($29) plans compared side by side.
+
+## Guides
+- [Coffee Loyalty Card: The Complete Guide for Cafes](https://brewstamp.app/blog/digital-loyalty-cards-for-cafes): How digital loyalty cards work and what to look for.
+- [Coffee shop loyalty cards: paper vs digital](https://brewstamp.app/blog/coffee-shop-loyalty-cards): The case for going digital, the 8-stamp rule, and how to launch.
+- [How many stamps for a free coffee?](https://brewstamp.app/blog/how-many-stamps-for-a-free-coffee): Choosing the right reward threshold (most cafes use 6–10).
+- [How to set up a QR code loyalty program](https://brewstamp.app/blog/qr-code-loyalty-program): Step-by-step QR loyalty setup for a coffee shop.
+- [Coffee shop loyalty card printing](https://brewstamp.app/blog/coffee-shop-loyalty-card-printing): Why you only print one QR poster instead of stacks of cards.
+- [Why paper loyalty cards don't work anymore](https://brewstamp.app/blog/why-paper-loyalty-cards-dont-work): Lost cards, fraud, and zero data.
+- [Cafe loyalty programs for customers](https://brewstamp.app/blog/cafe-loyalty-programs-for-customers): How the customer experience works.
+- [Multi-language loyalty cards](https://brewstamp.app/blog/multi-language-loyalty-card): One QR code, 13 customer languages.
+- [Multi-shop and team logins](https://brewstamp.app/blog/multiple-shops-and-team-logins): Running multiple cafes and inviting staff.
+- [Set up your Brewstamp shop in 5 minutes](https://brewstamp.app/blog/set-up-your-brewstamp-shop): Onboarding walkthrough.
+
+## Comparisons
+- [Brewstamp vs other loyalty apps](https://brewstamp.app/alternatives): Honest comparisons against the main digital loyalty platforms for cafes.
+- [Brewstamp vs Loopy Loyalty](https://brewstamp.app/alternatives/loopy-loyalty)
+- [Brewstamp vs Stamp Me](https://brewstamp.app/alternatives/stamp-me)
+- [Brewstamp vs PunchPass](https://brewstamp.app/alternatives/punchpass)
+- [Brewstamp vs Square Loyalty](https://brewstamp.app/alternatives/square-loyalty)
+- [Brewstamp vs Loyverse](https://brewstamp.app/alternatives/loyverse)
+- [Brewstamp vs Smile.io](https://brewstamp.app/alternatives/smile-io)
+
+## Customer stories
+- [Bennett St Dairy, Bondi](https://brewstamp.app/blog/bennett-st-dairy-bondi): How a Bondi cafe uses Brewstamp.
+- [Thirty7even, Macquarie Park](https://brewstamp.app/blog/thirty-7even-macquarie-park): A specialty coffee shop's loyalty story.

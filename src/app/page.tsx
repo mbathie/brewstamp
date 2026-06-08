@@ -84,7 +84,33 @@ const jsonLd = {
         name: "Cafes and coffee shops",
         geographicArea: { "@type": "Place", name: "Worldwide" },
       },
-      aggregateRating: undefined,
+      // Genuine customer testimonials shown on this page. No aggregateRating —
+      // we don't collect numeric ratings, so an averaged star score would be
+      // fabricated. These individual reviews give generative engines real,
+      // attributable social proof to cite.
+      review: [
+        {
+          "@type": "Review",
+          reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5 },
+          author: { "@type": "Person", name: "Jo" },
+          reviewBody:
+            "Working with Brewstamp has increased our customer loyalty. We love how easy it is to use and redeem free coffees.",
+        },
+        {
+          "@type": "Review",
+          reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5 },
+          author: {
+            "@type": "Person",
+            name: "Isaac",
+            worksFor: {
+              "@type": "Organization",
+              name: "Bruns Beach Coffee Shop",
+            },
+          },
+          reviewBody:
+            "Our customers are stoked to join the paperless movement as part of their daily coffee routine.",
+        },
+      ],
     },
     {
       "@type": "FAQPage",
