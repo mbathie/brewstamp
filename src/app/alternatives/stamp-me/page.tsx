@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
 
 export const metadata: Metadata = {
@@ -516,6 +517,8 @@ export default function StampMeAlternative() {
           </div>
         </div>
       </section>
+
+      <RelatedGuides />
 
       <Footer />
     </div>

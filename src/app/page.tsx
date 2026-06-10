@@ -25,17 +25,20 @@ export const metadata: Metadata = {
       "Coffee Loyalty Card App — Free, No Customer App | Brewstamp",
   },
   description:
-    "A digital coffee loyalty card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free for your first 100 stamps.",
+    "A digital coffee loyalty card and stamp card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free for your first 100 stamps.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
+  // Homepage owns the "loyalty card / stamp card" cluster. The "coffee rewards
+  // app/card" cluster is deliberately left to /coffee-rewards-app so the two
+  // pages stop competing for the same SERP (see 2026-06-10 SEO report).
   keywords: [
     "coffee loyalty card",
     "coffee loyalty card app",
     "coffee stamp card",
-    "coffee rewards card",
-    "coffee rewards app",
+    "digital coffee card",
     "digital loyalty card",
     "cafe loyalty program",
     "coffee shop loyalty app",
+    "loyalty card for coffee shop",
     "QR code loyalty",
     "digital stamp card",
   ],
