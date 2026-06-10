@@ -28,7 +28,19 @@ import {
   ExternalLink,
   AlertTriangle,
 } from "lucide-react";
-import { PLANS, getPlanRank, type PlanSlug } from "@/lib/plans";
+import {
+  PLANS,
+  getPlanRank,
+  annualPriceCents,
+  type PlanSlug,
+  type BillingInterval,
+} from "@/lib/plans";
+
+// "$7" for whole dollars, "$6.42" otherwise.
+function formatCents(cents: number): string {
+  const dollars = cents / 100;
+  return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
+}
 
 interface BillingData {
   totalStamps: number;
@@ -37,6 +49,7 @@ interface BillingData {
     status: string;
     currentPeriodEnd: string;
     planSlug: string | null;
+    interval: BillingInterval | null;
     planLabel: string | null;
     cancelAtPeriodEnd: boolean;
     isSeed: boolean;
@@ -55,6 +68,7 @@ export default function BillingPage() {
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [switchingTo, setSwitchingTo] = useState<PlanSlug | null>(null);
+  const [interval, setInterval] = useState<BillingInterval>("month");
   const [portalLoading, setPortalLoading] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
 
@@ -69,7 +83,11 @@ export default function BillingPage() {
   useEffect(() => {
     fetch("/api/billing")
       .then((res) => res.json())
-      .then(setData)
+      .then((d: BillingData) => {
+        setData(d);
+        // Default the toggle to whatever interval the user is already on.
+        if (d.subscription?.interval) setInterval(d.subscription.interval);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -82,6 +100,7 @@ export default function BillingPage() {
   }, [data]);
 
   const currentRank = useMemo(() => getPlanRank(currentSlug), [currentSlug]);
+  const currentInterval = data?.subscription?.interval ?? null;
   const isSeed = data?.subscription?.isSeed ?? false;
 
   async function handleSwitch(target: PlanSlug) {
@@ -99,7 +118,7 @@ export default function BillingPage() {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: target }),
+        body: JSON.stringify({ plan: target, interval }),
       });
       const result = await res.json();
 
@@ -210,17 +229,70 @@ export default function BillingPage() {
         )}
       </div>
 
+      {/* Billing interval toggle */}
+      <div className="flex flex-col items-center gap-2">
+        <div className="inline-flex items-center rounded-full border border-border bg-muted/30 p-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setInterval("month")}
+            className={`cursor-pointer rounded-full px-5 py-1.5 font-medium transition ${
+              interval === "month"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => setInterval("year")}
+            className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-1.5 font-medium transition ${
+              interval === "year"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Annual
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-500">
+              1 month free
+            </span>
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {interval === "year"
+            ? "Pay for 11 months, get 12 — on every paid plan."
+            : "Switch to annual billing and get a month on us."}
+        </p>
+      </div>
+
       {/* Plan grid */}
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-5 lg:grid-cols-4">
         {PLANS.map((plan) => {
-          const isCurrent = plan.slug === currentSlug;
+          const isCurrentTier = plan.slug === currentSlug;
+          // For a paid tier the user only counts as "on" it when the billing
+          // interval matches too — switching monthly↔annual is still a change.
+          const isCurrent =
+            isCurrentTier &&
+            (plan.slug === "free" || currentInterval === interval);
+          const isIntervalSwitch =
+            isCurrentTier && plan.slug !== "free" && !isCurrent;
           const targetRank = getPlanRank(plan.slug);
           const isUpgrade = targetRank > currentRank;
           const isDowngrade = targetRank < currentRank;
+          // Spotlight the recommended tier — but never over the active plan,
+          // whose emerald treatment takes precedence.
+          const isPopular = plan.slug === "plus" && !isCurrent;
+          const isPaid = plan.slug !== "free";
+          const annualCents = annualPriceCents(plan);
 
           let ctaLabel: string;
           if (isCurrent) ctaLabel = "Current plan";
           else if (plan.slug === "free") ctaLabel = "Cancel paid plan";
+          else if (isIntervalSwitch)
+            ctaLabel =
+              interval === "year"
+                ? "Switch to annual"
+                : "Switch to monthly";
           else if (isUpgrade) ctaLabel = `Upgrade to ${plan.label}`;
           else if (isDowngrade) ctaLabel = `Downgrade to ${plan.label}`;
           else ctaLabel = `Switch to ${plan.label}`;
@@ -228,8 +300,12 @@ export default function BillingPage() {
           return (
             <Card
               key={plan.slug}
-              className={`relative flex flex-col ${
-                isCurrent ? "border-2 border-emerald-500/60" : ""
+              className={`relative flex flex-col transition-shadow ${
+                isCurrent
+                  ? "border-2 border-emerald-500/60"
+                  : isPopular
+                    ? "border-2 border-amber-600/60 shadow-lg shadow-amber-900/10"
+                    : ""
               }`}
             >
               {isCurrent && (
@@ -237,17 +313,56 @@ export default function BillingPage() {
                   Active
                 </div>
               )}
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{plan.label}</span>
-                  <span className="text-base font-normal text-muted-foreground">
-                    {plan.priceLabel}/mo
-                  </span>
-                </CardTitle>
+              {isPopular && (
+                <div className="absolute -top-2.5 right-4 rounded-full bg-amber-600 px-2.5 py-0.5 text-xs font-medium text-white">
+                  Most popular
+                </div>
+              )}
+              <CardHeader className="pb-0">
+                <CardTitle className="text-lg">{plan.label}</CardTitle>
                 <CardDescription>{plan.tagline}</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-1 flex-col gap-4">
-                <ul className="flex-1 space-y-2 text-sm">
+              <CardContent className="flex flex-1 flex-col gap-5 pt-5">
+                {/* Price — the focal point of the card */}
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold tracking-tight text-foreground">
+                      {plan.slug === "free"
+                        ? plan.priceLabel
+                        : interval === "year"
+                          ? formatCents(annualCents)
+                          : plan.priceLabel}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {plan.slug === "free"
+                        ? "forever"
+                        : interval === "year"
+                          ? "/yr"
+                          : "/mo"}
+                    </span>
+                  </div>
+                  {/* Reserved line: keeps card bodies aligned across the
+                      monthly/annual toggle. */}
+                  <div className="mt-1.5 h-4 text-xs">
+                    {isPaid && interval === "year" ? (
+                      <span>
+                        <span className="font-semibold text-emerald-500">
+                          Save {formatCents(plan.priceCents)}/yr
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {formatCents(Math.round(annualCents / 12))}/mo
+                        </span>
+                      </span>
+                    ) : isPaid ? (
+                      <span className="text-muted-foreground">
+                        or {formatCents(annualCents)}/yr billed annually
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <ul className="flex-1 space-y-2.5 text-sm">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
@@ -257,8 +372,8 @@ export default function BillingPage() {
                 </ul>
                 <Button
                   className={`w-full cursor-pointer ${
-                    isUpgrade && !isCurrent
-                      ? "bg-amber-700 hover:bg-amber-800"
+                    (isUpgrade || isPopular) && !isCurrent
+                      ? "bg-amber-700 text-white hover:bg-amber-800"
                       : ""
                   }`}
                   variant={isCurrent || isDowngrade ? "outline" : "default"}

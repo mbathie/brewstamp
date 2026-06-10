@@ -1,3 +1,6 @@
+// MUST be first: loads .env.local into process.env before any import below
+// reads it at module-load time (e.g. lib/stripe.ts via the billing cron).
+import "./src/lib/load-env";
 import { createServer, IncomingMessage } from "http";
 import { parse } from "url";
 import next from "next";

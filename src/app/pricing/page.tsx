@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Check, Minus } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import PlanCards from "./plan-cards";
 
 export const metadata: Metadata = {
   title: "Pricing — Free, Pro, Plus, Max plans",
@@ -130,43 +131,7 @@ export default function PricingPage() {
 
         {/* Plan cards */}
         <section className="bg-stone-50 px-6 pb-20">
-          <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((p) => (
-              <div
-                key={p.name}
-                className={`relative flex flex-col rounded-2xl bg-white p-6 ${
-                  p.highlight
-                    ? "border-2 border-amber-600 shadow-sm"
-                    : "border border-stone-200"
-                }`}
-              >
-                {p.highlight && (
-                  <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
-                    Most popular
-                  </div>
-                )}
-                <h3 className="text-lg font-semibold text-stone-900">{p.name}</h3>
-                <p className="mt-1 text-sm text-stone-500">{p.tagline}</p>
-                <p className="mt-5">
-                  <span className="text-4xl font-bold text-stone-900">{p.price}</span>
-                  <span className="text-stone-500"> /month</span>
-                </p>
-                <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/register" className="mt-8">
-                  <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
-                    Get started
-                  </Button>
-                </Link>
-              </div>
-            ))}
-          </div>
+          <PlanCards />
         </section>
 
         {/* Feature comparison */}

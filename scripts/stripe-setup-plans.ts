@@ -27,14 +27,19 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+// Number of months waived on an annual plan. Annual amount = monthly ×
+// (12 − FREE_MONTHS). Keep in sync with FREE_MONTHS in src/lib/plans.ts.
+const FREE_MONTHS = 1;
+
 interface PlanSpec {
   slug: string;        // new metadata slug
   legacySlug?: string; // old metadata slug — looked up for rename
   name: string;
   description: string;
-  amount: number;
+  amount: number;          // monthly amount, in cents
   currency: string;
-  envVar: string;
+  envVar: string;          // env var for the monthly price ID
+  envVarAnnual: string;    // env var for the annual price ID
 }
 
 const PLANS: PlanSpec[] = [
@@ -47,6 +52,7 @@ const PLANS: PlanSpec[] = [
     amount: 700,
     currency: "aud",
     envVar: "STRIPE_PRICE_PRO",
+    envVarAnnual: "STRIPE_PRICE_PRO_ANNUAL",
   },
   {
     slug: "brewstamp_plus",
@@ -57,6 +63,7 @@ const PLANS: PlanSpec[] = [
     amount: 1900,
     currency: "aud",
     envVar: "STRIPE_PRICE_PLUS",
+    envVarAnnual: "STRIPE_PRICE_PLUS_ANNUAL",
   },
   {
     slug: "brewstamp_max",
@@ -67,6 +74,7 @@ const PLANS: PlanSpec[] = [
     amount: 2900,
     currency: "aud",
     envVar: "STRIPE_PRICE_MAX",
+    envVarAnnual: "STRIPE_PRICE_MAX_ANNUAL",
   },
 ];
 
@@ -87,7 +95,8 @@ async function findProductBySlug(slug: string): Promise<Stripe.Product | null> {
 async function findExistingPrice(
   productId: string,
   amount: number,
-  currency: string
+  currency: string,
+  interval: Stripe.Price.Recurring.Interval
 ): Promise<Stripe.Price | null> {
   const prices = await stripe.prices.list({
     product: productId,
@@ -99,7 +108,7 @@ async function findExistingPrice(
       (p) =>
         p.unit_amount === amount &&
         p.currency === currency &&
-        p.recurring?.interval === "month"
+        p.recurring?.interval === interval
     ) || null
   );
 }
@@ -122,7 +131,10 @@ async function main() {
   const results: Array<{ envVar: string; priceId: string }> = [];
 
   for (const plan of PLANS) {
-    console.log(`Plan: ${plan.name} — ${plan.currency.toUpperCase()} $${(plan.amount / 100).toFixed(2)}/mo`);
+    const annualAmount = plan.amount * (12 - FREE_MONTHS);
+    console.log(
+      `Plan: ${plan.name} — ${plan.currency.toUpperCase()} $${(plan.amount / 100).toFixed(2)}/mo, $${(annualAmount / 100).toFixed(2)}/yr`
+    );
 
     let product = await findProductBySlug(plan.slug);
 
@@ -164,26 +176,46 @@ async function main() {
       continue;
     }
 
-    let price = await findExistingPrice(product.id, plan.amount, plan.currency);
-    if (price) {
-      console.log(`  Reusing existing price ${price.id}`);
-    } else if (confirm) {
-      price = await stripe.prices.create({
-        product: product.id,
-        unit_amount: plan.amount,
-        currency: plan.currency,
-        recurring: { interval: "month" },
-        metadata: { brewstamp_slug: plan.slug },
+    // Find-or-create a price for one billing interval and record its env var.
+    const provisionPrice = async (
+      interval: Stripe.Price.Recurring.Interval,
+      amount: number,
+      envVar: string
+    ) => {
+      let price = await findExistingPrice(
+        product!.id,
+        amount,
+        plan.currency,
+        interval
+      );
+      const tag = `${interval}ly`;
+      if (price) {
+        console.log(`  Reusing existing ${tag} price ${price.id}`);
+      } else if (confirm) {
+        price = await stripe.prices.create({
+          product: product!.id,
+          unit_amount: amount,
+          currency: plan.currency,
+          recurring: { interval },
+          metadata: { brewstamp_slug: plan.slug, billing_interval: interval },
+        });
+        console.log(`  Created ${tag} price ${price.id}`);
+      } else {
+        console.log(`  Would create ${tag} price (${plan.currency.toUpperCase()} ${(amount / 100).toFixed(2)})`);
+      }
+      results.push({
+        envVar,
+        priceId: price?.id || "(dry-run, not created)",
       });
-      console.log(`  Created price ${price.id}`);
-    } else {
-      console.log(`  Would create price`);
-    }
+    };
 
-    results.push({
-      envVar: plan.envVar,
-      priceId: price?.id || "(dry-run, not created)",
-    });
+    // Monthly, then annual (12 months charged at the cost of 12 − FREE_MONTHS).
+    await provisionPrice("month", plan.amount, plan.envVar);
+    await provisionPrice(
+      "year",
+      plan.amount * (12 - FREE_MONTHS),
+      plan.envVarAnnual
+    );
     console.log("");
   }
 

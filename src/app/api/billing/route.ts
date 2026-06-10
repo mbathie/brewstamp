@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { StampCard, Subscription } from "@/models";
 import { stripe } from "@/lib/stripe";
-import { getPlanByPriceId } from "@/lib/plans";
+import {
+  getPlanByPriceId,
+  getIntervalByPriceId,
+  type BillingInterval,
+} from "@/lib/plans";
 
 export async function GET() {
   const merchant = await getMerchant();
@@ -52,10 +56,12 @@ export async function GET() {
   // billing UI can mark the active plan in its grid. Fall back to planLabel
   // (set on seed accounts) when the price ID doesn't match a known plan.
   let currentPlanSlug: string | null = null;
+  let currentInterval: BillingInterval | null = null;
   if (subscription) {
     if (subscription.stripePriceId) {
       const plan = getPlanByPriceId(subscription.stripePriceId);
       if (plan) currentPlanSlug = plan.slug;
+      currentInterval = getIntervalByPriceId(subscription.stripePriceId) ?? null;
     }
     if (!currentPlanSlug && subscription.planLabel) {
       currentPlanSlug = subscription.planLabel.toLowerCase();
@@ -71,6 +77,7 @@ export async function GET() {
           status: subscription.status,
           currentPeriodEnd: subscription.currentPeriodEnd,
           planSlug: currentPlanSlug,
+          interval: currentInterval,
           planLabel: subscription.planLabel || null,
           cancelAtPeriodEnd: !!subscription.cancelAtPeriodEnd,
           isSeed,

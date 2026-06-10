@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Shop } from "@/models";
 import { stripe } from "@/lib/stripe";
-import { getPlanBySlug, resolvePlanPriceId, type PlanSlug } from "@/lib/plans";
+import {
+  getPlanBySlug,
+  resolvePlanPriceId,
+  type PlanSlug,
+  type BillingInterval,
+} from "@/lib/plans";
 
 // Start a Stripe Checkout session for a paid plan. Accepts an optional
 // `plan` slug in the body — defaults to "pro" for back-compat with
@@ -20,7 +25,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { plan?: string } = {};
+  let body: { plan?: string; interval?: string } = {};
   try {
     body = await req.json().catch(() => ({}));
   } catch {
@@ -36,16 +41,24 @@ export async function POST(req: Request) {
     );
   }
 
+  const interval: BillingInterval = body.interval === "year" ? "year" : "month";
+
   const priceId =
-    resolvePlanPriceId(plan.slug) ||
-    // Back-compat: legacy single-plan setups stored the Pro price as
+    resolvePlanPriceId(plan.slug, interval) ||
+    // Back-compat: legacy single-plan setups stored the monthly Pro price as
     // STRIPE_PRICE_ID. Use it if the plan-specific var isn't set yet.
-    (plan.slug === "pro" ? process.env.STRIPE_PRICE_ID : null);
+    (plan.slug === "pro" && interval === "month"
+      ? process.env.STRIPE_PRICE_ID
+      : null);
 
   if (!priceId) {
+    const envVar =
+      interval === "year"
+        ? plan.stripePriceEnvVarAnnual
+        : plan.stripePriceEnvVar;
     return NextResponse.json(
       {
-        error: `Stripe price for plan "${plan.slug}" is not configured. Set ${plan.stripePriceEnvVar} in env, then run scripts/stripe-setup-plans.ts.`,
+        error: `Stripe price for plan "${plan.slug}" (${interval}ly) is not configured. Set ${envVar} in env, then run scripts/stripe-setup-plans.ts.`,
       },
       { status: 500 }
     );
@@ -79,7 +92,7 @@ export async function POST(req: Request) {
     ...(discounts.length > 0 ? { discounts } : {}),
     success_url: `${appUrl}/dashboard/billing?success=1`,
     cancel_url: `${appUrl}/dashboard/billing`,
-    metadata: { shopId: shop._id.toString(), plan: plan.slug },
+    metadata: { shopId: shop._id.toString(), plan: plan.slug, interval },
   });
 
   return NextResponse.json({ url: session.url });

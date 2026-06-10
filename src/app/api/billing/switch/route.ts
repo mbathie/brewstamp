@@ -6,6 +6,7 @@ import {
   getPlanBySlug,
   resolvePlanPriceId,
   type PlanSlug,
+  type BillingInterval,
 } from "@/lib/plans";
 
 // Switch the active subscription to a different paid plan, or schedule a
@@ -32,13 +33,14 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { plan?: string } = {};
+  let body: { plan?: string; interval?: string } = {};
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  const interval: BillingInterval = body.interval === "year" ? "year" : "month";
   const targetSlug = body.plan as PlanSlug | undefined;
   const targetPlan = targetSlug ? getPlanBySlug(targetSlug) : null;
   if (!targetPlan) {
@@ -80,11 +82,15 @@ export async function POST(req: Request) {
     });
   }
 
-  const newPriceId = resolvePlanPriceId(targetPlan.slug);
+  const newPriceId = resolvePlanPriceId(targetPlan.slug, interval);
   if (!newPriceId) {
+    const envVar =
+      interval === "year"
+        ? targetPlan.stripePriceEnvVarAnnual
+        : targetPlan.stripePriceEnvVar;
     return NextResponse.json(
       {
-        error: `Stripe price for plan "${targetPlan.slug}" is not configured. Set ${targetPlan.stripePriceEnvVar} in env.`,
+        error: `Stripe price for plan "${targetPlan.slug}" (${interval}ly) is not configured. Set ${envVar} in env.`,
       },
       { status: 500 }
     );
