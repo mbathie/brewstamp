@@ -1,7 +1,7 @@
 "use client";
 
 import StampDisplay from "@/components/stamp-display";
-import { getColorHex } from "@/lib/tailwind-colors";
+import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
 import { LANGUAGE_META, resolveLanguage, t } from "@/lib/i18n";
 
@@ -94,20 +94,15 @@ export default function CardPreview({
                 </div>
               )}
             </div>
-            <div
-              className="rounded-2xl p-6"
-              style={{
-                // Solid bg base masks the patterned backdrop behind text, then
-                // a translucent fg tint sits on top for the brand-coloured
-                // wash. Without the solid base the pattern shows through and
-                // competes with the body copy on mobile.
-                backgroundColor: bgHex,
-                backgroundImage: `linear-gradient(${fgHex}38, ${fgHex}38)`,
-                border: `1px solid ${fgHex}50`,
-              }}
-            >
-              <p className="mb-4 text-center text-base font-semibold" style={{ color: fgHex }}>
-                {shopName} <span style={{ opacity: 0.6 }}>&middot; {t(lang, "loyaltyCard")}</span>
+            <div className="rounded-2xl p-6" style={surfaceStyle(bgHex, fgHex)}>
+              <p
+                className="mb-4 text-center text-base font-semibold"
+                style={{ color: fgHex }}
+              >
+                {shopName}{" "}
+                <span style={{ opacity: 0.6 }}>
+                  &middot; {t(lang, "loyaltyCard")}
+                </span>
               </p>
               <StampDisplay
                 stamps={stamps}
@@ -117,7 +112,10 @@ export default function CardPreview({
                 language={lang}
               />
               {remaining > 0 && displayName ? (
-                <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
+                <p
+                  className="mt-3 text-center text-sm leading-relaxed"
+                  style={{ color: fgHex }}
+                >
                   {t(lang, "stampsAwayPersonal", {
                     name: displayName,
                     n: remaining,
@@ -127,12 +125,18 @@ export default function CardPreview({
                   })}
                 </p>
               ) : remaining > 0 ? (
-                <p className="mt-3 text-center text-sm leading-relaxed" style={{ color: fgHex }}>
+                <p
+                  className="mt-3 text-center text-sm leading-relaxed"
+                  style={{ color: fgHex }}
+                >
                   {t(lang, "stampsAwayGeneric", { n: threshold })}
                 </p>
               ) : null}
               {totalEarned !== undefined && freeRedeemed !== undefined && (
-                <p className="mt-1 text-center text-sm" style={{ color: fgHex }}>
+                <p
+                  className="mt-1 text-center text-sm"
+                  style={{ color: fgHex }}
+                >
                   {t(lang, "stampsEarnedRedeemed", {
                     earned: totalEarned,
                     redeemed: freeRedeemed,
@@ -172,7 +176,7 @@ export default function CardPreview({
                 {cardContent}
               </div>
               <div
-                className="flex w-1/2 flex-col justify-center pl-2"
+                className="w-1/2 pl-2"
                 aria-hidden={!showAltFace}
                 style={{ visibility: showAltFace ? "visible" : "hidden" }}
               >

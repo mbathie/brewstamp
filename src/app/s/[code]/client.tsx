@@ -6,7 +6,16 @@ import { useWebSocket } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Coffee, Gift, Stamp, ArrowRightLeft, HelpCircle, LogIn, Pencil, ArrowLeft } from "lucide-react";
+import {
+  Coffee,
+  Gift,
+  Stamp,
+  ArrowRightLeft,
+  HelpCircle,
+  LogIn,
+  Pencil,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -17,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import CustomerWaiting from "@/components/customer-waiting";
 import CardPreview from "@/components/card-preview";
-import { getColorHex } from "@/lib/tailwind-colors";
+import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { resolveLanguage, t } from "@/lib/i18n";
 
 interface OtherShop {
@@ -49,7 +58,13 @@ interface Props {
   otherShops: OtherShop[];
 }
 
-type Status = "idle" | "choosing" | "requesting" | "waiting" | "approved" | "rejected";
+type Status =
+  | "idle"
+  | "choosing"
+  | "requesting"
+  | "waiting"
+  | "approved"
+  | "rejected";
 
 export default function CustomerClient({
   shopCode,
@@ -86,14 +101,13 @@ export default function CustomerClient({
   const [password, setPassword] = useState("");
   const [showDetailsPrompt, setShowDetailsPrompt] = useState(false);
   const [detailsSaved, setDetailsSaved] = useState(false);
-  const [showShopSwitcher, setShowShopSwitcher] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
-  const [view, setView] = useState<"card" | "edit">("card");
+  const [view, setView] = useState<"card" | "edit" | "switch">("card");
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
   // Set true when the customer fills in their details inline (so we can flip
@@ -105,7 +119,11 @@ export default function CustomerClient({
   const searchParams = useSearchParams();
   const viewOnly = searchParams.get("checkin") === "0";
 
-  const { connected, send, on } = useWebSocket(shopCode, "customer", customerId);
+  const { connected, send, on } = useWebSocket(
+    shopCode,
+    "customer",
+    customerId,
+  );
   const autoRequestedRef = useRef(false);
 
   useEffect(() => {
@@ -126,7 +144,10 @@ export default function CustomerClient({
       // Show toast instead of celebration rectangle
       if (redeemed) {
         toast.success("You earned a reward!", {
-          description: awarded > 0 ? `+${awarded} stamp${awarded > 1 ? "s" : ""} added too` : undefined,
+          description:
+            awarded > 0
+              ? `+${awarded} stamp${awarded > 1 ? "s" : ""} added too`
+              : undefined,
         });
       } else if (earnedFree) {
         toast.success(`+${awarded} stamp${awarded > 1 ? "s" : ""}!`, {
@@ -157,38 +178,50 @@ export default function CustomerClient({
 
   const pendingRequestIdRef = useRef<string | null>(null);
 
-  const requestStamp = useCallback(async (redeem = false) => {
-    setStatus("requesting");
-    try {
-      const res = await fetch("/api/stamp-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shopId, customerId, redeem }),
-      });
+  const requestStamp = useCallback(
+    async (redeem = false) => {
+      setStatus("requesting");
+      try {
+        const res = await fetch("/api/stamp-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shopId, customerId, redeem }),
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          setStatus("idle");
+          return;
+        }
+
+        const data = await res.json();
+
+        send({
+          type: "stamp-request:new",
+          requestId: data.request._id,
+          customerId,
+          customerName: name || customerName || animalName,
+          stamps,
+          threshold,
+          redeem,
+        });
+
+        pendingRequestIdRef.current = data.request._id;
+        setStatus("waiting");
+      } catch {
         setStatus("idle");
-        return;
       }
-
-      const data = await res.json();
-
-      send({
-        type: "stamp-request:new",
-        requestId: data.request._id,
-        customerId,
-        customerName: name || customerName || animalName,
-        stamps,
-        threshold,
-        redeem,
-      });
-
-      pendingRequestIdRef.current = data.request._id;
-      setStatus("waiting");
-    } catch {
-      setStatus("idle");
-    }
-  }, [shopId, customerId, name, customerName, animalName, stamps, threshold, send]);
+    },
+    [
+      shopId,
+      customerId,
+      name,
+      customerName,
+      animalName,
+      stamps,
+      threshold,
+      send,
+    ],
+  );
 
   // Tell the merchant if the customer closes / navigates away while waiting,
   // so they aren't stuck staring at a stamp-request modal that will never
@@ -222,10 +255,13 @@ export default function CustomerClient({
   // Timeout after 3 minutes of waiting
   useEffect(() => {
     if (status !== "waiting") return;
-    const timer = setTimeout(() => {
-      toast.error("Request timed out", { description: "Please try again." });
-      setStatus("idle");
-    }, 3 * 60 * 1000);
+    const timer = setTimeout(
+      () => {
+        toast.error("Request timed out", { description: "Please try again." });
+        setStatus("idle");
+      },
+      3 * 60 * 1000,
+    );
     return () => clearTimeout(timer);
   }, [status]);
 
@@ -335,388 +371,566 @@ export default function CustomerClient({
       displayName={displayName}
       animate={status === "approved"}
       language={lang}
-      showAltFace={view === "edit"}
+      showAltFace={view !== "card"}
       altFace={
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setView("card");
-                setEditError("");
-                setPassword("");
-              }}
-              className="flex cursor-pointer items-center gap-1.5 text-sm hover:opacity-80"
+        view === "switch" ? (
+          <div
+            className="space-y-3 rounded-2xl p-5"
+            style={surfaceStyle(bgHex, fgHex)}
+          >
+            <p
+              className="text-center text-base font-semibold"
               style={{ color: fgHex }}
             >
-              <ArrowLeft className="h-4 w-4" />
-              {t(lang, "back")}
-            </button>
-            <p className="text-base font-semibold" style={{ color: fgHex }}>
-              {t(lang, "yourDetails")}
+              {t(lang, "switchShop")}
             </p>
-            <span className="w-12" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
-              {t(lang, "yourName")}
-            </Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t(lang, "yourName")}
-              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-              className="placeholder-inherit"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
-              {t(lang, "yourEmail")}
-            </Label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setEditError(""); }}
-              placeholder={t(lang, "yourEmail")}
-              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-              className="placeholder-inherit"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
-              {t(lang, "setPassword")}
-            </Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-              className="placeholder-inherit"
-            />
-          </div>
-          {editError && (
-            <p className="text-xs text-red-400">{editError}</p>
-          )}
-          <Button
-            type="button"
-            onClick={saveEditedDetails}
-            disabled={editSaving}
-            className="w-full cursor-pointer hover:opacity-90"
-            style={{ backgroundColor: fgHex, color: bgHex }}
-          >
-            {editSaving ? t(lang, "saving") : t(lang, "saveChanges")}
-          </Button>
-        </div>
-      }
-    >
-        {/* Actions */}
-        <div>
-          {status === "idle" && (
-            <Button
-              onClick={() => {
-                if (stamps >= threshold) {
-                  setStatus("choosing");
-                } else {
-                  requestStamp();
-                }
-              }}
-              className="w-full cursor-pointer text-base font-normal hover:opacity-90"
-              size="lg"
-              disabled={!connected}
-              style={{ backgroundColor: fgHex, color: bgHex }}
-            >
-              {connected ? t(lang, "requestStamp") : t(lang, "connecting")}
-            </Button>
-          )}
-
-          {status === "choosing" && (
-            <div className="space-y-3">
-              <p className="text-center text-sm font-medium" style={{ color: fgHex }}>
-                {t(lang, "rewardAvailable")}
-              </p>
-              <Button
-                onClick={() => requestStamp(true)}
-                className="w-full cursor-pointer text-base hover:opacity-90"
-                style={{ backgroundColor: fgHex + "20", color: fgHex, border: `1px solid ${fgHex}40` }}
-                size="lg"
+            <div className="space-y-2">
+              {/* Current shop — highlighted, not a link */}
+              <div
+                className="flex items-center gap-3 rounded-xl p-3"
+                style={{
+                  backgroundColor: fgHex + "1f",
+                  border: `1px solid ${fgHex}66`,
+                }}
               >
-                <Gift className="mr-2 h-5 w-5" />
-                {t(lang, "redeemReward")}
-              </Button>
-              <Button
-                onClick={() => requestStamp(false)}
-                className="w-full cursor-pointer text-base hover:opacity-90"
-                style={{ backgroundColor: fgHex + "20", color: fgHex, border: `1px solid ${fgHex}40` }}
-                size="lg"
-              >
-                <Stamp className="mr-2 h-5 w-5" />
-                {t(lang, "getAnotherStamp")}
-              </Button>
-            </div>
-          )}
-
-          {status === "requesting" && (
-            <Button className="w-full"
-              style={{ backgroundColor: fgHex + "20", color: fgHex, border: `1px solid ${fgHex}40` }} size="lg" disabled>
-              {t(lang, "sendingRequest")}
-            </Button>
-          )}
-
-          {status === "waiting" && <CustomerWaiting fgColor={fgHex} language={lang} />}
-
-          {status === "approved" && showDetailsPrompt && (
-            <div className="space-y-3">
-              {!customerName && (
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t(lang, "yourName")}
-                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                  className="placeholder-inherit"
-                />
-              )}
-              {!customerEmail && (
-                <div>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
-                    placeholder={t(lang, "yourEmail")}
-                    style={{ borderColor: emailError ? undefined : fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                    className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
-                  />
-                  {emailError && <p className="mt-1 text-xs text-red-400">{emailError}</p>}
-                </div>
-              )}
-              {!customerHasPassword && (
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t(lang, "setPassword")}
-                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                  className="placeholder-inherit"
-                />
-              )}
-              <div className="flex items-center justify-between">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <button className="flex cursor-pointer items-center gap-1.5" type="button">
-                      <p className="text-sm" style={{ color: fgHex, opacity: 0.6 }}>
-                        {t(lang, "whySaveDetails")}
-                      </p>
-                      <span style={{ color: fgHex, opacity: 0.4 }}>
-                        <HelpCircle className="h-3.5 w-3.5" />
-                      </span>
-                    </button>
-                  </DialogTrigger>
-                    <DialogContent className="max-w-xs">
-                      <DialogHeader>
-                        <DialogTitle>{t(lang, "whySaveDetails")}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-3 text-sm text-muted-foreground">
-                        <p>
-                          This is completely optional. Your information is only shared with <strong className="text-foreground">{shopName}</strong> and will never be shared with anyone else.
-                        </p>
-                        <p>
-                          Saving your name and email makes it easier for the shop to look you up if you ever forget your phone or lose access to your stamp card.
-                        </p>
-                        <p>
-                          Setting a <strong className="text-foreground">password</strong> lets you log in from any device to access your stamps — so you never lose your progress.
-                        </p>
-                      </div>
-                    </DialogContent>
-                </Dialog>
-              </div>
-              {!customerName && !customerEmail ? (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setDetailsSaved(true);
-                      setShowDetailsPrompt(false);
-                      setStatus("idle");
-                      setFreedEarned(false);
-                    }}
-                    variant="outline"
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
-                  >
-                    {t(lang, "remainAnonymous")}
-                  </Button>
-                  <Button
-                    onClick={saveDetails}
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ backgroundColor: fgHex, color: bgHex }}
-                  >
-                    {t(lang, "save")}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setShowDetailsPrompt(false);
-                      setStatus("idle");
-                      setFreedEarned(false);
-                    }}
-                    variant="outline"
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
-                  >
-                    Done
-                  </Button>
-                  <Button
-                    onClick={saveDetails}
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ backgroundColor: fgHex, color: bgHex }}
-                  >
-                    {t(lang, "save")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-        </div>
-
-        {/* Login for returning customers — only show to true anonymous
-            visitors. If they just created an account inline, hide it. */}
-        {!hasAccount && (
-          <div className="text-center">
-            {!showLogin ? (
-              <Button
-                onClick={() => setShowLogin(true)}
-                className="w-full cursor-pointer text-base font-normal hover:opacity-90"
-                size="lg"
-                style={{ backgroundColor: fgHex, color: bgHex }}
-              >
-                <LogIn className="mr-1.5 h-4 w-4" />
-                {t(lang, "haveExistingAccount")}
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <Input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder={t(lang, "email")}
-                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                  className="placeholder-inherit"
-                />
-                <Input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder={t(lang, "password")}
-                  style={{ borderColor: fgHex + "30", backgroundColor: fgHex + "10", color: fgHex }}
-                  className="placeholder-inherit"
-                />
-                {loginError && (
-                  <p className="text-xs text-red-400">{loginError}</p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowLogin(false)}
-                    variant="outline"
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
-                  >
-                    {t(lang, "cancel")}
-                  </Button>
-                  <Button
-                    onClick={handleLogin}
-                    disabled={loginLoading || !loginEmail || !loginPassword}
-                    className="flex-1 cursor-pointer hover:opacity-90"
-                    style={{ backgroundColor: fgHex, color: bgHex }}
-                  >
-                    {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Switch shop + Update details — half-width row when both are
-            available, full-width otherwise. Update details only shows for
-            authenticated customers (they have a name on record). */}
-        {(otherShops.length > 0 || hasAccount) && (
-          <div className="flex gap-2">
-            {otherShops.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowShopSwitcher(!showShopSwitcher)}
-                className="flex-1 cursor-pointer hover:opacity-90"
-                style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
-              >
-                <ArrowRightLeft className="mr-1.5 h-4 w-4" />
-                {t(lang, "switchShop")}
-              </Button>
-            )}
-            {hasAccount && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setView("edit")}
-                className="flex-1 cursor-pointer hover:opacity-90"
-                style={{ borderColor: fgHex + "40", color: fgHex, backgroundColor: "transparent" }}
-              >
-                <Pencil className="mr-1.5 h-4 w-4" />
-                {t(lang, "updateDetails")}
-              </Button>
-            )}
-          </div>
-        )}
-
-        {showShopSwitcher && otherShops.length > 0 && (
-          <div className="space-y-2">
-            {otherShops.map((s) => (
-              <a
-                key={s.code}
-                href={`/s/${s.code}`}
-                className="flex items-center gap-3 rounded-xl p-3 transition-colors"
-                style={{ backgroundColor: fgHex + "10", border: `1px solid ${fgHex}20` }}
-              >
-                {s.logo ? (
+                {shopLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={s.logo}
-                    alt={s.name}
+                    src={shopLogo}
+                    alt={shopName}
                     className="h-10 w-10 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-700">
-                    <Coffee className="h-5 w-5 text-white" />
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: fgHex }}
+                  >
+                    <Coffee className="h-5 w-5" style={{ color: bgHex }} />
                   </div>
                 )}
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={{ color: fgHex }}>{s.name}</p>
-                  <p className="text-xs" style={{ color: fgHex, opacity: 0.5 }}>
-                    {s.stamps} / {s.threshold} stamps
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-medium"
+                    style={{ color: fgHex }}
+                  >
+                    {shopName}
+                  </p>
+                  <p className="text-xs" style={{ color: fgHex, opacity: 0.6 }}>
+                    {stamps} / {threshold} stamps
                   </p>
                 </div>
-              </a>
-            ))}
+                <div
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: fgHex, color: bgHex }}
+                  aria-label="Current shop"
+                >
+                  <Check className="h-4 w-4" />
+                </div>
+              </div>
+              {otherShops.map((s) => (
+                <a
+                  key={s.code}
+                  href={`/s/${s.code}`}
+                  className="flex items-center gap-3 rounded-xl p-3 transition-opacity hover:opacity-80"
+                  style={{
+                    backgroundColor: fgHex + "10",
+                    border: `1px solid ${fgHex}25`,
+                  }}
+                >
+                  {s.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={s.logo}
+                      alt={s.name}
+                      className="h-10 w-10 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-lg"
+                      style={{ backgroundColor: fgHex }}
+                    >
+                      <Coffee className="h-5 w-5" style={{ color: bgHex }} />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: fgHex }}
+                    >
+                      {s.name}
+                    </p>
+                    <p
+                      className="text-xs"
+                      style={{ color: fgHex, opacity: 0.6 }}
+                    >
+                      {s.stamps} / {s.threshold} stamps
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setView("card")}
+              className="w-full cursor-pointer hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              {t(lang, "back")}
+            </Button>
+          </div>
+        ) : (
+          <div
+            className="space-y-3 rounded-2xl p-5"
+            style={surfaceStyle(bgHex, fgHex)}
+          >
+            <div className="space-y-1.5">
+              <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+                {t(lang, "yourName")}
+              </Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t(lang, "yourName")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+                {t(lang, "yourEmail")}
+              </Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEditError("");
+                }}
+                placeholder={t(lang, "yourEmail")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs" style={{ color: fgHex, opacity: 0.7 }}>
+                {t(lang, "setPassword")}
+              </Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+            </div>
+            {editError && <p className="text-xs text-red-400">{editError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setView("card");
+                  setEditError("");
+                  setPassword("");
+                }}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{
+                  borderColor: fgHex + "40",
+                  color: fgHex,
+                  backgroundColor: "transparent",
+                }}
+              >
+                {t(lang, "cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={saveEditedDetails}
+                disabled={editSaving}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{ backgroundColor: fgHex, color: bgHex }}
+              >
+                {editSaving ? t(lang, "saving") : t(lang, "saveChanges")}
+              </Button>
+            </div>
+          </div>
+        )
+      }
+    >
+      {/* Actions */}
+      <div>
+        {status === "idle" && (
+          <Button
+            onClick={() => {
+              if (stamps >= threshold) {
+                setStatus("choosing");
+              } else {
+                requestStamp();
+              }
+            }}
+            className="w-full cursor-pointer text-base font-normal hover:opacity-90"
+            size="lg"
+            disabled={!connected}
+            style={{ backgroundColor: fgHex, color: bgHex }}
+          >
+            {connected ? t(lang, "requestStamp") : t(lang, "connecting")}
+          </Button>
+        )}
+
+        {status === "choosing" && (
+          <div className="space-y-3">
+            <p
+              className="text-center text-sm font-medium"
+              style={{ color: fgHex }}
+            >
+              {t(lang, "rewardAvailable")}
+            </p>
+            <Button
+              onClick={() => requestStamp(true)}
+              className="w-full cursor-pointer text-base hover:opacity-90"
+              style={{
+                backgroundColor: fgHex + "20",
+                color: fgHex,
+                border: `1px solid ${fgHex}40`,
+              }}
+              size="lg"
+            >
+              <Gift className="mr-2 h-5 w-5" />
+              {t(lang, "redeemReward")}
+            </Button>
+            <Button
+              onClick={() => requestStamp(false)}
+              className="w-full cursor-pointer text-base hover:opacity-90"
+              style={{
+                backgroundColor: fgHex + "20",
+                color: fgHex,
+                border: `1px solid ${fgHex}40`,
+              }}
+              size="lg"
+            >
+              <Stamp className="mr-2 h-5 w-5" />
+              {t(lang, "getAnotherStamp")}
+            </Button>
           </div>
         )}
 
-        {/* Powered by — sits at the natural end of the content, right-aligned
+        {status === "requesting" && (
+          <Button
+            className="w-full"
+            style={{
+              backgroundColor: fgHex + "20",
+              color: fgHex,
+              border: `1px solid ${fgHex}40`,
+            }}
+            size="lg"
+            disabled
+          >
+            {t(lang, "sendingRequest")}
+          </Button>
+        )}
+
+        {status === "waiting" && (
+          <CustomerWaiting fgColor={fgHex} language={lang} />
+        )}
+
+        {status === "approved" && showDetailsPrompt && (
+          <div className="space-y-3">
+            {!customerName && (
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t(lang, "yourName")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+            )}
+            {!customerEmail && (
+              <div>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError("");
+                  }}
+                  placeholder={t(lang, "yourEmail")}
+                  style={{
+                    borderColor: emailError ? undefined : fgHex + "30",
+                    backgroundColor: fgHex + "10",
+                    color: fgHex,
+                  }}
+                  className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
+                />
+                {emailError && (
+                  <p className="mt-1 text-xs text-red-400">{emailError}</p>
+                )}
+              </div>
+            )}
+            {!customerHasPassword && (
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t(lang, "setPassword")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+            )}
+            <div className="flex items-center justify-between">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    className="flex cursor-pointer items-center gap-1.5"
+                    type="button"
+                  >
+                    <p
+                      className="text-sm"
+                      style={{ color: fgHex, opacity: 0.6 }}
+                    >
+                      {t(lang, "whySaveDetails")}
+                    </p>
+                    <span style={{ color: fgHex, opacity: 0.4 }}>
+                      <HelpCircle className="h-3.5 w-3.5" />
+                    </span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-xs">
+                  <DialogHeader>
+                    <DialogTitle>{t(lang, "whySaveDetails")}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <p>
+                      This is completely optional. Your information is only
+                      shared with{" "}
+                      <strong className="text-foreground">{shopName}</strong>{" "}
+                      and will never be shared with anyone else.
+                    </p>
+                    <p>
+                      Saving your name and email makes it easier for the shop to
+                      look you up if you ever forget your phone or lose access
+                      to your stamp card.
+                    </p>
+                    <p>
+                      Setting a{" "}
+                      <strong className="text-foreground">password</strong> lets
+                      you log in from any device to access your stamps — so you
+                      never lose your progress.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {!customerName && !customerEmail ? (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setDetailsSaved(true);
+                    setShowDetailsPrompt(false);
+                    setStatus("idle");
+                    setFreedEarned(false);
+                  }}
+                  variant="outline"
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{
+                    borderColor: fgHex + "40",
+                    color: fgHex,
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  {t(lang, "remainAnonymous")}
+                </Button>
+                <Button
+                  onClick={saveDetails}
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{ backgroundColor: fgHex, color: bgHex }}
+                >
+                  {t(lang, "save")}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setShowDetailsPrompt(false);
+                    setStatus("idle");
+                    setFreedEarned(false);
+                  }}
+                  variant="outline"
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{
+                    borderColor: fgHex + "40",
+                    color: fgHex,
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  Done
+                </Button>
+                <Button
+                  onClick={saveDetails}
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{ backgroundColor: fgHex, color: bgHex }}
+                >
+                  {t(lang, "save")}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Login for returning customers — only show to true anonymous
+            visitors. If they just created an account inline, hide it. */}
+      {!hasAccount && (
+        <div className="text-center">
+          {!showLogin ? (
+            <Button
+              onClick={() => setShowLogin(true)}
+              className="w-full cursor-pointer text-base font-normal hover:opacity-90"
+              size="lg"
+              style={{ backgroundColor: fgHex, color: bgHex }}
+            >
+              <LogIn className="mr-1.5 h-4 w-4" />
+              {t(lang, "haveExistingAccount")}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <Input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder={t(lang, "email")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+              <Input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder={t(lang, "password")}
+                style={{
+                  borderColor: fgHex + "30",
+                  backgroundColor: fgHex + "10",
+                  color: fgHex,
+                }}
+                className="placeholder-inherit"
+              />
+              {loginError && (
+                <p className="text-xs text-red-400">{loginError}</p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowLogin(false)}
+                  variant="outline"
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{
+                    borderColor: fgHex + "40",
+                    color: fgHex,
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  {t(lang, "cancel")}
+                </Button>
+                <Button
+                  onClick={handleLogin}
+                  disabled={loginLoading || !loginEmail || !loginPassword}
+                  className="flex-1 cursor-pointer hover:opacity-90"
+                  style={{ backgroundColor: fgHex, color: bgHex }}
+                >
+                  {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Switch shop + Update details — half-width row when both are
+            available, full-width otherwise. Update details only shows for
+            authenticated customers (they have a name on record). */}
+      {(otherShops.length > 0 || hasAccount) && (
+        <div className="flex gap-2">
+          {otherShops.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setView("switch")}
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              <ArrowRightLeft className="mr-1.5 h-4 w-4" />
+              {t(lang, "switchShop")}
+            </Button>
+          )}
+          {hasAccount && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setView("edit")}
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              <Pencil className="mr-1.5 h-4 w-4" />
+              {t(lang, "updateDetails")}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Powered by — sits at the natural end of the content, right-aligned
             and small. No fixed positioning so it can't overlap action buttons
             on tall pages. */}
-        <div className="flex justify-end">
-          <a
-            href="/"
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs transition-opacity hover:opacity-80"
-            style={{ backgroundColor: fgHex + "15", color: fgHex }}
+      <div className="flex justify-end">
+        <a
+          href="/"
+          className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs transition-opacity hover:opacity-80"
+          style={{ backgroundColor: fgHex + "15", color: fgHex }}
+        >
+          Powered by{" "}
+          <span
+            className="font-[family-name:var(--font-logo)] tracking-wide"
+            style={{ opacity: 1 }}
           >
-            Powered by{" "}
-            <span className="font-[family-name:var(--font-logo)] tracking-wide" style={{ opacity: 1 }}>
-              Brewstamp
-            </span>
-          </a>
-        </div>
-
+            Brewstamp
+          </span>
+        </a>
+      </div>
     </CardPreview>
   );
 }
