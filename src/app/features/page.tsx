@@ -17,7 +17,13 @@ import {
   Tag,
   Lock,
   Users,
+  HelpCircle,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import FeaturesCardCarousel from "@/components/features-card-carousel";
@@ -86,6 +92,7 @@ const jsonLd = {
     "Printable QR code PDF, branded with shop colours",
     "Drip lifecycle emails + first-stamp customer email",
     "Live activity dashboard with date-range filtering",
+    "Corporate perk mode — employer-subsidised staff coffee, capped per day and gated to work email domains",
   ],
 };
 
@@ -161,15 +168,33 @@ const PATTERN_SWATCHES: Array<{
 const FEATURE_TABLE: Array<{
   category: string;
   icon: React.ComponentType<{ className?: string }>;
-  rows: Array<{ label: string; free: string | true; pro: string | true }>;
+  rows: Array<{
+    label: string;
+    free: string | true;
+    pro: string | true;
+    hint?: string;
+  }>;
 }> = [
   {
     category: "For your customers",
     icon: Smartphone,
     rows: [
-      { label: "No app to download — opens in any phone browser", free: true, pro: true },
-      { label: "Stamps follow them across devices (optional login)", free: true, pro: true },
-      { label: "Auto-translates to their language (13 supported)", free: true, pro: true },
+      {
+        label: "No app to download — opens in any phone browser",
+        free: true,
+        pro: true,
+      },
+      {
+        label: "Stamps follow them across devices (optional login)",
+        free: true,
+        pro: true,
+        hint: "Customers can set a password to log in on any device, so they never lose their stamps if they switch or lose their phone.",
+      },
+      {
+        label: "Auto-translates to their language (13 supported)",
+        free: true,
+        pro: true,
+      },
     ],
   },
   {
@@ -185,19 +210,54 @@ const FEATURE_TABLE: Array<{
     category: "For you",
     icon: Coffee,
     rows: [
-      { label: "Real-time stamp approval (no separate stamper app)", free: true, pro: true },
+      {
+        label: "Real-time stamp approval (no separate stamper app)",
+        free: true,
+        pro: true,
+        hint: "When a customer scans, the request pops up live on your dashboard and you approve it there — no separate stamper device or app.",
+      },
       { label: "Customer list with notes + tags", free: true, pro: true },
-      { label: "Built-in lifecycle emails to you and your customers", free: true, pro: true },
-      { label: "CSV export of your customers", free: "—", pro: "Plus & Max" },
+      {
+        label: "Built-in lifecycle emails to you and your customers",
+        free: true,
+        pro: true,
+        hint: "Automatic emails with no setup — a welcome, a nudge when your first customer joins, and gentle re-engagement over time.",
+      },
+      {
+        label: "CSV export of your customers",
+        free: "—",
+        pro: "Plus & Max",
+        hint: "Download your customer list — names, emails, stamps, and rewards redeemed — as a spreadsheet.",
+      },
     ],
   },
   {
     category: "Team & scale",
     icon: Users,
     rows: [
-      { label: "Multiple shops under one account", free: "1 shop", pro: "Up to 10" },
-      { label: "Manager & staff logins", free: "—", pro: "Plus & Max" },
-      { label: "Cross-shop rollup reporting", free: "—", pro: "Plus & Max" },
+      {
+        label: "Multiple shops under one account",
+        free: "1 shop",
+        pro: "Up to 10",
+      },
+      {
+        label: "Manager & staff logins",
+        free: "—",
+        pro: "Plus & Max",
+        hint: "Give baristas and managers their own logins to approve stamps, instead of sharing one account.",
+      },
+      {
+        label: "Cross-shop rollup reporting",
+        free: "—",
+        pro: "Plus & Max",
+        hint: "Combine stamps, customers, and redemptions across all your shops into one view.",
+      },
+      {
+        label: "Corporate perk mode (subsidised staff coffee)",
+        free: "—",
+        pro: "Plus & Max",
+        hint: "Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free drink (no stamps), limited to staff email domains and capped per person per day.",
+      },
     ],
   },
   {
@@ -275,20 +335,17 @@ export default function FeaturesPage() {
                 {
                   icon: Smartphone,
                   title: "No app for customers",
-                  body:
-                    "Card opens in &lt;1 second from a QR scan. No app store, no install, no account.",
+                  body: "Card opens in &lt;1 second from a QR scan. No app store, no install, no account.",
                 },
                 {
                   icon: Languages,
                   title: "13 languages, same card",
-                  body:
-                    "Flip a setting and the customer card + printable QR PDF auto-translate. Arabic includes proper RTL.",
+                  body: "Flip a setting and the customer card + printable QR PDF auto-translate. Arabic includes proper RTL.",
                 },
                 {
                   icon: Lock,
                   title: "Built to scale with you",
-                  body:
-                    "Start free with the full single-shop experience. Upgrade for multi-shop, unlimited staff logins, and CSV exports when your business grows.",
+                  body: "Start free with the full single-shop experience. Upgrade for multi-shop, unlimited staff logins, and CSV exports when your business grows.",
                 },
               ].map(({ icon: Icon, title, body }) => (
                 <div
@@ -323,10 +380,10 @@ export default function FeaturesPage() {
                   Coffee, bakery, barber, brewery — make it yours.
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-stone-600">
-                  Pick from a riot of colours and patterns until the card
-                  feels unmistakably <em>you</em>. Built for cafes, just as
-                  happy on a bakery, a barber, a brewery, or a juice bar —
-                  same QR flow, your style.
+                  Pick from a riot of colours and patterns until the card feels
+                  unmistakably <em>you</em>. Built for cafes, just as happy on a
+                  bakery, a barber, a brewery, or a juice bar — same QR flow,
+                  your style.
                 </p>
                 <ul className="mt-6 space-y-3 text-base text-stone-700">
                   {[
@@ -362,10 +419,9 @@ export default function FeaturesPage() {
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
                 The full design system ships on every plan — that&apos;s{" "}
-                <strong className="text-stone-900">198 colours</strong> for
-                each of foreground and background. Pick a hue, pick a shade,
-                drop in a pattern, upload your logo. Live preview while you
-                tweak.
+                <strong className="text-stone-900">198 colours</strong> for each
+                of foreground and background. Pick a hue, pick a shade, drop in
+                a pattern, upload your logo. Live preview while you tweak.
               </p>
             </div>
 
@@ -477,12 +533,30 @@ export default function FeaturesPage() {
                     <span />
                     <span />
                   </div>
-                  {rows.map(({ label, free, pro }) => (
+                  {rows.map(({ label, free, pro, hint }) => (
                     <div
                       key={label}
                       className="grid grid-cols-[1fr_5rem_5rem] items-center gap-4 border-b border-stone-100 px-6 py-3 last:border-b-0 sm:grid-cols-[1fr_7rem_7rem]"
                     >
-                      <span className="text-sm text-stone-700">{label}</span>
+                      <span className="flex items-center gap-1.5 text-sm text-stone-700">
+                        {label}
+                        {hint && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={`About ${label}`}
+                                className="cursor-help text-stone-400 transition-colors hover:text-stone-700"
+                              >
+                                <HelpCircle className="size-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[260px] text-center">
+                              {hint}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </span>
                       <span className="flex items-center justify-center text-sm text-stone-700">
                         {free === true ? (
                           <Check className="size-5 text-emerald-600" />

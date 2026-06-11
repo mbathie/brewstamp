@@ -34,6 +34,8 @@ export interface PlanConfig {
   hasStaffLogins: boolean;
   hasAnalytics: boolean;
   hasCrossShopReporting: boolean;
+  // Corporate "perk mode" — employer-subsidised staff coffee. Plus & Max.
+  hasPerkMode: boolean;
   prioritySupport: boolean;
   dedicatedSupport: boolean;
   features: string[];
@@ -54,6 +56,7 @@ export const PLANS: PlanConfig[] = [
     hasStaffLogins: false,
     hasAnalytics: false,
     hasCrossShopReporting: false,
+    hasPerkMode: false,
     prioritySupport: false,
     dedicatedSupport: false,
     features: [
@@ -77,6 +80,7 @@ export const PLANS: PlanConfig[] = [
     hasStaffLogins: false,
     hasAnalytics: true,
     hasCrossShopReporting: false,
+    hasPerkMode: false,
     prioritySupport: true,
     dedicatedSupport: false,
     features: [
@@ -100,6 +104,7 @@ export const PLANS: PlanConfig[] = [
     hasStaffLogins: true,
     hasAnalytics: true,
     hasCrossShopReporting: true,
+    hasPerkMode: true,
     prioritySupport: true,
     dedicatedSupport: false,
     features: [
@@ -108,6 +113,7 @@ export const PLANS: PlanConfig[] = [
       "Unlimited staff logins",
       "CSV customer exports",
       "Cross-shop reporting",
+      "Corporate perk mode (subsidised staff coffee)",
     ],
   },
   {
@@ -124,6 +130,7 @@ export const PLANS: PlanConfig[] = [
     hasStaffLogins: true,
     hasAnalytics: true,
     hasCrossShopReporting: true,
+    hasPerkMode: true,
     prioritySupport: true,
     dedicatedSupport: true,
     features: [

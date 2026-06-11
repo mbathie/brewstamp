@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Users,
+  Building2,
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
@@ -422,6 +423,11 @@ export default function Home() {
                 icon: Users,
                 title: "Multi-shop support",
                 desc: "Support up to 10 shops under one account, and multiple team members.",
+              },
+              {
+                icon: Building2,
+                title: "Corporate perk mode",
+                desc: "Run employer-subsidised staff coffee: every scan is a free drink, gated to work-email domains and capped per person per day. On Plus and Max.",
               },
             ].map(({ icon: Icon, title, desc }, i, arr) => {
               const isLastOrphan =

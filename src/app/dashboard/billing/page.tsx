@@ -27,7 +27,13 @@ import {
   Mail,
   ExternalLink,
   AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   PLANS,
   getPlanRank,
@@ -108,13 +114,16 @@ export default function BillingPage() {
     try {
       if (target === "free") {
         const ok = window.confirm(
-          "Downgrade to Free? Your current paid plan keeps working until the end of the period, then cancels."
+          "Downgrade to Free? Your current paid plan keeps working until the end of the period, then cancels.",
         );
         if (!ok) return;
       }
 
       // Free → Paid uses checkout; everything else uses the switch endpoint.
-      const endpoint = currentSlug === "free" ? "/api/billing/checkout" : "/api/billing/switch";
+      const endpoint =
+        currentSlug === "free"
+          ? "/api/billing/checkout"
+          : "/api/billing/switch";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,7 +145,7 @@ export default function BillingPage() {
         toast.success("Plan will cancel at the end of your current period.");
       } else {
         toast.success(
-          `Switched to ${PLANS.find((p) => p.slug === target)?.label}. Prorated credit applied to your next invoice.`
+          `Switched to ${PLANS.find((p) => p.slug === target)?.label}. Prorated credit applied to your next invoice.`,
         );
       }
 
@@ -212,8 +221,8 @@ export default function BillingPage() {
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/15 p-3 text-sm text-amber-200">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
-              You&apos;ve hit the shop limit on your current plan. Upgrade
-              below to add another shop — your existing shops keep working.
+              You&apos;ve hit the shop limit on your current plan. Upgrade below
+              to add another shop — your existing shops keep working.
             </span>
           </div>
         )}
@@ -221,8 +230,8 @@ export default function BillingPage() {
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
-              This is a seeded test subscription. Plan switching and the
-              Stripe billing portal are disabled until the shop has a real
+              This is a seeded test subscription. Plan switching and the Stripe
+              billing portal are disabled until the shop has a real
               Stripe-backed subscription.
             </span>
           </div>
@@ -290,9 +299,7 @@ export default function BillingPage() {
           else if (plan.slug === "free") ctaLabel = "Cancel paid plan";
           else if (isIntervalSwitch)
             ctaLabel =
-              interval === "year"
-                ? "Switch to annual"
-                : "Switch to monthly";
+              interval === "year" ? "Switch to annual" : "Switch to monthly";
           else if (isUpgrade) ctaLabel = `Upgrade to ${plan.label}`;
           else if (isDowngrade) ctaLabel = `Downgrade to ${plan.label}`;
           else ctaLabel = `Switch to ${plan.label}`;
@@ -420,42 +427,55 @@ export default function BillingPage() {
               <TableBody>
                 <FeatureRow
                   label="Shops"
+                  hint="How many separate shop locations you can run under one account, each with its own card, QR code, and customers."
                   values={PLANS.map((p) =>
-                    p.shopLimit === 1 ? "1" : `Up to ${p.shopLimit}`
+                    p.shopLimit === 1 ? "1" : `Up to ${p.shopLimit}`,
                   )}
                 />
                 <FeatureRow
                   label="Stamps per month"
+                  hint="On Free you can award 100 stamps in total, ever. Paid plans award unlimited stamps with no monthly cap."
                   values={PLANS.map((p) =>
                     p.stampLimit === "unlimited"
                       ? "Unlimited"
-                      : `${p.stampLimit} total`
+                      : `${p.stampLimit} total`,
                   )}
                 />
                 <FeatureRow
                   label="Customer analytics"
+                  hint="See who visits, how often they come back, your busiest hours, and how close customers are to a reward."
                   values={PLANS.map((p) => p.hasAnalytics)}
                 />
                 <FeatureRow
                   label="Staff & manager logins"
+                  hint="Give baristas and managers their own logins to approve stamps, so you don't have to share one account."
                   values={PLANS.map((p) =>
-                    p.hasStaffLogins ? "Unlimited" : false
+                    p.hasStaffLogins ? "Unlimited" : false,
                   )}
                 />
                 <FeatureRow
                   label="CSV customer exports"
+                  hint="Download your full customer list — names, emails, stamps, and rewards redeemed — as a spreadsheet."
                   values={PLANS.map((p) => p.hasCsvExport)}
                 />
                 <FeatureRow
                   label="Cross-shop reporting"
+                  hint="Roll up stamps, customers, and redemptions across all your shops into one combined view."
                   values={PLANS.map((p) => p.hasCrossShopReporting)}
                 />
                 <FeatureRow
+                  label="Corporate perk mode"
+                  hint="Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free drink (no stamps), limited to staff email domains and capped per person per day."
+                  values={PLANS.map((p) => p.hasPerkMode)}
+                />
+                <FeatureRow
                   label="Priority support"
+                  hint="Your support emails jump the queue for a faster response."
                   values={PLANS.map((p) => p.prioritySupport)}
                 />
                 <FeatureRow
                   label="Dedicated support"
+                  hint="A named contact who knows your account, for hands-on help and onboarding."
                   values={PLANS.map((p) => p.dedicatedSupport)}
                 />
               </TableBody>
@@ -501,7 +521,7 @@ export default function BillingPage() {
                   }
                 >
                   {new Date(
-                    data.subscription.currentPeriodEnd
+                    data.subscription.currentPeriodEnd,
                   ).toLocaleDateString("en-AU", {
                     day: "numeric",
                     month: "long",
@@ -544,12 +564,10 @@ export default function BillingPage() {
                     <TableCell>
                       {new Date(invoice.date * 1000).toLocaleDateString(
                         "en-AU",
-                        { day: "numeric", month: "short", year: "numeric" }
+                        { day: "numeric", month: "short", year: "numeric" },
                       )}
                     </TableCell>
-                    <TableCell>
-                      ${(invoice.amount / 100).toFixed(2)}
-                    </TableCell>
+                    <TableCell>${(invoice.amount / 100).toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -596,13 +614,35 @@ export default function BillingPage() {
 function FeatureRow({
   label,
   values,
+  hint,
 }: {
   label: string;
   values: Array<string | boolean>;
+  hint?: string;
 }) {
   return (
     <TableRow>
-      <TableCell className="font-medium text-foreground">{label}</TableCell>
+      <TableCell className="font-medium text-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          {label}
+          {hint && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`About ${label}`}
+                  className="cursor-help text-muted-foreground/60 transition-colors hover:text-foreground"
+                >
+                  <HelpCircle className="size-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[260px] text-center">
+                {hint}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </span>
+      </TableCell>
       {values.map((v, i) => (
         <TableCell key={i} className="text-center">
           {v === true ? (
