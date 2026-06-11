@@ -1,39 +1,18 @@
 import { StampRequest } from "@/models";
 
 /**
- * Helpers for "perk mode" shops — employer-subsidised coffee where every
- * approved scan is a free drink, gated by email domain and capped per person
- * per local day. See the perkMode fields on the Shop model.
+ * Server-side helpers for "perk mode" shops — employer-subsidised coffee where
+ * every approved scan is a free drink, gated by email domain and capped per
+ * person per local day. See the perkMode fields on the Shop model.
+ *
+ * The pure email-domain helpers live in `perk-domain.ts` (no model imports) so
+ * the customer client can share them; re-exported here for server callers.
  */
-
-/** Lowercase, trim, and strip a leading "@" so "@Miovision.com " → "miovision.com". */
-export function normalizeDomain(input: string): string {
-  return input.trim().toLowerCase().replace(/^@+/, "");
-}
-
-/** Parse a free-text list ("miovision.com, acme.io") into clean domains. */
-export function parseDomains(input: string): string[] {
-  return input
-    .split(/[\s,;]+/)
-    .map(normalizeDomain)
-    .filter(Boolean);
-}
-
-/**
- * Does this email belong to one of the allowed domains? With no domains
- * configured the gate is closed (returns false) — a perk shop must name at
- * least one domain to admit anyone.
- */
-export function emailDomainAllowed(
-  email: string | null | undefined,
-  domains: string[] | null | undefined,
-): boolean {
-  if (!email || !domains || domains.length === 0) return false;
-  const at = email.lastIndexOf("@");
-  if (at < 0) return false;
-  const domain = email.slice(at + 1).trim().toLowerCase();
-  return domains.some((d) => normalizeDomain(d) === domain);
-}
+export {
+  normalizeDomain,
+  parseDomains,
+  emailDomainAllowed,
+} from "./perk-domain";
 
 /**
  * The UTC instant at which the current local day began for `tz`. Used to count
@@ -67,7 +46,8 @@ function tzOffsetMs(tz: string, date: Date): number {
     return 0;
   }
   const map: Record<string, number> = {};
-  for (const p of parts) if (p.type !== "literal") map[p.type] = Number(p.value);
+  for (const p of parts)
+    if (p.type !== "literal") map[p.type] = Number(p.value);
   // Intl renders hour 24 for midnight in some engines; normalise to 0.
   const hour = map.hour === 24 ? 0 : map.hour;
   const asUTC = Date.UTC(

@@ -10,6 +10,7 @@ import { Coffee, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
+import { emailDomainAllowed } from "@/lib/perk-domain";
 import CustomerWaiting from "@/components/customer-waiting";
 
 interface Props {
@@ -179,10 +180,9 @@ export default function PerkCustomerClient({
       setEmailError("Please enter a valid email address");
       return;
     }
-    const domain = value.slice(value.lastIndexOf("@") + 1);
-    if (!allowedDomains.map((d) => d.toLowerCase()).includes(domain)) {
-      // Don't name the allowed domain — staff already know theirs, and showing
-      // it would let anyone scanning the QR spoof a valid address.
+    // Don't name the allowed domain — staff already know theirs, and showing
+    // it would let anyone scanning the QR spoof a valid address.
+    if (!emailDomainAllowed(value, allowedDomains)) {
       setEmailError("Please use your work email address.");
       return;
     }
@@ -215,8 +215,7 @@ export default function PerkCustomerClient({
         setDetailsError("Please enter a valid email address");
         return;
       }
-      const domain = value.slice(value.lastIndexOf("@") + 1);
-      if (!allowedDomains.map((d) => d.toLowerCase()).includes(domain)) {
+      if (!emailDomainAllowed(value, allowedDomains)) {
         setDetailsError("Please use your work email address.");
         return;
       }

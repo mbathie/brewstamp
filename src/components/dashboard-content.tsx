@@ -62,6 +62,7 @@ import Link from "next/link";
 import { generateAnimalName } from "@/lib/animal-names";
 import { Sparkline } from "@/components/sparkline";
 import { getProgram } from "@/lib/program";
+import { ActivityValue } from "@/components/activity-value";
 
 type Range = "today" | "week" | "month" | "all" | "date";
 
@@ -938,28 +939,13 @@ export default function DashboardContent({
                             </TableCell>
                           )}
                           <TableCell>
-                            {c.status !== "approved" ? (
-                              <span className="text-muted-foreground">—</span>
-                            ) : perkMode ? (
-                              <span className="text-amber-500">
-                                {program.eventLabel}
-                              </span>
-                            ) : isRedeem && awarded === 0 ? (
-                              <span className="text-muted-foreground">
-                                -{stampThreshold}
-                              </span>
-                            ) : isRedeem && awarded > 0 ? (
-                              <span>
-                                <span className="text-muted-foreground">
-                                  -{stampThreshold}
-                                </span>{" "}
-                                <span className="text-amber-500">
-                                  +{awarded}
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-amber-500">+{awarded}</span>
-                            )}
+                            <ActivityValue
+                              status={c.status}
+                              redeem={isRedeem}
+                              stampsAwarded={awarded}
+                              threshold={stampThreshold}
+                              program={program}
+                            />
                           </TableCell>
                           <TableCell>
                             <Badge
