@@ -9,7 +9,11 @@ import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
 import { getPlanByPriceId } from "@/lib/plans";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import DashboardClient from "./dashboard-client";
 import ShopSwitcher from "@/components/shop-switcher";
 
@@ -129,7 +133,7 @@ export default async function DashboardLayout({
           canManageBilling={canManageBilling}
         />
         <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
+          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b bg-background px-4">
             <SidebarTrigger className="-ml-1 cursor-pointer text-muted-foreground hover:text-foreground" />
             <ShopSwitcher
               shops={switcherShops}

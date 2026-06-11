@@ -53,7 +53,12 @@ import PatternPicker from "@/components/ui/pattern-picker";
 import { getColorHex, getContrastRatio } from "@/lib/tailwind-colors";
 import { getRandomColorPair } from "@/lib/random-colors";
 import { patterns } from "@/lib/patterns";
-import { LANGUAGE_META, SUPPORTED_LANGUAGES, resolveLanguage, t } from "@/lib/i18n";
+import {
+  LANGUAGE_META,
+  SUPPORTED_LANGUAGES,
+  resolveLanguage,
+  t,
+} from "@/lib/i18n";
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved";
 
@@ -129,6 +134,11 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("UTC");
   // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
   const [canUsePerkMode, setCanUsePerkMode] = useState(false);
+  // The shop already has loyalty/perk history — switching program type strands
+  // it, so we warn before applying. `pendingMode` holds the target while the
+  // confirmation modal is open.
+  const [hasActivity, setHasActivity] = useState(false);
+  const [pendingMode, setPendingMode] = useState<boolean | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -149,6 +159,7 @@ export default function SettingsPage() {
         if (!data.shop) return;
         setShop(data.shop);
         setCanUsePerkMode(!!data.canUsePerkMode);
+        setHasActivity(!!data.hasActivity);
         const initial = {
           name: data.shop.name ?? "",
           threshold: data.shop.stampThreshold ?? 8,
@@ -220,7 +231,18 @@ export default function SettingsPage() {
     } catch {
       setSaveStatus("idle");
     }
-  }, [name, threshold, bgColor, fgColor, bgPattern, language, perkMode, perkDomains, dailyDrinkLimit, timezone]);
+  }, [
+    name,
+    threshold,
+    bgColor,
+    fgColor,
+    bgPattern,
+    language,
+    perkMode,
+    perkDomains,
+    dailyDrinkLimit,
+    timezone,
+  ]);
 
   // Auto-save: debounced 3s after a real change (current state differs from last saved snapshot).
   useEffect(() => {
@@ -246,11 +268,35 @@ export default function SettingsPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [name, threshold, bgColor, fgColor, bgPattern, language, perkMode, perkDomains, dailyDrinkLimit, timezone, saveChanges]);
+  }, [
+    name,
+    threshold,
+    bgColor,
+    fgColor,
+    bgPattern,
+    language,
+    perkMode,
+    perkDomains,
+    dailyDrinkLimit,
+    timezone,
+    saveChanges,
+  ]);
 
   async function handleSaveClick() {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveChanges();
+  }
+
+  // Tapping a program-type tab. If it's a real change AND the shop already has
+  // history, warn first (switching strands the existing data); otherwise apply
+  // straight away.
+  function requestModeChange(target: boolean) {
+    if (target === perkMode) return;
+    if (hasActivity) {
+      setPendingMode(target);
+    } else {
+      setPerkMode(target);
+    }
   }
 
   // From the "All shops" empty state, drop into a single shop's setup: set the
@@ -404,12 +450,16 @@ export default function SettingsPage() {
             {/* Branding + Loyalty — laid out 2-up so the block stays compact
                 without shrinking the individual controls. */}
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Branding</h2>
+              <h2 className="text-base font-semibold text-foreground">
+                Branding
+              </h2>
               <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
                 <div className="space-y-2">
                   <Label>Brand Logo</Label>
                   <div
-                    onClick={() => !uploadingLogo && fileInputRef.current?.click()}
+                    onClick={() =>
+                      !uploadingLogo && fileInputRef.current?.click()
+                    }
                     className="group relative h-16 w-48 cursor-pointer overflow-hidden rounded-lg"
                   >
                     <input
@@ -422,7 +472,11 @@ export default function SettingsPage() {
                     />
                     {logo ? (
                       <>
-                        <img src={logo} alt="Logo" className="h-full w-full object-cover" />
+                        <img
+                          src={logo}
+                          alt="Logo"
+                          className="h-full w-full object-cover"
+                        />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                           <Upload className="h-5 w-5 text-white" />
                         </div>
@@ -473,7 +527,7 @@ export default function SettingsPage() {
               <div className="inline-flex w-full rounded-lg border border-border bg-muted/40 p-1">
                 <button
                   type="button"
-                  onClick={() => setPerkMode(false)}
+                  onClick={() => requestModeChange(false)}
                   className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     !perkMode
                       ? "bg-background text-foreground shadow-sm"
@@ -485,7 +539,7 @@ export default function SettingsPage() {
                 {canUsePerkMode ? (
                   <button
                     type="button"
-                    onClick={() => setPerkMode(true)}
+                    onClick={() => requestModeChange(true)}
                     className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                       perkMode
                         ? "bg-background text-foreground shadow-sm"
@@ -530,7 +584,8 @@ export default function SettingsPage() {
                       onChange={(v) => setThreshold(v)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Customers collect this many stamps, then earn a free drink.
+                      Customers collect this many stamps, then earn a free
+                      drink.
                     </p>
                   </div>
                 ) : (
@@ -553,7 +608,9 @@ export default function SettingsPage() {
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
-                            <DialogTitle>How corporate perk mode works</DialogTitle>
+                            <DialogTitle>
+                              How corporate perk mode works
+                            </DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4 text-sm text-muted-foreground">
                             <p>
@@ -579,14 +636,14 @@ export default function SettingsPage() {
                                 iPad) signed in to approve drinks.
                               </li>
                               <li>
-                                A staff member scans the QR and enters their work
-                                email once — no app, no password. It&apos;s
+                                A staff member scans the QR and enters their
+                                work email once — no app, no password. It&apos;s
                                 remembered on their phone after that.
                               </li>
                               <li>
                                 Each scan asks the barista to approve a free
-                                coffee, up to the daily limit. Emails outside your
-                                domains are turned away.
+                                coffee, up to the daily limit. Emails outside
+                                your domains are turned away.
                               </li>
                               <li>
                                 To reimburse the cafe, download the{" "}
@@ -608,13 +665,15 @@ export default function SettingsPage() {
                         placeholder="mycompany.com"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Comma-separated. Only emails at these domains can claim a
-                        free coffee.
+                        Comma-separated. Only emails at these domains can claim
+                        a free coffee.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
                       <div className="space-y-2">
-                        <Label htmlFor="dailyDrinkLimit">Free drinks per day</Label>
+                        <Label htmlFor="dailyDrinkLimit">
+                          Free drinks per day
+                        </Label>
                         <NumberInput
                           id="dailyDrinkLimit"
                           min={1}
@@ -665,14 +724,17 @@ export default function SettingsPage() {
             {/* Card Design */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">Card Design</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  Card Design
+                </h2>
                 <button
                   type="button"
                   onClick={() => {
                     const { bgColor: bg, fgColor: fg } = getRandomColorPair();
                     setBgColor(bg);
                     setFgColor(fg);
-                    const pick = patterns[Math.floor(Math.random() * patterns.length)];
+                    const pick =
+                      patterns[Math.floor(Math.random() * patterns.length)];
                     setBgPattern(pick.key);
                   }}
                   className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -682,16 +744,22 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Background</Label>
+                <Label className="text-xs text-muted-foreground">
+                  Background
+                </Label>
                 <ColorPicker value={bgColor} onChange={setBgColor} />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Foreground</Label>
+                <Label className="text-xs text-muted-foreground">
+                  Foreground
+                </Label>
                 <ColorPicker value={fgColor} onChange={setFgColor} />
               </div>
               <ContrastWarning bg={bgColor} fg={fgColor} />
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Background Pattern</Label>
+                <Label className="text-xs text-muted-foreground">
+                  Background Pattern
+                </Label>
                 <PatternPicker
                   value={bgPattern}
                   onChange={setBgPattern}
@@ -720,9 +788,11 @@ export default function SettingsPage() {
             the colour/pattern pickers far down the page. self-start stops the
             grid from stretching it to the left column's full height (which
             would leave no room to stick). */}
-        <Card className="self-start md:sticky md:top-6">
+        <Card className="self-start md:sticky md:top-20">
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-base font-semibold text-foreground">Customer Preview</h2>
+            <h2 className="text-base font-semibold text-foreground">
+              Customer Preview
+            </h2>
             {perkMode ? (
               <PerkCardPreview
                 shopName={name || "Your Shop"}
@@ -775,6 +845,87 @@ export default function SettingsPage() {
           onCancel={handleEditorCancel}
         />
       )}
+
+      {/* Switching program type on a shop that already has history strands the
+          existing data — warn and steer toward a separate shop. */}
+      <Dialog
+        open={pendingMode !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingMode(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Switch this shop to{" "}
+              {pendingMode ? "Corporate perk" : "Stamp card"}?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">{name || "This shop"}</strong>{" "}
+              already has {pendingMode ? "stamp/loyalty" : "perk"} activity.
+              Switching the program type doesn&apos;t move that data across — it
+              stays on the shop but gets stranded:
+            </p>
+            {pendingMode ? (
+              <ul className="list-disc space-y-1.5 pl-5">
+                <li>
+                  Existing customers&apos; stamps become invisible and
+                  can&apos;t be redeemed.
+                </li>
+                <li>
+                  The card locks to your work-email domains — public customers
+                  can no longer take part.
+                </li>
+                <li>
+                  Reports &amp; the reimbursement CSV mix old loyalty
+                  redemptions in with free coffees.
+                </li>
+              </ul>
+            ) : (
+              <ul className="list-disc space-y-1.5 pl-5">
+                <li>
+                  Staff free-coffee history stays but gets reported as stamps.
+                </li>
+                <li>The email-domain gate and daily cap stop applying.</li>
+              </ul>
+            )}
+            <p>
+              We recommend running the new program as a{" "}
+              <strong className="text-foreground">separate shop</strong> — it
+              keeps each program&apos;s data, QR code, and reporting clean.
+            </p>
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            <Button
+              onClick={() => router.push("/dashboard/shops/new")}
+              className="w-full cursor-pointer"
+            >
+              Create a new shop instead
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setPendingMode(null)}
+                className="flex-1 cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (pendingMode !== null) setPerkMode(pendingMode);
+                  setPendingMode(null);
+                }}
+                className="flex-1 cursor-pointer"
+              >
+                Switch anyway
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

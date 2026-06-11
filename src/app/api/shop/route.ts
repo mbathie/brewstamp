@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { getCurrentShopContext } from "@/lib/shop-context";
 import { getShopPlanLimits } from "@/lib/plan-limits";
+import { StampRequest } from "@/models";
 import { isLanguage } from "@/lib/i18n";
 import { normalizeDomain } from "@/lib/perk";
 
@@ -30,10 +31,17 @@ export async function GET() {
   // Whether the shop's plan unlocks corporate perk mode (Plus & Max). The
   // settings UI uses this to gate the perk tab.
   const limits = await getShopPlanLimits(ctx.shop._id.toString());
+  // Whether the shop has real loyalty/perk activity. Switching program type on
+  // a shop with history strands existing data, so the UI warns first.
+  const hasActivity = !!(await StampRequest.exists({
+    shop: ctx.shop._id,
+    status: "approved",
+  }));
   return NextResponse.json({
     aggregate: false,
     shop: ctx.shop,
     canUsePerkMode: limits.plan.hasPerkMode,
+    hasActivity,
   });
 }
 
@@ -49,7 +57,7 @@ export async function PATCH(req: Request) {
         error:
           "Pick a specific shop from the switcher before editing its setup.",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -88,7 +96,7 @@ export async function PATCH(req: Request) {
             error: "Corporate perk mode requires the Plus or Max plan.",
             code: "PLAN_REQUIRED",
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }
