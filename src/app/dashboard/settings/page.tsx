@@ -435,6 +435,8 @@ export default function SettingsPage() {
           shopName={name}
           shopLogo={logo}
           stampThreshold={threshold ?? undefined}
+          perkMode={perkMode}
+          dailyDrinkLimit={dailyDrinkLimit ?? undefined}
           bgColor={bgColor}
           fgColor={fgColor}
           bgPattern={bgPattern}

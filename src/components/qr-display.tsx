@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, ExternalLink, Copy, Check, QrCode } from "lucide-react";
+import {
+  Download,
+  Printer,
+  ExternalLink,
+  Copy,
+  Check,
+  QrCode,
+} from "lucide-react";
 import { toast } from "sonner";
 import { generateQRCodeWithLogo } from "@/lib/qr";
 import { jsPDF } from "jspdf";
@@ -16,6 +23,9 @@ interface Props {
   shopName?: string;
   shopLogo?: string | null;
   stampThreshold?: number;
+  // Perk shops print a different headline (free coffee, no stamps).
+  perkMode?: boolean;
+  dailyDrinkLimit?: number;
   bgColor?: string;
   fgColor?: string;
   bgPattern?: string;
@@ -24,24 +34,44 @@ interface Props {
   variant?: "full" | "compact";
 }
 
-export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold, bgColor = "stone-800", fgColor = "amber-600", bgPattern = "none", language, variant = "full" }: Props) {
+export default function QrDisplay({
+  shopCode,
+  shopName,
+  shopLogo,
+  stampThreshold,
+  perkMode = false,
+  dailyDrinkLimit,
+  bgColor = "stone-800",
+  fgColor = "amber-600",
+  bgPattern = "none",
+  language,
+  variant = "full",
+}: Props) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const fgHex = getColorHex(fgColor);
 
   useEffect(() => {
-    generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, { width: 400, logoColor: fgHex }).then(
-      setQrUrl
-    );
+    generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, {
+      width: 400,
+      logoColor: fgHex,
+    }).then(setQrUrl);
   }, [appUrl, shopCode, fgHex]);
 
   async function generatePdf() {
     // Generate a high-res QR for the PDF
-    const hiResQr = await generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, { width: 800, logoColor: fgHex });
+    const hiResQr = await generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, {
+      width: 800,
+      logoColor: fgHex,
+    });
 
     // A5 dimensions in mm: 148 x 210
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a5",
+    });
     const w = 148;
     const h = 210;
 
@@ -55,7 +85,10 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     pdf.rect(0, 0, w, h, "F");
 
     // Render selected background pattern
-    const patternImg = await generatePatternImage(bgPattern, getColorHex(fgColor));
+    const patternImg = await generatePatternImage(
+      bgPattern,
+      getColorHex(fgColor),
+    );
     if (patternImg) {
       pdf.addImage(patternImg, "PNG", 0, 0, w, h);
     }
@@ -80,6 +113,15 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     const contentX = (w - contentW) / 2;
     const qrPadding = 5;
     const threshold = stampThreshold || 8;
+    // Perk shops print free-coffee copy (English-only for now); stamp shops use
+    // the translated "Buy N. Get one free." headline.
+    const perkLimit = dailyDrinkLimit || 2;
+    const eyebrowText = perkMode
+      ? "STAFF COFFEE PERK"
+      : t(language, "loyaltyCardEyebrow");
+    const heroText = perkMode
+      ? `${perkLimit} free coffee${perkLimit === 1 ? "" : "s"} a day.`
+      : t(language, "buyXGetFree", { n: threshold });
 
     let yPos = 18;
 
@@ -90,15 +132,33 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         const roundedLogo = await roundImageCorners(shopLogo, 900, 300, 40);
         pdf.addImage(roundedLogo, "PNG", contentX, yPos, contentW, logoH);
       } catch {
-        drawShopNameBanner(pdf, contentX, yPos, contentW, logoH, fgRgb, bgRgb, shopName ?? "");
+        drawShopNameBanner(
+          pdf,
+          contentX,
+          yPos,
+          contentW,
+          logoH,
+          fgRgb,
+          bgRgb,
+          shopName ?? "",
+        );
       }
     } else {
-      drawShopNameBanner(pdf, contentX, yPos, contentW, logoH, fgRgb, bgRgb, shopName ?? "");
+      drawShopNameBanner(
+        pdf,
+        contentX,
+        yPos,
+        contentW,
+        logoH,
+        fgRgb,
+        bgRgb,
+        shopName ?? "",
+      );
     }
     yPos += logoH + 14;
 
     // Eyebrow — small tracked label
-    drawText(pdf, t(language, "loyaltyCardEyebrow"), w / 2, yPos, {
+    drawText(pdf, eyebrowText, w / 2, yPos, {
       fontSize: 8,
       fontWeight: "bold",
       color: fgMuted,
@@ -108,7 +168,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     yPos += 9;
 
     // Hero reward headline — big, full fg
-    drawText(pdf, t(language, "buyXGetFree", { n: threshold }), w / 2, yPos, {
+    drawText(pdf, heroText, w / 2, yPos, {
       fontSize: 20,
       fontWeight: "bold",
       color: fgRgb,
@@ -128,7 +188,14 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
     const qrSize = 72;
     const qrX = (w - qrSize) / 2;
     pdf.setFillColor(255, 255, 255);
-    roundedRect(pdf, qrX - qrPadding, yPos - qrPadding, qrSize + qrPadding * 2, qrSize + qrPadding * 2, 4);
+    roundedRect(
+      pdf,
+      qrX - qrPadding,
+      yPos - qrPadding,
+      qrSize + qrPadding * 2,
+      qrSize + qrPadding * 2,
+      4,
+    );
     pdf.addImage(hiResQr, "PNG", qrX, yPos, qrSize, qrSize);
     yPos += qrSize + 14;
 
@@ -188,10 +255,10 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
 
   async function handleDownloadQrImage() {
     // Generate a high-res, transparent QR PNG so it scales nicely.
-    const hiResQr = await generateQRCodeWithLogo(
-      `${appUrl}/s/${shopCode}`,
-      { width: 1200, logoColor: fgHex }
-    );
+    const hiResQr = await generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, {
+      width: 1200,
+      logoColor: fgHex,
+    });
     const filename = `brewstamp-${shopCode}-qr.png`;
     const a = document.createElement("a");
     a.href = hiResQr;
@@ -211,7 +278,9 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         size={variant === "compact" ? "sm" : "default"}
         onClick={handleDownloadQrImage}
         disabled={!qrUrl}
-        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+        className={
+          variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"
+        }
       >
         <QrCode className="mr-2 h-4 w-4" />
         QR
@@ -221,7 +290,9 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         size={variant === "compact" ? "sm" : "default"}
         onClick={handleDownload}
         disabled={!qrUrl}
-        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+        className={
+          variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"
+        }
       >
         <Download className="mr-2 h-4 w-4" />
         PDF
@@ -231,7 +302,9 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         size={variant === "compact" ? "sm" : "default"}
         onClick={handlePrint}
         disabled={!qrUrl}
-        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+        className={
+          variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"
+        }
       >
         <Printer className="mr-2 h-4 w-4" />
         Print
@@ -244,10 +317,12 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
           window.open(
             `${appUrl}/s/${shopCode}`,
             "_blank",
-            "width=420,height=820,noopener,noreferrer"
+            "width=420,height=820,noopener,noreferrer",
           );
         }}
-        className={variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"}
+        className={
+          variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"
+        }
       >
         <ExternalLink className="mr-2 h-4 w-4" />
         Live preview
@@ -280,9 +355,7 @@ export default function QrDisplay({ shopCode, shopName, shopLogo, stampThreshold
         {appUrl}/s/{shopCode}
         <Copy className="size-3" />
       </button>
-      <div className="flex gap-2">
-        {actionButtons}
-      </div>
+      <div className="flex gap-2">{actionButtons}</div>
     </div>
   );
 }
@@ -325,7 +398,13 @@ function drawShopNameBanner(
   });
 }
 
-function drawFallbackLogo(pdf: jsPDF, x: number, y: number, size: number, fgRgb: [number, number, number] = [217, 119, 6]) {
+function drawFallbackLogo(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  size: number,
+  fgRgb: [number, number, number] = [217, 119, 6],
+) {
   pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2]);
   roundedRect(pdf, x, y, size, size, 4);
 
@@ -348,7 +427,14 @@ function drawFallbackLogo(pdf: jsPDF, x: number, y: number, size: number, fgRgb:
   pdf.line(hx + s * 0.2, hy + s * 0.35, hx, hy + s * 0.35);
 }
 
-function roundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number, r: number) {
+function roundedRect(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   pdf.roundedRect(x, y, w, h, r, r, "F");
 }
 
@@ -382,11 +468,11 @@ function isLatin1(text: string): boolean {
 }
 
 interface DrawTextOpts {
-  fontSize: number;            // pt
+  fontSize: number; // pt
   fontWeight?: "normal" | "bold";
   color: [number, number, number];
-  align?: "left" | "center";   // default "left"
-  letterSpacing?: number;      // mm (matches jsPDF's setCharSpace under unit:"mm")
+  align?: "left" | "center"; // default "left"
+  letterSpacing?: number; // mm (matches jsPDF's setCharSpace under unit:"mm")
 }
 
 // Draws text into the PDF, falling back to a rasterized canvas image for any
@@ -411,7 +497,8 @@ function drawText(
       pdf.setCharSpace(opts.letterSpacing);
       if (align === "center") {
         // jsPDF's align:"center" doesn't compensate for charSpace, so position manually.
-        const tw = pdf.getTextWidth(text) + opts.letterSpacing * (text.length - 1);
+        const tw =
+          pdf.getTextWidth(text) + opts.letterSpacing * (text.length - 1);
         pdf.text(text, x - tw / 2, baselineY);
       } else {
         pdf.text(text, x, baselineY);
@@ -491,7 +578,10 @@ function drawText(
   );
 }
 
-async function generatePatternImage(patternKey: string, fgColor: string): Promise<string | null> {
+async function generatePatternImage(
+  patternKey: string,
+  fgColor: string,
+): Promise<string | null> {
   const css = getPatternCSS(patternKey, fgColor, 0.07);
   if (!css) return null;
 
@@ -529,7 +619,12 @@ async function generatePatternImage(patternKey: string, fgColor: string): Promis
   });
 }
 
-function roundImageCorners(src: string, w: number, h: number, radius: number): Promise<string> {
+function roundImageCorners(
+  src: string,
+  w: number,
+  h: number,
+  radius: number,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
