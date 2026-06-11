@@ -94,6 +94,7 @@ export default async function CustomerDetailPage({
       shopId={shop._id.toString()}
       customerId={customer._id.toString()}
       customerName={customer.name || generateAnimalName(customer.cookieId)}
+      customerRealName={customer.name || null}
       customerEmail={customer.email || null}
       stamps={stampCard?.stamps || 0}
       totalEarned={stampCard?.totalEarned || 0}

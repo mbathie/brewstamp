@@ -15,10 +15,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, X, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import StampDisplay from "@/components/stamp-display";
 import MerchantCheckin from "@/components/merchant-checkin";
 import { getProgram } from "@/lib/program";
+import { ActivityValue } from "@/components/activity-value";
 import { toast } from "sonner";
 
 interface HistoryRow {
@@ -33,6 +41,7 @@ interface Props {
   shopId: string;
   customerId: string;
   customerName: string;
+  customerRealName?: string | null;
   customerEmail?: string | null;
   stamps: number;
   totalEarned: number;
@@ -54,6 +63,7 @@ export default function CustomerDetailContent({
   shopId,
   customerId,
   customerName,
+  customerRealName,
   customerEmail,
   stamps,
   totalEarned,
@@ -75,6 +85,51 @@ export default function CustomerDetailContent({
   const [tagInput, setTagInput] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesDirty, setNotesDirty] = useState(false);
+
+  // Editable name/email (the merchant can fix typos). `realName` is the stored
+  // name; the header falls back to the generated display name when it's blank.
+  const [realName, setRealName] = useState(customerRealName || "");
+  const [email, setEmail] = useState(customerEmail || "");
+  const [editOpen, setEditOpen] = useState(false);
+  const [formName, setFormName] = useState(customerRealName || "");
+  const [formEmail, setFormEmail] = useState(customerEmail || "");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editErr, setEditErr] = useState("");
+
+  const displayName = realName.trim() || customerName;
+
+  function openEdit() {
+    setFormName(realName);
+    setFormEmail(email);
+    setEditErr("");
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    setEditErr("");
+    const trimmedEmail = formEmail.trim();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEditErr("Enter a valid email address.");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formName.trim(), email: trimmedEmail }),
+      });
+      if (!res.ok) throw new Error("save-failed");
+      setRealName(formName.trim());
+      setEmail(trimmedEmail);
+      setEditOpen(false);
+      toast.success("Customer details updated");
+    } catch {
+      setEditErr("Could not save. Please try again.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   const program = getProgram(perkMode);
   const canRedeem = stamps >= threshold;
@@ -184,15 +239,25 @@ export default function CustomerDetailContent({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {customerName}
-            </h1>
-            {customerEmail && (
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-foreground">
+                {displayName}
+              </h1>
+              <button
+                type="button"
+                onClick={openEdit}
+                aria-label="Edit name and email"
+                className="cursor-pointer text-muted-foreground/60 transition-colors hover:text-foreground"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+            {email && (
               <a
-                href={`mailto:${customerEmail}`}
+                href={`mailto:${email}`}
                 className="text-sm text-muted-foreground hover:text-amber-700 hover:underline"
               >
-                {customerEmail}
+                {email}
               </a>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -228,7 +293,7 @@ export default function CustomerDetailContent({
         <MerchantCheckin
           shopId={shopId}
           customerId={customerId}
-          customerName={customerName}
+          customerName={displayName}
           stamps={stamps}
           threshold={threshold}
         />
@@ -453,26 +518,13 @@ export default function CustomerDetailContent({
                           </span>
                         </TableCell>
                         <TableCell>
-                          {req.status !== "approved" ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : perkMode ? (
-                            <span className="text-amber-500">
-                              {program.eventLabel}
-                            </span>
-                          ) : req.redeem && awarded === 0 ? (
-                            <span className="text-muted-foreground">
-                              -{threshold}
-                            </span>
-                          ) : req.redeem && awarded > 0 ? (
-                            <span>
-                              <span className="text-muted-foreground">
-                                -{threshold}
-                              </span>{" "}
-                              <span className="text-amber-500">+{awarded}</span>
-                            </span>
-                          ) : (
-                            <span className="text-amber-500">+{awarded}</span>
-                          )}
+                          <ActivityValue
+                            status={req.status}
+                            redeem={req.redeem}
+                            stampsAwarded={awarded}
+                            threshold={threshold}
+                            program={program}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge
@@ -526,6 +578,60 @@ export default function CustomerDetailContent({
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditOpen(false);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit customer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cust-name">Name</Label>
+              <Input
+                id="cust-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Customer name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cust-email">Email</Label>
+              <Input
+                id="cust-email"
+                type="email"
+                value={formEmail}
+                onChange={(e) => {
+                  setFormEmail(e.target.value);
+                  setEditErr("");
+                }}
+                placeholder="customer@example.com"
+              />
+            </div>
+            {editErr && <p className="text-sm text-red-400">{editErr}</p>}
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveEdit}
+                disabled={savingEdit}
+                className="cursor-pointer"
+              >
+                {savingEdit ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
