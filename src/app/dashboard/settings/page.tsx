@@ -1,16 +1,53 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Shuffle, AlertTriangle, Check, Loader2, Store } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Upload,
+  Shuffle,
+  AlertTriangle,
+  Check,
+  Loader2,
+  Store,
+  Lock,
+  HelpCircle,
+  ChevronsUpDown,
+} from "lucide-react";
 import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
 import CardPreview from "@/components/card-preview";
+import PerkCardPreview from "@/components/perk-card-preview";
 import ColorPicker from "@/components/ui/color-picker";
 import PatternPicker from "@/components/ui/pattern-picker";
 import { getColorHex, getContrastRatio } from "@/lib/tailwind-colors";
@@ -20,9 +57,56 @@ import { LANGUAGE_META, SUPPORTED_LANGUAGES, resolveLanguage, t } from "@/lib/i1
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved";
 
+// The merchant's own timezone, used as the default for a perk shop that hasn't
+// picked one yet. Called client-side (in the fetch hydration) so it reflects
+// the browser, not the server.
+function getBrowserTz(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+// Full IANA timezone list for the perk-mode daily-reset picker. Uses the
+// runtime's own list when available (modern browsers + Node 20), falling back
+// to a small common set. Computed once at module load.
+const TIMEZONES: string[] = (() => {
+  try {
+    const zones = (
+      Intl as unknown as { supportedValuesOf?: (k: string) => string[] }
+    ).supportedValuesOf?.("timeZone");
+    if (Array.isArray(zones) && zones.length) {
+      return zones.includes("UTC") ? zones : ["UTC", ...zones];
+    }
+  } catch {
+    // fall through to the static list
+  }
+  return [
+    "UTC",
+    "America/Los_Angeles",
+    "America/Denver",
+    "America/Chicago",
+    "America/New_York",
+    "America/Toronto",
+    "America/Sao_Paulo",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Africa/Johannesburg",
+    "Asia/Dubai",
+    "Asia/Kolkata",
+    "Asia/Singapore",
+    "Asia/Tokyo",
+    "Australia/Sydney",
+    "Pacific/Auckland",
+  ];
+})();
+
 export default function SettingsPage() {
   const { data: session } = useSession();
   void session;
+  const router = useRouter();
   const [shop, setShop] = useState<any>(null);
   // True when the top-bar switcher is on "All shops" — there's no single shop
   // to edit, so we show a "pick a shop" prompt instead of the setup form.
@@ -38,6 +122,13 @@ export default function SettingsPage() {
   const [fgColor, setFgColor] = useState("amber-600");
   const [bgPattern, setBgPattern] = useState("none");
   const [language, setLanguage] = useState<string>("en");
+  // Corporate "perk" mode — employer-subsidised coffee.
+  const [perkMode, setPerkMode] = useState(false);
+  const [perkDomains, setPerkDomains] = useState(""); // comma/space separated
+  const [dailyDrinkLimit, setDailyDrinkLimit] = useState<number | null>(2);
+  const [timezone, setTimezone] = useState("UTC");
+  // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
+  const [canUsePerkMode, setCanUsePerkMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -57,6 +148,7 @@ export default function SettingsPage() {
         }
         if (!data.shop) return;
         setShop(data.shop);
+        setCanUsePerkMode(!!data.canUsePerkMode);
         const initial = {
           name: data.shop.name ?? "",
           threshold: data.shop.stampThreshold ?? 8,
@@ -64,6 +156,11 @@ export default function SettingsPage() {
           fgColor: data.shop.fgColor || "amber-600",
           bgPattern: data.shop.bgPattern || "none",
           language: resolveLanguage(data.shop.language),
+          perkMode: !!data.shop.perkMode,
+          perkDomains: (data.shop.allowedEmailDomains || []).join(", "),
+          dailyDrinkLimit: data.shop.dailyDrinkLimit ?? 2,
+          // No saved timezone yet → default to the merchant's browser zone.
+          timezone: data.shop.timezone || getBrowserTz(),
         };
         setName(initial.name);
         setThreshold(initial.threshold);
@@ -72,6 +169,10 @@ export default function SettingsPage() {
         setFgColor(initial.fgColor);
         setBgPattern(initial.bgPattern);
         setLanguage(initial.language);
+        setPerkMode(initial.perkMode);
+        setPerkDomains(initial.perkDomains);
+        setDailyDrinkLimit(initial.dailyDrinkLimit);
+        setTimezone(initial.timezone);
         lastSavedRef.current = JSON.stringify(initial);
       });
   }, []);
@@ -85,7 +186,15 @@ export default function SettingsPage() {
       fgColor,
       bgPattern,
       language,
+      perkMode,
+      perkDomains,
+      dailyDrinkLimit,
+      timezone,
     });
+    const allowedEmailDomains = perkDomains
+      .split(/[\s,;]+/)
+      .map((d) => d.trim().toLowerCase().replace(/^@+/, ""))
+      .filter(Boolean);
     try {
       await fetch("/api/shop", {
         method: "PATCH",
@@ -97,6 +206,10 @@ export default function SettingsPage() {
           fgColor,
           bgPattern,
           language,
+          perkMode,
+          allowedEmailDomains,
+          dailyDrinkLimit: dailyDrinkLimit || 2,
+          timezone,
         }),
       });
       lastSavedRef.current = snapshot;
@@ -107,7 +220,7 @@ export default function SettingsPage() {
     } catch {
       setSaveStatus("idle");
     }
-  }, [name, threshold, bgColor, fgColor, bgPattern, language]);
+  }, [name, threshold, bgColor, fgColor, bgPattern, language, perkMode, perkDomains, dailyDrinkLimit, timezone]);
 
   // Auto-save: debounced 3s after a real change (current state differs from last saved snapshot).
   useEffect(() => {
@@ -119,6 +232,10 @@ export default function SettingsPage() {
       fgColor,
       bgPattern,
       language,
+      perkMode,
+      perkDomains,
+      dailyDrinkLimit,
+      timezone,
     });
     if (current === lastSavedRef.current) return; // nothing changed
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -129,7 +246,7 @@ export default function SettingsPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [name, threshold, bgColor, fgColor, bgPattern, language, saveChanges]);
+  }, [name, threshold, bgColor, fgColor, bgPattern, language, perkMode, perkDomains, dailyDrinkLimit, timezone, saveChanges]);
 
   async function handleSaveClick() {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -339,41 +456,209 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* Loyalty */}
+            {/* Program — stamp card vs corporate perk. A segmented control
+                drives both the fields below and the right-hand preview, so the
+                two mutually-exclusive modes read as one deliberate choice
+                instead of fields appearing and disappearing. */}
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Loyalty</h2>
-              <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
-                <div className="space-y-2">
-                  <Label htmlFor="threshold">Stamps for a free reward</Label>
-                  <NumberInput
-                    id="threshold"
-                    min={1}
-                    max={20}
-                    value={threshold}
-                    onChange={(v) => setThreshold(v)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language">Customer-facing language</Label>
-                  <select
-                    id="language"
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  Program
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  How customers earn at this shop.
+                </p>
+              </div>
+
+              <div className="inline-flex w-full rounded-lg border border-border bg-muted/40 p-1">
+                <button
+                  type="button"
+                  onClick={() => setPerkMode(false)}
+                  className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    !perkMode
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Stamp card
+                </button>
+                {canUsePerkMode ? (
+                  <button
+                    type="button"
+                    onClick={() => setPerkMode(true)}
+                    className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      perkMode
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {SUPPORTED_LANGUAGES.map((code) => {
-                      const meta = LANGUAGE_META[code];
-                      return (
-                        <option key={code} value={code}>
-                          {meta.flag} {meta.nativeName} ({meta.englishName})
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <p className="text-xs text-muted-foreground">
-                    Applies to your customer&apos;s loyalty card and the printed QR PDF.
-                  </p>
-                </div>
+                    Corporate perk
+                  </button>
+                ) : (
+                  /* Locked on Free & Pro — looks disabled, but clicking takes
+                     you to billing to upgrade. */
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/dashboard/billing")}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                        Corporate perk
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[240px] text-center">
+                      Corporate perk mode is on the Plus and Max plans. Click to
+                      upgrade.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+
+              {/* Mode-specific fields live in one bordered panel so switching
+                  modes changes the panel's contents, not the page layout. */}
+              <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+                {!perkMode ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="threshold">Stamps for a free reward</Label>
+                    <NumberInput
+                      id="threshold"
+                      min={1}
+                      max={20}
+                      value={threshold}
+                      onChange={(v) => setThreshold(v)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Customers collect this many stamps, then earn a free drink.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        Every scan is a free drink (no stamps) — for
+                        employer-subsidised staff coffee. Limited to staff email
+                        domains and capped per person per day.
+                      </p>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex shrink-0 cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                            How it works
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>How corporate perk mode works</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 text-sm text-muted-foreground">
+                            <p>
+                              Perk mode turns this shop into an employer-paid
+                              coffee program at a cafe of your choice. There are
+                              no stamps — every approved scan is one free drink.
+                            </p>
+                            <ol className="list-decimal space-y-2 pl-5">
+                              <li>
+                                Set your staff{" "}
+                                <strong className="text-foreground">
+                                  email domains
+                                </strong>{" "}
+                                (e.g. mycompany.com) and a{" "}
+                                <strong className="text-foreground">
+                                  daily limit
+                                </strong>{" "}
+                                per person.
+                              </li>
+                              <li>
+                                Print the QR code and place it at the cafe
+                                counter. The barista needs a device (phone or
+                                iPad) signed in to approve drinks.
+                              </li>
+                              <li>
+                                A staff member scans the QR and enters their work
+                                email once — no app, no password. It&apos;s
+                                remembered on their phone after that.
+                              </li>
+                              <li>
+                                Each scan asks the barista to approve a free
+                                coffee, up to the daily limit. Emails outside your
+                                domains are turned away.
+                              </li>
+                              <li>
+                                To reimburse the cafe, download the{" "}
+                                <strong className="text-foreground">CSV</strong>{" "}
+                                any time — it lists free drinks redeemed per
+                                employee so you can tally what you owe.
+                              </li>
+                            </ol>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="perkDomains">Allowed email domains</Label>
+                      <Input
+                        id="perkDomains"
+                        value={perkDomains}
+                        onChange={(e) => setPerkDomains(e.target.value)}
+                        placeholder="mycompany.com"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Comma-separated. Only emails at these domains can claim a
+                        free coffee.
+                      </p>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+                      <div className="space-y-2">
+                        <Label htmlFor="dailyDrinkLimit">Free drinks per day</Label>
+                        <NumberInput
+                          id="dailyDrinkLimit"
+                          min={1}
+                          max={20}
+                          value={dailyDrinkLimit}
+                          onChange={(v) => setDailyDrinkLimit(v)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="timezone">Timezone (daily reset)</Label>
+                        <TimezoneCombobox
+                          value={timezone}
+                          onChange={setTimezone}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          When the daily limit resets.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Language applies to both modes, so it stays put. */}
+              <div className="space-y-2">
+                <Label htmlFor="language">Customer-facing language</Label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-1/2"
+                >
+                  {SUPPORTED_LANGUAGES.map((code) => {
+                    const meta = LANGUAGE_META[code];
+                    return (
+                      <option key={code} value={code}>
+                        {meta.flag} {meta.nativeName} ({meta.englishName})
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Applies to the customer card and the printed QR PDF.
+                </p>
               </div>
             </section>
 
@@ -430,36 +715,53 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* RIGHT: live preview */}
-        <Card>
+        {/* RIGHT: live preview. Sticks to the top of the viewport as the left
+            column scrolls, so the whole card stays visible even when reaching
+            the colour/pattern pickers far down the page. self-start stops the
+            grid from stretching it to the left column's full height (which
+            would leave no room to stick). */}
+        <Card className="self-start md:sticky md:top-6">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-base font-semibold text-foreground">Customer Preview</h2>
-            <CardPreview
-              shopName={name || "Your Shop"}
-              shopLogo={logo}
-              stamps={previewStamps}
-              threshold={previewThreshold}
-              totalEarned={previewStamps + previewThreshold * 2}
-              freeRedeemed={2}
-              bgColor={bgColor}
-              fgColor={fgColor}
-              bgPattern={bgPattern}
-              displayName="Sam"
-              language={language}
-              fitToParent
-            >
-              <div
-                className="w-full rounded-md py-3 text-center text-base font-normal opacity-90"
-                style={{
-                  backgroundColor: getColorHex(fgColor),
-                  color: getColorHex(bgColor),
-                }}
+            {perkMode ? (
+              <PerkCardPreview
+                shopName={name || "Your Shop"}
+                shopLogo={logo}
+                bgColor={bgColor}
+                fgColor={fgColor}
+                bgPattern={bgPattern}
+                dailyLimit={dailyDrinkLimit ?? 2}
+              />
+            ) : (
+              <CardPreview
+                shopName={name || "Your Shop"}
+                shopLogo={logo}
+                stamps={previewStamps}
+                threshold={previewThreshold}
+                totalEarned={previewStamps + previewThreshold * 2}
+                freeRedeemed={2}
+                bgColor={bgColor}
+                fgColor={fgColor}
+                bgPattern={bgPattern}
+                displayName="Sam"
+                language={language}
+                fitToParent
               >
-                {t(language, "requestStamp")}
-              </div>
-            </CardPreview>
+                <div
+                  className="w-full rounded-md py-3 text-center text-base font-normal opacity-90"
+                  style={{
+                    backgroundColor: getColorHex(fgColor),
+                    color: getColorHex(bgColor),
+                  }}
+                >
+                  {t(language, "requestStamp")}
+                </div>
+              </CardPreview>
+            )}
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              Showing demo state — your customers will see real stamp counts.
+              {perkMode
+                ? "Staff scan, pick up a free coffee, and the barista approves — capped at your daily limit."
+                : "Showing demo state — your customers will see real stamp counts."}
             </p>
           </CardContent>
         </Card>
@@ -474,6 +776,64 @@ export default function SettingsPage() {
         />
       )}
     </div>
+  );
+}
+
+// Typeahead picker for the perk-mode daily-reset timezone. cmdk filters as you
+// type; each item carries a space-separated alias ("Australia/Sydney" →
+// "Australia Sydney") so searches like "sydney" or "new york" match.
+function TimezoneCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          className="flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <span className="truncate">{value || "Select timezone"}</span>
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0"
+        align="start"
+      >
+        <Command>
+          <CommandInput placeholder="Search city or zone…" />
+          <CommandList>
+            <CommandEmpty>No timezone found.</CommandEmpty>
+            <CommandGroup>
+              {TIMEZONES.map((tz) => (
+                <CommandItem
+                  key={tz}
+                  value={`${tz} ${tz.replace(/[/_]/g, " ")}`}
+                  onSelect={() => {
+                    onChange(tz);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={`mr-2 size-4 ${
+                      value === tz ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  {tz}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 

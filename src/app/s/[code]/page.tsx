@@ -4,7 +4,12 @@ import { Shop, StampCard, Customer } from "@/models";
 import { getOrCreateCustomer } from "@/lib/cookies";
 import { notFound } from "next/navigation";
 import { generateAnimalName } from "@/lib/animal-names";
+import {
+  emailDomainAllowed,
+  countPerkDrinksToday,
+} from "@/lib/perk";
 import CustomerClient from "./client";
+import PerkCustomerClient from "./perk-client";
 
 export async function generateMetadata({
   params,
@@ -88,6 +93,40 @@ export default async function CustomerScanPage({
       shop: shop._id,
       customer: customer._id,
     });
+  }
+
+  // Perk mode (employer-subsidised coffee): a different card entirely — no
+  // stamp accumulation, gated by email domain and capped per day. Render the
+  // dedicated client instead of the stamp card.
+  if (shop.perkMode) {
+    const dailyLimit = shop.dailyDrinkLimit || 2;
+    const drinksToday = await countPerkDrinksToday(
+      shop._id.toString(),
+      customer.email,
+      shop.timezone || "UTC",
+    );
+    const emailAllowed = emailDomainAllowed(
+      customer.email,
+      shop.allowedEmailDomains,
+    );
+    return (
+      <PerkCustomerClient
+        shopCode={shop.code}
+        shopName={shop.name}
+        shopLogo={shop.logo || null}
+        shopId={shop._id.toString()}
+        customerId={customer._id.toString()}
+        customerEmail={customer.email || null}
+        customerName={customer.name || null}
+        emailAllowed={emailAllowed}
+        allowedDomains={shop.allowedEmailDomains || []}
+        dailyLimit={dailyLimit}
+        drinksToday={drinksToday}
+        bgColor={shop.bgColor || "stone-800"}
+        fgColor={shop.fgColor || "amber-600"}
+        bgPattern={shop.bgPattern || "none"}
+      />
+    );
   }
 
   // Find other shops this customer has visited

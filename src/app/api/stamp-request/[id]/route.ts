@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
+import { countPerkDrinksToday } from "@/lib/perk";
 
 export async function PATCH(
   req: Request,
@@ -33,6 +34,41 @@ export async function PATCH(
     if (stampCard) {
       const shop = await Shop.findById(request.shop);
       const threshold = shop?.stampThreshold || 8;
+
+      // Perk mode: every approval is a free drink, with no stamp accumulation.
+      // Re-check the daily cap here so two devices (or a stale tab) can't
+      // approve past the limit even if the customer-side gate was bypassed.
+      if (shop?.perkMode) {
+        const limit = shop.dailyDrinkLimit || 2;
+        // Recheck by email (the cap's identity), so two devices sharing one
+        // work email can't both be approved past the limit.
+        const today = await countPerkDrinksToday(
+          request.shop.toString(),
+          request.email,
+          shop.timezone || "UTC",
+        );
+        if (today >= limit) {
+          return NextResponse.json(
+            { error: `Daily limit of ${limit} reached.`, code: "DAILY_LIMIT_REACHED" },
+            { status: 403 },
+          );
+        }
+        stampCard.freeRedeemed += 1;
+        request.stampsAwarded = 0;
+        request.redeem = true;
+        await stampCard.save();
+        await request.save();
+        return NextResponse.json({
+          request,
+          stampCard: {
+            stamps: stampCard.stamps,
+            totalEarned: stampCard.totalEarned,
+            freeRedeemed: stampCard.freeRedeemed,
+          },
+          redeemed: true,
+          perk: true,
+        });
+      }
 
       // Check stamp limit for non-subscribers
       const awarded = stampsAwarded || 0;

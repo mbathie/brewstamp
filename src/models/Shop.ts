@@ -10,6 +10,22 @@ const shopSchema = new mongoose.Schema(
     },
     stampThreshold: { type: Number, default: 8 },
     code: { type: String, required: true, unique: true },
+    // Corporate "perk" mode: instead of collecting stamps toward a reward,
+    // every approved scan is itself a free drink, gated to a set of email
+    // domains and capped per person per day. Built for employer-subsidised
+    // coffee programs (e.g. an office paying for staff coffee at the cafe
+    // downstairs). When false the shop behaves as a normal stamp card.
+    perkMode: { type: Boolean, default: false },
+    // Lowercased bare domains (e.g. "miovision.com") allowed to participate.
+    // Empty array with perkMode on = closed to everyone, so the UI requires
+    // at least one before perk mode does anything.
+    allowedEmailDomains: { type: [String], default: [] },
+    // Max free drinks one person can redeem per local day.
+    dailyDrinkLimit: { type: Number, default: 2 },
+    // IANA timezone used to decide when "today" resets for the daily cap.
+    // Empty = unset; the settings UI then defaults the picker to the merchant's
+    // browser timezone, and server-side perk logic falls back to UTC.
+    timezone: { type: String, default: "" },
     logo: { type: String },
     bgColor: { type: String, default: "stone-800" },
     fgColor: { type: String, default: "amber-600" },

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Gift, StickyNote, Crown } from "lucide-react";
+import { Minus, Plus, Gift, StickyNote, Crown, Coffee } from "lucide-react";
 
 interface StampRequestData {
   requestId: string;
@@ -18,6 +18,9 @@ interface StampRequestData {
   stamps: number;
   threshold: number;
   redeem: boolean;
+  // Perk-mode (employer-subsidised) request: a single free drink, no stamps.
+  perk?: boolean;
+  perkRemaining?: number;
   tags?: string[];
   notes?: string;
   isTopCustomer?: boolean;
@@ -55,9 +58,11 @@ export default function StampRequestModal({
           <DialogTitle className="text-center text-xl">
             {request.customerName}
           </DialogTitle>
-          <p className="text-center text-sm text-muted-foreground">
-            Current stamps: {request.stamps} / {request.threshold}
-          </p>
+          {!request.perk && (
+            <p className="text-center text-sm text-muted-foreground">
+              Current stamps: {request.stamps} / {request.threshold}
+            </p>
+          )}
           {request.isTopCustomer && (
             <div className="mt-2 flex justify-center">
               <Badge className="border-amber-500/40 bg-amber-500/15 font-medium text-amber-500 hover:bg-amber-500/15">
@@ -87,7 +92,38 @@ export default function StampRequestModal({
           )}
         </DialogHeader>
 
-        {request.redeem ? (
+        {request.perk ? (
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4">
+              <Coffee className="h-6 w-6 text-amber-700" />
+              <p className="text-sm font-medium text-amber-700">
+                Free coffee
+              </p>
+              {typeof request.perkRemaining === "number" && (
+                <p className="text-xs text-muted-foreground">
+                  {request.perkRemaining} left today after this
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => onReject(request.requestId)}
+                className="flex-1 cursor-pointer"
+                size="lg"
+              >
+                Decline
+              </Button>
+              <Button
+                onClick={() => onApprove(request.requestId, 0, true)}
+                className="flex-1 cursor-pointer bg-amber-700 hover:bg-amber-800"
+                size="lg"
+              >
+                Approve free coffee
+              </Button>
+            </div>
+          </div>
+        ) : request.redeem ? (
           <div className="flex flex-col gap-4 py-4">
             <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
               <Gift className="h-5 w-5 text-amber-700" />

@@ -13,6 +13,8 @@ interface StampRequestData {
   stamps: number;
   threshold: number;
   redeem: boolean;
+  perk?: boolean;
+  perkRemaining?: number;
   tags?: string[];
   notes?: string;
   isTopCustomer?: boolean;
@@ -44,6 +46,8 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
         stamps: msg.stamps,
         threshold: msg.threshold || threshold,
         redeem: !!msg.redeem,
+        perk: !!msg.perk,
+        perkRemaining: msg.perkRemaining,
       };
 
       // If there's already a pending request, cancel it
@@ -132,15 +136,19 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
         router.refresh();
         window.dispatchEvent(new Event("stamp-approved"));
 
-        const parts: string[] = [];
-        if (stampsAwarded > 0) {
-          parts.push(`+${stampsAwarded} stamp${stampsAwarded > 1 ? "s" : ""} awarded`);
+        if (currentRequest?.perk || data.perk) {
+          toast.success(`${name} — free coffee approved`);
+        } else {
+          const parts: string[] = [];
+          if (stampsAwarded > 0) {
+            parts.push(`+${stampsAwarded} stamp${stampsAwarded > 1 ? "s" : ""} awarded`);
+          }
+          if (redeem) {
+            parts.push("reward redeemed");
+          }
+          parts.push(`(${data.stampCard.stamps}/${threshold} stamps)`);
+          toast.success(`${name} — ${parts.join(", ")}`);
         }
-        if (redeem) {
-          parts.push("reward redeemed");
-        }
-        parts.push(`(${data.stampCard.stamps}/${threshold} stamps)`);
-        toast.success(`${name} — ${parts.join(", ")}`);
       }
 
       setCurrentRequest(null);
