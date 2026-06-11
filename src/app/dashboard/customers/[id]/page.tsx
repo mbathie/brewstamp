@@ -99,6 +99,7 @@ export default async function CustomerDetailPage({
       totalEarned={stampCard?.totalEarned || 0}
       freeRedeemed={stampCard?.freeRedeemed || 0}
       threshold={shop.stampThreshold}
+      perkMode={!!shop.perkMode}
       memberSince={memberSince}
       lastVisit={lastVisit}
       visitsLast30d={visitsLast30d}

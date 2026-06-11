@@ -17,14 +17,19 @@ export interface TopCustomerCard {
 
 export async function getTopCustomerCards(
   shopId: string | Types.ObjectId,
-  limit: number = TOP_CUSTOMER_LIMIT
+  limit: number = TOP_CUSTOMER_LIMIT,
+  // Perk shops earn no stamps, so rank by free coffees redeemed instead of
+  // stamps earned, and drop the "earned a stamp" gate.
+  perkMode = false,
 ): Promise<TopCustomerCard[]> {
-  return StampCard.find({
-    shop: shopId,
-    totalEarned: { $gt: 0 },
-    freeRedeemed: { $gte: 1 },
-  })
-    .sort({ totalEarned: -1, freeRedeemed: -1 })
+  const filter = perkMode
+    ? { shop: shopId, freeRedeemed: { $gte: 1 } }
+    : { shop: shopId, totalEarned: { $gt: 0 }, freeRedeemed: { $gte: 1 } };
+  const sort: Record<string, 1 | -1> = perkMode
+    ? { freeRedeemed: -1, updatedAt: -1 }
+    : { totalEarned: -1, freeRedeemed: -1 };
+  return StampCard.find(filter)
+    .sort(sort)
     .limit(limit)
     .select("customer totalEarned freeRedeemed stamps updatedAt")
     .lean<TopCustomerCard[]>();
@@ -33,8 +38,9 @@ export async function getTopCustomerCards(
 export async function isTopCustomer(
   shopId: string | Types.ObjectId,
   customerId: string,
-  limit: number = TOP_CUSTOMER_LIMIT
+  limit: number = TOP_CUSTOMER_LIMIT,
+  perkMode = false,
 ): Promise<boolean> {
-  const cards = await getTopCustomerCards(shopId, limit);
+  const cards = await getTopCustomerCards(shopId, limit, perkMode);
   return cards.some((c) => c.customer.toString() === customerId.toString());
 }

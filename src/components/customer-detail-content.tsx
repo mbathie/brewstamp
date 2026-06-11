@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
 import StampDisplay from "@/components/stamp-display";
 import MerchantCheckin from "@/components/merchant-checkin";
+import { getProgram } from "@/lib/program";
 import { toast } from "sonner";
 
 interface HistoryRow {
@@ -37,6 +38,7 @@ interface Props {
   totalEarned: number;
   freeRedeemed: number;
   threshold: number;
+  perkMode?: boolean;
   memberSince: string;
   lastVisit: string | null;
   visitsLast30d: number;
@@ -57,6 +59,7 @@ export default function CustomerDetailContent({
   totalEarned,
   freeRedeemed,
   threshold,
+  perkMode = false,
   memberSince,
   lastVisit,
   visitsLast30d,
@@ -73,6 +76,7 @@ export default function CustomerDetailContent({
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesDirty, setNotesDirty] = useState(false);
 
+  const program = getProgram(perkMode);
   const canRedeem = stamps >= threshold;
 
   // Auto-save notes/tags 1.5s after last edit
@@ -124,7 +128,10 @@ export default function CustomerDetailContent({
     if (diffMin < 60) return `${diffMin}m ago`;
     if (diffHr < 24) return `${diffHr}h ago`;
     if (d.toDateString() === now.toDateString()) {
-      return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+      return d.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      });
     }
     const sameYear = d.getFullYear() === now.getFullYear();
     return d.toLocaleString(undefined, {
@@ -155,7 +162,10 @@ export default function CustomerDetailContent({
   function memberDuration(iso: string) {
     const d = new Date(iso);
     const now = new Date();
-    const diffDays = Math.max(1, Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)));
+    const diffDays = Math.max(
+      1,
+      Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)),
+    );
     if (diffDays < 30) return `${diffDays}d`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo`;
     const years = Math.floor(diffDays / 365);
@@ -174,7 +184,9 @@ export default function CustomerDetailContent({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">{customerName}</h1>
+            <h1 className="text-xl font-semibold text-foreground">
+              {customerName}
+            </h1>
             {customerEmail && (
               <a
                 href={`mailto:${customerEmail}`}
@@ -184,13 +196,21 @@ export default function CustomerDetailContent({
               </a>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-              <Badge variant="outline" className="font-normal" suppressHydrationWarning>
+              <Badge
+                variant="outline"
+                className="font-normal"
+                suppressHydrationWarning
+              >
                 Last visit · {relativeDay(lastVisit)}
               </Badge>
               <Badge variant="outline" className="font-normal">
                 {visitsLast30d} visit{visitsLast30d === 1 ? "" : "s"} · last 30d
               </Badge>
-              <Badge variant="outline" className="font-normal" suppressHydrationWarning>
+              <Badge
+                variant="outline"
+                className="font-normal"
+                suppressHydrationWarning
+              >
                 Member · {memberDuration(memberSince)}
               </Badge>
               {tags.map((t) => (
@@ -216,57 +236,73 @@ export default function CustomerDetailContent({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Loyalty</CardTitle>
+          <CardTitle className="text-base">{program.detailTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div>
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">
-                {stamps} of {threshold} stamps
-              </span>
+          {perkMode ? (
+            // Perk customers earn no stamps — the meaningful number is how many
+            // free coffees they've redeemed (the reimbursement figure).
+            <div className="text-sm text-foreground">
+              <strong className="text-2xl font-bold">{freeRedeemed}</strong>{" "}
               <span className="text-muted-foreground">
-                {canRedeem
-                  ? "Free drink earned"
-                  : `${threshold - stamps} to go`}
+                {freeRedeemed === 1 ? program.unit : program.unitPlural}{" "}
+                redeemed
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className={`h-full transition-all ${canRedeem ? "bg-emerald-500" : "bg-amber-500"}`}
-                style={{ width: `${Math.min(100, (stamps / threshold) * 100)}%` }}
-              />
-            </div>
-          </div>
+          ) : (
+            <>
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">
+                    {stamps} of {threshold} stamps
+                  </span>
+                  <span className="text-muted-foreground">
+                    {canRedeem
+                      ? "Free drink earned"
+                      : `${threshold - stamps} to go`}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full transition-all ${canRedeem ? "bg-emerald-500" : "bg-amber-500"}`}
+                    style={{
+                      width: `${Math.min(100, (stamps / threshold) * 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <span className="text-foreground">
-              <strong className="font-semibold">{totalEarned}</strong>{" "}
-              <span className="text-muted-foreground">lifetime stamps</span>
-            </span>
-            <span className="text-foreground">
-              <strong className="font-semibold">{freeRedeemed}</strong>{" "}
-              <span className="text-muted-foreground">
-                free drink{freeRedeemed === 1 ? "" : "s"} redeemed
-              </span>
-            </span>
-          </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                <span className="text-foreground">
+                  <strong className="font-semibold">{totalEarned}</strong>{" "}
+                  <span className="text-muted-foreground">lifetime stamps</span>
+                </span>
+                <span className="text-foreground">
+                  <strong className="font-semibold">{freeRedeemed}</strong>{" "}
+                  <span className="text-muted-foreground">
+                    free drink{freeRedeemed === 1 ? "" : "s"} redeemed
+                  </span>
+                </span>
+              </div>
 
-          <button
-            type="button"
-            onClick={() => setShowCardPreview((v) => !v)}
-            className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            {showCardPreview ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-            {showCardPreview ? "Hide card preview" : "Show card preview"}
-          </button>
-          {showCardPreview && (
-            <div className="mx-auto max-w-xs pt-2">
-              <StampDisplay stamps={stamps} threshold={threshold} />
-            </div>
+              <button
+                type="button"
+                onClick={() => setShowCardPreview((v) => !v)}
+                className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {showCardPreview ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+                {showCardPreview ? "Hide card preview" : "Show card preview"}
+              </button>
+              {showCardPreview && (
+                <div className="mx-auto max-w-xs pt-2">
+                  <StampDisplay stamps={stamps} threshold={threshold} />
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -283,18 +319,25 @@ export default function CustomerDetailContent({
                 const max = Math.max(...weeklyVisits, 1);
                 const pct = (v / max) * 100;
                 return (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    key={i}
+                    className="flex flex-1 flex-col items-center gap-1"
+                  >
                     <div className="flex h-16 w-full items-end">
                       <div
                         className={`w-full rounded-sm transition-colors ${
                           v > 0 ? "bg-amber-500" : "bg-muted"
                         }`}
-                        style={{ height: v > 0 ? `${Math.max(8, pct)}%` : "4px" }}
+                        style={{
+                          height: v > 0 ? `${Math.max(8, pct)}%` : "4px",
+                        }}
                         title={`${v} visit${v === 1 ? "" : "s"}`}
                       />
                     </div>
                     <span className="text-[10px] text-muted-foreground">
-                      {i === weeklyVisits.length - 1 ? "now" : `${weeklyVisits.length - 1 - i}w`}
+                      {i === weeklyVisits.length - 1
+                        ? "now"
+                        : `${weeklyVisits.length - 1 - i}w`}
                     </span>
                   </div>
                 );
@@ -348,7 +391,11 @@ export default function CustomerDetailContent({
                     setTagInput("");
                   }
                 }}
-                placeholder={tags.length === 0 ? "Add tags (e.g. VIP, regular)" : "Add another"}
+                placeholder={
+                  tags.length === 0
+                    ? "Add tags (e.g. VIP, regular)"
+                    : "Add another"
+                }
                 className="h-7 w-40 text-xs"
               />
             </div>
@@ -393,7 +440,7 @@ export default function CustomerDetailContent({
                     return (
                       <TableRow key={req.id}>
                         <TableCell className="text-muted-foreground">
-                          {req.redeem && (
+                          {req.redeem && !perkMode && (
                             <Badge
                               variant="outline"
                               className="mr-2 border-amber-500/50 font-normal text-amber-500"
@@ -406,19 +453,25 @@ export default function CustomerDetailContent({
                           </span>
                         </TableCell>
                         <TableCell>
-                          {req.status === "approved" ? (
-                            req.redeem && awarded === 0 ? (
-                              <span className="text-muted-foreground">-{threshold}</span>
-                            ) : req.redeem && awarded > 0 ? (
-                              <span>
-                                <span className="text-muted-foreground">-{threshold}</span>{" "}
-                                <span className="text-amber-500">+{awarded}</span>
-                              </span>
-                            ) : (
-                              <span className="text-amber-500">+{awarded}</span>
-                            )
-                          ) : (
+                          {req.status !== "approved" ? (
                             <span className="text-muted-foreground">—</span>
+                          ) : perkMode ? (
+                            <span className="text-amber-500">
+                              {program.eventLabel}
+                            </span>
+                          ) : req.redeem && awarded === 0 ? (
+                            <span className="text-muted-foreground">
+                              -{threshold}
+                            </span>
+                          ) : req.redeem && awarded > 0 ? (
+                            <span>
+                              <span className="text-muted-foreground">
+                                -{threshold}
+                              </span>{" "}
+                              <span className="text-amber-500">+{awarded}</span>
+                            </span>
+                          ) : (
+                            <span className="text-amber-500">+{awarded}</span>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -460,7 +513,9 @@ export default function CustomerDetailContent({
                       size="sm"
                       className="cursor-pointer disabled:opacity-50"
                       disabled={page >= totalPages - 1}
-                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages - 1, p + 1))
+                      }
                     >
                       Next
                     </Button>
@@ -474,4 +529,3 @@ export default function CustomerDetailContent({
     </div>
   );
 }
-

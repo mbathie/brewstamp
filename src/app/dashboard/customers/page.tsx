@@ -43,6 +43,7 @@ export default async function CustomersPage() {
         stampCards={serialized}
         threshold={aggregate ? 8 : ctx.shop.stampThreshold}
         aggregate={aggregate}
+        perkMode={!aggregate && !!ctx.shop.perkMode}
         canExportCsv={limits.plan.hasCsvExport}
         planLabel={limits.plan.label}
       />

@@ -36,7 +36,9 @@ export default async function DashboardPage({
         },
       ]),
       StampRequest.aggregate([
-        { $match: { shop: { $in: shopIds }, redeem: true, status: "approved" } },
+        {
+          $match: { shop: { $in: shopIds }, redeem: true, status: "approved" },
+        },
         { $group: { _id: "$shop", count: { $sum: 1 } } },
       ]),
       StampCard.aggregate([
@@ -51,12 +53,14 @@ export default async function DashboardPage({
       ]),
     ]);
 
-    const stampByShop = new Map(stampAgg.map((s) => [s._id.toString(), s.stamps]));
+    const stampByShop = new Map(
+      stampAgg.map((s) => [s._id.toString(), s.stamps]),
+    );
     const redeemByShop = new Map(
-      redeemAgg.map((r) => [r._id.toString(), r.count])
+      redeemAgg.map((r) => [r._id.toString(), r.count]),
     );
     const customerByShop = new Map(
-      customerAgg.map((c) => [c._id.toString(), c.customers])
+      customerAgg.map((c) => [c._id.toString(), c.customers]),
     );
 
     const perShop = ctx.allShops
@@ -71,9 +75,7 @@ export default async function DashboardPage({
 
     const session = await auth();
     const userId = (session?.user as any)?.id as string | undefined;
-    const planLimits = userId
-      ? await getUserPlanLimits(userId)
-      : null;
+    const planLimits = userId ? await getUserPlanLimits(userId) : null;
 
     return (
       <DashboardAggregate
@@ -92,14 +94,26 @@ export default async function DashboardPage({
 
   const { init } = await searchParams;
 
-  const [hasActivity, earnedAgg] = await Promise.all([
+  const perkMode = !!merchant.shop.perkMode;
+  const [hasActivity, earnedAgg, hasPerkRedemption] = await Promise.all([
     StampRequest.exists({ shop: merchant.shop._id }),
     StampCard.aggregate([
       { $match: { shop: merchant.shop._id } },
       { $group: { _id: null, total: { $sum: "$totalEarned" } } },
     ]),
+    // Perk shops never award stamps, so onboarding completes on the first
+    // approved free coffee instead of the first stamp earned.
+    perkMode
+      ? StampRequest.exists({
+          shop: merchant.shop._id,
+          status: "approved",
+          redeem: true,
+        })
+      : Promise.resolve(null),
   ]);
-  const hasEarnedStamps = (earnedAgg[0]?.total ?? 0) > 0;
+  const hasEarnedStamps = perkMode
+    ? !!hasPerkRedemption
+    : (earnedAgg[0]?.total ?? 0) > 0;
 
   const needsProfileUpdate =
     !merchant.user.phone ||
@@ -110,8 +124,7 @@ export default async function DashboardPage({
     merchant.shop.fgColor !== "amber-600";
   const customPattern =
     !!merchant.shop.bgPattern && merchant.shop.bgPattern !== "none";
-  const setupComplete =
-    !!merchant.shop.logo || customColors || customPattern;
+  const setupComplete = !!merchant.shop.logo || customColors || customPattern;
 
   return (
     <DashboardContent
@@ -119,6 +132,7 @@ export default async function DashboardPage({
       shopCode={merchant.shop.code}
       shopLogo={merchant.shop.logo || null}
       stampThreshold={merchant.shop.stampThreshold}
+      perkMode={!!merchant.shop.perkMode}
       isNewShop={init === "1" || !hasActivity}
       hasEarnedStamps={hasEarnedStamps}
       hasActivity={!!hasActivity}

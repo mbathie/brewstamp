@@ -13,17 +13,28 @@ export async function GET(req: Request) {
   const limit = Math.min(
     parseInt(searchParams.get("limit") || String(TOP_CUSTOMER_LIMIT), 10) ||
       TOP_CUSTOMER_LIMIT,
-    20
+    20,
   );
 
   await connectDB();
-  const cards = await getTopCustomerCards(merchant.shop._id, limit);
+  const cards = await getTopCustomerCards(
+    merchant.shop._id,
+    limit,
+    !!merchant.shop.perkMode,
+  );
   if (cards.length === 0) return NextResponse.json({ customers: [] });
 
   const customerIds = cards.map((c) => c.customer);
   const customers = await Customer.find({ _id: { $in: customerIds } })
     .select("name email cookieId")
-    .lean<{ _id: { toString(): string }; name?: string; email?: string; cookieId: string }[]>();
+    .lean<
+      {
+        _id: { toString(): string };
+        name?: string;
+        email?: string;
+        cookieId: string;
+      }[]
+    >();
   const byId = new Map(customers.map((c) => [c._id.toString(), c]));
 
   const result = cards.map((c, idx) => {

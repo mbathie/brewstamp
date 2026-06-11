@@ -27,7 +27,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Search, Plus, Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Download,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+} from "lucide-react";
 import { generateAnimalName } from "@/lib/animal-names";
 
 interface Customer {
@@ -62,6 +69,8 @@ interface Props {
   // each row makes sense without context, and per-row threshold comes
   // from the populated shop ref instead of the page-level prop.
   aggregate?: boolean;
+  // Perk shops earn no stamps — report on free coffees redeemed instead.
+  perkMode?: boolean;
   // CSV export is a Plus+ feature. On lower plans we still render the
   // button (so customers know the capability exists) but disable it and
   // surface a tooltip nudging them to upgrade.
@@ -82,21 +91,27 @@ function csvCell(value: string | number | null | undefined): string {
   return s;
 }
 
-function downloadCsv(rows: StampCardData[], aggregate: boolean) {
+function downloadCsv(
+  rows: StampCardData[],
+  aggregate: boolean,
+  perkMode: boolean,
+) {
   const header = [
     ...(aggregate ? ["Shop"] : []),
     "Name",
     "Email",
     "Tags",
     "Notes",
-    "Current Stamps",
-    "Total Earned",
-    "Free Drinks Redeemed",
+    // Perk reports are reimbursement-focused: just the free coffees per person.
+    ...(perkMode
+      ? ["Free Coffees Redeemed"]
+      : ["Current Stamps", "Total Earned", "Free Drinks Redeemed"]),
     "Last Visit",
   ];
   const lines = [header.map(csvCell).join(",")];
   for (const c of rows) {
-    const name = c.customer.name?.trim() || generateAnimalName(c.customer.cookieId);
+    const name =
+      c.customer.name?.trim() || generateAnimalName(c.customer.cookieId);
     lines.push(
       [
         ...(aggregate ? [csvCell(c.shop?.name || "")] : []),
@@ -104,9 +119,13 @@ function downloadCsv(rows: StampCardData[], aggregate: boolean) {
         csvCell(c.customer.email || ""),
         csvCell((c.tags || []).join("; ")),
         csvCell((c.notes || "").replace(/\s+/g, " ").trim()),
-        csvCell(c.stamps),
-        csvCell(c.totalEarned),
-        csvCell(c.freeRedeemed),
+        ...(perkMode
+          ? [csvCell(c.freeRedeemed)]
+          : [
+              csvCell(c.stamps),
+              csvCell(c.totalEarned),
+              csvCell(c.freeRedeemed),
+            ]),
         csvCell(new Date(c.updatedAt).toISOString()),
       ].join(","),
     );
@@ -128,6 +147,7 @@ export default function CustomerSearch({
   stampCards,
   threshold,
   aggregate = false,
+  perkMode = false,
   canExportCsv = true,
   planLabel,
 }: Props) {
@@ -215,7 +235,10 @@ export default function CustomerSearch({
         t.toLowerCase().includes(q),
       );
       return (
-        name.includes(q) || email.includes(q) || cookieId.includes(q) || tagMatch
+        name.includes(q) ||
+        email.includes(q) ||
+        cookieId.includes(q) ||
+        tagMatch
       );
     });
 
@@ -279,7 +302,7 @@ export default function CustomerSearch({
         {canExportCsv ? (
           <Button
             variant="outline"
-            onClick={() => downloadCsv(filtered, aggregate)}
+            onClick={() => downloadCsv(filtered, aggregate, perkMode)}
             disabled={filtered.length === 0}
             className="cursor-pointer"
             title="Download visible customers as CSV"
@@ -326,7 +349,8 @@ export default function CustomerSearch({
             <DialogHeader>
               <DialogTitle>Add Customer</DialogTitle>
               <p className="text-sm text-muted-foreground">
-                For customers who don&apos;t have a phone. You can stamp them in manually and search for them on future visits.
+                For customers who don&apos;t have a phone. You can stamp them in
+                manually and search for them on future visits.
               </p>
             </DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4">
@@ -418,22 +442,26 @@ export default function CustomerSearch({
                   onClick={toggleSort}
                 />
               )}
+              {!perkMode && (
+                <SortHeader
+                  label="Current Stamps"
+                  k="stamps"
+                  activeKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+              )}
+              {!perkMode && (
+                <SortHeader
+                  label="Total Earned"
+                  k="totalEarned"
+                  activeKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+              )}
               <SortHeader
-                label="Current Stamps"
-                k="stamps"
-                activeKey={sortKey}
-                dir={sortDir}
-                onClick={toggleSort}
-              />
-              <SortHeader
-                label="Total Earned"
-                k="totalEarned"
-                activeKey={sortKey}
-                dir={sortDir}
-                onClick={toggleSort}
-              />
-              <SortHeader
-                label="Free Redeemed"
+                label={perkMode ? "Free coffees" : "Free Redeemed"}
                 k="freeRedeemed"
                 activeKey={sortKey}
                 dir={sortDir}
@@ -461,7 +489,8 @@ export default function CustomerSearch({
                     />
                     <div>
                       <p className="font-medium">
-                        {card.customer.name || generateAnimalName(card.customer.cookieId)}
+                        {card.customer.name ||
+                          generateAnimalName(card.customer.cookieId)}
                       </p>
                       {card.customer.email && (
                         <p className="truncate text-xs text-muted-foreground">
@@ -493,12 +522,14 @@ export default function CustomerSearch({
                       {card.shop?.name || "—"}
                     </TableCell>
                   )}
-                  <TableCell>
-                    <Badge variant="outline">
-                      {card.stamps} / {rowThreshold}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{card.totalEarned}</TableCell>
+                  {!perkMode && (
+                    <TableCell>
+                      <Badge variant="outline">
+                        {card.stamps} / {rowThreshold}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {!perkMode && <TableCell>{card.totalEarned}</TableCell>}
                   <TableCell>{card.freeRedeemed}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {new Date(card.updatedAt).toLocaleDateString("en-AU", {
@@ -516,7 +547,8 @@ export default function CustomerSearch({
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {pageStart + 1}–{Math.min(pageEnd, filtered.length)} of {filtered.length}
+            {pageStart + 1}–{Math.min(pageEnd, filtered.length)} of{" "}
+            {filtered.length}
           </p>
           <div className="flex gap-1">
             <Button
