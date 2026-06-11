@@ -6,7 +6,7 @@ import { isTopCustomer } from "@/lib/top-customers";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const merchant = await getMerchant();
   if (!merchant) {
@@ -20,7 +20,12 @@ export async function GET(
   })
     .select("notes tags")
     .lean<{ notes?: string; tags?: string[] }>();
-  const topCustomer = await isTopCustomer(merchant.shop._id, id);
+  const topCustomer = await isTopCustomer(
+    merchant.shop._id,
+    id,
+    undefined,
+    !!merchant.shop.perkMode,
+  );
   return NextResponse.json({
     notes: card?.notes || "",
     tags: card?.tags || [],
@@ -30,7 +35,7 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const merchant = await getMerchant();
   if (!merchant) {
@@ -39,7 +44,8 @@ export async function PUT(
 
   const { id } = await params;
   const body = await req.json();
-  const notes = typeof body.notes === "string" ? body.notes.slice(0, 2000) : undefined;
+  const notes =
+    typeof body.notes === "string" ? body.notes.slice(0, 2000) : undefined;
   const tags = Array.isArray(body.tags)
     ? body.tags
         .filter((t: unknown): t is string => typeof t === "string")
@@ -57,7 +63,7 @@ export async function PUT(
   const card = await StampCard.findOneAndUpdate(
     { shop: merchant.shop._id, customer: id },
     { $set: update },
-    { new: true }
+    { new: true },
   );
 
   if (!card) {

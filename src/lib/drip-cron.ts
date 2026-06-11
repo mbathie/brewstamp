@@ -29,26 +29,34 @@ export async function runDripEmails() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
+  // The lifecycle drip is written for stamp shops ("collect stamps", "first
+  // stamp", "free for 100 stamps"), so perk shops are excluded for now.
+  const notPerk = { perkMode: { $ne: true } };
+
   // Day 1: shops created >= 1 day ago that haven't received the day 1 email
   const day1Shops = await Shop.find({
+    ...notPerk,
     createdAt: { $lte: oneDayAgo },
     dripDay1Sent: { $ne: true },
   }).populate("owner");
 
   // Day 3: shops created >= 3 days ago that haven't received the day 3 email
   const day3Shops = await Shop.find({
+    ...notPerk,
     createdAt: { $lte: threeDaysAgo },
     dripDay3Sent: { $ne: true },
   }).populate("owner");
 
   // Day 7: shops created >= 7 days ago that haven't received the day 7 email
   const day7Shops = await Shop.find({
+    ...notPerk,
     createdAt: { $lte: sevenDaysAgo },
     dripDay7Sent: { $ne: true },
   }).populate("owner");
 
   // Day 14: shops created >= 14 days ago that haven't received the day 14 email
   const day14Shops = await Shop.find({
+    ...notPerk,
     createdAt: { $lte: fourteenDaysAgo },
     dripDay14Sent: { $ne: true },
   }).populate("owner");
@@ -80,7 +88,7 @@ export async function runDripEmails() {
     stampCounts.map((s: any) => [
       s._id.toString(),
       { stamps: s.total, customers: s.customers },
-    ])
+    ]),
   );
 
   // Active Pro subscriptions — used to suppress drips once a shop pays.
@@ -92,11 +100,10 @@ export async function runDripEmails() {
         shop: { $in: allShopIds },
         status: "active",
       }).select("shop")
-    ).map((s: any) => s.shop.toString())
+    ).map((s: any) => s.shop.toString()),
   );
 
-  const isDev =
-    process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? false;
+  const isDev = process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? false;
   const EXCLUDED_EMAILS = ["mbathie@gmail.com"];
 
   // Single source of truth for "is this shop active enough that the drip
@@ -135,9 +142,7 @@ export async function runDripEmails() {
         merchantName: owner.name,
         shopName: shop.name,
       });
-      console.log(
-        `[Drip] Day 1 email sent to ${to} for shop "${shop.name}"`
-      );
+      console.log(`[Drip] Day 1 email sent to ${to} for shop "${shop.name}"`);
     }
   }
 
@@ -162,9 +167,7 @@ export async function runDripEmails() {
         merchantName: owner.name,
         shopName: shop.name,
       });
-      console.log(
-        `[Drip] Day 3 email sent to ${to} for shop "${shop.name}"`
-      );
+      console.log(`[Drip] Day 3 email sent to ${to} for shop "${shop.name}"`);
     }
   }
 
@@ -192,9 +195,7 @@ export async function runDripEmails() {
         shopName: shop.name,
         stamps,
       });
-      console.log(
-        `[Drip] Day 7 email sent to ${to} for shop "${shop.name}"`
-      );
+      console.log(`[Drip] Day 7 email sent to ${to} for shop "${shop.name}"`);
     }
   }
 
@@ -222,9 +223,7 @@ export async function runDripEmails() {
         shopName: shop.name,
         stamps,
       });
-      console.log(
-        `[Drip] Day 14 email sent to ${to} for shop "${shop.name}"`
-      );
+      console.log(`[Drip] Day 14 email sent to ${to} for shop "${shop.name}"`);
     }
   }
 
@@ -242,7 +241,7 @@ export async function runDripEmails() {
         shop: { $in: upgradeShopIds },
         status: "active",
       }).select("shop")
-    ).map((s: any) => s.shop.toString())
+    ).map((s: any) => s.shop.toString()),
   );
 
   // Get stamp counts for these shops
@@ -251,7 +250,7 @@ export async function runDripEmails() {
     { $group: { _id: "$shop", total: { $sum: "$totalEarned" } } },
   ]);
   const upgradeStampMap = new Map<string, number>(
-    upgradeStampCounts.map((s: any) => [s._id.toString(), s.total])
+    upgradeStampCounts.map((s: any) => [s._id.toString(), s.total]),
   );
 
   let upgradeCount = 0;
@@ -278,12 +277,12 @@ export async function runDripEmails() {
       stampsUsed: stamps,
     });
     console.log(
-      `[Drip] Upgrade nudge sent to ${to} for shop "${shop.name}" (${stamps} stamps)`
+      `[Drip] Upgrade nudge sent to ${to} for shop "${shop.name}" (${stamps} stamps)`,
     );
     upgradeCount++;
   }
 
   console.log(
-    `[Drip] Run complete. Day 1: ${day1Shops.length}, Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Day 14: ${day14Shops.length}, Upgrade: ${upgradeCount} emails sent.`
+    `[Drip] Run complete. Day 1: ${day1Shops.length}, Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Day 14: ${day14Shops.length}, Upgrade: ${upgradeCount} emails sent.`,
   );
 }
