@@ -9,7 +9,7 @@ import {
   ArrowUpDown,
   ChevronRight,
   Trophy,
-  Zap,
+  Coffee,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,15 +33,21 @@ import { Sparkline } from "@/components/sparkline";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
+type PlanSlug = "free" | "pro" | "plus" | "max";
+
 interface ShopRow {
   _id: string;
   name: string;
   ownerEmail: string;
+  perkMode: boolean;
+  planSlug: PlanSlug;
+  planLabel: string;
+  monthlyCents: number;
   totalStamps: number;
+  freeCoffees: number;
   customers: number;
   createdAt: string;
   lastActive: string | null;
-  isPro: boolean;
 }
 
 interface ChartPoint {
@@ -55,7 +61,7 @@ interface ChartPoint {
 type SortKey =
   | "name"
   | "ownerEmail"
-  | "totalStamps"
+  | "activity"
   | "customers"
   | "createdAt"
   | "lastActive";
@@ -66,7 +72,7 @@ type Metric = "stamps" | "customers" | "shops" | "upgrades";
 const METRIC_LABELS: Record<Metric, string> = {
   stamps: "Stamps",
   customers: "Customers",
-  shops: "Shop Signups",
+  shops: "Shop signups",
   upgrades: "Upgrades",
 };
 
@@ -75,6 +81,33 @@ const METRIC_COLORS: Record<Metric, string> = {
   customers: "var(--chart-2)",
   shops: "var(--chart-3)",
   upgrades: "var(--chart-4)",
+};
+
+// Tier colours — Free neutral, then a cool→warm ramp by value.
+const PLAN_STYLE: Record<
+  PlanSlug,
+  { label: string; badge: string; bar: string }
+> = {
+  free: {
+    label: "Free",
+    badge: "border-border text-muted-foreground",
+    bar: "bg-muted-foreground/40",
+  },
+  pro: {
+    label: "Pro",
+    badge: "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
+    bar: "bg-emerald-500",
+  },
+  plus: {
+    label: "Plus",
+    badge: "border-sky-500/30 bg-sky-500/15 text-sky-300",
+    bar: "bg-sky-500",
+  },
+  max: {
+    label: "Max",
+    badge: "border-violet-500/30 bg-violet-500/15 text-violet-300",
+    bar: "bg-violet-500",
+  },
 };
 
 const chartConfig = {
@@ -157,17 +190,38 @@ function sparkLast(daily: ChartPoint[], field: Metric, days: number): number[] {
   return out;
 }
 
+const fmtDate = (iso: string | null) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-AU", {
+        day: "numeric",
+        month: "short",
+        year: "2-digit",
+      })
+    : "—";
+
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
   const [shops, setShops] = useState<ShopRow[]>([]);
-  const [proCount, setProCount] = useState(0);
   const [mrrUsd, setMrrUsd] = useState(0);
+  const [paidCount, setPaidCount] = useState(0);
+  const [planCounts, setPlanCounts] = useState<Record<PlanSlug, number>>({
+    free: 0,
+    pro: 0,
+    plus: 0,
+    max: 0,
+  });
+  const [totalFreeCoffees, setTotalFreeCoffees] = useState(0);
   const [charts, setCharts] = useState<{
     dailyStamps: ChartPoint[];
     dailyCustomers: ChartPoint[];
     dailyShops: ChartPoint[];
     dailyUpgrades: ChartPoint[];
-  }>({ dailyStamps: [], dailyCustomers: [], dailyShops: [], dailyUpgrades: [] });
+  }>({
+    dailyStamps: [],
+    dailyCustomers: [],
+    dailyShops: [],
+    dailyUpgrades: [],
+  });
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -175,9 +229,7 @@ export default function AdminShopsPage() {
   const [metric, setMetric] = useState<Metric>("stamps");
   const router = useRouter();
 
-  // Restore sort + tab from last visit. Tab is held in the URL hash, which
-  // also drives the on-page scroll anchor — so persisting the hash brings
-  // the admin back to the same section, not just the same tab label.
+  // Restore sort + tab anchor from last visit.
   useEffect(() => {
     try {
       const raw = localStorage.getItem("brewstamp.admin-shops");
@@ -224,17 +276,44 @@ export default function AdminShopsPage() {
     fetch("/api/admin/shops")
       .then((res) => res.json())
       .then((data) => {
-        setShops(data.shops || data);
-        setProCount(data.proCount || 0);
+        setShops(data.shops || []);
         setMrrUsd(data.mrrUsd || 0);
+        setPaidCount(data.paidCount || 0);
+        if (data.planCounts) setPlanCounts(data.planCounts);
+        setTotalFreeCoffees(data.totalFreeCoffees || 0);
         if (data.charts) setCharts(data.charts);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [session, status]);
 
+  // Honour the URL hash once the (async) content exists. The browser's native
+  // anchor scroll fires while the page is still showing the loading state, so
+  // the target section isn't in the DOM yet and it lands at the top.
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    requestAnimationFrame(() => {
+      try {
+        document.querySelector(hash)?.scrollIntoView();
+      } catch {}
+    });
+  }, [loading]);
+
+  // Activity = stamps for stamp shops, free coffees for perk shops — so a perk
+  // shop's column shows something meaningful and sorts sensibly.
+  const rows = useMemo(
+    () =>
+      shops.map((s) => ({
+        ...s,
+        activity: s.perkMode ? s.freeCoffees : s.totalStamps,
+      })),
+    [shops],
+  );
+
   const sorted = useMemo(() => {
-    return [...shops].sort((a, b) => {
+    return [...rows].sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
       if (sortKey === "createdAt" || sortKey === "lastActive") {
@@ -252,18 +331,20 @@ export default function AdminShopsPage() {
         ? (aVal as number) - (bVal as number)
         : (bVal as number) - (aVal as number);
     });
-  }, [shops, sortKey, sortDir]);
+  }, [rows, sortKey, sortDir]);
 
   const totalStamps = useMemo(
     () => shops.reduce((sum, s) => sum + s.totalStamps, 0),
     [shops],
   );
-  const totalCustomers = useMemo(
+  const activeCustomers = useMemo(
     () => shops.reduce((sum, s) => sum + s.customers, 0),
     [shops],
   );
+  const paidPct = shops.length
+    ? Math.round((paidCount / shops.length) * 100)
+    : 0;
 
-  // 14-day sparkline data
   const stampsSpark = useMemo(
     () => sparkLast(charts.dailyStamps, "stamps", 14),
     [charts.dailyStamps],
@@ -281,8 +362,6 @@ export default function AdminShopsPage() {
     [charts.dailyUpgrades],
   );
 
-  // Combined trend chart data — switches by metric, cumulative for stocks
-  // (customers, signups, upgrades), absolute for flow (stamps).
   const trendData = useMemo(() => {
     let source: ChartPoint[] = [];
     if (metric === "stamps") source = charts.dailyStamps;
@@ -298,12 +377,14 @@ export default function AdminShopsPage() {
     }));
   }, [metric, timeRange, charts]);
 
-  const top5 = useMemo(() => {
-    return [...shops]
-      .sort((a, b) => b.totalStamps - a.totalStamps)
-      .slice(0, 5)
-      .filter((s) => s.totalStamps > 0);
-  }, [shops]);
+  const top5 = useMemo(
+    () =>
+      [...rows]
+        .sort((a, b) => b.activity - a.activity)
+        .filter((s) => s.activity > 0)
+        .slice(0, 5),
+    [rows],
+  );
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -332,66 +413,79 @@ export default function AdminShopsPage() {
     );
   }
 
+  const showFreeCoffees = totalFreeCoffees > 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-foreground">Shops</h1>
         <p className="text-sm text-muted-foreground">
-          {shops.length} signed up · {proCount} on Pro
+          {shops.length} signed up · {paidCount} paid ·{" "}
+          <span className="font-medium text-amber-400">${mrrUsd}</span> MRR
         </p>
       </div>
 
-      {/* Anchor pill nav — lets users (especially on mobile) jump straight
-          past the charts to the tables. Sticks just below the page header on
-          scroll. */}
-      <nav className="sticky top-0 z-10 -mx-6 flex flex-wrap gap-2 border-b border-border/40 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-14 z-10 -mx-6 flex flex-wrap gap-2 border-b border-border/40 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <AnchorPill href="#overview" label="Overview" />
         <AnchorPill href="#trends" label="Trends" />
         <AnchorPill href="#top" label="Top shops" />
         <AnchorPill href="#all" label="All shops" />
       </nav>
 
-      {/* Overview — 5 compact KPI cards (2x2 on mobile, 5x1 on desktop) */}
-      <section id="overview" className="scroll-mt-16">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      {/* Overview KPIs — money first */}
+      <section id="overview" className="scroll-mt-20 space-y-3">
+        <div
+          className={`grid grid-cols-2 gap-3 ${showFreeCoffees ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}
+        >
+          <KpiCard
+            label="MRR"
+            value={mrrUsd}
+            valuePrefix="$"
+            valueSuffix="/mo"
+            spark={upgradesSpark}
+            color="var(--chart-4)"
+            tone="accent"
+          />
+          <KpiCard
+            label="Shops"
+            value={shops.length}
+            spark={shopsSpark}
+            color={METRIC_COLORS.shops}
+          />
+          <KpiCard
+            label="Paid"
+            value={paidCount}
+            valueSuffix={`· ${paidPct}%`}
+            spark={upgradesSpark}
+            color={METRIC_COLORS.upgrades}
+          />
+          <KpiCard
+            label="Active customers"
+            value={activeCustomers}
+            spark={customersSpark}
+            color={METRIC_COLORS.customers}
+          />
           <KpiCard
             label="Stamps"
             value={totalStamps}
             spark={stampsSpark}
             color={METRIC_COLORS.stamps}
           />
-          <KpiCard
-            label="Customers"
-            value={totalCustomers}
-            spark={customersSpark}
-            color={METRIC_COLORS.customers}
-          />
-          <KpiCard
-            label="Signups"
-            value={shops.length}
-            spark={shopsSpark}
-            color={METRIC_COLORS.shops}
-          />
-          <KpiCard
-            label="Upgraded"
-            value={proCount}
-            spark={upgradesSpark}
-            color={METRIC_COLORS.upgrades}
-            valueSuffix={shops.length > 0 ? ` (${Math.round((proCount / shops.length) * 100)}%)` : ""}
-          />
-          <KpiCard
-            label="MRR"
-            value={mrrUsd}
-            valuePrefix="$"
-            valueSuffix=" /mo"
-            spark={upgradesSpark}
-            color={METRIC_COLORS.upgrades}
-          />
+          {showFreeCoffees && (
+            <KpiCard
+              label="Free coffees"
+              value={totalFreeCoffees}
+              color="var(--chart-1)"
+            />
+          )}
         </div>
+
+        {/* Plan mix — stacked bar + legend, replaces the old "N on Pro" */}
+        <PlanMix counts={planCounts} total={shops.length} />
       </section>
 
-      {/* Trends — single chart with metric switcher + range toggle */}
-      <section id="trends" className="scroll-mt-16">
+      {/* Trends */}
+      <section id="trends" className="scroll-mt-20">
         <Card>
           <CardContent className="space-y-3 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -400,7 +494,7 @@ export default function AdminShopsPage() {
                   <button
                     key={m}
                     onClick={() => setMetric(m)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                       metric === m
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -415,7 +509,7 @@ export default function AdminShopsPage() {
                   <button
                     key={r}
                     onClick={() => setTimeRange(r)}
-                    className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    className={`cursor-pointer rounded px-2 py-1 text-xs font-medium transition-colors ${
                       timeRange === r
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -473,52 +567,46 @@ export default function AdminShopsPage() {
 
       {/* Top performing */}
       {top5.length > 0 && (
-        <section id="top" className="scroll-mt-16">
+        <section id="top" className="scroll-mt-20">
           <Card>
             <CardContent className="space-y-3 py-4">
               <div className="flex items-center gap-2">
                 <Trophy className="size-4 text-amber-500" />
                 <h2 className="text-sm font-medium">Top performing shops</h2>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {top5.map((shop, i) => (
                   <div
                     key={shop._id}
-                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
                     onClick={() =>
                       router.push(`/dashboard/admin/shops/${shop._id}`)
                     }
                   >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                      {i + 1}
-                    </span>
+                    <RankBadge rank={i + 1} />
                     <div className="min-w-0 flex-1">
-                      <p className="inline-flex items-center gap-1.5 truncate text-sm font-medium">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-medium">
                         {shop.name}
-                        {shop.isPro ? (
-                          <Badge className="bg-emerald-500/15 px-1.5 py-0 text-[10px] text-emerald-400 hover:bg-emerald-500/25">
-                            <Zap className="mr-0.5 size-2.5" />
-                            Pro
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="px-1.5 py-0 text-[10px] text-muted-foreground"
-                          >
-                            Free
-                          </Badge>
-                        )}
+                        <PlanBadge
+                          slug={shop.planSlug}
+                          label={shop.planLabel}
+                          monthlyCents={shop.monthlyCents}
+                        />
+                        {shop.perkMode && <PerkBadge />}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         {shop.ownerEmail}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        {shop.totalStamps} stamps
+                        {shop.activity.toLocaleString()}{" "}
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {shop.perkMode ? "coffees" : "stamps"}
+                        </span>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {shop.customers} customers
+                        {shop.customers} active
                       </p>
                     </div>
                   </div>
@@ -529,44 +617,57 @@ export default function AdminShopsPage() {
         </section>
       )}
 
-      {/* All shops table */}
-      <section id="all" className="scroll-mt-16">
-        <div className="rounded-md border">
+      {/* All shops */}
+      <section id="all" className="scroll-mt-20">
+        <div className="overflow-hidden rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                {(
-                  [
-                    { key: "name" as SortKey, label: "Shop Name", align: "" },
-                    { key: "ownerEmail" as SortKey, label: "Owner", align: "" },
-                    {
-                      key: "totalStamps" as SortKey,
-                      label: "Stamps",
-                      align: "text-right",
-                    },
-                    {
-                      key: "customers" as SortKey,
-                      label: "Customers",
-                      align: "text-right",
-                    },
-                    { key: "createdAt" as SortKey, label: "Signed Up", align: "" },
-                    {
-                      key: "lastActive" as SortKey,
-                      label: "Last Active",
-                      align: "",
-                    },
-                  ]
-                ).map((col) => (
-                  <TableHead
-                    key={col.key}
-                    className={`${col.align} cursor-pointer select-none hover:text-foreground`}
-                    onClick={() => toggleSort(col.key)}
-                  >
-                    {col.label}
-                    <SortIcon col={col.key} />
-                  </TableHead>
-                ))}
-                <TableHead className="w-8"></TableHead>
+                <SortHead
+                  k="name"
+                  label="Shop"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
+                  k="ownerEmail"
+                  label="Owner"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
+                  k="activity"
+                  label="Activity"
+                  align="right"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
+                  k="customers"
+                  label="Active"
+                  align="right"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
+                  k="createdAt"
+                  label="Signed up"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
+                  k="lastActive"
+                  label="Last active"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -589,43 +690,37 @@ export default function AdminShopsPage() {
                     }
                   >
                     <TableCell className="font-medium">
-                      <span className="inline-flex items-center gap-1.5">
+                      <span className="flex items-center gap-1.5">
                         {shop.name}
-                        {shop.isPro ? (
-                          <Badge className="bg-emerald-500/15 px-1.5 py-0 text-[10px] text-emerald-400 hover:bg-emerald-500/25">
-                            <Zap className="mr-0.5 size-2.5" />
-                            Pro
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="px-1.5 py-0 text-[10px] text-muted-foreground"
-                          >
-                            Free
-                          </Badge>
-                        )}
+                        <PlanBadge
+                          slug={shop.planSlug}
+                          label={shop.planLabel}
+                          monthlyCents={shop.monthlyCents}
+                        />
+                        {shop.perkMode && <PerkBadge />}
                       </span>
                     </TableCell>
-                    <TableCell>{shop.ownerEmail}</TableCell>
-                    <TableCell className="text-right">
-                      {shop.totalStamps}
+                    <TableCell className="text-muted-foreground">
+                      {shop.ownerEmail}
                     </TableCell>
-                    <TableCell className="text-right">{shop.customers}</TableCell>
-                    <TableCell>
-                      {new Date(shop.createdAt).toLocaleDateString("en-AU", {
-                        day: "numeric",
-                        month: "short",
-                        year: "2-digit",
-                      })}
+                    <TableCell className="text-right tabular-nums">
+                      {shop.perkMode ? (
+                        <span className="inline-flex items-center justify-end gap-1 text-amber-300">
+                          <Coffee className="size-3" />
+                          {shop.freeCoffees.toLocaleString()}
+                        </span>
+                      ) : (
+                        shop.totalStamps.toLocaleString()
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {shop.customers.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {shop.lastActive
-                        ? new Date(shop.lastActive).toLocaleDateString("en-AU", {
-                            day: "numeric",
-                            month: "short",
-                            year: "2-digit",
-                          })
-                        : "—"}
+                      {fmtDate(shop.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {fmtDate(shop.lastActive)}
                     </TableCell>
                     <TableCell>
                       <ChevronRight className="size-4 text-muted-foreground" />
@@ -636,6 +731,10 @@ export default function AdminShopsPage() {
             </TableBody>
           </Table>
         </div>
+        <p className="mt-2 px-1 text-xs text-muted-foreground">
+          Customers shown are active in the last 90 days; stamp shops show
+          stamps, perk shops show free coffees.
+        </p>
       </section>
     </div>
   );
@@ -654,18 +753,176 @@ function AnchorPill({ href, label }: { href: string; label: string }) {
   );
 }
 
+function fmtPrice(cents: number): string {
+  return `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+}
+
+function PlanBadge({
+  slug,
+  label,
+  monthlyCents,
+}: {
+  slug: PlanSlug;
+  label: string;
+  monthlyCents: number;
+}) {
+  const s = PLAN_STYLE[slug] ?? PLAN_STYLE.free;
+  if (slug === "free") {
+    return (
+      <Badge variant="outline" className={`px-1.5 py-0 text-[10px] ${s.badge}`}>
+        Free
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="outline"
+      className={`px-1.5 py-0 text-[10px] hover:bg-transparent ${s.badge}`}
+    >
+      {label}
+      {monthlyCents > 0 && (
+        <span className="ml-1 opacity-70">{fmtPrice(monthlyCents)}</span>
+      )}
+    </Badge>
+  );
+}
+
+function PerkBadge() {
+  return (
+    <Badge className="border-amber-500/30 bg-amber-500/15 px-1.5 py-0 text-[10px] text-amber-300 hover:bg-amber-500/15">
+      <Coffee className="mr-0.5 size-2.5" />
+      Perk
+    </Badge>
+  );
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  const medal =
+    rank === 1
+      ? "bg-amber-500/20 text-amber-300"
+      : rank === 2
+        ? "bg-slate-400/20 text-slate-300"
+        : rank === 3
+          ? "bg-orange-700/25 text-orange-300"
+          : "bg-muted text-muted-foreground";
+  return (
+    <span
+      className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}
+    >
+      {rank}
+    </span>
+  );
+}
+
+function PlanMix({
+  counts,
+  total,
+}: {
+  counts: Record<PlanSlug, number>;
+  total: number;
+}) {
+  const order: PlanSlug[] = ["max", "plus", "pro", "free"];
+  const paid = counts.pro + counts.plus + counts.max;
+  return (
+    <Card>
+      <CardContent className="space-y-2.5 py-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-foreground">Plan mix</span>
+          <span className="text-muted-foreground">
+            {paid} paid of {total}
+          </span>
+        </div>
+        <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+          {order.map((slug) =>
+            counts[slug] > 0 ? (
+              <div
+                key={slug}
+                className={PLAN_STYLE[slug].bar}
+                style={{
+                  width: `${(counts[slug] / Math.max(total, 1)) * 100}%`,
+                }}
+                title={`${PLAN_STYLE[slug].label}: ${counts[slug]}`}
+              />
+            ) : null,
+          )}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          {(["free", "pro", "plus", "max"] as PlanSlug[]).map((slug) => (
+            <span key={slug} className="inline-flex items-center gap-1.5">
+              <span className={`size-2 rounded-full ${PLAN_STYLE[slug].bar}`} />
+              <span className="text-muted-foreground">
+                {PLAN_STYLE[slug].label}
+              </span>
+              <span className="font-medium text-foreground">
+                {counts[slug]}
+              </span>
+            </span>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SortHead({
+  k,
+  label,
+  align,
+  sortKey,
+  dir,
+  onClick,
+}: {
+  k: SortKey;
+  label: string;
+  align?: "right";
+  sortKey: SortKey;
+  dir: SortDir;
+  onClick: (k: SortKey) => void;
+}) {
+  return (
+    <TableHead
+      className={`cursor-pointer select-none hover:text-foreground ${align === "right" ? "text-right" : ""}`}
+      onClick={() => onClick(k)}
+    >
+      {label}
+      {sortKey !== k ? (
+        <ArrowUpDown className="ml-1 inline size-3 opacity-40" />
+      ) : dir === "asc" ? (
+        <ArrowUp className="ml-1 inline size-3" />
+      ) : (
+        <ArrowDown className="ml-1 inline size-3" />
+      )}
+    </TableHead>
+  );
+}
+
 interface KpiCardProps {
   label: string;
   value: number;
-  spark: number[];
-  color: string;
+  spark?: number[];
+  color?: string;
   valuePrefix?: string;
   valueSuffix?: string;
+  tone?: "default" | "accent";
 }
 
-function KpiCard({ label, value, spark, color, valuePrefix, valueSuffix }: KpiCardProps) {
+function KpiCard({
+  label,
+  value,
+  spark,
+  color,
+  valuePrefix,
+  valueSuffix,
+  tone = "default",
+}: KpiCardProps) {
   return (
-    <Card>
+    <Card
+      className={
+        tone === "accent"
+          ? "border-amber-500/30 bg-amber-500/[0.04]"
+          : undefined
+      }
+    >
       <CardContent className="space-y-2 px-4 py-3">
         <p className="text-xs text-muted-foreground">{label}</p>
         <div className="flex items-end justify-between gap-3">
@@ -678,7 +935,9 @@ function KpiCard({ label, value, spark, color, valuePrefix, valueSuffix }: KpiCa
               </span>
             )}
           </p>
-          <Sparkline data={spark} color={color} width={64} height={24} />
+          {spark && (
+            <Sparkline data={spark} color={color} width={64} height={24} />
+          )}
         </div>
       </CardContent>
     </Card>

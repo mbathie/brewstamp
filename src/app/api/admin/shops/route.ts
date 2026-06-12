@@ -2,12 +2,52 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
+import {
+  getPlanByPriceId,
+  getIntervalByPriceId,
+  annualPriceCents,
+  type PlanSlug,
+} from "@/lib/plans";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
-// Single Stripe Pro price. Update here if the listed price ever changes — it
-// drives the MRR figure on the admin dashboard.
-const PRO_PRICE_USD = 5;
+// A customer counts as "active" if they've engaged within this window. The
+// admin views hide everyone older so the numbers reflect a live business, not
+// a lifetime tally inflated by one-time scanners.
+const ACTIVE_DAYS = 90;
+
+// Legacy subscriptions predate the current Stripe price IDs and are
+// grandfathered at the old $5/mo Pro rate — used when a price id doesn't map
+// to a current plan.
+const LEGACY_PRO_CENTS = 500;
+
+// Resolve a subscription's tier + true monthly revenue. Annual plans are
+// converted to a monthly-equivalent so MRR is apples-to-apples.
+function resolveSub(sub: { stripePriceId?: string; planLabel?: string }): {
+  slug: PlanSlug;
+  label: string;
+  monthlyCents: number;
+  legacy: boolean;
+} {
+  if (sub.stripePriceId) {
+    const plan = getPlanByPriceId(sub.stripePriceId);
+    if (plan) {
+      const interval = getIntervalByPriceId(sub.stripePriceId) ?? "month";
+      const monthlyCents =
+        interval === "year"
+          ? Math.round(annualPriceCents(plan) / 12)
+          : plan.priceCents;
+      return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
+    }
+  }
+  // Price id doesn't map to a current plan → grandfathered legacy Pro.
+  return {
+    slug: "pro",
+    label: sub.planLabel || "Pro",
+    monthlyCents: LEGACY_PRO_CENTS,
+    legacy: true,
+  };
+}
 
 export async function GET() {
   const session = await auth();
@@ -18,57 +58,121 @@ export async function GET() {
   await connectDB();
 
   const shops = await Shop.find().sort({ createdAt: -1 }).lean();
-
   const shopIds = shops.map((s) => s._id);
-  const stampCounts = await StampCard.aggregate([
+
+  const activeWindow = new Date();
+  activeWindow.setDate(activeWindow.getDate() - ACTIVE_DAYS);
+
+  // Per-shop totals. "active" customers are engaged (earned a stamp OR redeemed
+  // a free coffee) AND seen within the active window. freeCoffees is the perk
+  // redemption count (StampCard.freeRedeemed doubles as rewards for stamp
+  // shops, so it's only surfaced as "free coffees" for perk shops in the UI).
+  const stampAgg = await StampCard.aggregate([
     { $match: { shop: { $in: shopIds } } },
     {
       $group: {
         _id: "$shop",
         totalStamps: { $sum: "$totalEarned" },
+        freeRedeemed: { $sum: "$freeRedeemed" },
         customers: {
-          $sum: { $cond: [{ $gt: ["$totalEarned", 0] }, 1, 0] },
+          $sum: {
+            $cond: [
+              {
+                $or: [
+                  { $gt: ["$totalEarned", 0] },
+                  { $gt: ["$freeRedeemed", 0] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+        activeCustomers: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  {
+                    $or: [
+                      { $gt: ["$totalEarned", 0] },
+                      { $gt: ["$freeRedeemed", 0] },
+                    ],
+                  },
+                  { $gte: ["$updatedAt", activeWindow] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
         },
       },
     },
   ]);
+  const statMap = new Map(stampAgg.map((s: any) => [s._id.toString(), s]));
 
-  const stampMap = new Map(
-    stampCounts.map((s: any) => [s._id.toString(), { totalStamps: s.totalStamps, customers: s.customers }])
-  );
-
-  // Last activity per shop (most recent approved stamp request)
+  // Last activity per shop (most recent approved request)
   const lastActivity = await StampRequest.aggregate([
     { $match: { status: "approved", shop: { $in: shopIds } } },
     { $sort: { createdAt: -1 } },
     { $group: { _id: "$shop", lastActive: { $first: "$createdAt" } } },
   ]);
   const lastActiveMap = new Map(
-    lastActivity.map((s: any) => [s._id.toString(), s.lastActive])
+    lastActivity.map((s: any) => [s._id.toString(), s.lastActive]),
   );
 
-  const ownerIds = shops.map((s) => s.owner);
-  const owners = await User.find({ _id: { $in: ownerIds } }).lean();
+  const owners = await User.find({
+    _id: { $in: shops.map((s) => s.owner) },
+  }).lean();
   const ownerMap = new Map(owners.map((u: any) => [u._id.toString(), u.email]));
 
-  // Check which shops have active subscriptions
-  const activeSubs = await Subscription.find({ shop: { $in: shopIds }, status: "active" }).lean();
-  const proShopIds = new Set(activeSubs.map((s: any) => s.shop.toString()));
+  // Active subscriptions → tier + monthly revenue, keyed by shop.
+  const activeSubs = await Subscription.find({
+    shop: { $in: shopIds },
+    status: "active",
+  }).lean();
+  const subMap = new Map(
+    activeSubs.map((s: any) => [s.shop.toString(), resolveSub(s)]),
+  );
 
-  const result = shops.map((shop: any) => ({
-    _id: shop._id,
-    name: shop.name,
-    code: shop.code,
-    ownerEmail: ownerMap.get(shop.owner.toString()) || "Unknown",
-    totalStamps: stampMap.get(shop._id.toString())?.totalStamps || 0,
-    customers: stampMap.get(shop._id.toString())?.customers || 0,
-    createdAt: shop.createdAt,
-    lastActive: lastActiveMap.get(shop._id.toString()) || null,
-    isPro: proShopIds.has(shop._id.toString()),
-  }));
+  const result = shops.map((shop: any) => {
+    const stat = statMap.get(shop._id.toString());
+    const sub = subMap.get(shop._id.toString());
+    return {
+      _id: shop._id,
+      name: shop.name,
+      ownerEmail: ownerMap.get(shop.owner.toString()) || "Unknown",
+      perkMode: !!shop.perkMode,
+      planSlug: (sub?.slug ?? "free") as PlanSlug,
+      planLabel: sub?.label ?? "Free",
+      monthlyCents: sub?.monthlyCents ?? 0,
+      legacy: sub?.legacy ?? false,
+      totalStamps: stat?.totalStamps || 0,
+      freeCoffees: stat?.freeRedeemed || 0,
+      customers: stat?.activeCustomers || 0,
+      createdAt: shop.createdAt,
+      lastActive: lastActiveMap.get(shop._id.toString()) || null,
+    };
+  });
 
-  // Growth charts: pull 90 days so client-side can compute weekly/monthly
-  // aggregations and 7-day deltas without re-fetching.
+  // Headline aggregates.
+  const planCounts: Record<PlanSlug, number> = {
+    free: 0,
+    pro: 0,
+    plus: 0,
+    max: 0,
+  };
+  for (const r of result) planCounts[r.planSlug]++;
+  const mrrUsd =
+    [...subMap.values()].reduce((sum, s) => sum + s.monthlyCents, 0) / 100;
+  const paidCount = subMap.size;
+  const perkShopCount = result.filter((r) => r.perkMode).length;
+  const totalFreeCoffees = result
+    .filter((r) => r.perkMode)
+    .reduce((sum, r) => sum + r.freeCoffees, 0);
+
+  // Growth charts — 90 days of daily series for client-side aggregation.
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
@@ -84,7 +188,12 @@ export async function GET() {
       { $sort: { _id: 1 } },
     ]),
     StampCard.aggregate([
-      { $match: { totalEarned: { $gt: 0 }, createdAt: { $gte: ninetyDaysAgo } } },
+      {
+        $match: {
+          $or: [{ totalEarned: { $gt: 0 } }, { freeRedeemed: { $gt: 0 } }],
+          createdAt: { $gte: ninetyDaysAgo },
+        },
+      },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -95,7 +204,6 @@ export async function GET() {
     ]),
   ]);
 
-  // Shop signups by date (entire history — gives us a long signup curve)
   const shopsByDate: Record<string, number> = {};
   for (const shop of shops) {
     const d = new Date((shop as { createdAt: Date }).createdAt)
@@ -107,28 +215,24 @@ export async function GET() {
     .map(([date, count]) => ({ _id: date, shops: count }))
     .sort((a, b) => a._id.localeCompare(b._id));
 
-  // Subscription upgrades by date (active subs only — captures genuine
-  // conversions, not cancelled trials).
-  const allActiveSubsByDate: Record<string, number> = {};
+  const upgradesByDate: Record<string, number> = {};
   for (const sub of activeSubs) {
     const d = new Date((sub as { createdAt: Date }).createdAt)
       .toISOString()
       .slice(0, 10);
-    allActiveSubsByDate[d] = (allActiveSubsByDate[d] || 0) + 1;
+    upgradesByDate[d] = (upgradesByDate[d] || 0) + 1;
   }
-  const dailyUpgrades = Object.entries(allActiveSubsByDate)
+  const dailyUpgrades = Object.entries(upgradesByDate)
     .map(([date, count]) => ({ _id: date, upgrades: count }))
     .sort((a, b) => a._id.localeCompare(b._id));
 
   return NextResponse.json({
     shops: result,
-    proCount: proShopIds.size,
-    mrrUsd: proShopIds.size * PRO_PRICE_USD,
-    charts: {
-      dailyStamps,
-      dailyCustomers,
-      dailyShops,
-      dailyUpgrades,
-    },
+    mrrUsd,
+    paidCount,
+    planCounts,
+    perkShopCount,
+    totalFreeCoffees,
+    charts: { dailyStamps, dailyCustomers, dailyShops, dailyUpgrades },
   });
 }
