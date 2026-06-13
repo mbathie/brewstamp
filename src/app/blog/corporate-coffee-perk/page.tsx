@@ -112,42 +112,42 @@ export default function BlogPost() {
             </p>
           </div>
 
-          <figure className="mb-14 flex flex-col items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/blog/corporate-perk-card.png"
-              alt="Brewstamp corporate perk card on a phone — Nexus Technologies staff coffee perk showing two of two free coffees left today"
-              className="w-full max-w-[280px] rounded-[2rem] border border-stone-200 shadow-xl"
-            />
-            <figcaption className="mt-4 text-center text-sm text-stone-400">
-              The staff-facing card — branded to the company, with a subtle
-              pattern and a daily free-coffee cap.
-            </figcaption>
-          </figure>
-
-          <section className="mb-14">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-                <Coffee className="size-5 text-amber-700" />
+          <section className="mb-14 grid items-start gap-8 md:grid-cols-[1fr_240px]">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                  <Coffee className="size-5 text-amber-700" />
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+                  Every scan is a free coffee, not a stamp
+                </h2>
               </div>
-              <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-                Every scan is a free coffee, not a stamp
-              </h2>
+              <p className="mt-4 text-base leading-relaxed text-stone-600">
+                A normal Brewstamp loyalty card has customers collect stamps
+                toward a reward. Perk mode is different: there are no stamps to
+                count. Each approved scan is simply one free coffee, drawn from
+                the perk the employer is paying for. It&apos;s the office
+                coffee benefit, run from the same QR code and the same
+                approve-from-your-phone flow your baristas already know.
+              </p>
+              <p className="mt-4 text-base leading-relaxed text-stone-600">
+                For the staff member it couldn&apos;t be simpler — scan, enter
+                their work email the first time, and the barista taps approve.
+                No app to install, no loyalty account to create, nothing to
+                carry.
+              </p>
             </div>
-            <p className="mt-4 text-base leading-relaxed text-stone-600">
-              A normal Brewstamp loyalty card has customers collect stamps
-              toward a reward. Perk mode is different: there are no stamps to
-              count. Each approved scan is simply one free coffee, drawn from
-              the perk the employer is paying for. It&apos;s the office coffee
-              benefit, run from the same QR code and the same approve-from-
-              your-phone flow your baristas already know.
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-stone-600">
-              For the staff member it couldn&apos;t be simpler — scan, enter
-              their work email the first time, and the barista taps approve.
-              No app to install, no loyalty account to create, nothing to
-              carry.
-            </p>
+            <figure className="mx-auto w-full max-w-[240px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/blog/corporate-perk-card.png"
+                alt="Brewstamp corporate perk card on a phone — Nexus Technologies staff coffee perk showing two of two free coffees left today"
+                className="w-full rounded-[2rem] border border-stone-200 shadow-xl"
+              />
+              <figcaption className="mt-3 text-center text-xs text-stone-400">
+                The staff-facing card — branded to the company.
+              </figcaption>
+            </figure>
           </section>
 
           <section className="mb-14">
