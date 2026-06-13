@@ -15,7 +15,7 @@ import Footer from "@/components/footer";
 // Light, explicitly-styled field — the shared shadcn Input/Textarea pull the
 // dark dashboard theme tokens, which render grey/black on these public pages.
 const FIELD =
-  "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-[15px] text-stone-900 placeholder:text-stone-400 shadow-sm transition focus:border-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-600/15";
+  "w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-[15px] text-stone-900 placeholder:text-stone-400 shadow-sm transition focus:border-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-600/15";
 
 function FieldLabel({
   htmlFor,
@@ -109,7 +109,7 @@ export default function ContactPage() {
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-800"
+              className="mt-6 inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-800"
             >
               Back to home
               <ArrowRight className="size-4" />
@@ -181,7 +181,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-700 px-5 py-3 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
                 {isSubmitting ? (
                   <>
