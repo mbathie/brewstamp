@@ -9,7 +9,7 @@ import PlanCards from "./plan-cards";
 export const metadata: Metadata = {
   title: "Pricing — Free, Pro, Plus, Max plans",
   description:
-    "Brewstamp pricing for cafes and small businesses. Free for your first 100 stamps. Paid plans from $7/month with unlimited stamps, multi-shop, staff logins, and CSV exports.",
+    "Brewstamp pricing for cafes and small businesses. Free for your first 100 stamps. Paid plans from $7/month with unlimited stamps, multi-shop, staff logins, CSV exports, and corporate perk mode for subsidised staff coffee.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -55,6 +55,7 @@ const PLANS: Plan[] = [
       "Unlimited staff logins",
       "CSV customer exports",
       "Cross-shop reporting",
+      "Corporate perk mode",
     ],
   },
   {
@@ -88,6 +89,7 @@ const FEATURES: FeatureRow[] = [
   { label: "Staff & manager logins", free: false, starter: false, roast: "Unlimited", reserve: "Unlimited" },
   { label: "CSV customer exports", free: false, starter: false, roast: true, reserve: true },
   { label: "Cross-shop rollup reporting", free: false, starter: false, roast: true, reserve: true },
+  { label: "Corporate perk mode (subsidised staff coffee)", free: false, starter: false, roast: true, reserve: true },
   { label: "Email support", free: true, starter: true, roast: true, reserve: true },
   { label: "Priority support", free: false, starter: true, roast: true, reserve: true },
   { label: "Dedicated account support", free: false, starter: false, roast: false, reserve: true },

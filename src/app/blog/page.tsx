@@ -35,6 +35,19 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "corporate-coffee-perk",
+    title:
+      "Subsidised Staff Coffee, Run From One QR Code: Corporate Perk Mode",
+    description:
+      "Give your team a coffee perk without vouchers or spreadsheets. Perk mode turns a cafe QR code into an employer-subsidised staff coffee benefit — gated to your work email, capped per person per day, with reports for reimbursement.",
+    tag: "Product update",
+    image:
+      "https://images.unsplash.com/photo-1726666339581-07d2c51baeeb?w=600&h=400&q=70&auto=format&fit=crop",
+    imageAlt: "A flat white coffee served on a wooden tray",
+    publishedAt: "2026-06-13",
+    publishedAtDisplay: "13 June 2026",
+  },
+  {
     slug: "multiple-shops-and-team-logins",
     title:
       "Multi-Shop, Team Logins, and a New Pricing Lineup",
