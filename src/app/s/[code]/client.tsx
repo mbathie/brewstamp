@@ -125,23 +125,41 @@ export default function CustomerClient({
     customerId,
   );
   const autoRequestedRef = useRef(false);
+  const pendingRequestIdRef = useRef<string | null>(null);
+  // Guards against double-applying a resolution when both the live WebSocket
+  // frame AND the status poll deliver the same result for one request.
+  const handledRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    const unsub1 = on("stamp-request:approved", (msg: any) => {
-      const awarded = msg.stampsAwarded || 0;
-      const redeemed = !!msg.redeemed;
-      const earnedFree = msg.newFreeRedeemed > freeRedeemed;
+  // Apply an approval from either source (WS push or status poll). Values are
+  // absolute (newStamps, etc.) so a duplicate call is harmless, but the
+  // handledRef guard keeps the toast from firing twice.
+  const applyApproval = useCallback(
+    (
+      reqId: string,
+      p: {
+        stampsAwarded: number;
+        redeemed: boolean;
+        newStamps: number;
+        newTotalEarned: number;
+        newFreeRedeemed: number;
+      },
+    ) => {
+      if (reqId && handledRef.current === reqId) return;
+      handledRef.current = reqId;
+
+      const awarded = p.stampsAwarded || 0;
+      const redeemed = !!p.redeemed;
+      const earnedFree = p.newFreeRedeemed > freeRedeemed;
 
       setStampsAwarded(awarded);
-      setStamps(msg.newStamps);
-      setTotalEarned(msg.newTotalEarned);
+      setStamps(p.newStamps);
+      setTotalEarned(p.newTotalEarned);
       setWasRedeemed(redeemed);
       if (earnedFree) {
         setFreedEarned(true);
-        setFreeRedeemed(msg.newFreeRedeemed);
+        setFreeRedeemed(p.newFreeRedeemed);
       }
 
-      // Show toast instead of celebration rectangle
       if (redeemed) {
         toast.success("You earned a reward!", {
           description:
@@ -163,20 +181,67 @@ export default function CustomerClient({
       } else {
         setStatus("idle");
       }
+    },
+    [freeRedeemed, detailsSaved, customerName, customerEmail],
+  );
+
+  const applyRejection = useCallback((reqId: string | null) => {
+    if (reqId && handledRef.current === reqId) return;
+    if (reqId) handledRef.current = reqId;
+    toast.error("Request declined");
+    setStatus("idle");
+  }, []);
+
+  useEffect(() => {
+    const unsub1 = on("stamp-request:approved", (msg: any) => {
+      applyApproval(msg.requestId, {
+        stampsAwarded: msg.stampsAwarded,
+        redeemed: msg.redeemed,
+        newStamps: msg.newStamps,
+        newTotalEarned: msg.newTotalEarned,
+        newFreeRedeemed: msg.newFreeRedeemed,
+      });
     });
 
-    const unsub2 = on("stamp-request:rejected", () => {
-      toast.error("Request declined");
-      setStatus("idle");
+    const unsub2 = on("stamp-request:rejected", (msg: any) => {
+      applyRejection(msg?.requestId ?? null);
     });
 
     return () => {
       unsub1();
       unsub2();
     };
-  }, [on, customerName, customerEmail, freeRedeemed, detailsSaved]);
+  }, [on, applyApproval, applyRejection]);
 
-  const pendingRequestIdRef = useRef<string | null>(null);
+  // Fallback for a dropped approval frame: while waiting, poll the request's
+  // status so the customer still sees the result even if the WebSocket missed
+  // the merchant's response (idle tab, reconnect, redeploy).
+  useEffect(() => {
+    if (status !== "waiting") return;
+    const reqId = pendingRequestIdRef.current;
+    if (!reqId) return;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/stamp-request/${reqId}`);
+        if (!res.ok) return;
+        const d = await res.json();
+        if (d.status === "approved" && d.stampCard) {
+          applyApproval(reqId, {
+            stampsAwarded: d.stampsAwarded,
+            redeemed: d.redeemed,
+            newStamps: d.stampCard.stamps,
+            newTotalEarned: d.stampCard.totalEarned,
+            newFreeRedeemed: d.stampCard.freeRedeemed,
+          });
+        } else if (d.status === "rejected" || d.status === "expired") {
+          applyRejection(reqId);
+        }
+      } catch {
+        // transient — keep polling
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [status, applyApproval, applyRejection]);
 
   const requestStamp = useCallback(
     async (redeem = false) => {

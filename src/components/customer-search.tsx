@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -481,12 +480,16 @@ export default function CustomerSearch({
             {paged.map((card) => {
               const rowThreshold = card.shop?.stampThreshold ?? threshold;
               return (
-                <TableRow key={card._id} className="relative cursor-pointer">
+                <TableRow
+                  key={card._id}
+                  className="cursor-pointer"
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/customers/${card.customer._id}`,
+                    )
+                  }
+                >
                   <TableCell className="max-w-[220px]">
-                    <Link
-                      href={`/dashboard/customers/${card.customer._id}`}
-                      className="absolute inset-0"
-                    />
                     <div>
                       <p className="font-medium">
                         {card.customer.name ||

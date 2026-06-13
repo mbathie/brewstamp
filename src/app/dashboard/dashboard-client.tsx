@@ -112,6 +112,56 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
     };
   }, [on, threshold, send]);
 
+  // Durable fallback for the live WebSocket: pull any fresh pending request
+  // straight from the DB. The WS frame can be missed if the merchant tab was
+  // idle, mid-reconnect, or hadn't re-registered after a redeploy — in which
+  // case the customer is stuck "waiting" and the merchant sees nothing until a
+  // refresh. This makes Mongo the source of truth instead.
+  const reconcile = useCallback(async () => {
+    // Don't disturb a modal that's already open.
+    if (currentRequestRef.current) return;
+    try {
+      const res = await fetch("/api/stamp-request");
+      if (!res.ok) return;
+      const data = await res.json();
+      const reqs: StampRequestData[] = data.requests || [];
+      if (reqs.length === 0 || currentRequestRef.current) return;
+      const latest = reqs[0];
+      setCurrentRequest(latest);
+      if (latest.customerId) {
+        fetch(`/api/customers/${latest.customerId}/notes`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (!d) return;
+            setCurrentRequest((curr) =>
+              curr && curr.requestId === latest.requestId
+                ? {
+                    ...curr,
+                    tags: d.tags || [],
+                    notes: d.notes || "",
+                    isTopCustomer: !!d.isTopCustomer,
+                  }
+                : curr
+            );
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // network blip — the poll will retry
+    }
+  }, []);
+
+  // Reconcile on mount and on every (re)connect (connected flips false→true).
+  useEffect(() => {
+    if (connected) reconcile();
+  }, [connected, reconcile]);
+
+  // Slow poll as a safety net even while nominally connected.
+  useEffect(() => {
+    const id = setInterval(reconcile, 8000);
+    return () => clearInterval(id);
+  }, [reconcile]);
+
   const handleApprove = useCallback(
     async (requestId: string, stampsAwarded: number, redeem: boolean) => {
       const res = await fetch(`/api/stamp-request/${requestId}`, {

@@ -4,6 +4,45 @@ import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
 import { countPerkDrinksToday } from "@/lib/perk";
 
+// GET: the current status of a single request. The customer card polls this
+// while "waiting" so a resolved request (approved/rejected) is never missed if
+// the live WebSocket frame was dropped (idle tab, reconnect, redeploy).
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  await connectDB();
+
+  const request = await StampRequest.findById(id).lean();
+  if (!request) {
+    // TTL may have swept an expired pending row — treat as no longer actionable.
+    return NextResponse.json({ status: "expired" });
+  }
+
+  const payload: any = {
+    status: request.status,
+    stampsAwarded: request.stampsAwarded ?? 0,
+    redeemed: !!request.redeem,
+  };
+
+  if (request.status === "approved") {
+    const stampCard = await StampCard.findOne({
+      shop: request.shop,
+      customer: request.customer,
+    }).lean();
+    if (stampCard) {
+      payload.stampCard = {
+        stamps: stampCard.stamps,
+        totalEarned: stampCard.totalEarned,
+        freeRedeemed: stampCard.freeRedeemed,
+      };
+    }
+  }
+
+  return NextResponse.json(payload);
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
