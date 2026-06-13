@@ -112,6 +112,19 @@ export default function BlogPost() {
             </p>
           </div>
 
+          <figure className="mb-14 flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/blog/corporate-perk-card.png"
+              alt="Brewstamp corporate perk card on a phone — Nexus Technologies staff coffee perk showing two of two free coffees left today"
+              className="w-full max-w-[280px] rounded-[2rem] border border-stone-200 shadow-xl"
+            />
+            <figcaption className="mt-4 text-center text-sm text-stone-400">
+              The staff-facing card — branded to the company, with a subtle
+              pattern and a daily free-coffee cap.
+            </figcaption>
+          </figure>
+
           <section className="mb-14">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
