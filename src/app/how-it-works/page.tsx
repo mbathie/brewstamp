@@ -194,7 +194,7 @@ export default function HowItWorksPage() {
             <div>
               <StepEyebrow n={2} icon={Printer} label="Print your QR code" />
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-                One QR code on the counter
+                Place your QR code on the counter
               </h2>
               <p className="mt-4 text-base leading-relaxed text-stone-600">
                 Print your QR poster from the dashboard and stand it where
