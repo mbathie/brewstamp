@@ -821,37 +821,44 @@ export async function sendGoLiveNudgeEmail({
     greeting: string;
     p1: string;
     p2: string;
+    p3: string;
     cta: string;
     ps: string;
     signoff: string;
   };
   const name = merchantName || "there";
+  const ctaUrl = utm("/dashboard/settings", "go-live-nudge");
+  const link = (text: string) =>
+    `<a href="${ctaUrl}" style="color:#b45309;text-decoration:underline;">${text}</a>`;
   const COPY: Record<string, Copy> = {
     en: {
       subject: `${shopName} is set up — let's get your first customer`,
       greeting: `Hi ${name},`,
-      p1: `You set up <strong>${shopName}</strong>'s loyalty card — nice work. There's one step left, and it's the one that counts: put your QR code where customers can actually scan it.`,
-      p2: `Print the QR poster from Shop Setup, pop it on the counter or by the till, and you're live. Customers scan with their phone, you tap approve — that's the whole loop, with no app for anyone to download.`,
-      cta: `Print your QR code`,
-      ps: `Already up and running and this missed it? Just reply — I read every email.`,
+      p1: `You set up <strong>${shopName}</strong>'s loyalty card and it's looking sharp. One step left — and it's the one that actually brings customers back: getting your QR code in front of them.`,
+      p2: `Open the ${link("Shop Setup menu")} to grab your printable poster, then pop it <strong>right by the register, at eye level</strong> — your customers are already pausing to pay with their phone in hand, so it's the perfect moment to scan. Something like this:`,
+      p3: `From there it pretty much runs itself: they scan, you tap approve, they earn a stamp — no app, no fuss. Honestly the hardest part is deciding where to tape it.`,
+      cta: `Get your QR poster`,
+      ps: `Already up and running and this slipped through the cracks? Just hit reply — I read every email (usually before my first coffee).`,
       signoff: `Cheers,<br/>Mark at Brewstamp`,
     },
     es: {
       subject: `${shopName} ya está listo — consigue tu primer cliente`,
       greeting: `Hola ${name}:`,
-      p1: `Ya configuraste la tarjeta de fidelidad de <strong>${shopName}</strong> — ¡bien hecho! Solo queda un paso, y es el que cuenta: pon tu código QR donde tus clientes puedan escanearlo.`,
-      p2: `Imprime el póster con el QR desde Configuración de la tienda, ponlo en el mostrador o junto a la caja, y ya estarás en marcha. Tus clientes escanean con el móvil, tú tocas aprobar — ese es todo el proceso, sin que nadie tenga que descargar una app.`,
-      cta: `Imprime tu código QR`,
-      ps: `¿Ya estás en marcha y esto se nos pasó? Responde y avísame — leo todos los correos.`,
+      p1: `Ya configuraste la tarjeta de fidelidad de <strong>${shopName}</strong> y se ve genial. Solo queda un paso, y es el que de verdad hace que los clientes vuelvan: poner tu código QR donde puedan verlo.`,
+      p2: `Abre el menú ${link("Configuración de la tienda")} para conseguir tu póster imprimible, y ponlo <strong>justo al lado de la caja, a la altura de los ojos</strong> — tus clientes ya están pagando con el móvil en la mano, así que es el momento perfecto para escanear. Algo así:`,
+      p3: `A partir de ahí casi se gestiona solo: escanean, tú tocas aprobar, y ganan un sello — sin apps, sin líos. Lo más difícil será decidir dónde pegarlo.`,
+      cta: `Consigue tu póster con el QR`,
+      ps: `¿Ya estás en marcha y esto se nos coló? Responde sin más — leo todos los correos (normalmente antes del primer café).`,
       signoff: `Un saludo,<br/>Mark de Brewstamp`,
     },
     ar: {
       subject: `تم إعداد ${shopName} — لنحصل على أول عميل لك`,
       greeting: `مرحباً ${name}،`,
-      p1: `لقد أعددت بطاقة الولاء لـ <strong>${shopName}</strong> — عمل رائع. تبقّت خطوة واحدة فقط، وهي الأهم: ضع رمز QR في مكان يستطيع العملاء مسحه ضوئياً.`,
-      p2: `اطبع ملصق رمز QR من إعدادات المتجر، وضعه على الطاولة أو بجانب الصندوق، وستكون جاهزاً. يمسح العملاء بهواتفهم، وتضغط أنت على "موافقة" — هذه هي العملية بأكملها، دون الحاجة إلى تنزيل أي تطبيق.`,
-      cta: `اطبع رمز QR الخاص بك`,
-      ps: `هل أنت جاهز بالفعل وفاتَنا ذلك؟ ردّ وأخبرني — أقرأ كل رسالة.`,
+      p1: `لقد أعددت بطاقة الولاء لـ <strong>${shopName}</strong> وتبدو رائعة. تبقّت خطوة واحدة فقط، وهي التي تُعيد العملاء فعلاً: ضع رمز QR في مكان يراه الجميع.`,
+      p2: `افتح قائمة ${link("إعدادات المتجر")} للحصول على ملصقك القابل للطباعة، ثم ضعه <strong>بجانب الصندوق تماماً وعلى مستوى النظر</strong> — فعملاؤك يدفعون أصلاً وهواتفهم في أيديهم، وهذه هي اللحظة المثالية للمسح. شيءٌ كهذا:`,
+      p3: `بعد ذلك يسير الأمر تلقائياً تقريباً: يمسحون، وتضغط أنت على "موافقة"، فيحصلون على ختم — دون أي تطبيق ودون تعقيد. أصعب ما في الأمر هو اختيار المكان المناسب للصقه!`,
+      cta: `احصل على ملصق رمز QR`,
+      ps: `هل أنت جاهز بالفعل وفاتَنا ذلك؟ ردّ ببساطة — أقرأ كل رسالة (عادةً قبل قهوتي الأولى).`,
       signoff: `تحياتي،<br/>Mark من Brewstamp`,
     },
   };
@@ -859,7 +866,6 @@ export async function sendGoLiveNudgeEmail({
   const rtl = language === "ar";
   const dir = rtl ? "rtl" : "ltr";
   const align = rtl ? "right" : "left";
-  const ctaUrl = utm("/dashboard/settings", "go-live-nudge");
 
   const html = `
 <!DOCTYPE html>
@@ -880,7 +886,9 @@ export async function sendGoLiveNudgeEmail({
       <td dir="${dir}" style="padding:32px 24px 24px; text-align:${align};">
         <p style="margin:0 0 16px; font-size:16px; color:#1c1917; line-height:1.6;">${c.greeting}</p>
         <p style="margin:0 0 16px; font-size:16px; color:#57534e; line-height:1.6;">${c.p1}</p>
-        <p style="margin:0 0 24px; font-size:16px; color:#57534e; line-height:1.6;">${c.p2}</p>
+        <p style="margin:0 0 16px; font-size:16px; color:#57534e; line-height:1.6;">${c.p2}</p>
+        <img src="https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1104&h=620&fit=crop" alt="A QR loyalty poster on a cafe front counter" width="552" style="display:block; width:100%; max-width:552px; height:auto; border-radius:12px; margin:0 0 20px;" />
+        <p style="margin:0 0 24px; font-size:16px; color:#57534e; line-height:1.6;">${c.p3}</p>
         <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
           <tr><td style="border-radius:8px; background-color:#b45309;">
             <a href="${ctaUrl}" style="display:inline-block; padding:12px 28px; font-size:16px; font-weight:600; color:#ffffff; text-decoration:none;">${c.cta}</a>
