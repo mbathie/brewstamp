@@ -44,6 +44,15 @@ const id = {
   noAppRequired: "Tanpa aplikasi · Bekerja di semua HP",
 
   poweredBy: "Didukung oleh",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "Perbarui detail",
+  yourDetails: "Detail Anda",
+  back: "Kembali",
+  saveChanges: "Simpan perubahan",
+  saving: "Menyimpan…",
+  detailsUpdated: "Detail diperbarui",
+  couldNotSave: "Tidak dapat menyimpan perubahan — coba lagi.",
 } as const;
 
 export default id;

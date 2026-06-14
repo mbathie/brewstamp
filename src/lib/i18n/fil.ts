@@ -44,6 +44,15 @@ const fil = {
   noAppRequired: "Walang app · Gumagana sa anumang phone",
 
   poweredBy: "Pinapatakbo ng",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "I-update ang mga detalye",
+  yourDetails: "Iyong mga detalye",
+  back: "Bumalik",
+  saveChanges: "I-save ang mga pagbabago",
+  saving: "Sine-save…",
+  detailsUpdated: "Na-update ang mga detalye",
+  couldNotSave: "Hindi ma-save ang mga pagbabago — subukang muli.",
 } as const;
 
 export default fil;

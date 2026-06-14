@@ -44,6 +44,15 @@ const hi = {
   noAppRequired: "ऐप नहीं चाहिए · हर फ़ोन पर चलता है",
 
   poweredBy: "द्वारा संचालित",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "विवरण अपडेट करें",
+  yourDetails: "आपका विवरण",
+  back: "वापस",
+  saveChanges: "बदलाव सहेजें",
+  saving: "सहेजा जा रहा है…",
+  detailsUpdated: "विवरण अपडेट हो गया",
+  couldNotSave: "बदलाव सहेजे नहीं जा सके — फिर से प्रयास करें।",
 } as const;
 
 export default hi;

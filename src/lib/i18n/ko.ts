@@ -45,6 +45,15 @@ const ko = {
   noAppRequired: "앱 설치 불필요 · 모든 스마트폰 호환",
 
   poweredBy: "제공",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "정보 수정",
+  yourDetails: "내 정보",
+  back: "뒤로",
+  saveChanges: "변경사항 저장",
+  saving: "저장 중…",
+  detailsUpdated: "정보가 업데이트되었습니다",
+  couldNotSave: "변경사항을 저장하지 못했습니다 — 다시 시도해 주세요.",
 } as const;
 
 export default ko;

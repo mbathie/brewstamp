@@ -46,6 +46,15 @@ const ar = {
   noAppRequired: "بدون تطبيق · يعمل على أي هاتف",
 
   poweredBy: "مدعوم من",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "تحديث التفاصيل",
+  yourDetails: "بياناتك",
+  back: "رجوع",
+  saveChanges: "حفظ التغييرات",
+  saving: "جارٍ الحفظ…",
+  detailsUpdated: "تم تحديث البيانات",
+  couldNotSave: "تعذّر حفظ التغييرات — حاول مرة أخرى.",
 } as const;
 
 export default ar;

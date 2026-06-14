@@ -45,6 +45,15 @@ const ja = {
   noAppRequired: "アプリ不要 · どのスマホでも",
 
   poweredBy: "提供",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "詳細を更新",
+  yourDetails: "あなたの情報",
+  back: "戻る",
+  saveChanges: "変更を保存",
+  saving: "保存中…",
+  detailsUpdated: "情報を更新しました",
+  couldNotSave: "変更を保存できませんでした。もう一度お試しください。",
 } as const;
 
 export default ja;

@@ -46,6 +46,15 @@ const pt = {
   noAppRequired: "Sem app · Funciona em qualquer telemóvel",
 
   poweredBy: "Tecnologia",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "Atualizar dados",
+  yourDetails: "Seus dados",
+  back: "Voltar",
+  saveChanges: "Salvar alterações",
+  saving: "Salvando…",
+  detailsUpdated: "Dados atualizados",
+  couldNotSave: "Não foi possível salvar as alterações — tente novamente.",
 } as const;
 
 export default pt;

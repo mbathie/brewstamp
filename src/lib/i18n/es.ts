@@ -46,6 +46,15 @@ const es = {
   noAppRequired: "Sin app · Funciona en cualquier teléfono",
 
   poweredBy: "Hecho con",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "Actualizar datos",
+  yourDetails: "Tus datos",
+  back: "Atrás",
+  saveChanges: "Guardar cambios",
+  saving: "Guardando…",
+  detailsUpdated: "Datos actualizados",
+  couldNotSave: "No se pudieron guardar los cambios — inténtalo de nuevo.",
 } as const;
 
 export default es;

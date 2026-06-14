@@ -46,6 +46,15 @@ const fr = {
   noAppRequired: "Aucune appli requise · Fonctionne sur tous les téléphones",
 
   poweredBy: "Propulsé par",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "Modifier mes infos",
+  yourDetails: "Vos informations",
+  back: "Retour",
+  saveChanges: "Enregistrer les modifications",
+  saving: "Enregistrement…",
+  detailsUpdated: "Informations mises à jour",
+  couldNotSave: "Impossible d'enregistrer les modifications — réessayez.",
 } as const;
 
 export default fr;

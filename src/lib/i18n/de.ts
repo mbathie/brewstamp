@@ -46,6 +46,15 @@ const de = {
   noAppRequired: "Keine App nötig · Auf jedem Handy",
 
   poweredBy: "Bereitgestellt von",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "Daten aktualisieren",
+  yourDetails: "Deine Daten",
+  back: "Zurück",
+  saveChanges: "Änderungen speichern",
+  saving: "Wird gespeichert…",
+  detailsUpdated: "Daten aktualisiert",
+  couldNotSave: "Änderungen konnten nicht gespeichert werden — bitte erneut versuchen.",
 } as const;
 
 export default de;

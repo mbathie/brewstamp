@@ -44,6 +44,15 @@ const zh = {
   noAppRequired: "无需 App · 任何手机都能用",
 
   poweredBy: "技术支持",
+
+  // Customer edit-details flow (synced from en.ts)
+  updateDetails: "更新信息",
+  yourDetails: "您的信息",
+  back: "返回",
+  saveChanges: "保存更改",
+  saving: "保存中…",
+  detailsUpdated: "信息已更新",
+  couldNotSave: "无法保存更改，请重试。",
 } as const;
 
 export default zh;
