@@ -95,25 +95,46 @@ export default async function DashboardPage({
   const { init } = await searchParams;
 
   const perkMode = !!merchant.shop.perkMode;
-  const [hasActivity, earnedAgg, hasPerkRedemption] = await Promise.all([
-    StampRequest.exists({ shop: merchant.shop._id }),
-    StampCard.aggregate([
-      { $match: { shop: merchant.shop._id } },
-      { $group: { _id: null, total: { $sum: "$totalEarned" } } },
-    ]),
-    // Perk shops never award stamps, so onboarding completes on the first
-    // approved free coffee instead of the first stamp earned.
-    perkMode
-      ? StampRequest.exists({
-          shop: merchant.shop._id,
-          status: "approved",
-          redeem: true,
-        })
-      : Promise.resolve(null),
-  ]);
-  const hasEarnedStamps = perkMode
-    ? !!hasPerkRedemption
-    : (earnedAgg[0]?.total ?? 0) > 0;
+  const [hasActivity, earnedAgg, hasPerkRedemption, activeDaysAgg] =
+    await Promise.all([
+      StampRequest.exists({ shop: merchant.shop._id }),
+      StampCard.aggregate([
+        { $match: { shop: merchant.shop._id } },
+        { $group: { _id: null, total: { $sum: "$totalEarned" } } },
+      ]),
+      // Perk shops never award stamps, so onboarding completes on the first
+      // approved free coffee instead of the first stamp earned.
+      perkMode
+        ? StampRequest.exists({
+            shop: merchant.shop._id,
+            status: "approved",
+            redeem: true,
+          })
+        : Promise.resolve(null),
+      // Distinct days with an approved request. A one-session setup test is a
+      // single day; real recurring use spans multiple days.
+      StampRequest.aggregate([
+        { $match: { shop: merchant.shop._id, status: "approved" } },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+          },
+        },
+        { $count: "days" },
+      ]),
+    ]);
+  const totalEarned = earnedAgg[0]?.total ?? 0;
+  const hasEarnedStamps = perkMode ? !!hasPerkRedemption : totalEarned > 0;
+  const activeDays = activeDaysAgg[0]?.days ?? 0;
+
+  // "Launched" = real recurring use, not just a setup test. A couple of test
+  // stamps in one sitting shouldn't retire the go-live checklist — keep nudging
+  // until activity spans 2+ days or clears a small volume bar.
+  const isLaunched = perkMode
+    ? hasEarnedStamps
+    : activeDays >= 2 || totalEarned >= 10;
 
   const needsProfileUpdate =
     !merchant.user.phone ||
@@ -133,7 +154,7 @@ export default async function DashboardPage({
       shopLogo={merchant.shop.logo || null}
       stampThreshold={merchant.shop.stampThreshold}
       perkMode={!!merchant.shop.perkMode}
-      isNewShop={init === "1" || !hasActivity}
+      isNewShop={init === "1" || !isLaunched}
       hasEarnedStamps={hasEarnedStamps}
       hasActivity={!!hasActivity}
       needsProfileUpdate={needsProfileUpdate}

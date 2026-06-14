@@ -85,10 +85,8 @@ interface ShopDetail {
     bgPattern: string;
     logo: boolean;
     createdAt: string;
-    dripDay1Sent: boolean;
-    dripDay3Sent: boolean;
-    dripDay7Sent: boolean;
-    dripDay14Sent: boolean;
+    goLiveNudgeSent: boolean;
+    upgradeNudgeSent: boolean;
     firstCustomerEmailSent: boolean;
     language: string;
     isPro: boolean;
@@ -419,10 +417,8 @@ export default function AdminShopDetailPage() {
   ];
   const outreachItems: Array<{ label: string; on: boolean }> = [
     { label: "1st-stamp email", on: !!shop.firstCustomerEmailSent },
-    { label: "Day 1 drip", on: !!shop.dripDay1Sent },
-    { label: "Day 3 drip", on: !!shop.dripDay3Sent },
-    { label: "Day 7 drip", on: !!shop.dripDay7Sent },
-    { label: "Day 14 drip", on: !!shop.dripDay14Sent },
+    { label: "Go-live nudge", on: !!shop.goLiveNudgeSent },
+    { label: "Upgrade nudge", on: !!shop.upgradeNudgeSent },
   ];
 
   const referrer = shop.owner.signupReferrer || "";

@@ -642,276 +642,6 @@ ${dashboardLink}`;
   }
 }
 
-export async function sendDay1WelcomeEmail({
-  to,
-  merchantName,
-  shopName,
-}: {
-  to: string;
-  merchantName: string;
-  shopName: string;
-}) {
-  const dashboardLink = utm("/dashboard", "drip-day1");
-
-  const text = `Hey ${merchantName},
-
-Mark from Brewstamp here. Just saw you signed ${shopName} up yesterday — welcome aboard.
-
-Quick heads-up: every scan of your QR code auto-creates a stamp request, so if you've been kicking the tyres your dashboard probably has a few "rejected" entries from your own testing. That's totally normal. If you'd like me to clear out the test data before your first real customer comes in, just reply.
-
-Anything else — questions, snags, feedback on the product — reply to this email and it lands straight in my inbox.
-
-Cheers,
-Mark Bathie
-Founder / CEO, Brewstamp
-${dashboardLink}`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
-  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
-    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
-    <p style="margin: 0 0 16px;">Mark from Brewstamp here. Just saw you signed <strong>${shopName}</strong> up yesterday &mdash; welcome aboard.</p>
-    <p style="margin: 0 0 16px;">Quick heads-up: every scan of your QR code auto-creates a stamp request, so if you&rsquo;ve been kicking the tyres your dashboard probably has a few &ldquo;rejected&rdquo; entries from your own testing. That&rsquo;s totally normal. If you&rsquo;d like me to clear out the test data before your first real customer comes in, just reply.</p>
-    <p style="margin: 0 0 16px;">Anything else &mdash; questions, snags, feedback on the product &mdash; reply to this email and it lands straight in my inbox.</p>
-    <p style="margin: 24px 0 4px;">Cheers,</p>
-    <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Mark Bathie</strong></p>
-    <p style="margin: 0; font-size: 14px; color: #78716c;">Founder / CEO, Brewstamp</p>
-    <p style="margin: 4px 0 0;"><a href="${dashboardLink}" style="color: #b45309; font-size: 14px;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
-  </div>
-</body>
-</html>`;
-
-  try {
-    const info = await transporter.sendMail({
-      from: FROM_PERSONAL,
-      replyTo: REPLY_TO,
-      to,
-      subject: `How's the setup going at ${shopName}?`,
-      text,
-      html,
-      headers: {
-        "X-Mailin-Tag": "drip-day1",
-        "List-Unsubscribe": LIST_UNSUBSCRIBE,
-      },
-    });
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error("[Email] Failed to send day 1 welcome email:", error);
-    return { success: false, error };
-  }
-}
-
-export async function sendDay3NudgeEmail({
-  to,
-  merchantName,
-  shopName,
-}: {
-  to: string;
-  merchantName: string;
-  shopName: string;
-}) {
-  const dashboardLink = utm("/dashboard", "drip-day3");
-
-  const text = `Hey ${merchantName},
-
-Just checking in on ${shopName} \u2014 saw you set things up a few days ago.
-
-If you have a sec, the one thing that gets the ball rolling is printing your QR code and putting it somewhere customers can see it (next to the register works well). You can grab the PDF here:
-
-${dashboardLink}
-
-If you've hit a snag with anything, just reply to this email and I'll help you sort it out.
-
-Cheers,
-Mark
-Brewstamp`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
-  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
-    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
-    <p style="margin: 0 0 16px;">Just checking in on <strong>${shopName}</strong> &mdash; saw you set things up a few days ago.</p>
-    <p style="margin: 0 0 16px;">If you have a sec, the one thing that gets the ball rolling is printing your QR code and putting it somewhere customers can see it (next to the register works well). You can grab the PDF here:</p>
-    <p style="margin: 0 0 16px;"><a href="${dashboardLink}" style="color: #b45309;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
-    <p style="margin: 0 0 16px;">If you&rsquo;ve hit a snag with anything, just reply to this email and I&rsquo;ll help you sort it out.</p>
-    <p style="margin: 0 0 4px;">Cheers,<br/>Mark<br/><span style="color: #78716c; font-size: 14px;">Brewstamp</span></p>
-  </div>
-</body>
-</html>`;
-
-  try {
-    const info = await transporter.sendMail({
-      from: FROM_PERSONAL,
-      replyTo: REPLY_TO,
-      to,
-      subject: `Quick check-in on ${shopName}`,
-      text,
-      html,
-      headers: {
-        "X-Mailin-Tag": "drip-day3",
-        "List-Unsubscribe": LIST_UNSUBSCRIBE,
-      },
-    });
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error("[Email] Failed to send day 3 nudge email:", error);
-    return { success: false, error };
-  }
-}
-
-export async function sendDay7FollowUpEmail({
-  to,
-  merchantName,
-  shopName,
-  stamps = 0,
-}: {
-  to: string;
-  merchantName: string;
-  shopName: string;
-  stamps?: number;
-}) {
-  const dashboardLink = utm("/dashboard", "drip-day7");
-  const stampsLine = stamps > 0
-    ? `You&rsquo;ve had ${stamps} stamp${stamps === 1 ? "" : "s"} come through so far &mdash; nice start.`
-    : `Your loyalty card is live, just no stamps through yet.`;
-  const stampsLineText = stamps > 0
-    ? `You've had ${stamps} stamp${stamps === 1 ? "" : "s"} come through so far \u2014 nice start.`
-    : `Your loyalty card is live, just no stamps through yet.`;
-
-  const text = `Hey ${merchantName},
-
-It's been about a week since you set up ${shopName}. ${stampsLineText}
-
-If you'd like, I'm happy to jump on a quick call (or just trade emails) and walk through what's working for other cafes \u2014 what to put on the counter, how to mention it at checkout, that sort of thing. No pitch, just whatever is useful.
-
-Just reply to this email and let me know.
-
-Otherwise, here's your dashboard if you want to poke around:
-${dashboardLink}
-
-Cheers,
-Mark
-Brewstamp`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
-  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
-    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
-    <p style="margin: 0 0 16px;">It&rsquo;s been about a week since you set up <strong>${shopName}</strong>. ${stampsLine}</p>
-    <p style="margin: 0 0 16px;">If you&rsquo;d like, I&rsquo;m happy to jump on a quick call (or just trade emails) and walk through what&rsquo;s working for other cafes &mdash; what to put on the counter, how to mention it at checkout, that sort of thing. No pitch, just whatever is useful.</p>
-    <p style="margin: 0 0 16px;">Just reply to this email and let me know.</p>
-    <p style="margin: 0 0 16px;">Otherwise, here&rsquo;s your dashboard if you want to poke around:<br/><a href="${dashboardLink}" style="color: #b45309;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
-    <p style="margin: 0 0 4px;">Cheers,<br/>Mark<br/><span style="color: #78716c; font-size: 14px;">Brewstamp</span></p>
-  </div>
-</body>
-</html>`;
-
-  try {
-    const info = await transporter.sendMail({
-      from: FROM_PERSONAL,
-      replyTo: REPLY_TO,
-      to,
-      subject: `Want a hand getting ${shopName} going?`,
-      text,
-      html,
-      headers: {
-        "X-Mailin-Tag": "drip-day7",
-        "List-Unsubscribe": LIST_UNSUBSCRIBE,
-      },
-    });
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error("[Email] Failed to send day 7 follow-up email:", error);
-    return { success: false, error };
-  }
-}
-
-export async function sendDay14ReengagementEmail({
-  to,
-  merchantName,
-  shopName,
-  stamps = 0,
-}: {
-  to: string;
-  merchantName: string;
-  shopName: string;
-  stamps?: number;
-}) {
-  const dashboardLink = utm("/dashboard", "drip-day14");
-  const stampsLine = stamps > 0
-    ? `You&rsquo;ve had ${stamps} stamp${stamps === 1 ? "" : "s"} come through, so something&rsquo;s working.`
-    : `I noticed you haven&rsquo;t had any stamps come through yet.`;
-  const stampsLineText = stamps > 0
-    ? `You've had ${stamps} stamp${stamps === 1 ? "" : "s"} come through, so something's working.`
-    : `I noticed you haven't had any stamps come through yet.`;
-
-  const text = `Hey ${merchantName},
-
-It's been a couple of weeks since you set up ${shopName}. ${stampsLineText}
-
-If something has been getting in the way — printing the QR code, getting it in front of customers, anything else — let me know. Genuinely happy to help you sort it out, or to hear it's just not the right fit. Either is useful.
-
-Just hit reply.
-
-Cheers,
-Mark
-Brewstamp
-
-(Dashboard: ${dashboardLink})`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #1c1917;">
-  <div style="max-width: 560px; margin: 0 auto; font-size: 16px; line-height: 1.6;">
-    <p style="margin: 0 0 16px;">Hey ${merchantName},</p>
-    <p style="margin: 0 0 16px;">It&rsquo;s been a couple of weeks since you set up <strong>${shopName}</strong>. ${stampsLine}</p>
-    <p style="margin: 0 0 16px;">If something has been getting in the way &mdash; printing the QR code, getting it in front of customers, anything else &mdash; let me know. Genuinely happy to help you sort it out, or to hear it&rsquo;s just not the right fit. Either is useful.</p>
-    <p style="margin: 0 0 16px;">Just hit reply.</p>
-    <p style="margin: 0 0 4px;">Cheers,<br/>Mark<br/><span style="color: #78716c; font-size: 14px;">Brewstamp</span></p>
-    <p style="margin: 24px 0 0; font-size: 13px; color: #78716c;">Dashboard: <a href="${dashboardLink}" style="color: #78716c;">${APP_URL.replace(/^https?:\/\//, "")}/dashboard</a></p>
-  </div>
-</body>
-</html>`;
-
-  try {
-    const info = await transporter.sendMail({
-      from: FROM_PERSONAL,
-      replyTo: REPLY_TO,
-      to,
-      subject: `Need a hand setting up ${shopName}?`,
-      text,
-      html,
-      headers: {
-        "X-Mailin-Tag": "drip-day14",
-        "List-Unsubscribe": LIST_UNSUBSCRIBE,
-      },
-    });
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error("[Email] Failed to send day 14 re-engagement email:", error);
-    return { success: false, error };
-  }
-}
-
 export async function sendUpgradeNudgeEmail({
   to,
   merchantName,
@@ -1068,6 +798,123 @@ The Brewstamp team`;
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("[Email] Failed to send team invite email:", error);
+    return { success: false, error };
+  }
+}
+
+// Behaviour-triggered "go live" nudge — replaces the old day-1/3/7/14 calendar
+// drip. Sent once to shops that set up + tested their card but never went live.
+// Localised by the shop's language (en fallback), RTL-aware for Arabic.
+export async function sendGoLiveNudgeEmail({
+  to,
+  merchantName,
+  shopName,
+  language = "en",
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  language?: string;
+}) {
+  type Copy = {
+    subject: string;
+    greeting: string;
+    p1: string;
+    p2: string;
+    cta: string;
+    ps: string;
+    signoff: string;
+  };
+  const name = merchantName || "there";
+  const COPY: Record<string, Copy> = {
+    en: {
+      subject: `${shopName} is set up — let's get your first customer`,
+      greeting: `Hi ${name},`,
+      p1: `You set up <strong>${shopName}</strong>'s loyalty card — nice work. There's one step left, and it's the one that counts: put your QR code where customers can actually scan it.`,
+      p2: `Print the QR poster from Shop Setup, pop it on the counter or by the till, and you're live. Customers scan with their phone, you tap approve — that's the whole loop, with no app for anyone to download.`,
+      cta: `Print your QR code`,
+      ps: `Already up and running and this missed it? Just reply — I read every email.`,
+      signoff: `Cheers,<br/>Mark at Brewstamp`,
+    },
+    es: {
+      subject: `${shopName} ya está listo — consigue tu primer cliente`,
+      greeting: `Hola ${name}:`,
+      p1: `Ya configuraste la tarjeta de fidelidad de <strong>${shopName}</strong> — ¡bien hecho! Solo queda un paso, y es el que cuenta: pon tu código QR donde tus clientes puedan escanearlo.`,
+      p2: `Imprime el póster con el QR desde Configuración de la tienda, ponlo en el mostrador o junto a la caja, y ya estarás en marcha. Tus clientes escanean con el móvil, tú tocas aprobar — ese es todo el proceso, sin que nadie tenga que descargar una app.`,
+      cta: `Imprime tu código QR`,
+      ps: `¿Ya estás en marcha y esto se nos pasó? Responde y avísame — leo todos los correos.`,
+      signoff: `Un saludo,<br/>Mark de Brewstamp`,
+    },
+    ar: {
+      subject: `تم إعداد ${shopName} — لنحصل على أول عميل لك`,
+      greeting: `مرحباً ${name}،`,
+      p1: `لقد أعددت بطاقة الولاء لـ <strong>${shopName}</strong> — عمل رائع. تبقّت خطوة واحدة فقط، وهي الأهم: ضع رمز QR في مكان يستطيع العملاء مسحه ضوئياً.`,
+      p2: `اطبع ملصق رمز QR من إعدادات المتجر، وضعه على الطاولة أو بجانب الصندوق، وستكون جاهزاً. يمسح العملاء بهواتفهم، وتضغط أنت على "موافقة" — هذه هي العملية بأكملها، دون الحاجة إلى تنزيل أي تطبيق.`,
+      cta: `اطبع رمز QR الخاص بك`,
+      ps: `هل أنت جاهز بالفعل وفاتَنا ذلك؟ ردّ وأخبرني — أقرأ كل رسالة.`,
+      signoff: `تحياتي،<br/>Mark من Brewstamp`,
+    },
+  };
+  const c = COPY[language] || COPY.en;
+  const rtl = language === "ar";
+  const dir = rtl ? "rtl" : "ltr";
+  const align = rtl ? "right" : "left";
+  const ctaUrl = utm("/dashboard/settings", "go-live-nudge");
+
+  const html = `
+<!DOCTYPE html>
+<html dir="${dir}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${c.subject}</title>
+</head>
+<body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; background-color:#fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff;">
+    <tr>
+      <td style="background-color:#1c1917; padding:32px 24px; text-align:center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display:block; margin:0 auto;" />
+      </td>
+    </tr>
+    <tr>
+      <td dir="${dir}" style="padding:32px 24px 24px; text-align:${align};">
+        <p style="margin:0 0 16px; font-size:16px; color:#1c1917; line-height:1.6;">${c.greeting}</p>
+        <p style="margin:0 0 16px; font-size:16px; color:#57534e; line-height:1.6;">${c.p1}</p>
+        <p style="margin:0 0 24px; font-size:16px; color:#57534e; line-height:1.6;">${c.p2}</p>
+        <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+          <tr><td style="border-radius:8px; background-color:#b45309;">
+            <a href="${ctaUrl}" style="display:inline-block; padding:12px 28px; font-size:16px; font-weight:600; color:#ffffff; text-decoration:none;">${c.cta}</a>
+          </td></tr>
+        </table>
+        <p style="margin:0 0 16px; font-size:14px; color:#78716c; line-height:1.6;">${c.ps}</p>
+        <p style="margin:0; font-size:16px; color:#57534e; line-height:1.6;">${c.signoff}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#1c1917; padding:24px; text-align:center;">
+        <p style="margin:0 0 4px; color:#a8a29e; font-size:13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin:0; color:#78716c; font-size:12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: c.subject,
+      html,
+      headers: {
+        "X-Mailin-Tag": "go-live-nudge",
+        "List-Unsubscribe": LIST_UNSUBSCRIBE,
+      },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send go-live nudge email:", error);
     return { success: false, error };
   }
 }

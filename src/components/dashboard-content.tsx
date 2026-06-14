@@ -397,6 +397,9 @@ export default function DashboardContent({
   const showSetup = isNewShop || !hasEarnedStamps;
   // Customers have been scanning but no stamp has actually been awarded yet.
   const stuckOnActivation = !isNewShop && hasActivity && !hasEarnedStamps;
+  // Set up and tested, but not yet running for real customers — reframe the
+  // checklist as "go live" rather than "welcome".
+  const testedNotLive = isNewShop && hasEarnedStamps;
 
   return (
     <div className="space-y-6">
@@ -409,7 +412,9 @@ export default function DashboardContent({
                   ? perkMode
                     ? "You're almost there — let's approve your first free coffee"
                     : "You're almost there — let's land your first stamp"
-                  : "Welcome! Let's get you set up"}
+                  : testedNotLive
+                    ? "You've tested it — now go live"
+                    : "Welcome! Let's get you set up"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -418,9 +423,13 @@ export default function DashboardContent({
                   ? perkMode
                     ? "Staff have started scanning your QR code but no free coffees have been approved yet. Walk through step 4 below to approve your first one."
                     : "Customers have started scanning your QR code but no stamps have been approved yet. Walk through step 4 below to award your first one."
-                  : perkMode
-                    ? "Follow these four steps to start serving free coffees to your staff."
-                    : "Follow these four steps to start collecting stamps from your customers."}
+                  : testedNotLive
+                    ? perkMode
+                      ? "Your perk is set up and tested. Put your QR code where staff can scan it to start serving free coffees for real."
+                      : "Your card is set up and tested. Put your QR code on the counter to start collecting stamps from real customers."
+                    : perkMode
+                      ? "Follow these four steps to start serving free coffees to your staff."
+                      : "Follow these four steps to start collecting stamps from your customers."}
               </p>
               <div className="space-y-5">
                 {needsProfileUpdate && (

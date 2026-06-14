@@ -3,14 +3,13 @@ import { connectDB } from "./mongoose";
 import Shop from "../models/Shop";
 import User from "../models/User";
 import StampCard from "../models/StampCard";
+import StampRequest from "../models/StampRequest";
 import Subscription from "../models/Subscription";
-import {
-  sendDay1WelcomeEmail,
-  sendDay3NudgeEmail,
-  sendDay7FollowUpEmail,
-  sendDay14ReengagementEmail,
-  sendUpgradeNudgeEmail,
-} from "./email";
+import { sendGoLiveNudgeEmail, sendUpgradeNudgeEmail } from "./email";
+
+// `User` is imported so its model is registered for the `populate("owner")`
+// calls below.
+void User;
 
 export function startDripCron() {
   // Daily at 8am AEDT
@@ -24,217 +23,104 @@ export async function runDripEmails() {
   await connectDB();
 
   const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-  // The lifecycle drip is written for stamp shops ("collect stamps", "first
-  // stamp", "free for 100 stamps"), so perk shops are excluded for now.
-  const notPerk = { perkMode: { $ne: true } };
-
-  // Day 1: shops created >= 1 day ago that haven't received the day 1 email
-  const day1Shops = await Shop.find({
-    ...notPerk,
-    createdAt: { $lte: oneDayAgo },
-    dripDay1Sent: { $ne: true },
-  }).populate("owner");
-
-  // Day 3: shops created >= 3 days ago that haven't received the day 3 email
-  const day3Shops = await Shop.find({
-    ...notPerk,
-    createdAt: { $lte: threeDaysAgo },
-    dripDay3Sent: { $ne: true },
-  }).populate("owner");
-
-  // Day 7: shops created >= 7 days ago that haven't received the day 7 email
-  const day7Shops = await Shop.find({
-    ...notPerk,
-    createdAt: { $lte: sevenDaysAgo },
-    dripDay7Sent: { $ne: true },
-  }).populate("owner");
-
-  // Day 14: shops created >= 14 days ago that haven't received the day 14 email
-  const day14Shops = await Shop.find({
-    ...notPerk,
-    createdAt: { $lte: fourteenDaysAgo },
-    dripDay14Sent: { $ne: true },
-  }).populate("owner");
-
-  // Collect all shop IDs to batch-query stamp counts
-  const allShopIds = [
-    ...day1Shops.map((s: any) => s._id),
-    ...day3Shops.map((s: any) => s._id),
-    ...day7Shops.map((s: any) => s._id),
-    ...day14Shops.map((s: any) => s._id),
-  ];
-
-  // Batch aggregate total stamps + customer count per shop. Customers is
-  // the count of stamp-card documents for the shop with totalEarned > 0
-  // (excludes anonymous cookies that never actually got a stamp).
-  const stampCounts = await StampCard.aggregate([
-    { $match: { shop: { $in: allShopIds } } },
-    {
-      $group: {
-        _id: "$shop",
-        total: { $sum: "$totalEarned" },
-        customers: {
-          $sum: { $cond: [{ $gt: ["$totalEarned", 0] }, 1, 0] },
-        },
-      },
-    },
-  ]);
-  const statsMap = new Map<string, { stamps: number; customers: number }>(
-    stampCounts.map((s: any) => [
-      s._id.toString(),
-      { stamps: s.total, customers: s.customers },
-    ]),
-  );
-
-  // Active Pro subscriptions — used to suppress drips once a shop pays.
-  // We re-check at send time (not at signup) so a shop that upgrades between
-  // Day 1 and Day 14 still gets the earlier drips but stops after upgrading.
-  const proShopIds = new Set(
-    (
-      await Subscription.find({
-        shop: { $in: allShopIds },
-        status: "active",
-      }).select("shop")
-    ).map((s: any) => s.shop.toString()),
-  );
 
   const isDev = process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? false;
   const EXCLUDED_EMAILS = ["mbathie@gmail.com"];
 
-  // Single source of truth for "is this shop active enough that the drip
-  // would be noise rather than helpful?" — any one signal suppresses.
-  //  · Pro: they've paid; onboarding drips read as spam.
-  //  · customers ≥ 10: multiple distinct people scanning = real adoption.
-  //  · stamps ≥ 50: high-volume activity catches the rare case where the
-  //    customer count looks off but the shop is clearly running.
-  function isEngaged(shopId: string): boolean {
-    if (proShopIds.has(shopId)) return true;
-    const s = statsMap.get(shopId);
-    if (!s) return false;
-    if (s.customers >= 10) return true;
-    if (s.stamps >= 50) return true;
-    return false;
-  }
+  // ── "Go live" nudge ───────────────────────────────────────────────────────
+  // One behaviour-triggered email, replacing the old day-1/3/7/14 calendar drip
+  // (which reached every stalled shop and converted none). Targets shops that
+  // set up their card — and maybe tested a couple of stamps — but never went
+  // live: branded, created 5+ days ago, not on Pro, not "engaged", and idle for
+  // a week. Sent once, in the shop's language.
+  const goLiveCandidates = await Shop.find({
+    perkMode: { $ne: true },
+    goLiveNudgeSent: { $ne: true },
+    createdAt: { $lte: fiveDaysAgo },
+  }).populate("owner");
 
-  // Process Day 1 emails
-  for (const shop of day1Shops) {
+  const goLiveIds = goLiveCandidates.map((s: any) => s._id);
+
+  const [goLiveStats, goLiveLastActivity, goLivePaid] = await Promise.all([
+    StampCard.aggregate([
+      { $match: { shop: { $in: goLiveIds } } },
+      {
+        $group: {
+          _id: "$shop",
+          stamps: { $sum: "$totalEarned" },
+          customers: { $sum: { $cond: [{ $gt: ["$totalEarned", 0] }, 1, 0] } },
+        },
+      },
+    ]),
+    StampRequest.aggregate([
+      { $match: { shop: { $in: goLiveIds }, status: "approved" } },
+      { $group: { _id: "$shop", last: { $max: "$createdAt" } } },
+    ]),
+    Subscription.find({ shop: { $in: goLiveIds }, status: "active" }).select(
+      "shop",
+    ),
+  ]);
+
+  const statsMap = new Map<string, { stamps: number; customers: number }>(
+    goLiveStats.map((s: any) => [
+      s._id.toString(),
+      { stamps: s.stamps, customers: s.customers },
+    ]),
+  );
+  const lastActivityMap = new Map<string, Date>(
+    goLiveLastActivity.map((r: any) => [r._id.toString(), r.last]),
+  );
+  const paidIds = new Set(goLivePaid.map((s: any) => s.shop.toString()));
+
+  const isBranded = (shop: any) =>
+    !!shop.logo ||
+    (shop.bgColor && shop.bgColor !== "stone-800") ||
+    (shop.fgColor && shop.fgColor !== "amber-600") ||
+    (shop.bgPattern && shop.bgPattern !== "none");
+
+  let goLiveCount = 0;
+  for (const shop of goLiveCandidates) {
+    const id = shop._id.toString();
+    const stats = statsMap.get(id);
+    const engaged =
+      paidIds.has(id) ||
+      (stats?.customers ?? 0) >= 10 ||
+      (stats?.stamps ?? 0) >= 50;
+    const last = lastActivityMap.get(id);
+    const idle = !last || last <= sevenDaysAgo;
+
+    // Not in the stalled state yet (not branded, already launched, or actively
+    // in use) — skip without marking, so a later run can re-evaluate.
+    if (!isBranded(shop) || engaged || !idle) continue;
+
+    // Qualifies — mark sent first so we only ever nudge once.
+    await Shop.updateOne({ _id: shop._id }, { goLiveNudgeSent: true });
+
     const owner = shop.owner as any;
-    if (!owner?.email) {
-      await Shop.updateOne({ _id: shop._id }, { dripDay1Sent: true });
-      continue;
-    }
+    if (!owner?.email || EXCLUDED_EMAILS.includes(owner.email)) continue;
 
-    const engaged = isEngaged(shop._id.toString());
-
-    // Mark as sent regardless (avoids re-evaluating daily)
-    await Shop.updateOne({ _id: shop._id }, { dripDay1Sent: true });
-
-    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
-    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
-      const to = isDev ? "mbathie@gmail.com" : owner.email;
-      await sendDay1WelcomeEmail({
-        to,
-        merchantName: owner.name,
-        shopName: shop.name,
-      });
-      console.log(`[Drip] Day 1 email sent to ${to} for shop "${shop.name}"`);
-    }
+    const to = isDev ? "mbathie@gmail.com" : owner.email;
+    await sendGoLiveNudgeEmail({
+      to,
+      merchantName: owner.name,
+      shopName: shop.name,
+      language: shop.language || "en",
+    });
+    console.log(`[Drip] Go-live nudge sent to ${to} for shop "${shop.name}"`);
+    goLiveCount++;
   }
 
-  // Process Day 3 emails
-  for (const shop of day3Shops) {
-    const owner = shop.owner as any;
-    if (!owner?.email) {
-      await Shop.updateOne({ _id: shop._id }, { dripDay3Sent: true });
-      continue;
-    }
-
-    const engaged = isEngaged(shop._id.toString());
-
-    // Mark as sent regardless (avoids re-evaluating daily)
-    await Shop.updateOne({ _id: shop._id }, { dripDay3Sent: true });
-
-    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
-    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
-      const to = isDev ? "mbathie@gmail.com" : owner.email;
-      await sendDay3NudgeEmail({
-        to,
-        merchantName: owner.name,
-        shopName: shop.name,
-      });
-      console.log(`[Drip] Day 3 email sent to ${to} for shop "${shop.name}"`);
-    }
-  }
-
-  // Process Day 7 emails
-  for (const shop of day7Shops) {
-    const owner = shop.owner as any;
-    if (!owner?.email) {
-      await Shop.updateOne({ _id: shop._id }, { dripDay7Sent: true });
-      continue;
-    }
-
-    const stats = statsMap.get(shop._id.toString());
-    const stamps = stats?.stamps ?? 0;
-    const engaged = isEngaged(shop._id.toString());
-
-    // Mark as sent regardless
-    await Shop.updateOne({ _id: shop._id }, { dripDay7Sent: true });
-
-    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
-    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
-      const to = isDev ? "mbathie@gmail.com" : owner.email;
-      await sendDay7FollowUpEmail({
-        to,
-        merchantName: owner.name,
-        shopName: shop.name,
-        stamps,
-      });
-      console.log(`[Drip] Day 7 email sent to ${to} for shop "${shop.name}"`);
-    }
-  }
-
-  // Process Day 14 emails
-  for (const shop of day14Shops) {
-    const owner = shop.owner as any;
-    if (!owner?.email) {
-      await Shop.updateOne({ _id: shop._id }, { dripDay14Sent: true });
-      continue;
-    }
-
-    const stats = statsMap.get(shop._id.toString());
-    const stamps = stats?.stamps ?? 0;
-    const engaged = isEngaged(shop._id.toString());
-
-    // Mark as sent regardless
-    await Shop.updateOne({ _id: shop._id }, { dripDay14Sent: true });
-
-    // Skip activated shops (Pro / 10+ customers / 50+ stamps) and excluded.
-    if (!engaged && !EXCLUDED_EMAILS.includes(owner.email)) {
-      const to = isDev ? "mbathie@gmail.com" : owner.email;
-      await sendDay14ReengagementEmail({
-        to,
-        merchantName: owner.name,
-        shopName: shop.name,
-        stamps,
-      });
-      console.log(`[Drip] Day 14 email sent to ${to} for shop "${shop.name}"`);
-    }
-  }
-
-  // Upgrade nudge: shops with 80+ stamps, no subscription, not yet notified
+  // ── Upgrade nudge ─────────────────────────────────────────────────────────
+  // Shops with 60+ stamps, no subscription, not yet notified. (The one
+  // lifecycle email with a real hit rate, so it stays.)
   const upgradeShops = await Shop.find({
     upgradeNudgeSent: { $ne: true },
   }).populate("owner");
 
   const upgradeShopIds = upgradeShops.map((s: any) => s._id);
 
-  // Get active subscriptions to exclude Pro shops
   const activeSubShopIds = new Set(
     (
       await Subscription.find({
@@ -244,7 +130,6 @@ export async function runDripEmails() {
     ).map((s: any) => s.shop.toString()),
   );
 
-  // Get stamp counts for these shops
   const upgradeStampCounts = await StampCard.aggregate([
     { $match: { shop: { $in: upgradeShopIds } } },
     { $group: { _id: "$shop", total: { $sum: "$totalEarned" } } },
@@ -258,10 +143,8 @@ export async function runDripEmails() {
     const shopIdStr = shop._id.toString();
     const stamps = upgradeStampMap.get(shopIdStr) || 0;
 
-    // Skip if under 60 stamps or already on Pro. 60 (rather than 80) gives
-    // shop owners more breathing room to react before they hit the 100-stamp
-    // free-tier ceiling — important because nothing in-app currently blocks
-    // them from going over.
+    // Skip if under 60 stamps or already on Pro. 60 (rather than 80) gives shop
+    // owners breathing room before they hit the 100-stamp free-tier ceiling.
     if (stamps < 60 || activeSubShopIds.has(shopIdStr)) continue;
 
     const owner = shop.owner as any;
@@ -283,6 +166,6 @@ export async function runDripEmails() {
   }
 
   console.log(
-    `[Drip] Run complete. Day 1: ${day1Shops.length}, Day 3: ${day3Shops.length}, Day 7: ${day7Shops.length}, Day 14: ${day14Shops.length}, Upgrade: ${upgradeCount} emails sent.`,
+    `[Drip] Run complete. Go-live nudges: ${goLiveCount}, Upgrade: ${upgradeCount} emails sent.`,
   );
 }

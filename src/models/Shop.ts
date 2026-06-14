@@ -32,12 +32,9 @@ const shopSchema = new mongoose.Schema(
     bgPattern: { type: String, default: "none" },
     language: { type: String, default: "en" },
     stripeCustomerId: { type: String },
-    dripDay1Sent: { type: Boolean, default: false },
-    dripDay3Sent: { type: Boolean, default: false },
-    dripDay7Sent: { type: Boolean, default: false },
-    dripDay14Sent: { type: Boolean, default: false },
     firstCustomerEmailSent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },
+    goLiveNudgeSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
