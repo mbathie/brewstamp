@@ -224,7 +224,7 @@ export default function Home() {
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-100 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
               Replace paper stamp cards with a <mark className="bg-amber-500/20 px-1 text-white">digital rewards program</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
-              collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No bulky, annoying app to download</mark>, no
+              collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No bulky, annoying app download</mark>, no
               account to create. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
