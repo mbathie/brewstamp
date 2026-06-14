@@ -4,6 +4,7 @@
 
 ## Product
 - [Coffee loyalty card app (home)](https://brewstamp.app/): What Brewstamp is, how it works, and why digital beats paper punch cards.
+- [How it works](https://brewstamp.app/how-it-works): The three-step setup — customise your branded card, print one QR code for the counter, and approve stamps from your phone or tablet.
 - [Coffee rewards app](https://brewstamp.app/coffee-rewards-app): The coffee rewards card with no app to download — scan, stamp, free coffee.
 - [Features](https://brewstamp.app/features): Full feature list across the Free, Pro, Plus, and Max plans.
 - [Pricing](https://brewstamp.app/pricing): Free, Pro ($7), Plus ($19), and Max ($29) plans compared side by side.

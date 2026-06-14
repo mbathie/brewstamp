@@ -147,7 +147,7 @@ export async function sendWelcomeEmail({
                   <td>
                     <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #1c1917;">Print and display your QR code</h3>
                     <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.5;">Download your unique QR code from the dashboard, print it out and place it at your point of sale so customers can easily scan it on their phones.</p>
-                    <img src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg" alt="QR code printed out on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
+                    <img src="https://brewstamp.app/cafe-loyalty-counter.jpg" alt="A customer scanning a Brewstamp QR loyalty card on a cafe counter" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 8px; margin: 0 0 12px;" />
                     <a href="${utm("/dashboard", "welcome")}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;"><span style="color: #ffffff;">Download QR Code &rarr;</span></a>
                   </td>
                 </tr>
@@ -834,31 +834,31 @@ export async function sendGoLiveNudgeEmail({
     en: {
       subject: `${shopName} is set up — let's get your first customer`,
       greeting: `Hi ${name},`,
-      p1: `You set up <strong>${shopName}</strong>'s loyalty card and it's looking sharp. One step left — and it's the one that actually brings customers back: getting your QR code in front of them.`,
-      p2: `Open the ${link("Shop Setup menu")} to grab your printable poster, then pop it <strong>right by the register, at eye level</strong> — your customers are already pausing to pay with their phone in hand, so it's the perfect moment to scan. Something like this:`,
-      p3: `From there it pretty much runs itself: they scan, you tap approve, they earn a stamp — no app, no fuss. Honestly the hardest part is deciding where to tape it.`,
-      cta: `Get your QR poster`,
-      ps: `Already up and running and this slipped through the cracks? Just hit reply — I read every email (usually before my first coffee).`,
+      p1: `We noticed you set up <strong>${shopName}</strong>'s loyalty card and ran a couple of test stamps — nice work.`,
+      p2: `There's just one step left: print your QR code from the ${link("Shop Setup menu")} and place it at your register, where your customers order their drink. Like this:`,
+      p3: `That's all it takes. A customer scans it with their phone, you tap approve on the phone or tablet you keep at the counter, and they earn a stamp toward a free coffee — no app for them to download.`,
+      cta: `Print your QR code`,
+      ps: `Any questions? Just reply — I'm happy to help.`,
       signoff: `Cheers,<br/>Mark at Brewstamp`,
     },
     es: {
       subject: `${shopName} ya está listo — consigue tu primer cliente`,
       greeting: `Hola ${name}:`,
-      p1: `Ya configuraste la tarjeta de fidelidad de <strong>${shopName}</strong> y se ve genial. Solo queda un paso, y es el que de verdad hace que los clientes vuelvan: poner tu código QR donde puedan verlo.`,
-      p2: `Abre el menú ${link("Configuración de la tienda")} para conseguir tu póster imprimible, y ponlo <strong>justo al lado de la caja, a la altura de los ojos</strong> — tus clientes ya están pagando con el móvil en la mano, así que es el momento perfecto para escanear. Algo así:`,
-      p3: `A partir de ahí casi se gestiona solo: escanean, tú tocas aprobar, y ganan un sello — sin apps, sin líos. Lo más difícil será decidir dónde pegarlo.`,
-      cta: `Consigue tu póster con el QR`,
-      ps: `¿Ya estás en marcha y esto se nos coló? Responde sin más — leo todos los correos (normalmente antes del primer café).`,
+      p1: `Vimos que configuraste la tarjeta de fidelidad de <strong>${shopName}</strong> e hiciste un par de sellos de prueba — bien hecho.`,
+      p2: `Solo queda un paso: imprime tu código QR desde el menú ${link("Configuración de la tienda")} y colócalo en tu caja, donde tus clientes piden su bebida. Así:`,
+      p3: `Eso es todo. El cliente lo escanea con su móvil, tú apruebas desde el teléfono o la tablet que tienes en la caja, y gana un sello para un café gratis — sin que él descargue ninguna app.`,
+      cta: `Imprime tu código QR`,
+      ps: `¿Alguna pregunta? Responde sin más — con gusto te ayudo.`,
       signoff: `Un saludo,<br/>Mark de Brewstamp`,
     },
     ar: {
       subject: `تم إعداد ${shopName} — لنحصل على أول عميل لك`,
       greeting: `مرحباً ${name}،`,
-      p1: `لقد أعددت بطاقة الولاء لـ <strong>${shopName}</strong> وتبدو رائعة. تبقّت خطوة واحدة فقط، وهي التي تُعيد العملاء فعلاً: ضع رمز QR في مكان يراه الجميع.`,
-      p2: `افتح قائمة ${link("إعدادات المتجر")} للحصول على ملصقك القابل للطباعة، ثم ضعه <strong>بجانب الصندوق تماماً وعلى مستوى النظر</strong> — فعملاؤك يدفعون أصلاً وهواتفهم في أيديهم، وهذه هي اللحظة المثالية للمسح. شيءٌ كهذا:`,
-      p3: `بعد ذلك يسير الأمر تلقائياً تقريباً: يمسحون، وتضغط أنت على "موافقة"، فيحصلون على ختم — دون أي تطبيق ودون تعقيد. أصعب ما في الأمر هو اختيار المكان المناسب للصقه!`,
-      cta: `احصل على ملصق رمز QR`,
-      ps: `هل أنت جاهز بالفعل وفاتَنا ذلك؟ ردّ ببساطة — أقرأ كل رسالة (عادةً قبل قهوتي الأولى).`,
+      p1: `لاحظنا أنك أعددت بطاقة الولاء لـ <strong>${shopName}</strong> وأجريت بعض عمليات الختم التجريبية — أحسنت.`,
+      p2: `تبقّت خطوة واحدة فقط: اطبع رمز QR من قائمة ${link("إعدادات المتجر")} وضعه عند الصندوق، حيث يطلب عملاؤك مشروبهم. هكذا:`,
+      p3: `هذا كل شيء. يمسحه العميل بهاتفه، وتضغط أنت على "موافقة" من الهاتف أو الجهاز اللوحي الذي تبقيه عند الصندوق، فيحصل على ختم نحو قهوة مجانية — دون أن يُنزّل أي تطبيق.`,
+      cta: `اطبع رمز QR`,
+      ps: `أي أسئلة؟ ردّ ببساطة — يسعدني مساعدتك.`,
       signoff: `تحياتي،<br/>Mark من Brewstamp`,
     },
   };
@@ -887,7 +887,7 @@ export async function sendGoLiveNudgeEmail({
         <p style="margin:0 0 16px; font-size:16px; color:#1c1917; line-height:1.6;">${c.greeting}</p>
         <p style="margin:0 0 16px; font-size:16px; color:#57534e; line-height:1.6;">${c.p1}</p>
         <p style="margin:0 0 16px; font-size:16px; color:#57534e; line-height:1.6;">${c.p2}</p>
-        <img src="https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1104&h=620&fit=crop" alt="A QR loyalty poster on a cafe front counter" width="552" style="display:block; width:100%; max-width:552px; height:auto; border-radius:12px; margin:0 0 20px;" />
+        <img src="https://brewstamp.app/cafe-loyalty-counter.jpg" alt="A customer scanning a Brewstamp QR loyalty card on a cafe counter" width="552" style="display:block; width:100%; max-width:552px; height:auto; border-radius:12px; margin:0 0 20px;" />
         <p style="margin:0 0 24px; font-size:16px; color:#57534e; line-height:1.6;">${c.p3}</p>
         <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
           <tr><td style="border-radius:8px; background-color:#b45309;">

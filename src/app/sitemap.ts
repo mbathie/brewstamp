@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     })),
     { url: `${baseUrl}/features`, lastModified: new Date(), priority: 0.9 },
+    { url: `${baseUrl}/how-it-works`, lastModified: new Date(), priority: 0.8 },
     {
       url: `${baseUrl}/coffee-rewards-app`,
       lastModified: new Date(),

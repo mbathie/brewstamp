@@ -134,10 +134,13 @@ export default function BlogPost() {
           </section>
 
           {/* Image break */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://cultcha.syd1.cdn.digitaloceanspaces.com/brewstamp/prod/public/email-cafe-qr.jpg"
-            alt="QR code printed out on a cafe counter"
-            className="mb-14 w-full rounded-2xl"
+            src="/cafe-loyalty-counter.jpg"
+            alt="A customer scanning a framed Brewstamp QR loyalty card on a cafe counter"
+            className="mb-14 aspect-[16/10] w-full rounded-2xl object-cover shadow-md ring-1 ring-stone-200"
+            width={988}
+            height={966}
           />
 
           {/* Step 1 */}

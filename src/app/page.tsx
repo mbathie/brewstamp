@@ -192,16 +192,25 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative min-h-screen overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop"
-          alt=""
-          fill
-          priority
-          fetchPriority="high"
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-900/70 via-stone-900/60 to-stone-900/80" />
+        {/* Art-directed hero: portrait crop on phones, landscape on larger
+            screens. <picture> downloads only the matching source. */}
+        <picture>
+          <source
+            media="(max-width: 639px)"
+            srcSet="/cafe-loyalty-counter-portrait.jpg"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/cafe-loyalty-counter.jpg"
+            alt="A customer scanning a Brewstamp QR loyalty card on a cafe counter"
+            fetchPriority="high"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
+        {/* Layered overlays: strong left-to-right darkening keeps the text column
+            legible while the barista + QR card stay visible on the right. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-stone-950/92 via-stone-950/70 to-stone-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-transparent to-stone-950/45" />
         <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 pt-24 pb-20">
           <div className="max-w-2xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-1.5 text-sm font-medium text-amber-200 backdrop-blur-sm">
@@ -213,7 +222,7 @@ export default function Home() {
               <br />
               <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">your cafe deserves.</span>
             </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-300">
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-100 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
               Replace paper stamp cards with a <mark className="bg-amber-500/20 px-1 text-white">digital rewards program</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
               collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No app to download</mark>, no
               account to create. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>.
@@ -238,7 +247,7 @@ export default function Home() {
                 </Button>
               </a>
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-400">
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-200 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
                 Free up to 100 stamps total

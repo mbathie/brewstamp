@@ -155,6 +155,21 @@ export default function BlogPost() {
             </p>
           </div>
 
+          <figure className="mb-14">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/cafe-loyalty-counter.jpg"
+              alt="A printed Brewstamp QR loyalty card framed on a cafe counter as a customer scans it with their phone"
+              className="aspect-[16/10] w-full rounded-2xl object-cover shadow-md ring-1 ring-stone-200"
+              width={988}
+              height={966}
+            />
+            <figcaption className="mt-3 text-center text-sm text-stone-400">
+              One printed QR card on the counter — customers scan it with their
+              phone, no app required.
+            </figcaption>
+          </figure>
+
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
               The old way of printing loyalty cards
