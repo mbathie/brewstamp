@@ -63,6 +63,40 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     finalCtaSubtitle: "Sin tarjeta de crédito. Listo en 2 minutos.",
     finalCtaButton: "Configurar mi cafetería",
   },
+  tr: {
+    metaTitle: "Kafeler için QR'lı dijital sadakat kartı",
+    metaDescription:
+      "Kafeler için QR sadakat kartı. Müşterileriniz için uygulama yok. 100 damgaya kadar ücretsiz. 2 dakikada hazır.",
+    heroTitle: "Kafeler için dijital sadakat kartı",
+    heroSubtitle:
+      "Uygulamasız damgalar. Müşterileriniz tezgâhınızdaki bir QR'ı tarar — bu kadar.",
+    ctaPrimary: "Ücretsiz başla",
+    ctaSecondary: "Nasıl çalışır",
+    dashboardNote:
+      "Yönetim paneliniz İngilizce kalır — kartı Türkçe görenler yalnızca müşterilerinizdir.",
+    benefit1Title: "İndirilecek uygulama yok",
+    benefit1Body:
+      "Müşterileriniz QR'ı telefon kamerasıyla tarar ve kart tarayıcılarında açılır.",
+    benefit2Title: "100 damgaya kadar ücretsiz",
+    benefit2Body:
+      "Başlamak için kredi kartı gerekmez. Hiçbir şey ödemeden birkaç hafta deneyin.",
+    benefit3Title: "2 dakikada kurulum",
+    benefit3Body:
+      "Bir QR yazdırın, tezgâhınıza koyun ve çalışmaya başlayın.",
+    howItWorksTitle: "Nasıl çalışır",
+    step1Title: "QR'ınızı yazdırın ve yerleştirin",
+    step1Body:
+      "Panelinizden yazdırılabilir PDF'i indirin ve müşterilerinizin görebileceği bir yere koyun.",
+    step2Title: "Müşteri telefonuyla tarar",
+    step2Body:
+      "Telefon kamerası → bağlantıya dokun. Uygulama yok, indirme yok, form yok.",
+    step3Title: "Damgayı siz onaylarsınız",
+    step3Body:
+      "İstek panelinizde görünür. Onayla'ya dokunursunuz. Damga anında kartlarına düşer.",
+    finalCtaTitle: "Ücretsiz sadakat kartınızı başlatın",
+    finalCtaSubtitle: "Kredi kartı gerekmez. 2 dakikada hazır.",
+    finalCtaButton: "Kafemi kur",
+  },
   fr: {
     metaTitle: "Carte de fidélité QR numérique pour cafés",
     metaDescription:

@@ -1,6 +1,6 @@
 # Brewstamp
 
-> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 100 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, worldwide, in 13 customer-facing languages: English, Spanish, French, German, Portuguese, Italian, Mandarin Chinese, Japanese, Korean, Arabic, Hindi, Indonesian, and Filipino. Brewstamp also offers a corporate perk mode (Plus and Max plans): a company subsidises its team's coffee at a local cafe — staff get a free coffee by scanning a QR code and entering their work email, capped per person per day, with per-person reports the company can reimburse against.
+> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 100 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, worldwide, in 14 customer-facing languages: English, Spanish, French, German, Portuguese, Italian, Mandarin Chinese, Japanese, Korean, Arabic, Hindi, Indonesian, Filipino, and Turkish. Brewstamp also offers a corporate perk mode (Plus and Max plans): a company subsidises its team's coffee at a local cafe — staff get a free coffee by scanning a QR code and entering their work email, capped per person per day, with per-person reports the company can reimburse against.
 
 ## Product
 - [Coffee loyalty card app (home)](https://brewstamp.app/): What Brewstamp is, how it works, and why digital beats paper punch cards.
@@ -17,7 +17,7 @@
 - [Coffee shop loyalty card printing](https://brewstamp.app/blog/coffee-shop-loyalty-card-printing): Why you only print one QR poster instead of stacks of cards.
 - [Why paper loyalty cards don't work anymore](https://brewstamp.app/blog/why-paper-loyalty-cards-dont-work): Lost cards, fraud, and zero data.
 - [Cafe loyalty programs for customers](https://brewstamp.app/blog/cafe-loyalty-programs-for-customers): How the customer experience works.
-- [Multi-language loyalty cards](https://brewstamp.app/blog/multi-language-loyalty-card): One QR code, 13 customer languages.
+- [Multi-language loyalty cards](https://brewstamp.app/blog/multi-language-loyalty-card): One QR code, 14 customer languages.
 - [Multi-shop and team logins](https://brewstamp.app/blog/multiple-shops-and-team-logins): Running multiple cafes and inviting staff.
 - [Set up your Brewstamp shop in 5 minutes](https://brewstamp.app/blog/set-up-your-brewstamp-shop): Onboarding walkthrough.
 

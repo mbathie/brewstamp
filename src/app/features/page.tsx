@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   title:
     "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 13 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $7/mo unlimited — no premium tier gating.",
+    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $7/mo unlimited — no premium tier gating.",
   alternates: { canonical: "/features" },
   keywords: [
     "loyalty card features",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     url: "/features",
     title: "Brewstamp Features — Free, Customisable, No App Required",
     description:
-      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 13 languages. Real-time stamp approval. CSV export. One $7/mo plan — no feature gating.",
+      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 14 languages. Real-time stamp approval. CSV export. One $7/mo plan — no feature gating.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&h=630&q=70&auto=format&fit=crop",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brewstamp Features — Free Customisable Loyalty Card",
     description:
-      "No customer app. Branded card design free. 13 languages. One $7/mo plan, no feature gating.",
+      "No customer app. Branded card design free. 14 languages. One $7/mo plan, no feature gating.",
   },
 };
 
@@ -83,7 +83,7 @@ const jsonLd = {
   },
   featureList: [
     "No app download for customers — opens in any phone browser",
-    "13 languages including Arabic (RTL), Mandarin, Japanese, Korean, Hindi",
+    "14 languages including Arabic (RTL), Mandarin, Japanese, Korean, Hindi, Turkish",
     "Fully customisable card design — colours, patterns, logo (free, not gated)",
     "Real-time stamp approval via the merchant dashboard",
     "Customer login so stamps follow them between devices",
@@ -191,7 +191,7 @@ const FEATURE_TABLE: Array<{
         hint: "Customers can set a password to log in on any device, so they never lose their stamps if they switch or lose their phone.",
       },
       {
-        label: "Auto-translates to their language (13 supported)",
+        label: "Auto-translates to their language (14 supported)",
         free: true,
         pro: true,
       },
@@ -301,7 +301,7 @@ export default function FeaturesPage() {
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-stone-200 md:text-xl">
             No app to download. No premium-tier gating. Just a QR code at the
             counter and a card that opens in any phone browser — fully branded,
-            in 13 languages.
+            in 14 languages.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link href="/register">
@@ -339,7 +339,7 @@ export default function FeaturesPage() {
                 },
                 {
                   icon: Languages,
-                  title: "13 languages, same card",
+                  title: "14 languages, same card",
                   body: "Flip a setting and the customer card + printable QR PDF auto-translate. Arabic includes proper RTL.",
                 },
                 {
@@ -591,7 +591,7 @@ export default function FeaturesPage() {
                 <Globe className="size-6 text-amber-700" />
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-                13 languages, one QR code.
+                14 languages, one QR code.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
                 Set the customer-facing language in Shop Setup. The card, the
@@ -615,6 +615,7 @@ export default function FeaturesPage() {
                 "🇨🇳 中文",
                 "🇵🇹 Português",
                 "🇪🇸 Español",
+                "🇹🇷 Türkçe",
               ].map((label) => (
                 <span
                   key={label}
@@ -650,7 +651,7 @@ export default function FeaturesPage() {
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-stone-300 md:text-lg">
                   Free up to 100 stamps. No credit card required. Live in any
-                  phone browser, in any of 13 languages.
+                  phone browser, in any of 14 languages.
                 </p>
                 <div className="mt-10 flex flex-wrap justify-center gap-3">
                   <Link href="/register">

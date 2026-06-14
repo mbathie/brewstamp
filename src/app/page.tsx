@@ -503,7 +503,7 @@ export default function Home() {
             Available worldwide
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-            Your customer card in 13 languages
+            Your customer card in 14 languages
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-stone-500">
             Pick the language that matches your customers — the loyalty card and
@@ -524,6 +524,7 @@ export default function Home() {
               ["/zh", "🇨🇳", "中文", "你好"],
               ["/pt", "🇵🇹", "Português", "Olá"],
               ["/es", "🇪🇸", "Español", "Hola"],
+              ["/tr", "🇹🇷", "Türkçe", "Merhaba"],
             ].map(([href, flag, name, hello]) => (
               <Link
                 key={name}

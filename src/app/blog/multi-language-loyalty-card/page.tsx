@@ -6,16 +6,16 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
+  title: "Multi-Language Loyalty Cards: 14 Languages, Same QR Code",
   description:
-    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages — English, Spanish, French, German, Portuguese, Italian, Mandarin, Japanese, Korean, Arabic, Hindi, Indonesian, and Filipino.",
+    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 14 languages — English, Spanish, French, German, Portuguese, Italian, Mandarin, Japanese, Korean, Arabic, Hindi, Indonesian, Filipino, and Turkish.",
   alternates: { canonical: "/blog/multi-language-loyalty-card" },
   openGraph: {
     type: "article",
     url: "/blog/multi-language-loyalty-card",
-    title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
+    title: "Multi-Language Loyalty Cards: 14 Languages, Same QR Code",
     description:
-      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages.",
+      "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 14 languages.",
     images: [
       {
         url: "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Multi-Language Loyalty Cards: 12 Languages, Same QR Code",
+    title: "Multi-Language Loyalty Cards: 14 Languages, Same QR Code",
     description:
-      "Brewstamp now translates your customer-facing loyalty card into 13 languages.",
+      "Brewstamp now translates your customer-facing loyalty card into 14 languages.",
     images: [
       "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -39,9 +39,9 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Multi-Language Loyalty Cards: 13 Languages, Same QR Code",
+  headline: "Multi-Language Loyalty Cards: 14 Languages, Same QR Code",
   description:
-    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 13 languages.",
+    "Brewstamp now translates your customer-facing loyalty card and printable QR PDF into 14 languages.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -53,7 +53,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/multi-language-loyalty-card",
   datePublished: "2026-05-10",
-  dateModified: "2026-05-14",
+  dateModified: "2026-06-14",
   image:
     "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -72,6 +72,7 @@ const LANGUAGES: Array<{ flag: string; name: string; native: string; hello: stri
   { flag: "🇨🇳", name: "Mandarin Chinese", native: "中文", hello: "你好" },
   { flag: "🇵🇹", name: "Portuguese", native: "Português", hello: "Olá" },
   { flag: "🇪🇸", name: "Spanish", native: "Español", hello: "Hola" },
+  { flag: "🇹🇷", name: "Turkish", native: "Türkçe", hello: "Merhaba" },
 ];
 
 export default function BlogPost() {
@@ -89,11 +90,11 @@ export default function BlogPost() {
               Product update
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              13 languages, same QR code
+              14 languages, same QR code
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
               Your customer-facing loyalty card and your printable QR PDF
-              now translate into thirteen languages — flip a single setting in
+              now translate into fourteen languages — flip a single setting in
               Shop Setup and the entire customer experience switches over.
             </p>
             <p className="mt-3 text-sm text-stone-400">
@@ -107,7 +108,7 @@ export default function BlogPost() {
             </p>
             <p className="mt-2 text-base leading-relaxed text-stone-700">
               Open <strong>Shop Setup → Loyalty → Customer-facing language</strong>,
-              pick from the 12 supported languages, save. Every customer who
+              pick from the 14 supported languages, save. Every customer who
               scans your QR code from then on gets the card in that language.
               Your dashboard and admin tools stay in English.
             </p>
@@ -116,7 +117,7 @@ export default function BlogPost() {
           <figure className="mb-14 rounded-2xl bg-stone-100 px-6 py-8">
             <img
               src="/world-map.svg"
-              alt="World map illustrating Brewstamp's 12 supported languages"
+              alt="World map illustrating Brewstamp's 14 supported languages"
               className="mx-auto w-full max-w-2xl opacity-70"
               loading="lazy"
             />
@@ -127,7 +128,7 @@ export default function BlogPost() {
 
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              The 13 languages
+              The 14 languages
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               We picked the languages that cover the largest share of cafe
