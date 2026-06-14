@@ -223,9 +223,9 @@ export default function Home() {
               <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">coffee loyalty card.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-100 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
-              Simple <mark className="bg-amber-500/20 px-1 text-white">digital loyalty rewards</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
-              collect stamps, and earn free drinks — <mark className="bg-amber-500/20 px-1 text-white">no bulky app to download</mark>, no
-              signup. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>. Just scan and stamp.
+              Simple digital loyalty rewards. Your customers scan a QR code,
+              collect stamps, and earn <mark className="bg-amber-500/20 px-1 text-white">free drinks</mark> — no bulky app to download, no
+              signup. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on any phone. Just scan and stamp.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
