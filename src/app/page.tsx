@@ -218,14 +218,14 @@ export default function Home() {
               Free to get started
             </div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-              The digital coffee loyalty card
+              No fuss, simple
               <br />
-              <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">your cafe deserves.</span>
+              <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 bg-clip-text text-transparent">coffee loyalty card.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-stone-100 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
-              Replace paper stamp cards with a <mark className="bg-amber-500/20 px-1 text-white">digital rewards program</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
-              collect stamps, and earn free drinks. <mark className="bg-amber-500/20 px-1 text-white">No bulky, annoying app download</mark>, no
-              account to create. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>.
+              Simple <mark className="bg-amber-500/20 px-1 text-white">digital loyalty rewards</mark>. Your customers scan a <mark className="bg-amber-500/20 px-1 text-white">QR code</mark>,
+              collect stamps, and earn free drinks — <mark className="bg-amber-500/20 px-1 text-white">no bulky app to download</mark>, no
+              signup. The <mark className="bg-amber-500/20 px-1 text-white">coffee loyalty app</mark> that works on <mark className="bg-amber-500/20 px-1 text-white">any phone</mark>. Just scan and stamp.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
