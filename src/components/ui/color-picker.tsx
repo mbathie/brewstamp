@@ -96,8 +96,10 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
             })}
           </div>
 
-          {/* Shade selector — for the active hue */}
-          <div className="flex flex-wrap gap-2">
+          {/* Shade selector — a seamless light→dark strip for the active hue.
+              The selected shade lifts out as a rounded "thumb" so it stays
+              legible on both the lightest and darkest tints. */}
+          <div className="flex w-fit rounded-md ring-1 ring-border">
             {SHADES.map((shade) => {
               const colorKey = `${activeHue}-${shade}`;
               const isSelected = value === colorKey;
@@ -108,10 +110,10 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
                   aria-label={colorKey}
                   title={colorKey}
                   onClick={() => onChange(colorKey)}
-                  className={`size-7 cursor-pointer rounded-md border border-border transition-transform ${
+                  className={`relative size-7 cursor-pointer transition-transform first:rounded-l-md last:rounded-r-md ${
                     isSelected
-                      ? "ring-foreground ring-offset-background scale-110 ring-2 ring-offset-2"
-                      : "hover:scale-110"
+                      ? "ring-foreground ring-offset-background z-10 scale-110 rounded-md ring-2 ring-offset-2"
+                      : "hover:z-10 hover:scale-110 hover:rounded-md"
                   }`}
                   style={{ backgroundColor: colors[activeHue][shade] }}
                 />
