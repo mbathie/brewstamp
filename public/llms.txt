@@ -1,12 +1,13 @@
 # Brewstamp
 
-> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 100 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, in 13+ customer-facing languages, worldwide.
+> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 100 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, in 13+ customer-facing languages, worldwide. Brewstamp also offers a corporate perk mode (Plus and Max plans): a company subsidises its team's coffee at a local cafe — staff get a free coffee by scanning a QR code and entering their work email, capped per person per day, with per-person reports the company can reimburse against.
 
 ## Product
 - [Coffee loyalty card app (home)](https://brewstamp.app/): What Brewstamp is, how it works, and why digital beats paper punch cards.
 - [Coffee rewards app](https://brewstamp.app/coffee-rewards-app): The coffee rewards card with no app to download — scan, stamp, free coffee.
 - [Features](https://brewstamp.app/features): Full feature list across the Free, Pro, Plus, and Max plans.
 - [Pricing](https://brewstamp.app/pricing): Free, Pro ($7), Plus ($19), and Max ($29) plans compared side by side.
+- [Corporate perk mode (subsidised staff coffee)](https://brewstamp.app/blog/corporate-coffee-perk): Employer-paid staff coffee at a local cafe — staff scan and enter their work email for a free coffee, gated to the company's email domain and capped per person per day. On the Plus and Max plans.
 
 ## Guides
 - [Coffee Loyalty Card: The Complete Guide for Cafes](https://brewstamp.app/blog/digital-loyalty-cards-for-cafes): How digital loyalty cards work and what to look for.
