@@ -8,30 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Coffee, Gift } from "lucide-react";
-
-function ReferralBannerInner() {
-  const searchParams = useSearchParams();
-  const ref = searchParams.get("ref");
-  if (!ref) return null;
-
-  return (
-    <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-3">
-      <Gift className="size-5 shrink-0 text-amber-700" />
-      <p className="text-sm text-amber-900">
-        <strong>{ref}</strong> invited you! Sign up and get your <strong>first month of Pro free</strong>.
-      </p>
-    </div>
-  );
-}
-
-function ReferralBanner() {
-  return (
-    <Suspense fallback={null}>
-      <ReferralBannerInner />
-    </Suspense>
-  );
-}
+import { ArrowLeft, Coffee } from "lucide-react";
 
 function RegisterForm() {
   const router = useRouter();
@@ -248,7 +225,6 @@ export default function RegisterPage() {
         Back to home
       </Link>
       <div className="relative z-10 w-full max-w-xl">
-        <ReferralBanner />
         <Suspense>
           <RegisterForm />
         </Suspense>

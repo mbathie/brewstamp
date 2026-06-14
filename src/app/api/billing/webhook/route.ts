@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Subscription, Shop, User } from "@/models";
 import { stripe } from "@/lib/stripe";
 import { getPlanByPriceId } from "@/lib/plans";
-import { sendPaymentReceiptEmail, sendReferralRewardEmail } from "@/lib/email";
+import { sendPaymentReceiptEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
 function getPeriodDates(sub: Stripe.Subscription) {
@@ -115,52 +115,6 @@ export async function POST(req: Request) {
         console.error("[Webhook] Failed to send receipt email:", emailErr);
       }
 
-      // Referral reward: credit $10 to referrer when referred shop pays
-      try {
-        const localSub2 = await Subscription.findOne({ stripeSubscriptionId: sub.id });
-        if (localSub2) {
-          const paidShop = await Shop.findById(localSub2.shop);
-          if (paidShop?.referredBy && !paidShop.referralRewardApplied) {
-            const referrerShop = await Shop.findById(paidShop.referredBy);
-            if (referrerShop?.stripeCustomerId) {
-              // Add $10 credit (negative balance = credit in Stripe)
-              await stripe.customers.createBalanceTransaction(
-                referrerShop.stripeCustomerId,
-                { amount: -1000, currency: "usd", description: `Referral reward: ${paidShop.name} subscribed to Pro` }
-              );
-              await Shop.findByIdAndUpdate(paidShop._id, { referralRewardApplied: true });
-
-              // Send notification email to referrer
-              const referrerOwner = await User.findById(referrerShop.owner);
-              if (referrerOwner?.email) {
-                await sendReferralRewardEmail({
-                  to: referrerOwner.email,
-                  merchantName: referrerOwner.name || "there",
-                  referredShopName: paidShop.name,
-                });
-              }
-            } else if (referrerShop) {
-              // Referrer has no Stripe customer yet — store coupon for later
-              const couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
-              if (couponId) {
-                await Shop.findByIdAndUpdate(referrerShop._id, { referralCouponId: couponId });
-              }
-              await Shop.findByIdAndUpdate(paidShop._id, { referralRewardApplied: true });
-
-              const referrerOwner = await User.findById(referrerShop.owner);
-              if (referrerOwner?.email) {
-                await sendReferralRewardEmail({
-                  to: referrerOwner.email,
-                  merchantName: referrerOwner.name || "there",
-                  referredShopName: paidShop.name,
-                });
-              }
-            }
-          }
-        }
-      } catch (refErr) {
-        console.error("[Webhook] Failed to process referral reward:", refErr);
-      }
       break;
     }
 

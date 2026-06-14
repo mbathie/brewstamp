@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { User, Shop, ShopMembership } from "@/models";
 import { sendWelcomeEmail } from "@/lib/email";
-import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -35,22 +34,10 @@ export async function POST(req: Request) {
     code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
   } while (await Shop.findOne({ code }));
 
-  // Check for referral cookie
-  const cookieStore = await cookies();
-  const refCookie = cookieStore.get("brewstamp_ref");
-  let referredBy: string | undefined;
-  if (refCookie?.value) {
-    const referringShop = await Shop.findById(refCookie.value);
-    if (referringShop) {
-      referredBy = referringShop._id.toString();
-    }
-  }
-
   const shop = await Shop.create({
     name: shopName,
     owner: user._id,
     code,
-    ...(referredBy ? { referredBy } : {}),
   });
 
   // Mint the owner membership so the new shop is visible to the multi-shop
@@ -74,13 +61,6 @@ export async function POST(req: Request) {
     merchantName: user.name,
     shopName,
   }).catch((err) => console.error("[Setup] Welcome email failed:", err));
-
-  // Clear referral cookie after use
-  if (refCookie?.value) {
-    const response = NextResponse.json({ success: true, shopId: shop._id }, { status: 201 });
-    response.cookies.delete("brewstamp_ref");
-    return response;
-  }
 
   return NextResponse.json({ success: true, shopId: shop._id }, { status: 201 });
 }

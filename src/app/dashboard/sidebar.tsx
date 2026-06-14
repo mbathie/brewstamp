@@ -6,7 +6,6 @@ import { signOut } from "next-auth/react";
 import {
   Coffee,
   CreditCard,
-  Gift,
   Home,
   Users,
   Users2,
@@ -42,14 +41,13 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 
 // `ownerOnly` items are hidden from staff/manager — the matching API routes
 // enforce the same gate server-side, this just avoids showing a link that
-// would 403. Billing is owner-only; Referrals rewards the owner's account.
+// would 403. Billing is owner-only.
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Shop Setup", href: "/dashboard/settings", icon: Settings },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
   { title: "Team", href: "/dashboard/team", icon: Users2 },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
-  { title: "Referrals", href: "/dashboard/referrals", icon: Gift, ownerOnly: true },
 ];
 
 const adminItems = [

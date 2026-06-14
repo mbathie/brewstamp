@@ -89,7 +89,7 @@ export default async function DashboardLayout({
   }
 
   // In single-shop mode the gauge is scoped to that shop's subscription.
-  // In aggregate mode we still want to show plan + referral info, so we
+  // In aggregate mode we still want to show plan info, so we
   // pick any active sub across the user's owned shops. Phase-3 tier work
   // can refine this to "highest tier across shops" once tiers have an
   // order — for now both shops on the seed account share one tier so any
@@ -116,7 +116,7 @@ export default async function DashboardLayout({
   // shopLimit 1) hit the server-side guard in /dashboard/shops/new and get
   // bounced to /dashboard/billing?limit=1 with the upgrade prompt.
 
-  // Billing/referrals nav is owner-only. In single-shop mode that's the
+  // Billing nav is owner-only. In single-shop mode that's the
   // role on the active shop; in aggregate mode, owning any shop qualifies
   // (getMerchant resolves billing against an owned shop).
   const canManageBilling = aggregate

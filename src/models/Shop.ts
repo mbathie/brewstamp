@@ -38,9 +38,6 @@ const shopSchema = new mongoose.Schema(
     dripDay14Sent: { type: Boolean, default: false },
     firstCustomerEmailSent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },
-    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
-    referralRewardApplied: { type: Boolean, default: false },
-    referralCouponId: { type: String },
   },
   { timestamps: true }
 );
