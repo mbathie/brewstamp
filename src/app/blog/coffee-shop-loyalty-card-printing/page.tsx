@@ -6,9 +6,9 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Coffee Shop Loyalty Card Printing — One QR Code, Free PDF",
+  title: "Coffee Shop Loyalty Card Printing: Free Printable QR Template (PDF)",
   description:
-    "How to print a coffee shop loyalty card the modern way — one A4 sheet with a QR code, not boxes of punch cards. Free PDF, print at home or at the printer, set up in 2 minutes.",
+    "Free printable coffee shop loyalty card — download a branded QR template as a PDF, print one A4 sheet, and skip the box of punch cards. Set up in 2 minutes.",
   alternates: { canonical: "/blog/coffee-shop-loyalty-card-printing" },
   openGraph: {
     type: "article",
