@@ -85,7 +85,7 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
                     // Keep the same shade level when switching hues.
                     onChange(`${hue}-${currentShade}`);
                   }}
-                  className={`size-7 cursor-pointer rounded-md transition-transform ${
+                  className={`size-7 cursor-pointer rounded-md border border-border transition-transform ${
                     isActive
                       ? "ring-foreground ring-offset-background scale-110 ring-2 ring-offset-2"
                       : "hover:scale-110"
@@ -108,10 +108,10 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
                   aria-label={colorKey}
                   title={colorKey}
                   onClick={() => onChange(colorKey)}
-                  className={`size-14 cursor-pointer rounded-lg border border-border transition-transform ${
+                  className={`size-7 cursor-pointer rounded-md border border-border transition-transform ${
                     isSelected
-                      ? "ring-foreground ring-offset-background scale-105 ring-2 ring-offset-2"
-                      : "hover:scale-105"
+                      ? "ring-foreground ring-offset-background scale-110 ring-2 ring-offset-2"
+                      : "hover:scale-110"
                   }`}
                   style={{ backgroundColor: colors[activeHue][shade] }}
                 />
