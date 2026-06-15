@@ -199,6 +199,17 @@ const fmtDate = (iso: string | null) =>
       })
     : "—";
 
+const fmtDateTime = (iso: string | null) =>
+  iso
+    ? new Date(iso).toLocaleString("en-AU", {
+        day: "numeric",
+        month: "short",
+        year: "2-digit",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "—";
+
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
   const [shops, setShops] = useState<ShopRow[]>([]);
@@ -719,8 +730,8 @@ export default function AdminShopsPage() {
                     <TableCell className="text-muted-foreground">
                       {fmtDate(shop.createdAt)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {fmtDate(shop.lastActive)}
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {fmtDateTime(shop.lastActive)}
                     </TableCell>
                     <TableCell>
                       <ChevronRight className="size-4 text-muted-foreground" />
