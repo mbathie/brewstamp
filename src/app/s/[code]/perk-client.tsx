@@ -22,6 +22,7 @@ interface Props {
   customerEmail: string | null;
   customerName: string | null;
   emailAllowed: boolean;
+  emailVerified: boolean;
   allowedDomains: string[];
   dailyLimit: number;
   drinksToday: number;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 type Status = "idle" | "requesting" | "waiting";
+type VerifyStep = "email" | "code" | "done";
 
 export default function PerkCustomerClient({
   shopCode,
@@ -41,6 +43,7 @@ export default function PerkCustomerClient({
   customerEmail,
   customerName,
   emailAllowed: initialEmailAllowed,
+  emailVerified: initialEmailVerified,
   allowedDomains,
   dailyLimit,
   drinksToday: initialDrinksToday,
@@ -52,10 +55,22 @@ export default function PerkCustomerClient({
   const fgHex = getColorHex(fgColor);
   const patternCSS = getPatternCSS(bgPattern, fgHex, 0.05);
 
-  const [emailAllowed, setEmailAllowed] = useState(initialEmailAllowed);
+  // Three-step gate: enter work email → enter the emailed 6-digit code → done.
+  // "done" means domain-allowed AND mailbox-verified, the only state that can
+  // claim a coffee.
+  const [step, setStep] = useState<VerifyStep>(
+    initialEmailAllowed && initialEmailVerified ? "done" : "email",
+  );
   const [email, setEmail] = useState(customerEmail || "");
   const [emailError, setEmailError] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
+
+  // Code-entry step.
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [resending, setResending] = useState(false);
+
   const [drinksToday, setDrinksToday] = useState(initialDrinksToday);
   const [status, setStatus] = useState<Status>("idle");
 
@@ -94,8 +109,11 @@ export default function PerkCustomerClient({
           setDrinksToday(dailyLimit);
           toast.error(data.error || "Daily limit reached.");
         } else if (data.code === "DOMAIN_NOT_ALLOWED") {
-          setEmailAllowed(false);
+          setStep("email");
           toast.error("Please enter your work email.");
+        } else if (data.code === "EMAIL_NOT_VERIFIED") {
+          setStep("email");
+          toast.error("Please verify your work email.");
         } else {
           toast.error("Something went wrong. Try again.");
         }
@@ -147,7 +165,7 @@ export default function PerkCustomerClient({
   useEffect(() => {
     if (
       connected &&
-      emailAllowed &&
+      step === "done" &&
       !atLimit &&
       status === "idle" &&
       !autoRequestedRef.current
@@ -155,7 +173,7 @@ export default function PerkCustomerClient({
       autoRequestedRef.current = true;
       requestDrink();
     }
-  }, [connected, emailAllowed, atLimit, status, requestDrink]);
+  }, [connected, step, atLimit, status, requestDrink]);
 
   // If the customer leaves while a request is pending, tell the barista so they
   // aren't left staring at a request that will never resolve.
@@ -174,7 +192,8 @@ export default function PerkCustomerClient({
     return () => window.removeEventListener("pagehide", cancelPending);
   }, [send, customerId]);
 
-  async function saveEmail() {
+  // Step 1 → 2: validate the work email and ask the server to mail a code.
+  async function sendCode() {
     const value = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setEmailError("Please enter a valid email address");
@@ -189,51 +208,133 @@ export default function PerkCustomerClient({
     setEmailError("");
     setSavingEmail(true);
     try {
-      const res = await fetch(`/api/customers/${customerId}`, {
-        method: "PATCH",
+      const res = await fetch("/api/perk/verify/send", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: value }),
+        body: JSON.stringify({ shopId, customerId, email: value }),
       });
-      if (!res.ok) throw new Error("save-failed");
-      setEmailAllowed(true);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setEmailError(
+          data.code === "DOMAIN_NOT_ALLOWED"
+            ? "Please use your work email address."
+            : data.error || "Could not send a code. Please try again.",
+        );
+        return;
+      }
+      setCode("");
+      setCodeError("");
+      setStep("code");
     } catch {
-      setEmailError("Could not save. Please try again.");
+      setEmailError("Could not send a code. Please try again.");
     } finally {
       setSavingEmail(false);
     }
   }
 
+  // Step 2 → done: confirm the 6-digit code the staff member received. Accepts
+  // the value directly so the auto-submit on the 6th digit isn't racing the
+  // async `code` state update.
+  async function verifyCode(submitted?: string) {
+    const value = (submitted ?? code).trim();
+    if (!/^\d{6}$/.test(value)) {
+      setCodeError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setCodeError("");
+    setVerifyingCode(true);
+    try {
+      const res = await fetch("/api/perk/verify/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, code: value }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data.code === "CODE_EXPIRED" || data.code === "TOO_MANY_ATTEMPTS") {
+          setCodeError(data.error || "Request a new code.");
+        } else {
+          setCodeError(data.error || "Incorrect code. Try again.");
+        }
+        // Clear the field so they can retype cleanly (and re-trigger
+        // auto-submit) rather than editing a wrong code in place.
+        setCode("");
+        return;
+      }
+      setStep("done");
+    } catch {
+      setCodeError("Could not verify. Please try again.");
+    } finally {
+      setVerifyingCode(false);
+    }
+  }
+
+  async function resendCode() {
+    setResending(true);
+    setCodeError("");
+    try {
+      const res = await fetch("/api/perk/verify/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shopId, customerId, email: email.trim().toLowerCase() }),
+      });
+      if (!res.ok) throw new Error("resend-failed");
+      toast.success("New code sent — check your email.");
+    } catch {
+      setCodeError("Could not resend. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  }
+
   async function saveDetails() {
     setDetailsError("");
-    const update: { name?: string; email?: string } = {};
     const trimmedName = name.trim();
-    if (trimmedName) update.name = trimmedName;
+    const newEmail = email.trim().toLowerCase();
+    const emailChanged =
+      emailEditable && newEmail !== (customerEmail || "").trim().toLowerCase();
 
-    if (emailEditable) {
-      const value = email.trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    // Validate a changed email up front before touching the server.
+    if (emailChanged) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
         setDetailsError("Please enter a valid email address");
         return;
       }
-      if (!emailDomainAllowed(value, allowedDomains)) {
+      if (!emailDomainAllowed(newEmail, allowedDomains)) {
         setDetailsError("Please use your work email address.");
         return;
       }
-      update.email = value;
     }
 
-    if (Object.keys(update).length === 0) {
+    if (!trimmedName && !emailChanged) {
       setShowDetails(false);
       return;
     }
     setSavingDetails(true);
     try {
-      const res = await fetch(`/api/customers/${customerId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(update),
-      });
-      if (!res.ok) throw new Error("save-failed");
+      if (trimmedName) {
+        const res = await fetch(`/api/customers/${customerId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+        if (!res.ok) throw new Error("save-failed");
+      }
+      // A changed email must be re-verified — send a fresh code and drop the
+      // customer into the code-entry step rather than silently trusting it.
+      if (emailChanged) {
+        const res = await fetch("/api/perk/verify/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shopId, customerId, email: newEmail }),
+        });
+        if (!res.ok) throw new Error("send-failed");
+        setShowDetails(false);
+        setCode("");
+        setCodeError("");
+        setStep("code");
+        return;
+      }
       toast.success("Details updated");
       setShowDetails(false);
     } catch {
@@ -294,7 +395,7 @@ export default function PerkCustomerClient({
                 <span style={{ opacity: 0.6 }}>&middot; Staff coffee perk</span>
               </p>
 
-              {!emailAllowed ? (
+              {step === "email" ? (
                 /* Email gate — asked once, then remembered on this device. */
                 <div className="space-y-3">
                   <Label
@@ -324,13 +425,86 @@ export default function PerkCustomerClient({
                     <p className="text-xs text-red-400">{emailError}</p>
                   )}
                   <Button
-                    onClick={saveEmail}
+                    onClick={sendCode}
                     disabled={savingEmail || !email.trim()}
                     className="w-full cursor-pointer hover:opacity-90"
                     style={{ backgroundColor: fgHex, color: bgHex }}
                   >
-                    {savingEmail ? "Saving…" : "Continue"}
+                    {savingEmail ? "Sending…" : "Continue"}
                   </Button>
+                </div>
+              ) : step === "code" ? (
+                /* Code gate — prove control of the mailbox before any claim. */
+                <div className="space-y-3">
+                  <Label
+                    className="text-xs"
+                    style={{ color: fgHex, opacity: 0.7 }}
+                  >
+                    Enter the 6-digit code we emailed to{" "}
+                    <span style={{ opacity: 1, fontWeight: 600 }}>
+                      {email.trim().toLowerCase()}
+                    </span>
+                  </Label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => {
+                      const next = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                      setCode(next);
+                      setCodeError("");
+                      // Auto-submit the moment 6 digits are in (typed or
+                      // pasted) — no extra tap needed at the counter.
+                      if (next.length === 6 && !verifyingCode) verifyCode(next);
+                    }}
+                    placeholder="000000"
+                    style={{
+                      borderColor: codeError ? "#f87171" : fgHex + "30",
+                      backgroundColor: fgHex + "10",
+                      color: fgHex,
+                      letterSpacing: "0.4em",
+                      textAlign: "center",
+                      fontSize: "1.25rem",
+                    }}
+                    className="placeholder-inherit"
+                  />
+                  {codeError && (
+                    <p className="text-xs text-red-400">{codeError}</p>
+                  )}
+                  <Button
+                    onClick={() => verifyCode()}
+                    disabled={verifyingCode || code.length !== 6}
+                    className="w-full cursor-pointer hover:opacity-90"
+                    style={{ backgroundColor: fgHex, color: bgHex }}
+                  >
+                    {verifyingCode ? "Verifying…" : "Verify"}
+                  </Button>
+                  <div className="flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("email");
+                        setCodeError("");
+                      }}
+                      className="cursor-pointer underline-offset-2 hover:underline"
+                      style={{ color: fgHex, opacity: 0.7 }}
+                    >
+                      Change email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resendCode}
+                      disabled={resending}
+                      className="cursor-pointer underline-offset-2 hover:underline disabled:opacity-50"
+                      style={{ color: fgHex, opacity: 0.7 }}
+                    >
+                      {resending ? "Sending…" : "Resend code"}
+                    </button>
+                  </div>
                 </div>
               ) : atLimit ? (
                 <div className="text-center">
@@ -368,7 +542,7 @@ export default function PerkCustomerClient({
             </div>
 
             {/* Action area below the card, like the stamp card's Request button */}
-            {emailAllowed &&
+            {step === "done" &&
               !atLimit &&
               (status === "waiting" ? (
                 <CustomerWaiting fgColor={fgHex} language="en" />
@@ -398,7 +572,7 @@ export default function PerkCustomerClient({
 
         {/* Update details — outlined button + expanding panel, matching the
             stamp card's "Update details" placement and styling. */}
-        {emailAllowed && status !== "waiting" && (
+        {step === "done" && status !== "waiting" && (
           <div>
             {!showDetails ? (
               <Button

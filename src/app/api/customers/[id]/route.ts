@@ -16,6 +16,22 @@ export async function PATCH(
   if (email) update.email = email;
   if (password) update.password = await bcrypt.hash(password, 10);
 
+  // If the email is changing, any prior perk verification no longer applies —
+  // reset it so the new address must be verified before it can redeem.
+  if (email) {
+    const current = await Customer.findById(id).select("email").lean();
+    const changed =
+      (current as any)?.email?.trim().toLowerCase() !==
+      String(email).trim().toLowerCase();
+    if (changed) {
+      update.emailVerified = false;
+      update.emailVerifiedAt = null;
+      update.emailVerifyCodeHash = null;
+      update.emailVerifyExpires = null;
+      update.emailVerifyAttempts = 0;
+    }
+  }
+
   const customer = await Customer.findByIdAndUpdate(id, update, { new: true });
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });

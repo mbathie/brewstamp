@@ -119,6 +119,7 @@ export default async function CustomerScanPage({
         customerEmail={customer.email || null}
         customerName={customer.name || null}
         emailAllowed={emailAllowed}
+        emailVerified={!!customer.emailVerified}
         allowedDomains={shop.allowedEmailDomains || []}
         dailyLimit={dailyLimit}
         drinksToday={drinksToday}

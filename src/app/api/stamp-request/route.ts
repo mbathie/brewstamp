@@ -96,6 +96,17 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+    // Domain-valid is not enough — the email must be verified, so a spoofed
+    // fake@company.com can't redeem without access to the mailbox.
+    if (!customer!.emailVerified) {
+      return NextResponse.json(
+        {
+          error: "Please verify your work email first.",
+          code: "EMAIL_NOT_VERIFIED",
+        },
+        { status: 403 },
+      );
+    }
     perkEmail = customer!.email.trim().toLowerCase();
     const limit = shop.dailyDrinkLimit || 2;
     // Cap by email, not the device cookie — same email on a second phone can't

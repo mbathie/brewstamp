@@ -96,6 +96,83 @@ export async function sendResetEmail({
   }
 }
 
+export async function sendPerkVerifyCodeEmail({
+  to,
+  code,
+  shopName,
+}: {
+  to: string;
+  code: string;
+  shopName: string;
+}) {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your coffee perk code</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px 24px 8px;">
+        <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">Verify your work email</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Enter this code on the ${shopName} coffee perk screen to confirm your email and start claiming your free coffees.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Code -->
+    <tr>
+      <td style="padding: 8px 24px 24px; text-align: center;">
+        <div style="display: inline-block; background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 10px; padding: 18px 28px; font-size: 34px; font-weight: 700; letter-spacing: 8px; color: #1c1917;">${code}</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding: 0 24px 32px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5;">
+          This code expires in 10 minutes. If you didn&rsquo;t request it, you can safely ignore this email.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `Your ${shopName} perk code: ${code}`,
+      html,
+      headers: { "X-Mailin-Tag": "perk-verify" },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send perk verify email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendWelcomeEmail({
   to,
   merchantName,
