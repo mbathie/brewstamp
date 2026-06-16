@@ -114,6 +114,8 @@ export default function PerkCustomerClient({
         } else if (data.code === "EMAIL_NOT_VERIFIED") {
           setStep("email");
           toast.error("Please verify your work email.");
+        } else if (data.code === "CUSTOMER_DISABLED") {
+          toast.error("This account has been disabled. Please see staff.");
         } else {
           toast.error("Something went wrong. Try again.");
         }

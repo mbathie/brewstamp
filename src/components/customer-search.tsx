@@ -27,6 +27,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   Plus,
   Download,
@@ -59,7 +66,10 @@ interface StampCardData {
   updatedAt: string;
   tags?: string[];
   notes?: string;
+  disabled?: boolean;
 }
+
+type StatusFilter = "active" | "disabled" | "all";
 
 interface Props {
   stampCards: StampCardData[];
@@ -99,6 +109,7 @@ function downloadCsv(
     ...(aggregate ? ["Shop"] : []),
     "Name",
     "Email",
+    "Status",
     "Tags",
     "Notes",
     // Perk reports are reimbursement-focused: just the free coffees per person.
@@ -116,6 +127,7 @@ function downloadCsv(
         ...(aggregate ? [csvCell(c.shop?.name || "")] : []),
         csvCell(name),
         csvCell(c.customer.email || ""),
+        csvCell(c.disabled ? "Disabled" : "Active"),
         csvCell((c.tags || []).join("; ")),
         csvCell((c.notes || "").replace(/\s+/g, " ").trim()),
         ...(perkMode
@@ -159,11 +171,6 @@ export default function CustomerSearch({
   const [error, setError] = useState("");
   const [page, setPage] = useState(0);
 
-  // Reset to first page when search changes
-  useEffect(() => {
-    setPage(0);
-  }, [query]);
-
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setAdding("Adding...");
@@ -199,6 +206,14 @@ export default function CustomerSearch({
   }, [validCards]);
 
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  // Default to active so disabled (e.g. spoofed/ex-staff) customers are hidden
+  // from the working list but still reachable via the filter and the CSV.
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+
+  // Reset to first page when the visible set changes
+  useEffect(() => {
+    setPage(0);
+  }, [query, statusFilter, tagFilter]);
 
   type SortKey =
     | "customer"
@@ -222,7 +237,9 @@ export default function CustomerSearch({
     }
   }
 
-  const filtered = useMemo(() => {
+  // Search + tag filtered and sorted, across ALL statuses. This is what the CSV
+  // exports — so a Plus owner gets active and disabled customers in one file.
+  const sortedAll = useMemo(() => {
     const list = validCards.filter((card) => {
       if (tagFilter && !(card.tags || []).includes(tagFilter)) return false;
       if (!query.trim()) return true;
@@ -281,6 +298,18 @@ export default function CustomerSearch({
     return [...list].sort(compare);
   }, [validCards, query, tagFilter, sortKey, sortDir]);
 
+  // Table view applies the status filter on top of the sorted base.
+  const filtered = useMemo(() => {
+    if (statusFilter === "all") return sortedAll;
+    const wantDisabled = statusFilter === "disabled";
+    return sortedAll.filter((c) => !!c.disabled === wantDisabled);
+  }, [sortedAll, statusFilter]);
+
+  const disabledCount = useMemo(
+    () => validCards.filter((c) => c.disabled).length,
+    [validCards],
+  );
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageStart = page * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
@@ -298,13 +327,28 @@ export default function CustomerSearch({
             className="pl-9"
           />
         </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+        >
+          <SelectTrigger className="w-[130px] cursor-pointer">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="disabled">
+              Disabled{disabledCount > 0 ? ` (${disabledCount})` : ""}
+            </SelectItem>
+            <SelectItem value="all">All</SelectItem>
+          </SelectContent>
+        </Select>
         {canExportCsv ? (
           <Button
             variant="outline"
-            onClick={() => downloadCsv(filtered, aggregate, perkMode)}
-            disabled={filtered.length === 0}
+            onClick={() => downloadCsv(sortedAll, aggregate, perkMode)}
+            disabled={sortedAll.length === 0}
             className="cursor-pointer"
-            title="Download visible customers as CSV"
+            title="Download all customers (active + disabled) as CSV"
           >
             <Download className="mr-1 size-4" />
             Export CSV
@@ -419,7 +463,11 @@ export default function CustomerSearch({
         <p className="text-sm text-muted-foreground">
           {query.trim() || tagFilter
             ? "No customers match your search."
-            : "No customers yet."}
+            : statusFilter === "disabled"
+              ? "No disabled customers."
+              : statusFilter === "active"
+                ? "No active customers."
+                : "No customers yet."}
         </p>
       ) : (
         <Table>
@@ -491,9 +539,19 @@ export default function CustomerSearch({
                 >
                   <TableCell className="max-w-[220px]">
                     <div>
-                      <p className="font-medium">
-                        {card.customer.name ||
-                          generateAnimalName(card.customer.cookieId)}
+                      <p className="flex items-center gap-2 font-medium">
+                        <span className={card.disabled ? "text-muted-foreground line-through" : ""}>
+                          {card.customer.name ||
+                            generateAnimalName(card.customer.cookieId)}
+                        </span>
+                        {card.disabled && (
+                          <Badge
+                            variant="outline"
+                            className="border-red-500/40 px-1.5 py-0 text-[10px] font-normal text-red-400"
+                          >
+                            Disabled
+                          </Badge>
+                        )}
                       </p>
                       {card.customer.email && (
                         <p className="truncate text-xs text-muted-foreground">

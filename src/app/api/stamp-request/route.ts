@@ -81,6 +81,19 @@ export async function POST(req: Request) {
     );
   }
 
+  // A disabled customer can't earn stamps or claim perks at this shop. Applies
+  // in both modes; a customer with no card yet (first scan) isn't disabled.
+  const existingCard = await StampCard.findOne({
+    shop: shopId,
+    customer: customerId,
+  }).select("disabled");
+  if (existingCard?.disabled) {
+    return NextResponse.json(
+      { error: "This account has been disabled.", code: "CUSTOMER_DISABLED" },
+      { status: 403 },
+    );
+  }
+
   // Perk-mode shops (employer-subsidised coffee) gate every request by email
   // domain and a per-person daily cap before it ever reaches the barista.
   const shop = await Shop.findById(shopId);

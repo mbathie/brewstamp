@@ -108,6 +108,7 @@ export default async function CustomerDetailPage({
       history={history}
       initialNotes={stampCard?.notes || ""}
       initialTags={stampCard?.tags || []}
+      initialDisabled={!!stampCard?.disabled}
     />
   );
 }

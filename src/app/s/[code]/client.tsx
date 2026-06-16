@@ -254,6 +254,10 @@ export default function CustomerClient({
         });
 
         if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (err.code === "CUSTOMER_DISABLED") {
+            toast.error("This account has been disabled. Please see staff.");
+          }
           setStatus("idle");
           return;
         }

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, X, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, X, Pencil, Ban } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ interface Props {
   history: HistoryRow[];
   initialNotes: string;
   initialTags: string[];
+  initialDisabled?: boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -77,6 +78,7 @@ export default function CustomerDetailContent({
   history,
   initialNotes,
   initialTags,
+  initialDisabled = false,
 }: Props) {
   const [showCardPreview, setShowCardPreview] = useState(false);
   const [page, setPage] = useState(0);
@@ -96,7 +98,31 @@ export default function CustomerDetailContent({
   const [savingEdit, setSavingEdit] = useState(false);
   const [editErr, setEditErr] = useState("");
 
+  // Per-shop disable state.
+  const [disabled, setDisabled] = useState(initialDisabled);
+  const [togglingDisabled, setTogglingDisabled] = useState(false);
+
   const displayName = realName.trim() || customerName;
+
+  async function toggleDisabled() {
+    const next = !disabled;
+    setTogglingDisabled(true);
+    try {
+      const res = await fetch(`/api/customers/${customerId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disabled: next }),
+      });
+      if (!res.ok) throw new Error("toggle-failed");
+      setDisabled(next);
+      setEditOpen(false);
+      toast.success(next ? "Customer disabled" : "Customer enabled");
+    } catch {
+      toast.error("Could not update. Please try again.");
+    } finally {
+      setTogglingDisabled(false);
+    }
+  }
 
   function openEdit() {
     setFormName(realName);
@@ -246,11 +272,19 @@ export default function CustomerDetailContent({
               <button
                 type="button"
                 onClick={openEdit}
-                aria-label="Edit name and email"
+                aria-label="Edit customer"
                 className="cursor-pointer text-muted-foreground/60 transition-colors hover:text-foreground"
               >
                 <Pencil className="h-4 w-4" />
               </button>
+              {disabled && (
+                <Badge
+                  variant="outline"
+                  className="border-red-500/40 font-normal text-red-400"
+                >
+                  Disabled
+                </Badge>
+              )}
             </div>
             {email && (
               <a
@@ -290,13 +324,45 @@ export default function CustomerDetailContent({
             </div>
           </div>
         </div>
-        <MerchantCheckin
-          shopId={shopId}
-          customerId={customerId}
-          customerName={displayName}
-          stamps={stamps}
-          threshold={threshold}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {disabled ? (
+            <>
+              <Badge
+                variant="outline"
+                className="border-red-500/40 px-3 py-1.5 font-normal text-red-400"
+              >
+                Disabled — can&apos;t earn or claim
+              </Badge>
+              <Button
+                variant="outline"
+                onClick={toggleDisabled}
+                disabled={togglingDisabled}
+                className="cursor-pointer"
+              >
+                {togglingDisabled ? "…" : "Enable customer"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={toggleDisabled}
+                disabled={togglingDisabled}
+                className="cursor-pointer border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+              >
+                <Ban className="mr-1.5 size-4" />
+                {togglingDisabled ? "…" : "Disable"}
+              </Button>
+              <MerchantCheckin
+                shopId={shopId}
+                customerId={customerId}
+                customerName={displayName}
+                stamps={stamps}
+                threshold={threshold}
+              />
+            </>
+          )}
+        </div>
       </div>
 
       <Card>

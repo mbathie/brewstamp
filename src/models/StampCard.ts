@@ -17,6 +17,10 @@ const stampCardSchema = new mongoose.Schema(
     freeRedeemed: { type: Number, default: 0 },
     notes: { type: String, default: "" },
     tags: { type: [String], default: [] },
+    // Per-shop disable: a disabled customer can't earn stamps or claim perks at
+    // this shop (e.g. a spoofed/ex-staff perk account). Scoped to the card so
+    // the same person stays active at other shops. Works in both modes.
+    disabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
