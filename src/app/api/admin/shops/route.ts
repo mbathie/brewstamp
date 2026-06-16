@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
-import {
-  getPlanByPriceId,
-  getIntervalByPriceId,
-  annualPriceCents,
-  type PlanSlug,
-} from "@/lib/plans";
+import { resolveSub, type PlanSlug } from "@/lib/plans";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -15,39 +10,6 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 // admin views hide everyone older so the numbers reflect a live business, not
 // a lifetime tally inflated by one-time scanners.
 const ACTIVE_DAYS = 90;
-
-// Legacy subscriptions predate the current Stripe price IDs and are
-// grandfathered at the old $5/mo Pro rate — used when a price id doesn't map
-// to a current plan.
-const LEGACY_PRO_CENTS = 500;
-
-// Resolve a subscription's tier + true monthly revenue. Annual plans are
-// converted to a monthly-equivalent so MRR is apples-to-apples.
-function resolveSub(sub: { stripePriceId?: string; planLabel?: string }): {
-  slug: PlanSlug;
-  label: string;
-  monthlyCents: number;
-  legacy: boolean;
-} {
-  if (sub.stripePriceId) {
-    const plan = getPlanByPriceId(sub.stripePriceId);
-    if (plan) {
-      const interval = getIntervalByPriceId(sub.stripePriceId) ?? "month";
-      const monthlyCents =
-        interval === "year"
-          ? Math.round(annualPriceCents(plan) / 12)
-          : plan.priceCents;
-      return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
-    }
-  }
-  // Price id doesn't map to a current plan → grandfathered legacy Pro.
-  return {
-    slug: "pro",
-    label: sub.planLabel || "Pro",
-    monthlyCents: LEGACY_PRO_CENTS,
-    legacy: true,
-  };
-}
 
 export async function GET() {
   const session = await auth();

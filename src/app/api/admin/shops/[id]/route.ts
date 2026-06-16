@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, Account } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
+import { resolveSub } from "@/lib/plans";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
@@ -24,8 +25,14 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Get all stamp cards with customer info (only those with stamps)
-  const stampCards = await StampCard.find({ shop: id, totalEarned: { $gt: 0 } })
+  // Get all stamp cards with customer info. A card counts as a real customer
+  // if they've earned a stamp OR redeemed a free coffee/perk — perk-mode shops
+  // accrue freeRedeemed without totalEarned, so filtering on totalEarned alone
+  // would hide every perk customer. Matches the admin list's definition.
+  const stampCards = await StampCard.find({
+    shop: id,
+    $or: [{ totalEarned: { $gt: 0 } }, { freeRedeemed: { $gt: 0 } }],
+  })
     .populate("customer", "name email cookieId")
     .sort({ updatedAt: -1 })
     .lean();
@@ -84,6 +91,7 @@ export async function GET(
   ]);
 
   const activeSub = await Subscription.findOne({ shop: shop._id, status: "active" }).lean();
+  const plan = activeSub ? resolveSub(activeSub as any) : null;
 
   // Determine auth methods for shop owner
   const ownerId = (shop as any).owner._id;
@@ -118,6 +126,9 @@ export async function GET(
       language: (shop as any).language || "en",
       owner: { ...(shop as any).owner, authMethods, signupReferrer, signupLandingPage },
       isPro: !!activeSub,
+      perkMode: !!(shop as any).perkMode,
+      planSlug: plan?.slug ?? "free",
+      planLabel: plan?.label ?? "Free",
     },
     customers: stampCards.map((sc: any) => ({
       name: sc.customer?.name || (sc.customer?.cookieId ? generateAnimalName(sc.customer.cookieId) : null),

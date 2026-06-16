@@ -204,6 +204,43 @@ export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
   return undefined;
 }
 
+// Legacy subscriptions predate the current Stripe price IDs and are
+// grandfathered at the old $5/mo Pro rate — used when a price id doesn't map
+// to a current plan.
+export const LEGACY_PRO_CENTS = 500;
+
+// Resolve a subscription's tier + true monthly revenue. Annual plans are
+// converted to a monthly-equivalent so MRR is apples-to-apples. Shared by the
+// admin shops list and detail endpoints so they report the same tier.
+export function resolveSub(sub: {
+  stripePriceId?: string;
+  planLabel?: string;
+}): {
+  slug: PlanSlug;
+  label: string;
+  monthlyCents: number;
+  legacy: boolean;
+} {
+  if (sub.stripePriceId) {
+    const plan = getPlanByPriceId(sub.stripePriceId);
+    if (plan) {
+      const interval = getIntervalByPriceId(sub.stripePriceId) ?? "month";
+      const monthlyCents =
+        interval === "year"
+          ? Math.round(annualPriceCents(plan) / 12)
+          : plan.priceCents;
+      return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
+    }
+  }
+  // Price id doesn't map to a current plan → grandfathered legacy Pro.
+  return {
+    slug: "pro",
+    label: sub.planLabel || "Pro",
+    monthlyCents: LEGACY_PRO_CENTS,
+    legacy: true,
+  };
+}
+
 // Identify whether a Stripe price ID is the monthly or annual variant. Used
 // by the billing UI to highlight the active interval. Returns undefined if
 // the price ID isn't recognised.

@@ -19,6 +19,7 @@ import {
   Globe,
   Compass,
   Gift,
+  Coffee,
 } from "lucide-react";
 import { Sparkline } from "@/components/sparkline";
 import {
@@ -90,6 +91,9 @@ interface ShopDetail {
     firstCustomerEmailSent: boolean;
     language: string;
     isPro: boolean;
+    perkMode: boolean;
+    planSlug: string;
+    planLabel: string;
     owner: {
       name: string;
       email: string;
@@ -140,6 +144,14 @@ type ReqSortKey = "customer" | "status" | "stampsAwarded" | "redeem" | "createdA
 type SortDir = "asc" | "desc";
 
 const PAGE_SIZE = 20;
+
+// Tier badge colours, kept in sync with the admin shops list.
+const PLAN_BADGE: Record<string, string> = {
+  free: "border-border text-muted-foreground",
+  pro: "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
+  plus: "border-sky-500/30 bg-sky-500/15 text-sky-300",
+  max: "border-violet-500/30 bg-violet-500/15 text-violet-300",
+};
 
 function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -438,14 +450,19 @@ export default function AdminShopDetailPage() {
         <div className="flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl font-semibold text-foreground">{shop.name}</h1>
-            {shop.isPro ? (
-              <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs px-2 py-0.5">
-                <Zap className="mr-1 size-3" />
-                Pro
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-muted-foreground text-xs px-2 py-0.5">
-                Free
+            <Badge
+              variant="outline"
+              className={`text-xs px-2 py-0.5 hover:bg-transparent ${
+                PLAN_BADGE[shop.planSlug] ?? PLAN_BADGE.free
+              }`}
+            >
+              {shop.planSlug !== "free" && <Zap className="mr-1 size-3" />}
+              {shop.planLabel}
+            </Badge>
+            {shop.perkMode && (
+              <Badge className="border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/15 text-xs px-2 py-0.5">
+                <Coffee className="mr-1 size-3" />
+                Perk
               </Badge>
             )}
             <a
