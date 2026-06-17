@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import RelatedGuides from "@/components/related-guides";
 
 export const metadata: Metadata = {
   title: "QR Code Loyalty Program: How to Set One Up for Your Cafe (Free)",
@@ -423,6 +424,7 @@ export default function BlogPost() {
           </div>
         </article>
       </main>
+      <RelatedGuides />
       <Footer />
     </div>
   );
