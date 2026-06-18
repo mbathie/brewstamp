@@ -84,6 +84,10 @@ export async function POST(req: Request) {
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
+    // Show Stripe's hosted "Add promotion code" field so customers can redeem
+    // discount codes created in the admin Discounts page. Stripe validates the
+    // code (expiry, plan restriction, redemption cap) against this cart.
+    allow_promotion_codes: true,
     success_url: `${appUrl}/dashboard/billing?success=1`,
     cancel_url: `${appUrl}/dashboard/billing`,
     metadata: { shopId: shop._id.toString(), plan: plan.slug, interval },

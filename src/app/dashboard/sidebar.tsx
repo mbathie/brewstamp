@@ -14,6 +14,7 @@ import {
   ChevronUp,
   UserCog,
   BarChart3,
+  Ticket,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,7 @@ const navItems = [
 
 const adminItems = [
   { title: "Stats", href: "/dashboard/admin/shops", icon: BarChart3 },
+  { title: "Discounts", href: "/dashboard/admin/discounts", icon: Ticket },
 ];
 
 export function DashboardSidebar({
