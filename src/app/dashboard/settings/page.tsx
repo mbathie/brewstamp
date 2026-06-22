@@ -352,13 +352,28 @@ export default function SettingsPage() {
     setEditorOpen(false);
     setRawImage(null);
     setUploadingLogo(true);
-    const res = await fetch("/api/shop", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ logo: croppedUrl }),
-    });
-    if (res.ok) setLogo(croppedUrl);
-    setUploadingLogo(false);
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/shop", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logo: croppedUrl }),
+      });
+      if (res.ok) {
+        setLogo(croppedUrl);
+        setSaveStatus("saved");
+        setTimeout(
+          () => setSaveStatus((s) => (s === "saved" ? "idle" : s)),
+          1500,
+        );
+      } else {
+        setSaveStatus("idle");
+      }
+    } catch {
+      setSaveStatus("idle");
+    } finally {
+      setUploadingLogo(false);
+    }
   }
 
   function handleEditorCancel() {
@@ -368,14 +383,29 @@ export default function SettingsPage() {
 
   async function handleLogoRemove() {
     setUploadingLogo(true);
-    const res = await fetch("/api/shop", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ logo: null }),
-    });
-    if (res.ok) setLogo(null);
-    setUploadingLogo(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/shop", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logo: null }),
+      });
+      if (res.ok) {
+        setLogo(null);
+        setSaveStatus("saved");
+        setTimeout(
+          () => setSaveStatus((s) => (s === "saved" ? "idle" : s)),
+          1500,
+        );
+      } else {
+        setSaveStatus("idle");
+      }
+    } catch {
+      setSaveStatus("idle");
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   if (aggregate) {
