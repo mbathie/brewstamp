@@ -291,6 +291,8 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
+      // accountName so a customer name change propagates to the saved pass.
+      accountName: d.customerName,
       loyaltyPoints: {
         label: d.perkMode ? "Free rewards" : "Stamps",
         balance: { string: balanceString(d) },

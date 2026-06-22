@@ -190,6 +190,26 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
 }
 
 /**
+ * Sync every wallet pass belonging to a customer — across all the shops they
+ * hold a card with. Call fire-and-forget after a customer's name changes (the
+ * name shows on the pass). Walks each of their cards through syncWalletPasses.
+ */
+export async function syncWalletPassesForCustomer(
+  customerId: string,
+): Promise<void> {
+  try {
+    const cards = await WalletPass.find({ customer: customerId }).distinct(
+      "card",
+    );
+    for (const cardId of cards) {
+      await syncWalletPasses(cardId.toString());
+    }
+  } catch (err) {
+    console.error("[Wallet] customer sync failed for", customerId, err);
+  }
+}
+
+/**
  * Push the latest balance to every wallet pass registered for a card. Call
  * fire-and-forget after a stamp/redeem change — never block or throw into the
  * approval flow.
