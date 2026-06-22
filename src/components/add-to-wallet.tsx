@@ -63,8 +63,28 @@ export function AddToWallet({
   // Official vendor badge artwork — required by Apple & Google brand
   // guidelines (no recreating). The badge IS the button; clicking it runs the
   // save flow. h-12 ≈ 48dp, meeting Google's minimum.
+  // Dev-only visual preview of the Apple badge before Apple Wallet is
+  // provisioned — non-interactive, never rendered in production. Shows only
+  // when the real Apple button isn't already available.
+  const devApplePreview =
+    process.env.NODE_ENV !== "production" && !showApple;
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-3">
+      {devApplePreview && (
+        <span
+          aria-hidden
+          title="Apple Wallet — visual preview (not wired yet)"
+          className="cursor-default select-none"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/badges/add-to-apple-wallet.svg"
+            alt=""
+            className="h-12 w-auto"
+          />
+        </span>
+      )}
       {showApple && (
         <button
           type="button"
