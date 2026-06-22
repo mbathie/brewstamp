@@ -159,6 +159,7 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
         shopId: shop._id.toString(),
         shopName: shop.name,
         shopLogo: shop.logo || null,
+        bgColor: shop.bgColor || "stone-800",
         fgColor: shop.fgColor || "amber-600",
         perkMode: !!shop.perkMode,
       });

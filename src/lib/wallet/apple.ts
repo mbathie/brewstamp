@@ -43,12 +43,24 @@ function balanceString(d: WalletCardData): string {
 // server-side); fall back to the bundled Brewstamp mark. Returns null only if
 // even the fallback can't be read.
 async function logoBytes(shopLogo: string | null): Promise<Buffer | null> {
-  if (shopLogo && /^https?:\/\//i.test(shopLogo)) {
-    try {
-      const res = await fetch(shopLogo);
-      if (res.ok) return Buffer.from(await res.arrayBuffer());
-    } catch {
-      // fall through to bundled mark
+  if (shopLogo) {
+    // Uploaded logos are data: URIs — decode straight to bytes (Apple bakes the
+    // image into the .pkpass, so no public URL needed, unlike Google).
+    const data = /^data:image\/[a-z0-9.+-]+;base64,(.+)$/i.exec(shopLogo);
+    if (data) {
+      try {
+        return Buffer.from(data[1], "base64");
+      } catch {
+        // fall through to bundled mark
+      }
+    }
+    if (/^https?:\/\//i.test(shopLogo)) {
+      try {
+        const res = await fetch(shopLogo);
+        if (res.ok) return Buffer.from(await res.arrayBuffer());
+      } catch {
+        // fall through to bundled mark
+      }
     }
   }
   try {
@@ -76,6 +88,10 @@ export async function buildPkpass(
   const img = await logoBytes(d.shopLogo);
   if (!img) return null;
 
+  // Match the customer card: dark background colour, accent colour for the
+  // field text/labels. Apple lets us set all three independently (Google only
+  // takes a single background colour).
+  const background = getColorHex(d.bgColor);
   const accent = getColorHex(d.fgColor);
 
   let pass: PKPass;
@@ -100,9 +116,9 @@ export async function buildPkpass(
         description: `${d.shopName} loyalty card`,
         organizationName: d.shopName,
         logoText: d.shopName,
-        foregroundColor: "rgb(255, 255, 255)",
-        backgroundColor: rgb(accent),
-        labelColor: "rgb(255, 255, 255)",
+        foregroundColor: rgb(accent),
+        backgroundColor: rgb(background),
+        labelColor: rgb(accent),
         webServiceURL: WEB_SERVICE_URL,
         authenticationToken: authToken,
       },

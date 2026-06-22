@@ -21,6 +21,7 @@ export interface WalletClassData {
   shopId: string;
   shopName: string;
   shopLogo: string | null;
+  bgColor: string;
   fgColor: string;
   perkMode: boolean;
 }
@@ -66,17 +67,33 @@ async function accessToken(): Promise<string | null> {
 // since Google fetches it server-side).
 const FALLBACK_LOGO = "https://brewstamp.app/apple-touch-icon.png";
 
+// Google fetches programLogo server-side, so the URI MUST be a public URL.
+// A data: URI (how uploaded logos are stored) makes the class create/update
+// fail with a 500 — which silently drops the colour update too. So: pass an
+// https logo straight through; serve a data-URI logo via our public logo
+// endpoint when the app has a public https origin; otherwise use the fallback.
+function classLogoUri(d: WalletClassData): string {
+  if (d.shopLogo) {
+    if (/^https?:\/\//i.test(d.shopLogo)) return d.shopLogo;
+    if (d.shopLogo.startsWith("data:") && APP_URL.startsWith("https://")) {
+      return `${APP_URL}/api/shop/${d.shopId}/logo`;
+    }
+  }
+  return FALLBACK_LOGO;
+}
+
 function loyaltyClassBody(issuerId: string, d: WalletClassData) {
   return {
     id: classId(issuerId, d.shopId),
     issuerName: d.shopName,
     programName: d.perkMode ? "Staff perk" : `${d.shopName} loyalty`,
     reviewStatus: "UNDER_REVIEW",
-    // Use the shop's accent colour as the pass background so it reads as their
-    // brand (Google auto-picks legible label colours from this).
-    hexBackgroundColor: getColorHex(d.fgColor),
+    // Match the customer card: its dark background colour is the pass
+    // background. Google auto-derives a legible (white/black) text colour from
+    // this — it has no separate accent/foreground field like Apple does.
+    hexBackgroundColor: getColorHex(d.bgColor),
     programLogo: {
-      sourceUri: { uri: d.shopLogo || FALLBACK_LOGO },
+      sourceUri: { uri: classLogoUri(d) },
       contentDescription: {
         defaultValue: { language: "en", value: `${d.shopName} logo` },
       },

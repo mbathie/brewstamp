@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Customer-facing "Add to Apple/Google Wallet" buttons using each vendor's
@@ -63,14 +64,20 @@ export function AddToWallet({
           onClick={() => add("apple")}
           disabled={loading !== null}
           aria-label="Add to Apple Wallet"
-          className="cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          aria-busy={loading === "apple"}
+          className="relative cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/badges/add-to-apple-wallet.svg"
             alt="Add to Apple Wallet"
-            className="h-12 w-auto"
+            className={`h-12 w-auto ${loading === "apple" ? "opacity-30" : ""}`}
           />
+          {loading === "apple" && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            </span>
+          )}
         </button>
       )}
       {showGoogle && (
@@ -79,14 +86,20 @@ export function AddToWallet({
           onClick={() => add("google")}
           disabled={loading !== null}
           aria-label="Add to Google Wallet"
-          className="cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          aria-busy={loading === "google"}
+          className="relative cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/badges/add-to-google-wallet.svg"
             alt="Add to Google Wallet"
-            className="h-12 w-auto"
+            className={`h-12 w-auto ${loading === "google" ? "opacity-30" : ""}`}
           />
+          {loading === "google" && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            </span>
+          )}
         </button>
       )}
     </div>
