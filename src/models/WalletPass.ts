@@ -28,6 +28,8 @@ const walletPassSchema = new mongoose.Schema(
 
 walletPassSchema.index({ card: 1, provider: 1 }, { unique: true });
 walletPassSchema.index({ shop: 1 });
+// Lookup for the "recover my card" wallet link.
+walletPassSchema.index({ authToken: 1 });
 
 const WalletPass =
   mongoose.models.WalletPass || mongoose.model("WalletPass", walletPassSchema);

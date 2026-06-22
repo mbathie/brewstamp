@@ -72,6 +72,19 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
   const avail = walletAvailable(!!shop?.walletPasses);
   if (!avail.enabled) return { google: null, apple: null };
 
+  const customerId = (
+    await StampCard.findById(cardId).select("customer").lean<any>()
+  )?.customer;
+
+  // One recovery token per card, shared by both providers and reused across
+  // re-issues. The pass embeds `${APP_URL}/api/wallet/recover?t=…`, which
+  // restores this customer's browser cookie if they lose it.
+  const existingToken = (
+    await WalletPass.findOne({ card: d.cardId }).select("authToken").lean<any>()
+  )?.authToken;
+  const recoverToken = existingToken || crypto.randomBytes(24).toString("hex");
+  d.recoverUrl = `${APP_URL}/api/wallet/recover?t=${recoverToken}`;
+
   const links: SaveLinks = { google: null, apple: null };
 
   if (avail.google) {
@@ -82,9 +95,10 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
         {
           card: d.cardId,
           shop: d.shopId,
-          customer: (await StampCard.findById(cardId).select("customer").lean<any>())?.customer,
+          customer: customerId,
           provider: "google",
           serial: `card_${d.cardId}`,
+          authToken: recoverToken,
         },
         { upsert: true },
       );
@@ -92,19 +106,7 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
   }
 
   if (avail.apple && isAppleWalletConfigured()) {
-    const customerId = (
-      await StampCard.findById(cardId).select("customer").lean<any>()
-    )?.customer;
     const serial = `card_${d.cardId}`;
-    // Reuse the existing auth token if this pass was issued before, so a
-    // re-download keeps the same web-service credential.
-    const existing = await WalletPass.findOne({
-      card: d.cardId,
-      provider: "apple",
-    })
-      .select("authToken")
-      .lean<any>();
-    const authToken = existing?.authToken || crypto.randomBytes(24).toString("hex");
     await WalletPass.updateOne(
       { card: d.cardId, provider: "apple" },
       {
@@ -113,7 +115,7 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
         customer: customerId,
         provider: "apple",
         serial,
-        authToken,
+        authToken: recoverToken,
       },
       { upsert: true },
     );
@@ -138,7 +140,8 @@ export async function pkpassForSerial(serial: string): Promise<Buffer | null> {
   if (!pass?.card || !pass.authToken) return null;
   const d = await buildCardData(pass.card.toString());
   if (!d) return null;
-  return buildPkpass(d, pass.authToken, serial);
+  const recoverUrl = `${APP_URL}/api/wallet/recover?t=${pass.authToken}`;
+  return buildPkpass(d, pass.authToken, serial, recoverUrl);
 }
 
 /**

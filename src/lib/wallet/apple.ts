@@ -81,6 +81,7 @@ export async function buildPkpass(
   d: WalletCardData,
   authToken: string,
   serial: string,
+  recoverUrl?: string | null,
 ): Promise<Buffer | null> {
   const creds = appleWalletCreds();
   if (!creds) return null;
@@ -150,6 +151,15 @@ export async function buildPkpass(
       key: "reward",
       label: "Reward",
       value: `Free at ${d.threshold}`,
+    });
+  }
+  // Back of pass: a tappable "recover my card" link. Only the wallet owner can
+  // open it, so it safely restores their browser card if they lose the cookie.
+  if (recoverUrl) {
+    pass.backFields.push({
+      key: "recover",
+      label: "Your card",
+      value: `Open your card online: ${recoverUrl}`,
     });
   }
 

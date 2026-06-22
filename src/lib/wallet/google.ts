@@ -41,6 +41,9 @@ export interface WalletCardData {
   totalEarned: number;
   freeRedeemed: number;
   threshold: number;
+  // "Recover my card" deep link embedded in the pass — restores the browser
+  // cookie for this customer if they lose it. Optional (set at issue time).
+  recoverUrl?: string | null;
 }
 
 function classId(issuerId: string, shopId: string) {
@@ -129,6 +132,22 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
       value: `${APP_URL}/s/${d.shopCode}`,
       alternateText: d.shopName,
     },
+    // "Recover my card" link on the pass details — only the wallet owner sees
+    // it (it's not the scannable barcode), so it can't be used to hijack a
+    // card by scanning someone's pass at the counter.
+    ...(d.recoverUrl
+      ? {
+          linksModuleData: {
+            uris: [
+              {
+                uri: d.recoverUrl,
+                description: "View or recover my card",
+                id: "recover",
+              },
+            ],
+          },
+        }
+      : {}),
   };
 }
 
