@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -528,54 +529,39 @@ export default function SettingsPage() {
                 drives both the fields below and the right-hand preview, so the
                 two mutually-exclusive modes read as one deliberate choice
                 instead of fields appearing and disappearing. */}
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">
-                  Wallet passes
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Let customers add their card to Apple &amp; Google Wallet. The
-                  browser card stays available either way.
-                </p>
-              </div>
-              <div className="inline-flex w-full rounded-lg border border-border bg-muted/40 p-1">
-                <button
-                  type="button"
-                  onClick={() => setWalletPasses(false)}
-                  className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    !walletPasses
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Off
-                </button>
+            <section>
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+                <div className="min-w-0">
+                  <h2 className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+                    Wallet passes
+                    {!canUseWalletPasses && (
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Let customers add their card to Apple &amp; Google Wallet —
+                    the browser card stays available either way.
+                  </p>
+                </div>
                 {canUseWalletPasses ? (
-                  <button
-                    type="button"
-                    onClick={() => setWalletPasses(true)}
-                    className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      walletPasses
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    On
-                  </button>
+                  <Switch
+                    checked={walletPasses}
+                    onCheckedChange={setWalletPasses}
+                    aria-label="Wallet passes"
+                  />
                 ) : (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
                         onClick={() => router.push("/dashboard/billing")}
-                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+                        className="shrink-0 cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
                       >
-                        <Lock className="h-3.5 w-3.5" />
-                        On
+                        Upgrade
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[240px] text-center">
-                      Wallet passes are on the Pro plan and up. Click to upgrade.
+                      Wallet passes are on the Pro plan and up.
                     </TooltipContent>
                   </Tooltip>
                 )}

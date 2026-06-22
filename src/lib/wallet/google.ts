@@ -62,7 +62,9 @@ function loyaltyClassBody(issuerId: string, d: WalletCardData) {
     issuerName: d.shopName,
     programName: d.perkMode ? "Staff perk" : `${d.shopName} loyalty`,
     reviewStatus: "UNDER_REVIEW",
-    hexBackgroundColor: getColorHex(d.bgColor),
+    // Use the shop's accent colour as the pass background so it reads as their
+    // brand (Google auto-picks legible label colours from this).
+    hexBackgroundColor: getColorHex(d.fgColor),
     programLogo: {
       sourceUri: { uri: d.shopLogo || FALLBACK_LOGO },
       contentDescription: {
@@ -109,14 +111,27 @@ async function logIfError(label: string, res: Response) {
   return res;
 }
 
-/** Create the shop's class if missing (idempotent). */
+/**
+ * Create the shop's class if missing, or update its branding (logo/colours/name)
+ * if it already exists — so editing the shop's brand reflects on saved passes.
+ */
 async function ensureClass(token: string, issuerId: string, d: WalletCardData) {
-  const res = await apiGet(token, `loyaltyClass/${classId(issuerId, d.shopId)}`);
+  const id = classId(issuerId, d.shopId);
+  const res = await apiGet(token, `loyaltyClass/${id}`);
   if (res.status === 404) {
     await logIfError(
       "class create",
       await fetch(`${BASE}/loyaltyClass`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(loyaltyClassBody(issuerId, d)),
+      }),
+    );
+  } else if (res.ok) {
+    await logIfError(
+      "class update",
+      await fetch(`${BASE}/loyaltyClass/${id}`, {
+        method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(loyaltyClassBody(issuerId, d)),
       }),
