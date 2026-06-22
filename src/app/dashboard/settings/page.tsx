@@ -136,6 +136,8 @@ export default function SettingsPage() {
   const [walletPasses, setWalletPasses] = useState(false);
   // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
   const [canUsePerkMode, setCanUsePerkMode] = useState(false);
+  // Whether the shop's plan (Pro+) unlocks Apple/Google Wallet passes.
+  const [canUseWalletPasses, setCanUseWalletPasses] = useState(false);
   // The shop already has loyalty/perk history — switching program type strands
   // it, so we warn before applying. `pendingMode` holds the target while the
   // confirmation modal is open.
@@ -161,6 +163,7 @@ export default function SettingsPage() {
         if (!data.shop) return;
         setShop(data.shop);
         setCanUsePerkMode(!!data.canUsePerkMode);
+        setCanUseWalletPasses(!!data.canUseWalletPasses);
         setHasActivity(!!data.hasActivity);
         const initial = {
           name: data.shop.name ?? "",
@@ -547,7 +550,7 @@ export default function SettingsPage() {
                 >
                   Off
                 </button>
-                {canUsePerkMode ? (
+                {canUseWalletPasses ? (
                   <button
                     type="button"
                     onClick={() => setWalletPasses(true)}
@@ -572,8 +575,7 @@ export default function SettingsPage() {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[240px] text-center">
-                      Wallet passes are on the Plus and Max plans. Click to
-                      upgrade.
+                      Wallet passes are on the Pro plan and up. Click to upgrade.
                     </TooltipContent>
                   </Tooltip>
                 )}

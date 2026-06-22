@@ -41,6 +41,7 @@ export async function GET() {
     aggregate: false,
     shop: ctx.shop,
     canUsePerkMode: limits.plan.hasPerkMode,
+    canUseWalletPasses: limits.plan.hasWalletPasses,
     hasActivity,
   });
 }
@@ -109,10 +110,10 @@ export async function PATCH(req: Request) {
     // gate as the paid-tier check). Turning off is always allowed.
     if (walletPasses) {
       const limits = await getShopPlanLimits(shop._id.toString());
-      if (!limits.plan.hasPerkMode) {
+      if (!limits.plan.hasWalletPasses) {
         return NextResponse.json(
           {
-            error: "Wallet passes require the Plus or Max plan.",
+            error: "Wallet passes require the Pro plan or higher.",
             code: "PLAN_REQUIRED",
           },
           { status: 403 },

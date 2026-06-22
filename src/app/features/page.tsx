@@ -185,6 +185,12 @@ const FEATURE_TABLE: Array<{
         pro: true,
       },
       {
+        label: "Add to Apple Wallet & Google Wallet",
+        free: "—",
+        pro: "Pro & up",
+        hint: "Customers can save their card to Apple or Google Wallet for lock-screen access and automatic updates when they earn a stamp. The browser card still works for everyone.",
+      },
+      {
         label: "Stamps follow them across devices (optional login)",
         free: true,
         pro: true,
