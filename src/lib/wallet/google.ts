@@ -128,11 +128,10 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
       label: d.perkMode ? "Free rewards" : "Stamps",
       balance: { string: balanceString(d) },
     },
-    barcode: {
-      type: "QR_CODE",
-      value: `${APP_URL}/s/${d.shopCode}`,
-      alternateText: d.shopName,
-    },
+    // No barcode: Brewstamp's flow is customer-scans-the-shop-QR, not
+    // merchant-scans-the-pass, so a QR on the pass is misleading. null (not
+    // omitted) so a PATCH clears it from already-saved passes too.
+    barcode: null,
     // "Recover my card" link on the pass details — only the wallet owner sees
     // it (it's not the scannable barcode), so it can't be used to hijack a
     // card by scanning someone's pass at the counter.

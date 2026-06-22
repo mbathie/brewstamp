@@ -130,12 +130,8 @@ export async function buildPkpass(
   }
 
   pass.type = "storeCard";
-  pass.setBarcodes({
-    message: `${APP_URL}/s/${d.shopCode}`,
-    format: "PKBarcodeFormatQR",
-    messageEncoding: "iso-8859-1",
-    altText: d.shopName,
-  });
+  // No barcode: Brewstamp's flow is customer-scans-the-shop-QR, not
+  // merchant-scans-the-pass, so a QR on the pass would be misleading.
   pass.primaryFields.push({
     key: "balance",
     label: d.perkMode ? "Redeemed" : "Stamps",
