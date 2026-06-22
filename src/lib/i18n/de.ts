@@ -49,6 +49,7 @@ const de = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Daten aktualisieren",
+  saveDetails: "Daten speichern",
   yourDetails: "Deine Daten",
   back: "Zurück",
   saveChanges: "Änderungen speichern",

@@ -47,6 +47,7 @@ const id = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Perbarui detail",
+  saveDetails: "Simpan detail",
   yourDetails: "Detail Anda",
   back: "Kembali",
   saveChanges: "Simpan perubahan",

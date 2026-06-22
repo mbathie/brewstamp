@@ -49,6 +49,7 @@ const fr = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Modifier mes infos",
+  saveDetails: "Enregistrer mes infos",
   yourDetails: "Vos informations",
   back: "Retour",
   saveChanges: "Enregistrer les modifications",

@@ -47,6 +47,7 @@ const fil = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "I-update ang mga detalye",
+  saveDetails: "I-save ang detalye",
   yourDetails: "Iyong mga detalye",
   back: "Bumalik",
   saveChanges: "I-save ang mga pagbabago",

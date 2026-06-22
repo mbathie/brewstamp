@@ -725,72 +725,56 @@ export default function CustomerClient({
         )}
 
         {status === "approved" && showDetailsPrompt && (
-          <div className="space-y-3">
-            {!customerName && (
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t(lang, "yourName")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
+          <div className="space-y-2.5">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setDetailsSaved(true);
+                  setShowDetailsPrompt(false);
+                  setStatus("idle");
+                  setFreedEarned(false);
                 }}
-                className="placeholder-inherit"
-              />
-            )}
-            {!customerEmail && (
-              <div>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailError("");
-                  }}
-                  placeholder={t(lang, "yourEmail")}
-                  style={{
-                    borderColor: emailError ? undefined : fgHex + "30",
-                    backgroundColor: fgHex + "10",
-                    color: fgHex,
-                  }}
-                  className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
-                />
-                {emailError && (
-                  <p className="mt-1 text-xs text-red-400">{emailError}</p>
-                )}
-              </div>
-            )}
-            {!customerHasPassword && (
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t(lang, "setPassword")}
+                variant="outline"
+                className="flex-1 cursor-pointer hover:opacity-90"
                 style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
+                  borderColor: fgHex + "40",
                   color: fgHex,
+                  backgroundColor: "transparent",
                 }}
-                className="placeholder-inherit"
-              />
-            )}
-            <div className="flex items-center justify-between">
+              >
+                {t(lang, "remainAnonymous")}
+              </Button>
+              <Button
+                onClick={() => {
+                  // Reuse the "Update details" face for name/email/password.
+                  setShowDetailsPrompt(false);
+                  setStatus("idle");
+                  setFreedEarned(false);
+                  setView("edit");
+                }}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{ backgroundColor: fgHex, color: bgHex }}
+              >
+                {t(lang, "saveDetails")}
+              </Button>
+            </div>
+            <div className="flex justify-center">
               <Dialog>
                 <DialogTrigger asChild>
                   <button
                     className="flex cursor-pointer items-center gap-1.5"
                     type="button"
                   >
-                    <p
+                    <span
                       className="text-sm"
                       style={{ color: fgHex, opacity: 0.6 }}
                     >
                       {t(lang, "whySaveDetails")}
-                    </p>
-                    <span style={{ color: fgHex, opacity: 0.4 }}>
-                      <HelpCircle className="h-3.5 w-3.5" />
                     </span>
+                    <HelpCircle
+                      className="h-3.5 w-3.5"
+                      style={{ color: fgHex, opacity: 0.4 }}
+                    />
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-xs">
@@ -801,13 +785,13 @@ export default function CustomerClient({
                     <p>
                       This is completely optional. Your information is only
                       shared with{" "}
-                      <strong className="text-foreground">{shopName}</strong>{" "}
-                      and will never be shared with anyone else.
+                      <strong className="text-foreground">{shopName}</strong> and
+                      will never be shared with anyone else.
                     </p>
                     <p>
                       Saving your name and email makes it easier for the shop to
-                      look you up if you ever forget your phone or lose access
-                      to your stamp card.
+                      look you up if you ever forget your phone or lose access to
+                      your stamp card.
                     </p>
                     <p>
                       Setting a{" "}
@@ -819,60 +803,6 @@ export default function CustomerClient({
                 </DialogContent>
               </Dialog>
             </div>
-            {!customerName && !customerEmail ? (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setDetailsSaved(true);
-                    setShowDetailsPrompt(false);
-                    setStatus("idle");
-                    setFreedEarned(false);
-                  }}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  {t(lang, "remainAnonymous")}
-                </Button>
-                <Button
-                  onClick={saveDetails}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {t(lang, "save")}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setShowDetailsPrompt(false);
-                    setStatus("idle");
-                    setFreedEarned(false);
-                  }}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  Done
-                </Button>
-                <Button
-                  onClick={saveDetails}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {t(lang, "save")}
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>

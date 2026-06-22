@@ -49,6 +49,7 @@ const es = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Actualizar datos",
+  saveDetails: "Guardar datos",
   yourDetails: "Tus datos",
   back: "Atrás",
   saveChanges: "Guardar cambios",

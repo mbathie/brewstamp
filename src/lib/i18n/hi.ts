@@ -47,6 +47,7 @@ const hi = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "विवरण अपडेट करें",
+  saveDetails: "विवरण सहेजें",
   yourDetails: "आपका विवरण",
   back: "वापस",
   saveChanges: "बदलाव सहेजें",

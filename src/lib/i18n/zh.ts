@@ -47,6 +47,7 @@ const zh = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "更新信息",
+  saveDetails: "保存信息",
   yourDetails: "您的信息",
   back: "返回",
   saveChanges: "保存更改",

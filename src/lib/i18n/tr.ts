@@ -41,6 +41,7 @@ const tr = {
   // Switch shop
   switchShop: "Mağaza değiştir",
   updateDetails: "Bilgileri güncelle",
+  saveDetails: "Bilgileri kaydet",
   yourDetails: "Bilgileriniz",
   back: "Geri",
   saveChanges: "Değişiklikleri kaydet",

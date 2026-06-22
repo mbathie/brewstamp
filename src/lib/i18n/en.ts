@@ -43,6 +43,7 @@ const en = {
   // Switch shop
   switchShop: "Switch shop",
   updateDetails: "Update details",
+  saveDetails: "Save details",
   yourDetails: "Your details",
   back: "Back",
   saveChanges: "Save changes",

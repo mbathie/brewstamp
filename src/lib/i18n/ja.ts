@@ -48,6 +48,7 @@ const ja = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "詳細を更新",
+  saveDetails: "詳細を保存",
   yourDetails: "あなたの情報",
   back: "戻る",
   saveChanges: "変更を保存",

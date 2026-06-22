@@ -49,6 +49,7 @@ const ar = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "تحديث التفاصيل",
+  saveDetails: "حفظ التفاصيل",
   yourDetails: "بياناتك",
   back: "رجوع",
   saveChanges: "حفظ التغييرات",

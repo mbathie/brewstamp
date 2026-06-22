@@ -48,6 +48,7 @@ const ko = {
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "정보 수정",
+  saveDetails: "정보 저장",
   yourDetails: "내 정보",
   back: "뒤로",
   saveChanges: "변경사항 저장",
