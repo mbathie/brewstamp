@@ -51,6 +51,11 @@ async function accessToken(): Promise<string | null> {
   return token ?? null;
 }
 
+// Google requires a programLogo on every loyalty class — fall back to the
+// Brewstamp mark when the shop hasn't uploaded one (a publicly reachable URL,
+// since Google fetches it server-side).
+const FALLBACK_LOGO = "https://brewstamp.app/apple-touch-icon.png";
+
 function loyaltyClassBody(issuerId: string, d: WalletCardData) {
   return {
     id: classId(issuerId, d.shopId),
@@ -58,16 +63,12 @@ function loyaltyClassBody(issuerId: string, d: WalletCardData) {
     programName: d.perkMode ? "Staff perk" : `${d.shopName} loyalty`,
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: getColorHex(d.bgColor),
-    ...(d.shopLogo
-      ? {
-          programLogo: {
-            sourceUri: { uri: d.shopLogo },
-            contentDescription: {
-              defaultValue: { language: "en", value: `${d.shopName} logo` },
-            },
-          },
-        }
-      : {}),
+    programLogo: {
+      sourceUri: { uri: d.shopLogo || FALLBACK_LOGO },
+      contentDescription: {
+        defaultValue: { language: "en", value: `${d.shopName} logo` },
+      },
+    },
   };
 }
 
@@ -101,15 +102,25 @@ async function apiGet(token: string, path: string): Promise<Response> {
   });
 }
 
+async function logIfError(label: string, res: Response) {
+  if (!res.ok) {
+    console.error(`[Wallet/google] ${label} ${res.status}:`, await res.text());
+  }
+  return res;
+}
+
 /** Create the shop's class if missing (idempotent). */
 async function ensureClass(token: string, issuerId: string, d: WalletCardData) {
   const res = await apiGet(token, `loyaltyClass/${classId(issuerId, d.shopId)}`);
   if (res.status === 404) {
-    await fetch(`${BASE}/loyaltyClass`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(loyaltyClassBody(issuerId, d)),
-    });
+    await logIfError(
+      "class create",
+      await fetch(`${BASE}/loyaltyClass`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(loyaltyClassBody(issuerId, d)),
+      }),
+    );
   }
 }
 
@@ -129,11 +140,14 @@ export async function googleSaveUrl(d: WalletCardData): Promise<string | null> {
   const oid = objectId(creds.issuerId, d.cardId);
   const existing = await apiGet(token, `loyaltyObject/${oid}`);
   if (existing.status === 404) {
-    await fetch(`${BASE}/loyaltyObject`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
-    });
+    await logIfError(
+      "object create",
+      await fetch(`${BASE}/loyaltyObject`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
+      }),
+    );
   }
 
   // Signed JWT save link (RS256 with the service-account private key).
