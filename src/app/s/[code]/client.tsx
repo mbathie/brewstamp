@@ -955,8 +955,6 @@ export default function CustomerClient({
             customerId={customerId}
             google={walletGoogle}
             apple={walletApple}
-            fgColor={bgHex}
-            bgColor={fgHex}
           />
         </div>
       )}

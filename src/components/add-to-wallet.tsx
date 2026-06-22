@@ -2,26 +2,22 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Wallet } from "lucide-react";
 
-// Customer-facing "Add to Apple/Google Wallet" buttons. Additive — the browser
-// card is always the default; this is an optional upgrade. Shows the button
-// matching the device (both on desktop). Fetches the signed link on click so we
-// don't create wallet objects for cards nobody adds.
+// Customer-facing "Add to Apple/Google Wallet" buttons using each vendor's
+// official badge artwork. Additive — the browser card is always the default;
+// this is an optional upgrade. Shows the badge matching the device (both on
+// desktop). Fetches the signed link on click so we don't create wallet objects
+// for cards nobody adds.
 export function AddToWallet({
   shopId,
   customerId,
   google,
   apple,
-  fgColor = "#ffffff",
-  bgColor = "#1c1917",
 }: {
   shopId: string;
   customerId: string;
   google: boolean;
   apple: boolean;
-  fgColor?: string;
-  bgColor?: string;
 }) {
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
 
@@ -56,18 +52,25 @@ export function AddToWallet({
     }
   }
 
+  // Official vendor badge artwork — required by Apple & Google brand
+  // guidelines (no recreating). The badge IS the button; clicking it runs the
+  // save flow. h-12 ≈ 48dp, meeting Google's minimum.
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-3">
       {showApple && (
         <button
           type="button"
           onClick={() => add("apple")}
           disabled={loading !== null}
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: bgColor, color: fgColor }}
+          aria-label="Add to Apple Wallet"
+          className="cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          <Wallet className="h-4 w-4" />
-          {loading === "apple" ? "Adding…" : "Add to Apple Wallet"}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/badges/add-to-apple-wallet.svg"
+            alt="Add to Apple Wallet"
+            className="h-12 w-auto"
+          />
         </button>
       )}
       {showGoogle && (
@@ -75,11 +78,15 @@ export function AddToWallet({
           type="button"
           onClick={() => add("google")}
           disabled={loading !== null}
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: bgColor, color: fgColor }}
+          aria-label="Add to Google Wallet"
+          className="cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          <Wallet className="h-4 w-4" />
-          {loading === "google" ? "Adding…" : "Add to Google Wallet"}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/badges/add-to-google-wallet.svg"
+            alt="Add to Google Wallet"
+            className="h-12 w-auto"
+          />
         </button>
       )}
     </div>

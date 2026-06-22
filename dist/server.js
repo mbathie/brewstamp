@@ -98,6 +98,14 @@ app.prepare().then(() => {
             ws.close(1008, "Missing required parameters");
             return;
         }
+        // Heartbeat: the periodic ping below keeps the connection alive through
+        // idle proxy timeouts (DigitalOcean closes quiet WebSockets), and the pong
+        // marks the socket alive so the sweep can terminate ones that have gone
+        // away without a clean close (e.g. a phone that dropped off Wi-Fi).
+        ws.isAlive = true;
+        ws.on("pong", () => {
+            ws.isAlive = true;
+        });
         const channel = getOrCreateChannel(shopCode);
         if (role === "merchant") {
             channel.merchant = ws;
@@ -135,6 +143,28 @@ app.prepare().then(() => {
         // Send a connection acknowledgement
         ws.send(JSON.stringify({ type: "connected", role, shopCode }));
     });
+    // Sweep all sockets every 30s: terminate any that didn't pong since the last
+    // sweep, and ping the rest. Terminating a dead merchant socket also clears
+    // its channel reference (via the "close" handler) so presence stays honest
+    // and the next connection can register cleanly.
+    const HEARTBEAT_INTERVAL = 30000;
+    const heartbeat = setInterval(() => {
+        wss.clients.forEach((ws) => {
+            const live = ws;
+            if (live.isAlive === false) {
+                ws.terminate();
+                return;
+            }
+            live.isAlive = false;
+            try {
+                ws.ping();
+            }
+            catch {
+                // socket already gone; the sweep will terminate it next round
+            }
+        });
+    }, HEARTBEAT_INTERVAL);
+    wss.on("close", () => clearInterval(heartbeat));
     function handleMessage(shopCode, role, clientId, msg) {
         const channel = channels.get(shopCode);
         if (!channel)

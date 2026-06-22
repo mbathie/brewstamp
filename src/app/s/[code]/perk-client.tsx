@@ -716,8 +716,6 @@ export default function PerkCustomerClient({
             customerId={customerId}
             google={walletGoogle}
             apple={walletApple}
-            fgColor={bgHex}
-            bgColor={fgHex}
           />
         )}
 
