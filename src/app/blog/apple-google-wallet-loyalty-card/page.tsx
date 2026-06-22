@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
-import { WalletBadges } from "@/components/wallet-badges";
 import RelatedGuides from "@/components/related-guides";
 
 export const metadata: Metadata = {
@@ -89,6 +88,15 @@ export default function BlogPost() {
             </p>
           </header>
 
+          <figure className="mb-12 overflow-hidden rounded-2xl border border-stone-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/blog/wallet-passes-hero.svg"
+              alt="A Brewstamp loyalty card with Add to Apple Wallet and Add to Google Wallet buttons"
+              className="w-full"
+            />
+          </figure>
+
           <div className="mb-14 rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
               The short version
@@ -120,8 +128,19 @@ export default function BlogPost() {
               And because the pass is tied to your customer&apos;s real wallet,
               it&apos;s exactly where they already look when they pay for coffee.
             </p>
-            <div className="mt-8 flex justify-center rounded-2xl bg-stone-100 px-6 py-8">
-              <WalletBadges />
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 rounded-2xl bg-stone-100 px-6 py-8">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/badges/add-to-apple-wallet.svg"
+                alt="Add to Apple Wallet"
+                className="h-12 w-auto"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/badges/add-to-google-wallet.svg"
+                alt="Add to Google Wallet"
+                className="h-12 w-auto"
+              />
             </div>
           </section>
 
