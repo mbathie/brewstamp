@@ -83,6 +83,11 @@ function classLogoUri(d: WalletClassData): string {
 }
 
 function loyaltyClassBody(issuerId: string, d: WalletClassData) {
+  const logoUri = classLogoUri(d);
+  const hasRealLogo = logoUri !== FALLBACK_LOGO;
+  const desc = {
+    defaultValue: { language: "en", value: `${d.shopName} logo` },
+  };
   return {
     id: classId(issuerId, d.shopId),
     issuerName: d.shopName,
@@ -92,12 +97,14 @@ function loyaltyClassBody(issuerId: string, d: WalletClassData) {
     // background. Google auto-derives a legible (white/black) text colour from
     // this — it has no separate accent/foreground field like Apple does.
     hexBackgroundColor: getColorHex(d.bgColor),
-    programLogo: {
-      sourceUri: { uri: classLogoUri(d) },
-      contentDescription: {
-        defaultValue: { language: "en", value: `${d.shopName} logo` },
-      },
-    },
+    // Small circular issuer icon (top-left).
+    programLogo: { sourceUri: { uri: logoUri }, contentDescription: desc },
+    // The shop's wide banner logo renders edge-to-edge across the card, like
+    // the banner on the Brewstamp customer card. Only set when we have a real
+    // public logo (skip the square fallback so it isn't stretched).
+    ...(hasRealLogo
+      ? { heroImage: { sourceUri: { uri: logoUri }, contentDescription: desc } }
+      : {}),
   };
 }
 
