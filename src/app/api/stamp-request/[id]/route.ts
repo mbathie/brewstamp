@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongoose";
 import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
 import { countPerkDrinksToday } from "@/lib/perk";
+import { syncWalletPasses } from "@/lib/wallet";
 
 // GET: the current status of a single request. The customer card polls this
 // while "waiting" so a resolved request (approved/rejected) is never missed if
@@ -97,6 +98,8 @@ export async function PATCH(
         request.redeem = true;
         await stampCard.save();
         await request.save();
+        // Push the new balance to any wallet passes (no-op if none / unconfigured).
+        void syncWalletPasses(stampCard._id.toString());
         return NextResponse.json({
           request,
           stampCard: {
@@ -146,6 +149,8 @@ export async function PATCH(
 
       await stampCard.save();
       await request.save();
+      // Push the new balance to any wallet passes (no-op if none / unconfigured).
+      void syncWalletPasses(stampCard._id.toString());
 
       // First-customer celebration: fire once when a shop's first stamp is awarded
       if (awarded > 0 && shop && !shop.firstCustomerEmailSent) {

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import CustomerWaiting from "@/components/customer-waiting";
 import CardPreview from "@/components/card-preview";
+import { AddToWallet } from "@/components/add-to-wallet";
 import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { resolveLanguage, t } from "@/lib/i18n";
 
@@ -56,6 +57,8 @@ interface Props {
   language?: string;
   animalName: string;
   otherShops: OtherShop[];
+  walletGoogle: boolean;
+  walletApple: boolean;
 }
 
 type Status =
@@ -85,6 +88,8 @@ export default function CustomerClient({
   language,
   animalName,
   otherShops,
+  walletGoogle,
+  walletApple,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
@@ -939,6 +944,20 @@ export default function CustomerClient({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Add to Wallet — optional upgrade; browser card stays the default. */}
+      {(walletGoogle || walletApple) && (
+        <div className="mt-4">
+          <AddToWallet
+            shopId={shopId}
+            customerId={customerId}
+            google={walletGoogle}
+            apple={walletApple}
+            fgColor={bgHex}
+            bgColor={fgHex}
+          />
         </div>
       )}
 

@@ -72,6 +72,7 @@ export async function PATCH(req: Request) {
     bgPattern,
     language,
     perkMode,
+    walletPasses,
     allowedEmailDomains,
     dailyDrinkLimit,
     timezone,
@@ -101,6 +102,24 @@ export async function PATCH(req: Request) {
       }
     }
     shop.perkMode = !!perkMode;
+  }
+
+  if (walletPasses !== undefined) {
+    // Apple/Google Wallet passes are a Plus & Max feature (reuses the perk
+    // gate as the paid-tier check). Turning off is always allowed.
+    if (walletPasses) {
+      const limits = await getShopPlanLimits(shop._id.toString());
+      if (!limits.plan.hasPerkMode) {
+        return NextResponse.json(
+          {
+            error: "Wallet passes require the Plus or Max plan.",
+            code: "PLAN_REQUIRED",
+          },
+          { status: 403 },
+        );
+      }
+    }
+    shop.walletPasses = !!walletPasses;
   }
   if (Array.isArray(allowedEmailDomains)) {
     shop.allowedEmailDomains = allowedEmailDomains

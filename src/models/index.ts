@@ -8,6 +8,7 @@ import StampRequest from "./StampRequest";
 import Subscription from "./Subscription";
 import Account from "./Account";
 import VerificationToken from "./VerificationToken";
+import WalletPass from "./WalletPass";
 
 export {
   Shop,
@@ -20,4 +21,5 @@ export {
   Subscription,
   Account,
   VerificationToken,
+  WalletPass,
 };

@@ -10,6 +10,7 @@ import {
 } from "@/lib/perk";
 import CustomerClient from "./client";
 import PerkCustomerClient from "./perk-client";
+import { walletAvailable } from "@/lib/wallet/config";
 
 export async function generateMetadata({
   params,
@@ -98,6 +99,8 @@ export default async function CustomerScanPage({
   // Perk mode (employer-subsidised coffee): a different card entirely — no
   // stamp accumulation, gated by email domain and capped per day. Render the
   // dedicated client instead of the stamp card.
+  const wallet = walletAvailable(!!shop.walletPasses);
+
   if (shop.perkMode) {
     const dailyLimit = shop.dailyDrinkLimit || 2;
     const drinksToday = await countPerkDrinksToday(
@@ -126,6 +129,8 @@ export default async function CustomerScanPage({
         bgColor={shop.bgColor || "stone-800"}
         fgColor={shop.fgColor || "amber-600"}
         bgPattern={shop.bgPattern || "none"}
+        walletGoogle={wallet.enabled && wallet.google}
+        walletApple={wallet.enabled && wallet.apple}
       />
     );
   }
@@ -166,6 +171,8 @@ export default async function CustomerScanPage({
       bgPattern={shop.bgPattern || "none"}
       language={shop.language || "en"}
       otherShops={otherShops}
+      walletGoogle={wallet.enabled && wallet.google}
+      walletApple={wallet.enabled && wallet.apple}
     />
   );
 }

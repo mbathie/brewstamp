@@ -12,6 +12,7 @@ import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
 import { emailDomainAllowed } from "@/lib/perk-domain";
 import CustomerWaiting from "@/components/customer-waiting";
+import { AddToWallet } from "@/components/add-to-wallet";
 
 interface Props {
   shopCode: string;
@@ -29,6 +30,8 @@ interface Props {
   bgColor: string;
   fgColor: string;
   bgPattern: string;
+  walletGoogle: boolean;
+  walletApple: boolean;
 }
 
 type Status = "idle" | "requesting" | "waiting";
@@ -50,6 +53,8 @@ export default function PerkCustomerClient({
   bgColor,
   fgColor,
   bgPattern,
+  walletGoogle,
+  walletApple,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
@@ -702,6 +707,18 @@ export default function PerkCustomerClient({
               </div>
             )}
           </div>
+        )}
+
+        {/* Add to Wallet — optional upgrade; browser card stays the default. */}
+        {step === "done" && (walletGoogle || walletApple) && (
+          <AddToWallet
+            shopId={shopId}
+            customerId={customerId}
+            google={walletGoogle}
+            apple={walletApple}
+            fgColor={bgHex}
+            bgColor={fgHex}
+          />
         )}
 
         {/* Powered by — right-aligned at the end of the column, like the

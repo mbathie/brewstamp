@@ -132,6 +132,8 @@ export default function SettingsPage() {
   const [perkDomains, setPerkDomains] = useState(""); // comma/space separated
   const [dailyDrinkLimit, setDailyDrinkLimit] = useState<number | null>(2);
   const [timezone, setTimezone] = useState("UTC");
+  // Apple/Google Wallet passes (Plus/Max). Reuses the perk plan gate.
+  const [walletPasses, setWalletPasses] = useState(false);
   // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
   const [canUsePerkMode, setCanUsePerkMode] = useState(false);
   // The shop already has loyalty/perk history — switching program type strands
@@ -172,6 +174,7 @@ export default function SettingsPage() {
           dailyDrinkLimit: data.shop.dailyDrinkLimit ?? 2,
           // No saved timezone yet → default to the merchant's browser zone.
           timezone: data.shop.timezone || getBrowserTz(),
+          walletPasses: !!data.shop.walletPasses,
         };
         setName(initial.name);
         setThreshold(initial.threshold);
@@ -184,6 +187,7 @@ export default function SettingsPage() {
         setPerkDomains(initial.perkDomains);
         setDailyDrinkLimit(initial.dailyDrinkLimit);
         setTimezone(initial.timezone);
+        setWalletPasses(initial.walletPasses);
         lastSavedRef.current = JSON.stringify(initial);
       });
   }, []);
@@ -198,6 +202,7 @@ export default function SettingsPage() {
       bgPattern,
       language,
       perkMode,
+      walletPasses,
       perkDomains,
       dailyDrinkLimit,
       timezone,
@@ -218,6 +223,7 @@ export default function SettingsPage() {
           bgPattern,
           language,
           perkMode,
+          walletPasses,
           allowedEmailDomains,
           dailyDrinkLimit: dailyDrinkLimit || 2,
           timezone,
@@ -239,6 +245,7 @@ export default function SettingsPage() {
     bgPattern,
     language,
     perkMode,
+    walletPasses,
     perkDomains,
     dailyDrinkLimit,
     timezone,
@@ -255,6 +262,7 @@ export default function SettingsPage() {
       bgPattern,
       language,
       perkMode,
+      walletPasses,
       perkDomains,
       dailyDrinkLimit,
       timezone,
@@ -276,6 +284,7 @@ export default function SettingsPage() {
     bgPattern,
     language,
     perkMode,
+    walletPasses,
     perkDomains,
     dailyDrinkLimit,
     timezone,
@@ -516,6 +525,61 @@ export default function SettingsPage() {
                 drives both the fields below and the right-hand preview, so the
                 two mutually-exclusive modes read as one deliberate choice
                 instead of fields appearing and disappearing. */}
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  Wallet passes
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Let customers add their card to Apple &amp; Google Wallet. The
+                  browser card stays available either way.
+                </p>
+              </div>
+              <div className="inline-flex w-full rounded-lg border border-border bg-muted/40 p-1">
+                <button
+                  type="button"
+                  onClick={() => setWalletPasses(false)}
+                  className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    !walletPasses
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Off
+                </button>
+                {canUsePerkMode ? (
+                  <button
+                    type="button"
+                    onClick={() => setWalletPasses(true)}
+                    className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      walletPasses
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    On
+                  </button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/dashboard/billing")}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                        On
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[240px] text-center">
+                      Wallet passes are on the Plus and Max plans. Click to
+                      upgrade.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </section>
+
             <section className="space-y-4">
               <div>
                 <h2 className="text-base font-semibold text-foreground">
