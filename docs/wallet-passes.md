@@ -3,7 +3,7 @@
 Lets customers add their loyalty/perk card to **Apple Wallet** and **Google
 Wallet**. No native app — passes are server-generated and delivered via an
 "Add to Wallet" link. The **browser card stays the default**; wallet is an
-additive, customer-chosen upgrade, gated per-shop (Plus/Max plan).
+additive, customer-chosen upgrade, available on **every plan** (toggle per shop).
 
 Branch: `feature/wallet-passes`. Ship Apple + Google together.
 
@@ -11,19 +11,22 @@ Branch: `feature/wallet-passes`. Ship Apple + Google together.
 
 | Milestone | State |
 | --- | --- |
-| Google Wallet (Android) | ✅ Built — needs issuer creds to go live |
-| Apple Wallet (iOS) | 🚧 Scaffolded — provider + APNs web service still to build |
+| Google Wallet (Android) | ✅ Built + verified — needs issuer creds to go live |
+| Apple Wallet (iOS) | ✅ Built (code complete) — needs Apple Developer cert to go live + on-device testing |
 
 ## Architecture
 
 - `src/models/WalletPass.ts` — links a `StampCard` to its pass per provider; stores Apple device push registrations.
 - `src/lib/wallet/config.ts` — env-driven provider availability (`isGoogleWalletConfigured`, `isAppleWalletConfigured`, `walletAvailable`). Everything no-ops when unconfigured.
 - `src/lib/wallet/google.ts` — Google Wallet: ensure class/object, signed "Save" JWT link, PATCH-to-update.
-- `src/lib/wallet/index.ts` — `issueSaveLinks(cardId)` and `syncWalletPasses(cardId)` (provider-agnostic orchestration).
+- `src/lib/wallet/apple.ts` — Apple Wallet: build + sign `.pkpass` (passkit-generator), branded from shop logo/colours; `applePushUpdate()` sends empty APNs pushes (cert auth).
+- `src/lib/wallet/index.ts` — `issueSaveLinks(cardId)`, `syncWalletPasses(cardId)`, `pkpassForSerial(serial)` (provider-agnostic orchestration).
 - `POST /api/wallet/save` — customer-facing; returns the save links.
+- `GET /api/wallet/apple/download/[serial]` — initial `.pkpass` download (the Apple save link).
+- `/api/wallet/apple/v1/...` — PassKit web service: `passes/[passTypeId]/[serial]` (get latest), `devices/[deviceId]/registrations/[passTypeId]/[serial]` (register/unregister), `devices/[deviceId]/registrations/[passTypeId]` (list updatable), `log`.
 - Approval flow (`/api/stamp-request/[id]`) calls `syncWalletPasses()` fire-and-forget on every stamp/redeem.
-- `src/components/add-to-wallet.tsx` — device-aware "Add to Wallet" buttons on the customer card (stamp + perk).
-- Shop toggle: Settings → "Wallet passes" (`Shop.walletPasses`, Plus/Max gated).
+- `src/components/add-to-wallet.tsx` — device-aware "Add to Wallet" buttons on the customer card (stamp + perk), using each vendor's official badge artwork.
+- Shop toggle: Settings → "Wallet passes" (`Shop.walletPasses`); plan gate `PlanConfig.hasWalletPasses` (true on every plan).
 
 ## Google Wallet — provisioning (to go live)
 
@@ -37,16 +40,34 @@ Branch: `feature/wallet-passes`. Ship Apple + Google together.
 
 Once set, the customer card shows "Add to Google Wallet"; balances update on each stamp via PATCH.
 
-## Apple Wallet — remaining work (next milestone)
+## Apple Wallet — provisioning (to go live)
 
-Prereqs: Apple Developer Program ($99/yr), a **Pass Type ID** + signing cert (`.p12`), Apple WWDR cert.
+The code is complete and inert until these env vars are set. Prereqs: Apple
+Developer Program ($99/yr).
 
-- Env: `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`, `APPLE_PASS_CERT_BASE64` (+ cert password).
-- Build `src/lib/wallet/apple.ts`: generate signed `.pkpass` (e.g. `passkit-generator`), branded from shop logo/colours.
-- `GET /api/wallet/apple/[serial].pkpass` — serve the pass.
-- PassKit web service routes (register / unregister / get serials / get latest pass / log) under `/api/wallet/apple/v1/...`.
-- APNs: on stamp change, push to registered devices so they re-pull the pass. Wire into `syncWalletPasses()` where the `// Apple push` comment is.
+1. In the **Apple Developer** portal → Certificates, Identifiers & Profiles:
+   - Create a **Pass Type ID** (e.g. `pass.app.brewstamp`).
+   - Create a **Pass Type ID Certificate** for it; download and import into Keychain.
+2. Export the signing material as PEM:
+   - From Keychain, export the cert + key as a `.p12`, then split to PEM:
+     - `openssl pkcs12 -in cert.p12 -clcerts -nokeys -out signerCert.pem`
+     - `openssl pkcs12 -in cert.p12 -nocerts -nodes -out signerKey.pem` (or keep a passphrase)
+   - Download Apple's **WWDR** intermediate cert and convert to PEM: `wwdr.pem`.
+3. Set env vars (DO App Platform + `.env.local` for dev), base64-encoded:
+   - `APPLE_PASS_TYPE_ID` — e.g. `pass.app.brewstamp`
+   - `APPLE_TEAM_ID` — your Apple Developer Team ID
+   - `APPLE_PASS_CERT_BASE64` — `base64 -i signerCert.pem`
+   - `APPLE_PASS_KEY_BASE64` — `base64 -i signerKey.pem`
+   - `APPLE_WWDR_BASE64` — `base64 -i wwdr.pem`
+   - `APPLE_PASS_KEY_PASSWORD` — (optional) key passphrase if you set one
+4. `NEXT_PUBLIC_APP_URL` must be the public HTTPS origin (Wallet calls the web service + APNs needs reachable URLs).
+5. Turn on "Wallet passes" for a shop in Settings.
+
+Once set, iOS customers see "Add to Apple Wallet"; the pass registers with the
+PassKit web service and stamp changes push via APNs (empty payload → device
+re-fetches the pass). Push uses **certificate auth** with the Pass Type ID cert
+(`apns-topic` = the pass type id), so no separate APNs key is needed.
 
 ## Notes
-- Plan gate currently reuses the perk-mode check (`hasPerkMode` = Plus/Max).
+- Plan gate is `PlanConfig.hasWalletPasses` — currently true on every plan (Free included; Free is capped at 100 customers).
 - Nothing ships to prod until merged to `main`; the branch does not auto-deploy.
