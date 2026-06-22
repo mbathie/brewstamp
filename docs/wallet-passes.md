@@ -68,6 +68,35 @@ PassKit web service and stamp changes push via APNs (empty payload → device
 re-fetches the pass). Push uses **certificate auth** with the Pass Type ID cert
 (`apns-topic` = the pass type id), so no separate APNs key is needed.
 
+## Logos — DigitalOcean Spaces
+
+Shop logos are stored in Mongo as **`data:` URIs** (`shop.logo`) for the in-app
+card. Wallet providers can't use those:
+- **Google** fetches `programLogo`/`heroImage` server-side — a `data:` URI makes
+  the loyaltyClass create/update fail with a **500 backendError**, which also
+  silently drops the colour update riding in the same PATCH.
+- **Apple** bakes the image into the `.pkpass`, so a `data:` URI works there
+  (we decode it), but a public URL is cleaner.
+
+Fix: on a logo change, `/api/shop` uploads the image to **DO Spaces** via
+`src/lib/spaces.ts` and stores the public URL on **`shop.logoUrl`**. Wallet
+builders prefer `logoUrl` over the `data:` URI. Bucket `cultcha`, region `syd1`,
+objects under `brewstamp/<dev|prod>/shops/<id>/logo-<hash>.<ext>` (public-read,
+content-hashed for cache-busting).
+
+Env: `SPACES_KEY`, `SPACES_SECRET`, `SPACES_BUCKET`, `SPACES_REGION`,
+`SPACES_FOLDER`. No-ops when unset (falls back to the `data:` URI → Google shows
+the Brewstamp fallback mark).
+
+## Colour mapping (matches the customer card)
+- Pass **background** = the card's `bgColor` (`hexBackgroundColor` on Google;
+  `backgroundColor` on Apple). NOT the accent.
+- **Google has no text/accent colour field** — it auto-derives white/black for
+  contrast. Custom accent text is impossible on Google.
+- **Apple** sets `foregroundColor`/`labelColor` = the card's `fgColor` accent,
+  so Apple matches the card exactly (dark bg + accent text).
+
 ## Notes
 - Plan gate is `PlanConfig.hasWalletPasses` — currently true on every plan (Free included; Free is capped at 100 customers).
+- Branding edits in Shop Setup push to saved passes via `syncWalletBranding()` (Google class PATCH + Apple APNs).
 - Nothing ships to prod until merged to `main`; the branch does not auto-deploy.
