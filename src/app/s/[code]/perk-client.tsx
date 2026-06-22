@@ -148,7 +148,7 @@ export default function PerkCustomerClient({
       pendingRequestIdRef.current = null;
       setDrinksToday((n) => n + 1);
       setStatus("idle");
-      toast.success("Enjoy your free coffee! ☕");
+      toast.success("Enjoy your reward!");
     });
     const unsubRejected = on("stamp-request:rejected", () => {
       pendingRequestIdRef.current = null;
@@ -394,7 +394,7 @@ export default function PerkCustomerClient({
                 style={{ color: fgHex }}
               >
                 {shopName}{" "}
-                <span style={{ opacity: 0.6 }}>&middot; Staff coffee perk</span>
+                <span style={{ opacity: 0.6 }}>&middot; Staff perk</span>
               </p>
 
               {step === "email" ? (
@@ -404,7 +404,7 @@ export default function PerkCustomerClient({
                     className="text-xs"
                     style={{ color: fgHex, opacity: 0.7 }}
                   >
-                    Enter your work email to get your free coffee
+                    Enter your work email to get your reward
                   </Label>
                   <Input
                     type="email"
@@ -536,7 +536,7 @@ export default function PerkCustomerClient({
                   </div>
                   <p className="mt-4 text-sm" style={{ color: fgHex }}>
                     <span className="text-2xl font-bold">{remaining}</span> of{" "}
-                    {dailyLimit} free coffee{dailyLimit === 1 ? "" : "s"} left
+                    {dailyLimit} free reward{dailyLimit === 1 ? "" : "s"} left
                     today
                   </p>
                 </div>
@@ -562,7 +562,7 @@ export default function PerkCustomerClient({
                       ? "Connecting…"
                       : status === "requesting"
                         ? "Sending…"
-                        : "Get free coffee"}
+                        : "Get your reward"}
                   </Button>
                   <p className="text-xs" style={{ color: fgHex, opacity: 0.5 }}>
                     Show this screen to the barista to approve.

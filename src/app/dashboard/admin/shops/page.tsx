@@ -484,7 +484,7 @@ export default function AdminShopsPage() {
           />
           {showFreeCoffees && (
             <KpiCard
-              label="Free coffees"
+              label="Free rewards"
               value={totalFreeCoffees}
               color="var(--chart-1)"
             />
@@ -613,7 +613,7 @@ export default function AdminShopsPage() {
                       <p className="text-sm font-semibold">
                         {shop.activity.toLocaleString()}{" "}
                         <span className="text-xs font-normal text-muted-foreground">
-                          {shop.perkMode ? "coffees" : "stamps"}
+                          {shop.perkMode ? "rewards" : "stamps"}
                         </span>
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -744,7 +744,7 @@ export default function AdminShopsPage() {
         </div>
         <p className="mt-2 px-1 text-xs text-muted-foreground">
           Customers shown are active in the last 90 days; stamp shops show
-          stamps, perk shops show free coffees.
+          stamps, perk shops show free rewards.
         </p>
       </section>
     </div>

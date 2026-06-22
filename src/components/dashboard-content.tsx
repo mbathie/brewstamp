@@ -410,7 +410,7 @@ export default function DashboardContent({
               <CardTitle className="text-lg text-foreground">
                 {stuckOnActivation
                   ? perkMode
-                    ? "You're almost there — let's approve your first free coffee"
+                    ? "You're almost there — let's approve your first free reward"
                     : "You're almost there — let's land your first stamp"
                   : testedNotLive
                     ? "You've tested it — now go live"
@@ -421,14 +421,14 @@ export default function DashboardContent({
               <p className="mb-6 text-sm text-muted-foreground">
                 {stuckOnActivation
                   ? perkMode
-                    ? "Staff have started scanning your QR code but no free coffees have been approved yet. Walk through step 4 below to approve your first one."
+                    ? "Staff have started scanning your QR code but no free rewards have been approved yet. Walk through step 4 below to approve your first one."
                     : "Customers have started scanning your QR code but no stamps have been approved yet. Walk through step 4 below to award your first one."
                   : testedNotLive
                     ? perkMode
-                      ? "Your perk is set up and tested. Put your QR code where staff can scan it to start serving free coffees for real."
+                      ? "Your perk is set up and tested. Put your QR code where staff can scan it to start serving free rewards for real."
                       : "Your card is set up and tested. Put your QR code on the counter to start collecting stamps from real customers."
                     : perkMode
-                      ? "Follow these four steps to start serving free coffees to your staff."
+                      ? "Follow these four steps to start serving free rewards to your staff."
                       : "Follow these four steps to start collecting stamps from your customers."}
               </p>
               <div className="space-y-5">
@@ -687,7 +687,7 @@ export default function DashboardContent({
                 color="var(--color-amber-500)"
                 subline={
                   stats.redeems > 0
-                    ? `${stats.redeems} free drink${stats.redeems === 1 ? "" : "s"} redeemed`
+                    ? `${stats.redeems} free reward${stats.redeems === 1 ? "" : "s"} redeemed`
                     : undefined
                 }
               />
@@ -770,7 +770,7 @@ export default function DashboardContent({
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
                   {perkMode
-                    ? "Lifetime · most free coffees"
+                    ? "Lifetime · most free rewards"
                     : "Lifetime · most-stamped first"}
                 </p>
               </CardHeader>

@@ -49,8 +49,21 @@ export async function GET(
         totalRejected: {
           $sum: { $cond: [{ $eq: ["$status", "rejected"] }, 1, 0] },
         },
+        // Only approved redemptions count as a reward actually redeemed —
+        // rejected/expired redeem requests shouldn't inflate the figure.
         totalRedeems: {
-          $sum: { $cond: [{ $eq: ["$redeem", true] }, 1, 0] },
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: ["$redeem", true] },
+                  { $eq: ["$status", "approved"] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
         },
         totalStampsAwarded: {
           $sum: { $ifNull: ["$stampsAwarded", 0] },

@@ -552,7 +552,7 @@ export default function AdminShopDetailPage() {
             color="var(--chart-2)"
           />
           <KpiCard
-            label="Free drinks redeemed"
+            label="Free rewards redeemed"
             value={stats.totalRedeems}
             spark={sparks.redeems}
             color="var(--chart-3)"

@@ -37,13 +37,13 @@ const STAMP: ProgramConfig = {
 
 const PERK: ProgramConfig = {
   isPerk: true,
-  unit: "free coffee",
-  unitPlural: "free coffees",
-  kpiLabel: "Free coffees given",
-  activityLabel: "Free coffees",
-  eventLabel: "Free coffee",
-  topColumnLabel: "Free coffees",
-  detailTitle: "Staff coffee perk",
+  unit: "free reward",
+  unitPlural: "free rewards",
+  kpiLabel: "Free rewards given",
+  activityLabel: "Free rewards",
+  eventLabel: "Free reward",
+  topColumnLabel: "Free rewards",
+  detailTitle: "Staff perk",
 };
 
 export function getProgram(perkMode: boolean | undefined): ProgramConfig {

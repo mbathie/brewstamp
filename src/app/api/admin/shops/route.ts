@@ -130,9 +130,9 @@ export async function GET() {
     [...subMap.values()].reduce((sum, s) => sum + s.monthlyCents, 0) / 100;
   const paidCount = subMap.size;
   const perkShopCount = result.filter((r) => r.perkMode).length;
-  const totalFreeCoffees = result
-    .filter((r) => r.perkMode)
-    .reduce((sum, r) => sum + r.freeCoffees, 0);
+  // Total free rewards redeemed across ALL shops (stamp reward redemptions +
+  // perk redemptions) — a platform-wide figure, not just perk shops.
+  const totalFreeCoffees = result.reduce((sum, r) => sum + r.freeCoffees, 0);
 
   // Growth charts — 90 days of daily series for client-side aggregation.
   const ninetyDaysAgo = new Date();

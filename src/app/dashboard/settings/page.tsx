@@ -594,7 +594,7 @@ export default function SettingsPage() {
                   <>
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-xs text-muted-foreground">
-                        Every scan is a free drink (no stamps) — for
+                        Every scan is a free reward (no stamps) — for
                         employer-subsidised staff coffee. Limited to staff email
                         domains and capped per person per day.
                       </p>
@@ -618,7 +618,7 @@ export default function SettingsPage() {
                             <p>
                               Perk mode turns this shop into an employer-paid
                               coffee program at a cafe of your choice. There are
-                              no stamps — every approved scan is one free drink.
+                              no stamps — every approved scan is one free reward.
                             </p>
                             <ol className="list-decimal space-y-2 pl-5">
                               <li>
@@ -650,7 +650,7 @@ export default function SettingsPage() {
                               <li>
                                 To reimburse the cafe, download the{" "}
                                 <strong className="text-foreground">CSV</strong>{" "}
-                                any time — it lists free drinks redeemed per
+                                any time — it lists free rewards redeemed per
                                 employee so you can tally what you owe.
                               </li>
                             </ol>
@@ -668,13 +668,13 @@ export default function SettingsPage() {
                       />
                       <p className="text-xs text-muted-foreground">
                         Comma-separated. Only emails at these domains can claim
-                        a free coffee.
+                        a reward.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
                       <div className="space-y-2">
                         <Label htmlFor="dailyDrinkLimit">
-                          Free drinks per day
+                          Free rewards per day
                         </Label>
                         <NumberInput
                           id="dailyDrinkLimit"
@@ -832,7 +832,7 @@ export default function SettingsPage() {
             )}
             <p className="mt-3 text-center text-xs text-muted-foreground">
               {perkMode
-                ? "Staff scan, pick up a free coffee, and the barista approves — capped at your daily limit."
+                ? "Staff scan, pick up a reward, and the barista approves — capped at your daily limit."
                 : "Showing demo state — your customers will see real stamp counts."}
             </p>
           </CardContent>
@@ -882,7 +882,7 @@ export default function SettingsPage() {
                 </li>
                 <li>
                   Reports &amp; the reimbursement CSV mix old loyalty
-                  redemptions in with free coffees.
+                  redemptions in with free rewards.
                 </li>
               </ul>
             ) : (

@@ -114,8 +114,8 @@ function downloadCsv(
     "Notes",
     // Perk reports are reimbursement-focused: just the free coffees per person.
     ...(perkMode
-      ? ["Free Coffees Redeemed"]
-      : ["Current Stamps", "Total Earned", "Free Drinks Redeemed"]),
+      ? ["Free Rewards Redeemed"]
+      : ["Current Stamps", "Total Earned", "Free Rewards Redeemed"]),
     "Last Visit",
   ];
   const lines = [header.map(csvCell).join(",")];
@@ -508,7 +508,7 @@ export default function CustomerSearch({
                 />
               )}
               <SortHeader
-                label={perkMode ? "Free coffees" : "Free Redeemed"}
+                label={perkMode ? "Free rewards" : "Free Redeemed"}
                 k="freeRedeemed"
                 activeKey={sortKey}
                 dir={sortDir}

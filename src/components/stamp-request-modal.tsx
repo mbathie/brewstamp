@@ -97,7 +97,7 @@ export default function StampRequestModal({
             <div className="flex flex-col items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4">
               <Coffee className="h-6 w-6 text-amber-700" />
               <p className="text-sm font-medium text-amber-700">
-                Free coffee
+                Free reward
               </p>
               {typeof request.perkRemaining === "number" && (
                 <p className="text-xs text-muted-foreground">
@@ -119,7 +119,7 @@ export default function StampRequestModal({
                 className="flex-1 cursor-pointer bg-amber-700 hover:bg-amber-800"
                 size="lg"
               >
-                Approve free coffee
+                Approve free reward
               </Button>
             </div>
           </div>

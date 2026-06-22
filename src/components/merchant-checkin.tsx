@@ -127,7 +127,7 @@ export default function MerchantCheckin({
         ) : (
           <Stamp className="mr-2 h-4 w-4" />
         )}
-        {canRedeem ? "Redeem free drink" : "Check in"}
+        {canRedeem ? "Redeem reward" : "Check in"}
       </Button>
       <StampRequestModal
         request={requestData}

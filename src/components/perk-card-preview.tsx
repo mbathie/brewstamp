@@ -86,7 +86,7 @@ export default function PerkCardPreview({
             </div>
             <p className="mt-4 text-center text-sm" style={{ color: fgHex }}>
               <span className="text-2xl font-bold">{limit}</span> of {limit}{" "}
-              free coffee{limit === 1 ? "" : "s"} left today
+              free reward{limit === 1 ? "" : "s"} left today
             </p>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function PerkCardPreview({
           style={{ backgroundColor: fgHex, color: bgHex }}
         >
           <Coffee className="h-5 w-5" />
-          Get free coffee
+          Get your reward
         </div>
       </div>
     </div>

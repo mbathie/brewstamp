@@ -187,7 +187,7 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
         window.dispatchEvent(new Event("stamp-approved"));
 
         if (currentRequest?.perk || data.perk) {
-          toast.success(`${name} — free coffee approved`);
+          toast.success(`${name} — free reward approved`);
         } else {
           const parts: string[] = [];
           if (stampsAwarded > 0) {

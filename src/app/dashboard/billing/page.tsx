@@ -465,7 +465,7 @@ export default function BillingPage() {
                 />
                 <FeatureRow
                   label="Corporate perk mode"
-                  hint="Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free drink (no stamps), limited to staff email domains and capped per person per day."
+                  hint="Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free reward (no stamps), limited to staff email domains and capped per person per day."
                   values={PLANS.map((p) => p.hasPerkMode)}
                 />
                 <FeatureRow

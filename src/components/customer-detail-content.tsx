@@ -389,7 +389,7 @@ export default function CustomerDetailContent({
                   </span>
                   <span className="text-muted-foreground">
                     {canRedeem
-                      ? "Free drink earned"
+                      ? "Reward earned"
                       : `${threshold - stamps} to go`}
                   </span>
                 </div>
@@ -411,7 +411,7 @@ export default function CustomerDetailContent({
                 <span className="text-foreground">
                   <strong className="font-semibold">{freeRedeemed}</strong>{" "}
                   <span className="text-muted-foreground">
-                    free drink{freeRedeemed === 1 ? "" : "s"} redeemed
+                    reward{freeRedeemed === 1 ? "" : "s"} redeemed
                   </span>
                 </span>
               </div>
