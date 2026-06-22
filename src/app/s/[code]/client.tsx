@@ -877,79 +877,9 @@ export default function CustomerClient({
         )}
       </div>
 
-      {/* Login for returning customers — only show to true anonymous
-            visitors. If they just created an account inline, hide it. */}
-      {!hasAccount && (
-        <div className="text-center">
-          {!showLogin ? (
-            <Button
-              onClick={() => setShowLogin(true)}
-              className="w-full cursor-pointer text-base font-normal hover:opacity-90"
-              size="lg"
-              style={{ backgroundColor: fgHex, color: bgHex }}
-            >
-              <LogIn className="mr-1.5 h-4 w-4" />
-              {t(lang, "haveExistingAccount")}
-            </Button>
-          ) : (
-            <div className="space-y-3">
-              <Input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder={t(lang, "email")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
-                }}
-                className="placeholder-inherit"
-              />
-              <Input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder={t(lang, "password")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
-                }}
-                className="placeholder-inherit"
-              />
-              {loginError && (
-                <p className="text-xs text-red-400">{loginError}</p>
-              )}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowLogin(false)}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  {t(lang, "cancel")}
-                </Button>
-                <Button
-                  onClick={handleLogin}
-                  disabled={loginLoading || !loginEmail || !loginPassword}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Add to Wallet — optional upgrade; browser card stays the default. */}
+      {/* Add to Wallet — optional upgrade; the browser card stays the default. */}
       {(walletGoogle || walletApple) && (
-        <div className="mt-4">
+        <div className="flex justify-center">
           <AddToWallet
             shopId={shopId}
             customerId={customerId}
@@ -959,17 +889,88 @@ export default function CustomerClient({
         </div>
       )}
 
-      {/* Switch shop + Update details — half-width row when both are
-            available, full-width otherwise. Update details only shows for
-            authenticated customers (they have a name on record). */}
-      {(otherShops.length > 0 || hasAccount) && (
-        <div className="flex gap-2">
+      {/* Login form — expands inline only when a returning customer taps "Log
+            in" below. Hidden once they have an account on this device. */}
+      {!hasAccount && showLogin && (
+        <div className="space-y-3">
+          <Input
+            type="email"
+            value={loginEmail}
+            onChange={(e) => setLoginEmail(e.target.value)}
+            placeholder={t(lang, "email")}
+            style={{
+              borderColor: fgHex + "30",
+              backgroundColor: fgHex + "10",
+              color: fgHex,
+            }}
+            className="placeholder-inherit"
+          />
+          <Input
+            type="password"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            placeholder={t(lang, "password")}
+            style={{
+              borderColor: fgHex + "30",
+              backgroundColor: fgHex + "10",
+              color: fgHex,
+            }}
+            className="placeholder-inherit"
+          />
+          {loginError && <p className="text-xs text-red-400">{loginError}</p>}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowLogin(false)}
+              variant="outline"
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              {t(lang, "cancel")}
+            </Button>
+            <Button
+              onClick={handleLogin}
+              disabled={loginLoading || !loginEmail || !loginPassword}
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{ backgroundColor: fgHex, color: bgHex }}
+            >
+              {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Secondary actions — one compact outline row so log in, switch shop and
+            update details share a line instead of stacking full-height. Log in
+            only shows to anonymous visitors; update details only to those with
+            an account on record. */}
+      {!showLogin && (
+        <div className="flex flex-wrap gap-2">
+          {!hasAccount && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowLogin(true)}
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              <LogIn className="mr-1.5 h-4 w-4" />
+              {t(lang, "logIn")}
+            </Button>
+          )}
           {otherShops.length > 0 && (
             <Button
               type="button"
               variant="outline"
               onClick={() => setView("switch")}
-              className="flex-1 cursor-pointer hover:opacity-90"
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
               style={{
                 borderColor: fgHex + "40",
                 color: fgHex,
@@ -985,7 +986,7 @@ export default function CustomerClient({
               type="button"
               variant="outline"
               onClick={() => setView("edit")}
-              className="flex-1 cursor-pointer hover:opacity-90"
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
               style={{
                 borderColor: fgHex + "40",
                 color: fgHex,

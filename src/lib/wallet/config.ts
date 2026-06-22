@@ -37,13 +37,47 @@ export function isGoogleWalletConfigured(): boolean {
   return googleWalletCreds() !== null;
 }
 
-// Apple config lands here in the Apple milestone (cert/team/pass-type-id).
+export interface AppleWalletCreds {
+  passTypeId: string;
+  teamId: string;
+  // PEM strings, decoded from base64 env vars. signerKeyPassphrase is optional
+  // (only set if the .p8/.pem key was exported with a password).
+  signerCert: string;
+  signerKey: string;
+  wwdr: string;
+  signerKeyPassphrase?: string;
+}
+
+/**
+ * Apple Wallet signing creds. To enable, set:
+ *   APPLE_PASS_TYPE_ID       — e.g. pass.app.brewstamp
+ *   APPLE_TEAM_ID            — your Apple Developer Team ID
+ *   APPLE_PASS_CERT_BASE64   — base64 of the Pass Type ID signing cert (PEM)
+ *   APPLE_PASS_KEY_BASE64    — base64 of the matching private key (PEM)
+ *   APPLE_WWDR_BASE64        — base64 of Apple's WWDR intermediate cert (PEM)
+ *   APPLE_PASS_KEY_PASSWORD  — (optional) passphrase for the private key
+ * Returns null when not fully configured — nothing throws.
+ */
+export function appleWalletCreds(): AppleWalletCreds | null {
+  const passTypeId = process.env.APPLE_PASS_TYPE_ID;
+  const teamId = process.env.APPLE_TEAM_ID;
+  const certB64 = process.env.APPLE_PASS_CERT_BASE64;
+  const keyB64 = process.env.APPLE_PASS_KEY_BASE64;
+  const wwdrB64 = process.env.APPLE_WWDR_BASE64;
+  if (!passTypeId || !teamId || !certB64 || !keyB64 || !wwdrB64) return null;
+  const dec = (b: string) => Buffer.from(b, "base64").toString("utf8");
+  return {
+    passTypeId,
+    teamId,
+    signerCert: dec(certB64),
+    signerKey: dec(keyB64),
+    wwdr: dec(wwdrB64),
+    signerKeyPassphrase: process.env.APPLE_PASS_KEY_PASSWORD || undefined,
+  };
+}
+
 export function isAppleWalletConfigured(): boolean {
-  return Boolean(
-    process.env.APPLE_PASS_TYPE_ID &&
-      process.env.APPLE_TEAM_ID &&
-      process.env.APPLE_PASS_CERT_BASE64,
-  );
+  return appleWalletCreds() !== null;
 }
 
 /** Wallet UI/issuance is available for a shop only when it's switched on AND
