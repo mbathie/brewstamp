@@ -44,6 +44,7 @@ import {
   Lock,
   HelpCircle,
   ChevronsUpDown,
+  X,
 } from "lucide-react";
 import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
@@ -438,7 +439,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Sticky header: title + save state + QR/PDF/Print/Live actions stay in
+          reach as you scroll the (now taller) grouped form. top-14 clears the
+          dashboard's own sticky bar (h-14). */}
+      <div className="sticky top-14 z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3 sm:-mx-6 sm:px-6">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-foreground">Shop Setup</h1>
           <SaveIndicator status={saveStatus} />
@@ -459,15 +463,33 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* LEFT: all the controls */}
-        <Card>
-          <CardContent className="space-y-8 p-6">
-            {/* Branding + Loyalty — laid out 2-up so the block stays compact
-                without shrinking the individual controls. */}
-            <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">
-                Branding
-              </h2>
+        {/* LEFT: controls, grouped into cards so related settings sit
+            together (brand + card visuals; program; customer experience). */}
+        <div className="space-y-6">
+          {/* ── Brand & card: name, logo, colours, pattern — everything that
+              shapes how the card looks, in one place. ── */}
+          <Card>
+            <CardContent className="space-y-6 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">
+                  Brand &amp; card
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const { bgColor: bg, fgColor: fg } = getRandomColorPair();
+                    setBgColor(bg);
+                    setFgColor(fg);
+                    const pick =
+                      patterns[Math.floor(Math.random() * patterns.length)];
+                    setBgPattern(pick.key);
+                  }}
+                  className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <Shuffle className="h-3 w-3" />
+                  Randomize
+                </button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
                 <div className="space-y-2">
                   <Label>Brand Logo</Label>
@@ -495,6 +517,18 @@ export default function SettingsPage() {
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                           <Upload className="h-5 w-5 text-white" />
                         </div>
+                        {/* Remove-logo affordance over the top-right corner. */}
+                        <button
+                          type="button"
+                          aria-label="Remove logo"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLogoRemove();
+                          }}
+                          className="absolute right-1 top-1 z-10 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-stone-700 text-sm text-muted-foreground transition-colors group-hover:border-stone-500 group-hover:text-foreground">
@@ -503,16 +537,6 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  {logo && (
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      onClick={handleLogoRemove}
-                      className="cursor-pointer"
-                    >
-                      Delete
-                    </Button>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Shop Name</Label>
@@ -523,51 +547,35 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-            </section>
 
-            {/* Program — stamp card vs corporate perk. A segmented control
-                drives both the fields below and the right-hand preview, so the
-                two mutually-exclusive modes read as one deliberate choice
-                instead of fields appearing and disappearing. */}
-            <section>
-              <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
-                <div className="min-w-0">
-                  <h2 className="flex items-center gap-1.5 text-base font-semibold text-foreground">
-                    Wallet passes
-                    {!canUseWalletPasses && (
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Let customers add their card to Apple &amp; Google Wallet —
-                    the browser card stays available either way.
-                  </p>
-                </div>
-                {canUseWalletPasses ? (
-                  <Switch
-                    checked={walletPasses}
-                    onCheckedChange={setWalletPasses}
-                    aria-label="Wallet passes"
-                  />
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/dashboard/billing")}
-                        className="shrink-0 cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                      >
-                        Upgrade
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[240px] text-center">
-                      Wallet passes are on the Pro plan and up.
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </section>
+            {/* Colours + pattern — also part of "Brand & card", so they live
+                with the name/logo rather than in a separate section far below. */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Background</Label>
+              <ColorPicker value={bgColor} onChange={setBgColor} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Foreground</Label>
+              <ColorPicker value={fgColor} onChange={setFgColor} />
+            </div>
+            <ContrastWarning bg={bgColor} fg={fgColor} />
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">
+                Background pattern
+              </Label>
+              <PatternPicker
+                value={bgPattern}
+                onChange={setBgPattern}
+                previewColor={getColorHex(fgColor)}
+                previewBg={getColorHex(bgColor)}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
+        {/* ── Program: how customers earn ── */}
+        <Card>
+          <CardContent className="space-y-4 p-6">
             <section className="space-y-4">
               <div>
                 <h2 className="text-base font-semibold text-foreground">
@@ -751,98 +759,93 @@ export default function SettingsPage() {
                 )}
               </div>
 
-              {/* Language applies to both modes, so it stays put. */}
-              <div className="space-y-2">
-                <Label htmlFor="language">Customer-facing language</Label>
-                <select
-                  id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-1/2"
-                >
-                  {SUPPORTED_LANGUAGES.map((code) => {
-                    const meta = LANGUAGE_META[code];
-                    return (
-                      <option key={code} value={code}>
-                        {meta.flag} {meta.nativeName} ({meta.englishName})
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Applies to the customer card and the printed QR PDF.
-                </p>
-              </div>
             </section>
-
-            {/* Card Design */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">
-                  Card Design
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const { bgColor: bg, fgColor: fg } = getRandomColorPair();
-                    setBgColor(bg);
-                    setFgColor(fg);
-                    const pick =
-                      patterns[Math.floor(Math.random() * patterns.length)];
-                    setBgPattern(pick.key);
-                  }}
-                  className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <Shuffle className="h-3 w-3" />
-                  Randomize
-                </button>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">
-                  Background
-                </Label>
-                <ColorPicker value={bgColor} onChange={setBgColor} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">
-                  Foreground
-                </Label>
-                <ColorPicker value={fgColor} onChange={setFgColor} />
-              </div>
-              <ContrastWarning bg={bgColor} fg={fgColor} />
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">
-                  Background Pattern
-                </Label>
-                <PatternPicker
-                  value={bgPattern}
-                  onChange={setBgPattern}
-                  previewColor={getColorHex(fgColor)}
-                  previewBg={getColorHex(bgColor)}
-                />
-              </div>
-            </section>
-
-            <Button
-              onClick={handleSaveClick}
-              disabled={saveStatus === "saving"}
-              className="cursor-pointer"
-            >
-              {saveStatus === "saving"
-                ? "Saving..."
-                : saveStatus === "saved"
-                  ? "Saved!"
-                  : "Save Changes"}
-            </Button>
           </CardContent>
         </Card>
+
+        {/* ── Customer experience: wallet passes + language ── */}
+        <Card>
+          <CardContent className="space-y-6 p-6">
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+                  Wallet passes
+                  {!canUseWalletPasses && (
+                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Let customers add their card to Apple &amp; Google Wallet — the
+                  browser card stays available either way.
+                </p>
+              </div>
+              {canUseWalletPasses ? (
+                <Switch
+                  checked={walletPasses}
+                  onCheckedChange={setWalletPasses}
+                  aria-label="Wallet passes"
+                />
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/dashboard/billing")}
+                      className="shrink-0 cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      Upgrade
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px] text-center">
+                    Wallet passes are on the Pro plan and up.
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="language">Customer-facing language</Label>
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-1/2"
+              >
+                {SUPPORTED_LANGUAGES.map((code) => {
+                  const meta = LANGUAGE_META[code];
+                  return (
+                    <option key={code} value={code}>
+                      {meta.flag} {meta.nativeName} ({meta.englishName})
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Applies to the customer card and the printed QR PDF.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button
+          onClick={handleSaveClick}
+          disabled={saveStatus === "saving"}
+          className="cursor-pointer"
+        >
+          {saveStatus === "saving"
+            ? "Saving..."
+            : saveStatus === "saved"
+              ? "Saved!"
+              : "Save Changes"}
+        </Button>
+        </div>
 
         {/* RIGHT: live preview. Sticks to the top of the viewport as the left
             column scrolls, so the whole card stays visible even when reaching
             the colour/pattern pickers far down the page. self-start stops the
             grid from stretching it to the left column's full height (which
             would leave no room to stick). */}
-        <Card className="self-start md:sticky md:top-20">
+        <Card className="self-start md:sticky md:top-32">
           <CardContent className="space-y-4 p-6">
             <h2 className="text-base font-semibold text-foreground">
               Customer Preview
