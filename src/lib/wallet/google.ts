@@ -124,7 +124,9 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
     accountName: d.customerName,
     accountId: d.cardId,
     loyaltyPoints: {
-      label: d.perkMode ? "Free rewards" : "Stamps",
+      // No "Stamps" label for stamp mode — the balance already reads
+      // "5 / 8 stamps", so the label would be redundant.
+      label: d.perkMode ? "Free rewards" : "",
       balance: { string: balanceString(d) },
     },
     barcode: {
@@ -294,7 +296,9 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
       // accountName so a customer name change propagates to the saved pass.
       accountName: d.customerName,
       loyaltyPoints: {
-        label: d.perkMode ? "Free rewards" : "Stamps",
+        // No "Stamps" label for stamp mode — the balance already reads
+      // "5 / 8 stamps", so the label would be redundant.
+      label: d.perkMode ? "Free rewards" : "",
         balance: { string: balanceString(d) },
       },
     }),
