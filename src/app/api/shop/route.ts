@@ -5,6 +5,7 @@ import { getShopPlanLimits } from "@/lib/plan-limits";
 import { StampRequest } from "@/models";
 import { isLanguage } from "@/lib/i18n";
 import { normalizeDomain } from "@/lib/perk";
+import { syncWalletBranding } from "@/lib/wallet";
 
 export async function GET() {
   const ctx = await getCurrentShopContext();
@@ -137,5 +138,18 @@ export async function PATCH(req: Request) {
   }
 
   await shop.save();
+
+  // If wallet-relevant branding changed, push it to saved Apple/Google passes
+  // so existing wallets reflect the new logo/colour/name. Fire-and-forget —
+  // never block or fail the settings save on a wallet API hiccup.
+  const brandingChanged =
+    name !== undefined ||
+    logo !== undefined ||
+    fgColor !== undefined ||
+    perkMode !== undefined;
+  if (brandingChanged && shop.walletPasses) {
+    void syncWalletBranding(shop._id.toString());
+  }
+
   return NextResponse.json({ shop });
 }

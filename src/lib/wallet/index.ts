@@ -3,7 +3,12 @@ import { connectDB } from "@/lib/mongoose";
 import { StampCard, Shop, Customer, WalletPass } from "@/models";
 import { generateAnimalName } from "@/lib/animal-names";
 import { APP_URL, isAppleWalletConfigured, walletAvailable } from "./config";
-import { googleSaveUrl, googleUpdateObject, type WalletCardData } from "./google";
+import {
+  googleSaveUrl,
+  googleUpdateClassBranding,
+  googleUpdateObject,
+  type WalletCardData,
+} from "./google";
 import { applePushUpdate, buildPkpass } from "./apple";
 
 // Re-export so route handlers (e.g. the .pkpass download) can rebuild a pass.
@@ -132,6 +137,50 @@ export async function pkpassForSerial(serial: string): Promise<Buffer | null> {
   const d = await buildCardData(pass.card.toString());
   if (!d) return null;
   return buildPkpass(d, pass.authToken, serial);
+}
+
+/**
+ * Push updated SHOP BRANDING (logo, accent colour, name, perk mode) to every
+ * saved wallet pass for the shop. Call fire-and-forget after a Shop Setup save
+ * that changed branding. Google needs one class PATCH (objects inherit it);
+ * Apple needs a push per device so it re-fetches the rebuilt .pkpass. Never
+ * throws into the settings flow.
+ */
+export async function syncWalletBranding(shopId: string): Promise<void> {
+  try {
+    await connectDB();
+    const shop = await Shop.findById(shopId).lean<any>();
+    if (!shop) return;
+    const avail = walletAvailable(!!shop.walletPasses);
+    if (!avail.enabled) return;
+
+    if (avail.google) {
+      await googleUpdateClassBranding({
+        shopId: shop._id.toString(),
+        shopName: shop.name,
+        shopLogo: shop.logo || null,
+        fgColor: shop.fgColor || "amber-600",
+        perkMode: !!shop.perkMode,
+      });
+    }
+
+    if (avail.apple) {
+      const passes = await WalletPass.find({ shop: shopId, provider: "apple" })
+        .select("registrations")
+        .lean<any[]>();
+      const tokens = passes
+        .flatMap((p) => p.registrations || [])
+        .map((r: any) => r.pushToken)
+        .filter(Boolean);
+      await applePushUpdate(tokens);
+      await WalletPass.updateMany(
+        { shop: shopId, provider: "apple" },
+        { lastPushedAt: new Date() },
+      );
+    }
+  } catch (err) {
+    console.error("[Wallet] branding sync failed for shop", shopId, err);
+  }
 }
 
 /**

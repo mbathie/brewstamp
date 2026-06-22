@@ -15,6 +15,16 @@ import { APP_URL, googleWalletCreds } from "./config";
 const BASE = "https://walletobjects.googleapis.com/walletobjects/v1";
 const SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer";
 
+// Shop-level branding that lives on the loyaltyClass (shared by every pass for
+// the shop). A subset of WalletCardData so either can drive the class body.
+export interface WalletClassData {
+  shopId: string;
+  shopName: string;
+  shopLogo: string | null;
+  fgColor: string;
+  perkMode: boolean;
+}
+
 // Stamp-card branding shared by class + object.
 export interface WalletCardData {
   cardId: string;
@@ -56,7 +66,7 @@ async function accessToken(): Promise<string | null> {
 // since Google fetches it server-side).
 const FALLBACK_LOGO = "https://brewstamp.app/apple-touch-icon.png";
 
-function loyaltyClassBody(issuerId: string, d: WalletCardData) {
+function loyaltyClassBody(issuerId: string, d: WalletClassData) {
   return {
     id: classId(issuerId, d.shopId),
     issuerName: d.shopName,
@@ -182,6 +192,35 @@ export async function googleSaveUrl(d: WalletCardData): Promise<string | null> {
     .update(unsigned)
     .sign(creds.privateKey, "base64url");
   return `https://pay.google.com/gp/v/save/${unsigned}.${sig}`;
+}
+
+/**
+ * PATCH the shop's loyaltyClass branding (logo, accent colour, name). Because
+ * every customer's loyaltyObject inherits class-level branding, a single PATCH
+ * updates the appearance of every saved Google pass for the shop. No-op if the
+ * class doesn't exist yet (nobody has added a pass) or Google isn't configured.
+ */
+export async function googleUpdateClassBranding(
+  d: WalletClassData,
+): Promise<void> {
+  const creds = googleWalletCreds();
+  if (!creds) return;
+  const token = await accessToken();
+  if (!token) return;
+  const id = classId(creds.issuerId, d.shopId);
+  const res = await apiGet(token, `loyaltyClass/${id}`);
+  if (!res.ok) return; // 404 → no class yet; nothing saved to update
+  await logIfError(
+    "class branding update",
+    await fetch(`${BASE}/loyaltyClass/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(loyaltyClassBody(creds.issuerId, d)),
+    }),
+  );
 }
 
 /**
