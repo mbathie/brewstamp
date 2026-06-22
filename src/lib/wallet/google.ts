@@ -113,7 +113,8 @@ function loyaltyClassBody(issuerId: string, d: WalletClassData) {
 
 function balanceString(d: WalletCardData): string {
   if (d.perkMode) return `${d.freeRedeemed} redeemed`;
-  return `${d.stamps} / ${d.threshold} stamps`;
+  // Just "5 / 8" — the "Stamps" label sits above it, so no need to repeat it.
+  return `${d.stamps} / ${d.threshold}`;
 }
 
 function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
@@ -124,9 +125,7 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
     accountName: d.customerName,
     accountId: d.cardId,
     loyaltyPoints: {
-      // No "Stamps" label for stamp mode — the balance already reads
-      // "5 / 8 stamps", so the label would be redundant.
-      label: d.perkMode ? "Free rewards" : "",
+      label: d.perkMode ? "Free rewards" : "Stamps",
       balance: { string: balanceString(d) },
     },
     barcode: {
@@ -296,9 +295,7 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
       // accountName so a customer name change propagates to the saved pass.
       accountName: d.customerName,
       loyaltyPoints: {
-        // No "Stamps" label for stamp mode — the balance already reads
-      // "5 / 8 stamps", so the label would be redundant.
-      label: d.perkMode ? "Free rewards" : "",
+        label: d.perkMode ? "Free rewards" : "Stamps",
         balance: { string: balanceString(d) },
       },
     }),
