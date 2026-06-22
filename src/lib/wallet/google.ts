@@ -216,6 +216,17 @@ export async function googleSaveUrl(d: WalletCardData): Promise<string | null> {
         body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
       }),
     );
+  } else if (existing.ok) {
+    // Object already exists (re-add / re-issue) — PATCH so the recovery link and
+    // balance are present/current on the already-saved pass.
+    await logIfError(
+      "object update",
+      await fetch(`${BASE}/loyaltyObject/${oid}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
+      }),
+    );
   }
 
   // Signed JWT save link (RS256 with the service-account private key).
