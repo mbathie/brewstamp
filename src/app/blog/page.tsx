@@ -35,6 +35,19 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "apple-google-wallet-loyalty-card",
+    title:
+      "Your Coffee Loyalty Card, Now in Apple Wallet & Google Wallet",
+    description:
+      "Brewstamp loyalty cards now save to Apple Wallet and Google Wallet — lock-screen access, stamps that update automatically, and still no app to download. On every plan, including Free.",
+    tag: "Product update",
+    image:
+      "https://images.pexels.com/photos/887751/pexels-photo-887751.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Person holding a smartphone at a cafe counter",
+    publishedAt: "2026-06-22",
+    publishedAtDisplay: "22 June 2026",
+  },
+  {
     slug: "corporate-coffee-perk",
     title:
       "Subsidised Staff Coffee, Run From One QR Code: Corporate Perk Mode",
