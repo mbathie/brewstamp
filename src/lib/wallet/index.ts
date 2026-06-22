@@ -38,7 +38,9 @@ export async function buildCardData(
     cardId: card._id.toString(),
     shopId: card.shop.toString(),
     shopName: shop.name,
-    shopLogo: shop.logo || null,
+    // Prefer the public Spaces URL — wallet providers fetch logos by URL and
+    // can't use the data: URI stored in shop.logo.
+    shopLogo: shop.logoUrl || shop.logo || null,
     shopCode: shop.code,
     bgColor: shop.bgColor || "stone-800",
     fgColor: shop.fgColor || "amber-600",

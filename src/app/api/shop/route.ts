@@ -6,6 +6,7 @@ import { StampRequest } from "@/models";
 import { isLanguage } from "@/lib/i18n";
 import { normalizeDomain } from "@/lib/perk";
 import { syncWalletBranding } from "@/lib/wallet";
+import { uploadShopLogo } from "@/lib/spaces";
 
 export async function GET() {
   const ctx = await getCurrentShopContext();
@@ -82,7 +83,20 @@ export async function PATCH(req: Request) {
 
   if (name) shop.name = name;
   if (stampThreshold) shop.stampThreshold = stampThreshold;
-  if (logo !== undefined) shop.logo = logo || null;
+  if (logo !== undefined) {
+    shop.logo = logo || null;
+    // Mirror the logo to Spaces so wallet providers have a public URL to fetch.
+    // Keep the data: URI in `logo` for the in-app card. No-ops if Spaces isn't
+    // configured (logoUrl stays as-is); clears logoUrl when the logo is removed.
+    if (logo && String(logo).startsWith("data:")) {
+      const url = await uploadShopLogo(shop._id.toString(), logo);
+      if (url) shop.logoUrl = url;
+    } else if (!logo) {
+      shop.logoUrl = null;
+    } else if (/^https?:\/\//i.test(String(logo))) {
+      shop.logoUrl = logo; // already a URL
+    }
+  }
   if (bgColor !== undefined) shop.bgColor = bgColor;
   if (fgColor !== undefined) shop.fgColor = fgColor;
   if (bgPattern !== undefined) shop.bgPattern = bgPattern;
