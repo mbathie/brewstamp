@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import RelatedGuides from "@/components/related-guides";
 
 export const metadata: Metadata = {
   title: "Loyalty App Comparisons for Cafes",
@@ -135,6 +136,7 @@ export default function AlternativesIndex() {
           ))}
         </div>
       </main>
+      <RelatedGuides />
       <Footer />
     </div>
   );

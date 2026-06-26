@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
 
@@ -823,6 +824,7 @@ export default function Home() {
         </div>
       </section>
 
+      <RelatedGuides />
       <Footer />
     </div>
   );
