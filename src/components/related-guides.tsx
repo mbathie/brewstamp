@@ -19,6 +19,11 @@ const GUIDES: Array<{ href: string; anchor: string; blurb: string }> = [
     blurb: "A digital coffee rewards card customers reach by scanning a QR code — no app to download.",
   },
   {
+    href: "/cafe-loyalty-app",
+    anchor: "Cafe loyalty app — no customer download",
+    blurb: "The loyalty app for cafes your customers never install — they scan a QR code and collect stamps in the browser.",
+  },
+  {
     href: "/blog/coffee-shop-loyalty-cards",
     anchor: "Coffee shop loyalty cards: rewards & setup guide",
     blurb: "The rewards that keep customers coming back, the 8-stamp rule, and how to launch a coffee shop loyalty card in minutes.",
