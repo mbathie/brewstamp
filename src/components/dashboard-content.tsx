@@ -347,6 +347,22 @@ export default function DashboardContent({
     }
   }, [chartRaw, range, selectedRange]);
 
+  // Whether the chart has any non-zero bar — drives the empty-state fallback.
+  const chartHasData = useMemo(
+    () => chartData.some((d) => d.stamps > 0 || d.redeems > 0),
+    [chartData],
+  );
+  const rangeNoun =
+    range === "today"
+      ? "day"
+      : range === "week"
+        ? "week"
+        : range === "month"
+          ? "month"
+          : range === "date"
+            ? "range"
+            : "period";
+
   function formatTime(dateStr: string) {
     const d = new Date(dateStr);
     const singleDay =
@@ -710,50 +726,67 @@ export default function DashboardContent({
                 <CardTitle className="text-lg">Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer
-                  config={
-                    perkMode
-                      ? {
-                          redeems: {
-                            label: program.activityLabel,
-                            color: "var(--color-amber-500)",
-                          },
-                        }
-                      : chartConfig
-                  }
-                  className="h-[250px] w-full"
-                >
-                  <BarChart data={chartData} accessibilityLayer>
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                      tickMargin={8}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                      allowDecimals={false}
-                      width={30}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    {/* Perk shops have no stamps — show only the free-coffee bar. */}
-                    {!perkMode && (
-                      <Bar
-                        dataKey="stamps"
-                        fill="var(--color-stamps)"
-                        radius={[4, 4, 0, 0]}
+                {chartHasData ? (
+                  <ChartContainer
+                    config={
+                      perkMode
+                        ? {
+                            redeems: {
+                              label: program.activityLabel,
+                              color: "var(--color-amber-500)",
+                            },
+                          }
+                        : chartConfig
+                    }
+                    className="h-[250px] w-full"
+                  >
+                    <BarChart data={chartData} accessibilityLayer>
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={12}
+                        tickMargin={8}
                       />
-                    )}
-                    <Bar
-                      dataKey="redeems"
-                      fill="var(--color-redeems)"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ChartContainer>
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={12}
+                        allowDecimals={false}
+                        width={30}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      {/* Perk shops have no stamps — show only the free-coffee bar. */}
+                      {!perkMode && (
+                        <Bar
+                          dataKey="stamps"
+                          fill="var(--color-stamps)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={44}
+                        />
+                      )}
+                      <Bar
+                        dataKey="redeems"
+                        fill="var(--color-redeems)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={44}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                ) : (
+                  // All-zero range: an empty axis grid reads as "broken", so show
+                  // a friendly message instead.
+                  <div className="flex h-[250px] flex-col items-center justify-center gap-1 text-center">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      No activity in this {rangeNoun} yet
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {perkMode
+                        ? "Approved free rewards will appear here."
+                        : "Stamps and rewards will appear here as customers check in."}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1048,8 +1081,8 @@ function KpiCard({
           : "vs prev day";
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="gap-2 py-4">
+      <CardHeader className="pb-0">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>
       <CardContent>

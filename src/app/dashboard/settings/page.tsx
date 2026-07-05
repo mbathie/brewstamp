@@ -293,11 +293,6 @@ export default function SettingsPage() {
     saveChanges,
   ]);
 
-  async function handleSaveClick() {
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    await saveChanges();
-  }
-
   // Tapping a program-type tab. If it's a real change AND the shop already has
   // history, warn first (switching strands the existing data); otherwise apply
   // straight away.
@@ -828,23 +823,12 @@ export default function SettingsPage() {
                 })}
               </select>
               <p className="text-xs text-muted-foreground">
-                Applies to the customer card and the printed QR PDF.
+                Applies to the customer card, wallet passes, and the printed QR
+                PDF.
               </p>
             </div>
           </CardContent>
         </Card>
-
-        <Button
-          onClick={handleSaveClick}
-          disabled={saveStatus === "saving"}
-          className="cursor-pointer"
-        >
-          {saveStatus === "saving"
-            ? "Saving..."
-            : saveStatus === "saved"
-              ? "Saved!"
-              : "Save Changes"}
-        </Button>
         </div>
 
         {/* RIGHT: live preview. Sticks to the top of the viewport as the left

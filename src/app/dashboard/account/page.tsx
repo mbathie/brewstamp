@@ -121,7 +121,7 @@ export default function AccountPage() {
     return <p className="text-sm text-muted-foreground">Loading...</p>;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6">
       <h1 className="text-xl font-semibold text-foreground">Account</h1>
 
       {/* Profile */}
