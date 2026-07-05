@@ -42,31 +42,60 @@ Once set, the customer card shows "Add to Google Wallet"; balances update on eac
 
 ## Apple Wallet — provisioning (to go live)
 
-The code is complete and inert until these env vars are set. Prereqs: Apple
-Developer Program ($99/yr).
+The code is complete and inert until these env vars are set.
+`scripts/apple-wallet-setup.ts` automates the openssl + base64 grunt work — you
+only do the Apple-portal clicks.
 
-1. In the **Apple Developer** portal → Certificates, Identifiers & Profiles:
-   - Create a **Pass Type ID** (e.g. `pass.app.brewstamp`).
-   - Create a **Pass Type ID Certificate** for it; download and import into Keychain.
-2. Export the signing material as PEM:
-   - From Keychain, export the cert + key as a `.p12`, then split to PEM:
-     - `openssl pkcs12 -in cert.p12 -clcerts -nokeys -out signerCert.pem`
-     - `openssl pkcs12 -in cert.p12 -nocerts -nodes -out signerKey.pem` (or keep a passphrase)
-   - Download Apple's **WWDR** intermediate cert and convert to PEM: `wwdr.pem`.
-3. Set env vars (DO App Platform + `.env.local` for dev), base64-encoded:
-   - `APPLE_PASS_TYPE_ID` — e.g. `pass.app.brewstamp`
-   - `APPLE_TEAM_ID` — your Apple Developer Team ID
-   - `APPLE_PASS_CERT_BASE64` — `base64 -i signerCert.pem`
-   - `APPLE_PASS_KEY_BASE64` — `base64 -i signerKey.pem`
-   - `APPLE_WWDR_BASE64` — `base64 -i wwdr.pem`
-   - `APPLE_PASS_KEY_PASSWORD` — (optional) key passphrase if you set one
-4. `NEXT_PUBLIC_APP_URL` must be the public HTTPS origin (Wallet calls the web service + APNs needs reachable URLs).
-5. Turn on "Wallet passes" for a shop in Settings.
+**Prereq: an ACTIVE Apple Developer Program membership** ($99/yr). If it lapses,
+the portal shows "Your Apple Developer Program membership has expired" and
+blocks Certificates/Identifiers until you **Renew membership** (renewal can take
+minutes to a few hours to propagate before the portal unlocks). You can't
+re-enroll while expired — you're still the Account Holder — you renew.
+
+1. **Generate a signing key + CSR locally** (the private key is your pass-signing
+   key and never leaves your machine):
+   ```
+   mkdir -p ~/.config/brewstamp/apple && chmod 700 ~/.config/brewstamp/apple
+   openssl req -new -newkey rsa:2048 -nodes \
+     -keyout ~/.config/brewstamp/apple/signerKey.pem \
+     -out    ~/.config/brewstamp/apple/request.certSigningRequest \
+     -subj "/CN=Brewstamp Pass Type ID/O=Brewstamp/C=AU"
+   ```
+2. **Fetch Apple's WWDR G4 intermediate** (public, no login):
+   ```
+   curl -fsSo ~/.config/brewstamp/apple/AppleWWDRCAG4.cer \
+     https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
+   ```
+3. In the **Apple Developer** portal → Certificates, Identifiers & Profiles:
+   - **Identifiers → +** → *Pass Type IDs* → create `pass.app.brewstamp`.
+   - **Certificates → +** → *Pass Type ID Certificate* → pick that identifier →
+     upload `request.certSigningRequest` → download the `.cer` (e.g. `pass.cer`).
+   - Grab your **Team ID** from *Membership details*.
+4. **Assemble the env vars** with the helper (handles DER→PEM + base64 +
+   validates the key matches the cert and isn't expired):
+   ```
+   npx tsx scripts/apple-wallet-setup.ts \
+     --cert ~/Downloads/pass.cer \
+     --key  ~/.config/brewstamp/apple/signerKey.pem \
+     --wwdr ~/.config/brewstamp/apple/AppleWWDRCAG4.cer \
+     --pass-type-id pass.app.brewstamp --team-id <TEAM_ID>
+   ```
+   It writes `~/.config/brewstamp/apple/apple-wallet.env` (chmod 600) with
+   `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`, `APPLE_PASS_CERT_BASE64`,
+   `APPLE_PASS_KEY_BASE64`, `APPLE_WWDR_BASE64`. (If you exported a Keychain
+   `.p12` instead of a separate key, pass `--p12 file.p12 --p12-password …`.)
+5. **Wire it up:**
+   - Dev: `cat ~/.config/brewstamp/apple/apple-wallet.env >> .env.local`, restart.
+   - Prod: add each `APPLE_*` var to DO App Platform (encrypted), redeploy.
+   - `NEXT_PUBLIC_APP_URL` must be the public HTTPS origin (Wallet calls the web
+     service; APNs needs reachable URLs).
+6. Turn on "Wallet passes" for a shop in Settings.
 
 Once set, iOS customers see "Add to Apple Wallet"; the pass registers with the
 PassKit web service and stamp changes push via APNs (empty payload → device
 re-fetches the pass). Push uses **certificate auth** with the Pass Type ID cert
-(`apns-topic` = the pass type id), so no separate APNs key is needed.
+(`apns-topic` = the pass type id), so no separate APNs key is needed. The cert
+expires yearly — re-run steps 3–5 with a fresh cert to rotate.
 
 ## Logos — DigitalOcean Spaces
 
