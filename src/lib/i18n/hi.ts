@@ -43,10 +43,26 @@ const hi = {
   scanWithCamera: "अपने फ़ोन कैमरे से स्कैन करें",
   noAppRequired: "ऐप नहीं चाहिए · हर फ़ोन पर चलता है",
 
+  // Wallet passes (Apple/Google) — ग्राहक के कार्ड में शामिल टेक्स्ट
+  walletBalanceLabel: "स्टैम्प",
+  walletRedeemedLabel: "भुनाए गए",
+  walletPerkPointsLabel: "मुफ़्त इनाम",
+  walletRedeemedValue: "{count} भुनाए गए",
+  walletMemberLabel: "सदस्य",
+  walletRewardLabel: "इनाम",
+  walletRewardValue: "{threshold} पर मुफ़्त",
+  walletRecoverLabel: "आपका कार्ड",
+  walletRecoverValue: "अपना कार्ड ऑनलाइन खोलें: {url}",
+  walletRecoverLinkDescription: "मेरा कार्ड देखें या पुनर्प्राप्त करें",
+  walletProgramName: "{shop} लॉयल्टी",
+  walletPerkProgramName: "स्टाफ़ भत्ता",
+  walletLogoDescription: "{shop} लोगो",
+
   poweredBy: "द्वारा संचालित",
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "विवरण अपडेट करें",
+  saveDetails: "विवरण सहेजें",
   yourDetails: "आपका विवरण",
   back: "वापस",
   saveChanges: "बदलाव सहेजें",

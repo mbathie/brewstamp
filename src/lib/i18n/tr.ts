@@ -41,6 +41,7 @@ const tr = {
   // Switch shop
   switchShop: "Mağaza değiştir",
   updateDetails: "Bilgileri güncelle",
+  saveDetails: "Bilgileri kaydet",
   yourDetails: "Bilgileriniz",
   back: "Geri",
   saveChanges: "Değişiklikleri kaydet",
@@ -58,6 +59,21 @@ const tr = {
   buyXGetFree: "{n} al. Bir tane bedava.",
   scanWithCamera: "Telefon kameranızla tarayın",
   noAppRequired: "Uygulama gerekmez · Her telefonda çalışır",
+
+  // Wallet passes (Apple/Google) — müşterinin kartına gömülü metin
+  walletBalanceLabel: "Damgalar",
+  walletRedeemedLabel: "Kullanıldı",
+  walletPerkPointsLabel: "Ücretsiz ödüller",
+  walletRedeemedValue: "{count} kullanıldı",
+  walletMemberLabel: "Üye",
+  walletRewardLabel: "Ödül",
+  walletRewardValue: "{threshold} damgada ücretsiz",
+  walletRecoverLabel: "Kartınız",
+  walletRecoverValue: "Kartınızı çevrimiçi açın: {url}",
+  walletRecoverLinkDescription: "Kartımı görüntüle veya kurtar",
+  walletProgramName: "{shop} sadakat",
+  walletPerkProgramName: "Personel avantajı",
+  walletLogoDescription: "{shop} logosu",
 
   // Footer
   poweredBy: "Sağlayan",

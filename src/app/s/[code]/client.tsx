@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import CustomerWaiting from "@/components/customer-waiting";
 import CardPreview from "@/components/card-preview";
+import { AddToWallet } from "@/components/add-to-wallet";
 import { getColorHex, surfaceStyle } from "@/lib/tailwind-colors";
 import { resolveLanguage, t } from "@/lib/i18n";
 
@@ -56,6 +57,8 @@ interface Props {
   language?: string;
   animalName: string;
   otherShops: OtherShop[];
+  walletGoogle: boolean;
+  walletApple: boolean;
 }
 
 type Status =
@@ -85,6 +88,8 @@ export default function CustomerClient({
   language,
   animalName,
   otherShops,
+  walletGoogle,
+  walletApple,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
@@ -392,6 +397,13 @@ export default function CustomerClient({
         body: JSON.stringify(update),
       });
       if (!res.ok) throw new Error("save-failed");
+      // Mirror the state the old inline save used to set: providing a name means
+      // the customer now has an account (hides "Log in", shows "Update details"),
+      // and saving details suppresses the "save your details" prompt from firing
+      // again this session (the customerName/customerEmail props stay stale until
+      // a reload, so detailsSaved is what actually gates the prompt).
+      if (update.name) setAccountCreated(true);
+      setDetailsSaved(true);
       setPassword("");
       toast.success(t(lang, "detailsUpdated"));
       setView("card");
@@ -720,72 +732,56 @@ export default function CustomerClient({
         )}
 
         {status === "approved" && showDetailsPrompt && (
-          <div className="space-y-3">
-            {!customerName && (
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t(lang, "yourName")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
+          <div className="space-y-2.5">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setDetailsSaved(true);
+                  setShowDetailsPrompt(false);
+                  setStatus("idle");
+                  setFreedEarned(false);
                 }}
-                className="placeholder-inherit"
-              />
-            )}
-            {!customerEmail && (
-              <div>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailError("");
-                  }}
-                  placeholder={t(lang, "yourEmail")}
-                  style={{
-                    borderColor: emailError ? undefined : fgHex + "30",
-                    backgroundColor: fgHex + "10",
-                    color: fgHex,
-                  }}
-                  className={`placeholder-inherit ${emailError ? "border-red-400" : ""}`}
-                />
-                {emailError && (
-                  <p className="mt-1 text-xs text-red-400">{emailError}</p>
-                )}
-              </div>
-            )}
-            {!customerHasPassword && (
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t(lang, "setPassword")}
+                variant="outline"
+                className="flex-1 cursor-pointer hover:opacity-90"
                 style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
+                  borderColor: fgHex + "40",
                   color: fgHex,
+                  backgroundColor: "transparent",
                 }}
-                className="placeholder-inherit"
-              />
-            )}
-            <div className="flex items-center justify-between">
+              >
+                {t(lang, "remainAnonymous")}
+              </Button>
+              <Button
+                onClick={() => {
+                  // Reuse the "Update details" face for name/email/password.
+                  setShowDetailsPrompt(false);
+                  setStatus("idle");
+                  setFreedEarned(false);
+                  setView("edit");
+                }}
+                className="flex-1 cursor-pointer hover:opacity-90"
+                style={{ backgroundColor: fgHex, color: bgHex }}
+              >
+                {t(lang, "saveDetails")}
+              </Button>
+            </div>
+            <div className="flex justify-center">
               <Dialog>
                 <DialogTrigger asChild>
                   <button
                     className="flex cursor-pointer items-center gap-1.5"
                     type="button"
                   >
-                    <p
+                    <span
                       className="text-sm"
                       style={{ color: fgHex, opacity: 0.6 }}
                     >
                       {t(lang, "whySaveDetails")}
-                    </p>
-                    <span style={{ color: fgHex, opacity: 0.4 }}>
-                      <HelpCircle className="h-3.5 w-3.5" />
                     </span>
+                    <HelpCircle
+                      className="h-3.5 w-3.5"
+                      style={{ color: fgHex, opacity: 0.4 }}
+                    />
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-xs">
@@ -796,13 +792,13 @@ export default function CustomerClient({
                     <p>
                       This is completely optional. Your information is only
                       shared with{" "}
-                      <strong className="text-foreground">{shopName}</strong>{" "}
-                      and will never be shared with anyone else.
+                      <strong className="text-foreground">{shopName}</strong> and
+                      will never be shared with anyone else.
                     </p>
                     <p>
                       Saving your name and email makes it easier for the shop to
-                      look you up if you ever forget your phone or lose access
-                      to your stamp card.
+                      look you up if you ever forget your phone or lose access to
+                      your stamp card.
                     </p>
                     <p>
                       Setting a{" "}
@@ -814,145 +810,104 @@ export default function CustomerClient({
                 </DialogContent>
               </Dialog>
             </div>
-            {!customerName && !customerEmail ? (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setDetailsSaved(true);
-                    setShowDetailsPrompt(false);
-                    setStatus("idle");
-                    setFreedEarned(false);
-                  }}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  {t(lang, "remainAnonymous")}
-                </Button>
-                <Button
-                  onClick={saveDetails}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {t(lang, "save")}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setShowDetailsPrompt(false);
-                    setStatus("idle");
-                    setFreedEarned(false);
-                  }}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  Done
-                </Button>
-                <Button
-                  onClick={saveDetails}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {t(lang, "save")}
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* Login for returning customers — only show to true anonymous
-            visitors. If they just created an account inline, hide it. */}
-      {!hasAccount && (
-        <div className="text-center">
-          {!showLogin ? (
-            <Button
-              onClick={() => setShowLogin(true)}
-              className="w-full cursor-pointer text-base font-normal hover:opacity-90"
-              size="lg"
-              style={{ backgroundColor: fgHex, color: bgHex }}
-            >
-              <LogIn className="mr-1.5 h-4 w-4" />
-              {t(lang, "haveExistingAccount")}
-            </Button>
-          ) : (
-            <div className="space-y-3">
-              <Input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder={t(lang, "email")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
-                }}
-                className="placeholder-inherit"
-              />
-              <Input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder={t(lang, "password")}
-                style={{
-                  borderColor: fgHex + "30",
-                  backgroundColor: fgHex + "10",
-                  color: fgHex,
-                }}
-                className="placeholder-inherit"
-              />
-              {loginError && (
-                <p className="text-xs text-red-400">{loginError}</p>
-              )}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowLogin(false)}
-                  variant="outline"
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{
-                    borderColor: fgHex + "40",
-                    color: fgHex,
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  {t(lang, "cancel")}
-                </Button>
-                <Button
-                  onClick={handleLogin}
-                  disabled={loginLoading || !loginEmail || !loginPassword}
-                  className="flex-1 cursor-pointer hover:opacity-90"
-                  style={{ backgroundColor: fgHex, color: bgHex }}
-                >
-                  {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
-                </Button>
-              </div>
-            </div>
-          )}
+      {/* Add to Wallet — optional upgrade; the browser card stays the default. */}
+      {(walletGoogle || walletApple) && (
+        <div className="flex justify-center">
+          <AddToWallet
+            shopId={shopId}
+            customerId={customerId}
+            google={walletGoogle}
+            apple={walletApple}
+          />
         </div>
       )}
 
-      {/* Switch shop + Update details — half-width row when both are
-            available, full-width otherwise. Update details only shows for
-            authenticated customers (they have a name on record). */}
-      {(otherShops.length > 0 || hasAccount) && (
-        <div className="flex gap-2">
+      {/* Login form — expands inline only when a returning customer taps "Log
+            in" below. Hidden once they have an account on this device. */}
+      {!hasAccount && showLogin && (
+        <div className="space-y-3">
+          <Input
+            type="email"
+            value={loginEmail}
+            onChange={(e) => setLoginEmail(e.target.value)}
+            placeholder={t(lang, "email")}
+            style={{
+              borderColor: fgHex + "30",
+              backgroundColor: fgHex + "10",
+              color: fgHex,
+            }}
+            className="placeholder-inherit"
+          />
+          <Input
+            type="password"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            placeholder={t(lang, "password")}
+            style={{
+              borderColor: fgHex + "30",
+              backgroundColor: fgHex + "10",
+              color: fgHex,
+            }}
+            className="placeholder-inherit"
+          />
+          {loginError && <p className="text-xs text-red-400">{loginError}</p>}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowLogin(false)}
+              variant="outline"
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              {t(lang, "cancel")}
+            </Button>
+            <Button
+              onClick={handleLogin}
+              disabled={loginLoading || !loginEmail || !loginPassword}
+              className="flex-1 cursor-pointer hover:opacity-90"
+              style={{ backgroundColor: fgHex, color: bgHex }}
+            >
+              {loginLoading ? t(lang, "loggingIn") : t(lang, "logIn")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Secondary actions — one compact outline row so log in, switch shop and
+            update details share a line instead of stacking full-height. Log in
+            only shows to anonymous visitors; update details only to those with
+            an account on record. */}
+      {!showLogin && (
+        <div className="flex flex-wrap gap-2">
+          {!hasAccount && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowLogin(true)}
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
+              style={{
+                borderColor: fgHex + "40",
+                color: fgHex,
+                backgroundColor: "transparent",
+              }}
+            >
+              <LogIn className="mr-1.5 h-4 w-4" />
+              {t(lang, "logIn")}
+            </Button>
+          )}
           {otherShops.length > 0 && (
             <Button
               type="button"
               variant="outline"
               onClick={() => setView("switch")}
-              className="flex-1 cursor-pointer hover:opacity-90"
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
               style={{
                 borderColor: fgHex + "40",
                 color: fgHex,
@@ -968,7 +923,7 @@ export default function CustomerClient({
               type="button"
               variant="outline"
               onClick={() => setView("edit")}
-              className="flex-1 cursor-pointer hover:opacity-90"
+              className="h-10 min-w-[7rem] flex-1 cursor-pointer font-normal hover:opacity-90"
               style={{
                 borderColor: fgHex + "40",
                 color: fgHex,

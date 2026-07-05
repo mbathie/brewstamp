@@ -21,6 +21,10 @@ const stampCardSchema = new mongoose.Schema(
     // this shop (e.g. a spoofed/ex-staff perk account). Scoped to the card so
     // the same person stays active at other shops. Works in both modes.
     disabled: { type: Boolean, default: false },
+    // One "recover my card" secret per card, shared by both wallet providers.
+    // Lives here (not on WalletPass) so it can be claimed atomically — concurrent
+    // first-time "Add to Wallet" taps converge on a single token.
+    walletRecoverToken: { type: String },
   },
   { timestamps: true }
 );

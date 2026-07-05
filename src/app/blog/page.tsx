@@ -35,6 +35,19 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "apple-google-wallet-loyalty-card",
+    title:
+      "Your Coffee Loyalty Card, Now in Apple Wallet & Google Wallet",
+    description:
+      "Brewstamp loyalty cards now save to Apple Wallet and Google Wallet — lock-screen access, stamps that update automatically, and still no app to download. On every plan, including Free.",
+    tag: "Product update",
+    image: "/blog/wallet-passes-hero.svg",
+    imageAlt:
+      "A Brewstamp loyalty card with Add to Apple Wallet and Add to Google Wallet buttons",
+    publishedAt: "2026-06-22",
+    publishedAtDisplay: "22 June 2026",
+  },
+  {
     slug: "corporate-coffee-perk",
     title:
       "Subsidised Staff Coffee, Run From One QR Code: Corporate Perk Mode",
@@ -108,6 +121,7 @@ const posts = [
     image: "/world-map.svg",
     imageAlt: "World map illustrating Brewstamp's 14 supported languages",
     imageBg: "stone-100",
+    imageContain: true,
     publishedAt: "2026-05-10",
     publishedAtDisplay: "10 May 2026",
   },
@@ -251,7 +265,7 @@ export default function BlogIndex() {
                   alt={post.imageAlt}
                   loading="lazy"
                   className={`h-48 w-full transition-transform duration-300 group-hover:scale-105 sm:h-full ${
-                    post.image.endsWith(".svg")
+                    post.imageContain
                       ? "object-contain p-4 opacity-70"
                       : "object-cover"
                   }`}

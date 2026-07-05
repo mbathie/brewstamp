@@ -27,10 +27,16 @@ const shopSchema = new mongoose.Schema(
     // browser timezone, and server-side perk logic falls back to UTC.
     timezone: { type: String, default: "" },
     logo: { type: String },
+    // Public Spaces URL mirror of `logo` (which is stored as a data: URI).
+    // Wallet providers fetch logos by URL, so this is what they use.
+    logoUrl: { type: String },
     bgColor: { type: String, default: "stone-800" },
     fgColor: { type: String, default: "amber-600" },
     bgPattern: { type: String, default: "none" },
     language: { type: String, default: "en" },
+    // When on, customers can add their card to Apple/Google Wallet (the browser
+    // card always stays available as the default/fallback). Plan-gated in the UI.
+    walletPasses: { type: Boolean, default: false },
     stripeCustomerId: { type: String },
     firstCustomerEmailSent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },

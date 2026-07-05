@@ -45,10 +45,26 @@ const it = {
   scanWithCamera: "Inquadra con la fotocamera del telefono",
   noAppRequired: "Nessuna app · Funziona su qualsiasi telefono",
 
+  // Wallet passes (Apple/Google) — testo integrato nella carta del cliente
+  walletBalanceLabel: "Timbri",
+  walletRedeemedLabel: "Riscossi",
+  walletPerkPointsLabel: "Premi gratis",
+  walletRedeemedValue: "{count} riscossi",
+  walletMemberLabel: "Membro",
+  walletRewardLabel: "Premio",
+  walletRewardValue: "Gratis a {threshold}",
+  walletRecoverLabel: "La tua carta",
+  walletRecoverValue: "Apri la tua carta online: {url}",
+  walletRecoverLinkDescription: "Visualizza o recupera la mia carta",
+  walletProgramName: "Fedeltà {shop}",
+  walletPerkProgramName: "Vantaggio staff",
+  walletLogoDescription: "Logo {shop}",
+
   poweredBy: "Tecnologia",
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Aggiorna dati",
+  saveDetails: "Salva dati",
   yourDetails: "I tuoi dati",
   back: "Indietro",
   saveChanges: "Salva modifiche",

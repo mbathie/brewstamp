@@ -36,6 +36,9 @@ export interface PlanConfig {
   hasCrossShopReporting: boolean;
   // Corporate "perk mode" — employer-subsidised staff coffee. Plus & Max.
   hasPerkMode: boolean;
+  // Apple & Google Wallet passes — included on every plan (shown in the billing
+  // feature comparison; not a gate).
+  hasWalletPasses: boolean;
   prioritySupport: boolean;
   dedicatedSupport: boolean;
   features: string[];
@@ -57,12 +60,14 @@ export const PLANS: PlanConfig[] = [
     hasAnalytics: false,
     hasCrossShopReporting: false,
     hasPerkMode: false,
+    hasWalletPasses: true,
     prioritySupport: false,
     dedicatedSupport: false,
     features: [
       "Up to 100 stamps total",
       "1 shop",
       "QR codes & real-time approvals",
+      "Apple & Google Wallet passes",
       "Customer dashboard",
     ],
   },
@@ -81,11 +86,13 @@ export const PLANS: PlanConfig[] = [
     hasAnalytics: true,
     hasCrossShopReporting: false,
     hasPerkMode: false,
+    hasWalletPasses: true,
     prioritySupport: true,
     dedicatedSupport: false,
     features: [
       "Unlimited stamps",
       "1 shop",
+      "Apple & Google Wallet passes",
       "Customer insights & analytics",
       "Priority support",
     ],
@@ -105,6 +112,7 @@ export const PLANS: PlanConfig[] = [
     hasAnalytics: true,
     hasCrossShopReporting: true,
     hasPerkMode: true,
+    hasWalletPasses: true,
     prioritySupport: true,
     dedicatedSupport: false,
     features: [
@@ -131,6 +139,7 @@ export const PLANS: PlanConfig[] = [
     hasAnalytics: true,
     hasCrossShopReporting: true,
     hasPerkMode: true,
+    hasWalletPasses: true,
     prioritySupport: true,
     dedicatedSupport: true,
     features: [

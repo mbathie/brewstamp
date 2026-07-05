@@ -532,6 +532,7 @@ export default function AdminShopsPage() {
               </div>
             </div>
 
+            {trendData.some((d) => d.value > 0) ? (
             <ChartContainer config={chartConfig} className="h-[200px] w-full">
               <AreaChart
                 data={trendData}
@@ -572,6 +573,13 @@ export default function AdminShopsPage() {
                 />
               </AreaChart>
             </ChartContainer>
+            ) : (
+              <div className="flex h-[200px] items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground">
+                  No data for this period yet.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>

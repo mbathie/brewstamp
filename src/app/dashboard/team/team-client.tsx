@@ -285,8 +285,9 @@ export default function TeamClient() {
 
       {/* Invite form. A grid keeps Email / Role / Send invite on one row that
           aligns by grid row (immune to control-height quirks) and stacks
-          cleanly on mobile. */}
-      {showInviteForm && (
+          cleanly on mobile. Hidden entirely when the plan can't invite — the
+          gate card above already explains why, so we don't show a dead form. */}
+      {showInviteForm && data.plan.hasStaffLogins && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">

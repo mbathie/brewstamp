@@ -43,10 +43,26 @@ const zh = {
   scanWithCamera: "用手机相机扫码",
   noAppRequired: "无需 App · 任何手机都能用",
 
+  // Wallet passes (Apple/Google) — 嵌入顾客卡片的文字
+  walletBalanceLabel: "印章",
+  walletRedeemedLabel: "已兑换",
+  walletPerkPointsLabel: "免费奖励",
+  walletRedeemedValue: "已兑换 {count} 次",
+  walletMemberLabel: "会员",
+  walletRewardLabel: "奖励",
+  walletRewardValue: "满 {threshold} 免费",
+  walletRecoverLabel: "您的卡",
+  walletRecoverValue: "在线打开您的卡:{url}",
+  walletRecoverLinkDescription: "查看或恢复我的卡",
+  walletProgramName: "{shop} 积分",
+  walletPerkProgramName: "员工福利",
+  walletLogoDescription: "{shop} 标志",
+
   poweredBy: "技术支持",
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "更新信息",
+  saveDetails: "保存信息",
   yourDetails: "您的信息",
   back: "返回",
   saveChanges: "保存更改",

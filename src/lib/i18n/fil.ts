@@ -43,10 +43,26 @@ const fil = {
   scanWithCamera: "I-scan gamit ang camera ng phone",
   noAppRequired: "Walang app · Gumagana sa anumang phone",
 
+  // Wallet passes (Apple/Google) — text na naka-baked sa card ng customer
+  walletBalanceLabel: "Mga Stamp",
+  walletRedeemedLabel: "Na-claim",
+  walletPerkPointsLabel: "Libreng reward",
+  walletRedeemedValue: "{count} na-claim",
+  walletMemberLabel: "Miyembro",
+  walletRewardLabel: "Reward",
+  walletRewardValue: "Libre sa {threshold}",
+  walletRecoverLabel: "Ang iyong card",
+  walletRecoverValue: "Buksan ang iyong card online: {url}",
+  walletRecoverLinkDescription: "Tingnan o i-recover ang aking card",
+  walletProgramName: "Loyalty ng {shop}",
+  walletPerkProgramName: "Perk ng staff",
+  walletLogoDescription: "Logo ng {shop}",
+
   poweredBy: "Pinapatakbo ng",
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "I-update ang mga detalye",
+  saveDetails: "I-save ang detalye",
   yourDetails: "Iyong mga detalye",
   back: "Bumalik",
   saveChanges: "I-save ang mga pagbabago",

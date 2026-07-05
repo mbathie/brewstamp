@@ -30,6 +30,7 @@ const PLANS: Plan[] = [
       "Up to 100 stamps total",
       "1 shop",
       "QR codes & real-time approvals",
+      "Apple & Google Wallet passes",
       "Customer dashboard",
     ],
   },
@@ -40,6 +41,7 @@ const PLANS: Plan[] = [
     features: [
       "Unlimited stamps",
       "1 shop",
+      "Apple & Google Wallet passes",
       "Customer insights & analytics",
       "Priority support",
     ],
@@ -86,6 +88,7 @@ const FEATURES: FeatureRow[] = [
   { label: "Custom logo, colours, patterns", free: true, starter: true, roast: true, reserve: true },
   { label: "Customer dashboard", free: true, starter: true, roast: true, reserve: true },
   { label: "Customer insights & analytics", free: false, starter: true, roast: true, reserve: true },
+  { label: "Apple & Google Wallet passes", free: true, starter: true, roast: true, reserve: true },
   { label: "Staff & manager logins", free: false, starter: false, roast: "Unlimited", reserve: "Unlimited" },
   { label: "CSV customer exports", free: false, starter: false, roast: true, reserve: true },
   { label: "Cross-shop rollup reporting", free: false, starter: false, roast: true, reserve: true },

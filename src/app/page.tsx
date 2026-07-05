@@ -14,10 +14,12 @@ import {
   ArrowRight,
   Users,
   Building2,
+  Wallet,
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
+import { WalletBadges } from "@/components/wallet-badges";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
 
@@ -154,6 +156,14 @@ const jsonLd = {
           acceptedAnswer: {
             "@type": "Answer",
             text: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can customers add the card to Apple Wallet or Google Wallet?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes — on every plan, customers can save their loyalty card to Apple Wallet or Google Wallet for lock-screen access, and it updates automatically each time they earn a stamp. There's still no app to download, and the browser card works for everyone either way.",
           },
         },
         {
@@ -409,6 +419,12 @@ export default function Home() {
                 desc: "Customers open a link in their browser. Works on iPhone, Android, any device with a camera.",
               },
               {
+                icon: Wallet,
+                title: "Apple & Google Wallet",
+                desc: "Customers can save their card to Apple Wallet or Google Wallet — lock-screen access and live stamp updates. Still no app to download, on every plan.",
+                badges: true,
+              },
+              {
                 icon: Clock,
                 title: "Real-time approvals",
                 desc: "Live connection between your dashboard and the customer's phone. Approve stamps instantly.",
@@ -443,7 +459,7 @@ export default function Home() {
                 title: "Corporate perk mode",
                 desc: "Run employer-subsidised staff coffee: every scan is a free drink, gated to work-email domains and capped per person per day. On Plus and Max.",
               },
-            ].map(({ icon: Icon, title, desc }, i, arr) => {
+            ].map(({ icon: Icon, title, desc, badges }, i, arr) => {
               const isLastOrphan =
                 i === arr.length - 1 && arr.length % 3 === 1;
               return (
@@ -458,6 +474,7 @@ export default function Home() {
                   </div>
                   <h3 className="mb-1.5 font-semibold text-stone-900">{title}</h3>
                   <p className="text-sm leading-relaxed text-stone-500">{desc}</p>
+                  {badges && <WalletBadges className="mt-3" />}
                 </div>
               );
             })}
@@ -592,6 +609,10 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Apple &amp; Google Wallet passes
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   Customer dashboard
                 </li>
               </ul>
@@ -618,6 +639,10 @@ export default function Home() {
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   1 shop
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  Apple &amp; Google Wallet passes
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
@@ -762,6 +787,10 @@ export default function Home() {
               {
                 q: "Do customers need to download an app?",
                 a: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
+              },
+              {
+                q: "Can customers add the card to Apple Wallet or Google Wallet?",
+                a: "Yes — on every plan, customers can save their loyalty card to Apple Wallet or Google Wallet for lock-screen access, and it updates automatically each time they earn a stamp. There's still no app to download, and the browser card works for everyone either way.",
               },
               {
                 q: "How much does a digital loyalty card for cafes cost?",

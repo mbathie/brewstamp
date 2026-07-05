@@ -459,6 +459,11 @@ export default function BillingPage() {
                   values={PLANS.map((p) => p.hasCsvExport)}
                 />
                 <FeatureRow
+                  label="Apple & Google Wallet passes"
+                  hint="Customers add their loyalty card to Apple Wallet or Google Wallet — lock-screen presence and push updates when they earn a stamp. The browser card still works for everyone."
+                  values={PLANS.map((p) => p.hasWalletPasses)}
+                />
+                <FeatureRow
                   label="Cross-shop reporting"
                   hint="Roll up stamps, customers, and redemptions across all your shops into one combined view."
                   values={PLANS.map((p) => p.hasCrossShopReporting)}

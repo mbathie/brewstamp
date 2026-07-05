@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { WalletBadges } from "@/components/wallet-badges";
 import FeaturesCardCarousel from "@/components/features-card-carousel";
 import { patterns } from "@/lib/patterns";
 
@@ -185,6 +186,12 @@ const FEATURE_TABLE: Array<{
         pro: true,
       },
       {
+        label: "Add to Apple Wallet & Google Wallet",
+        free: true,
+        pro: true,
+        hint: "Customers can save their card to Apple or Google Wallet for lock-screen access and automatic updates when they earn a stamp. The browser card still works for everyone.",
+      },
+      {
         label: "Stamps follow them across devices (optional login)",
         free: true,
         pro: true,
@@ -300,8 +307,8 @@ export default function FeaturesPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-stone-200 md:text-xl">
             No app to download. No premium-tier gating. Just a QR code at the
-            counter and a card that opens in any phone browser — fully branded,
-            in 14 languages.
+            counter and a card that opens in any phone browser — or saves to
+            Apple &amp; Google Wallet — fully branded, in 14 languages.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link href="/register">
@@ -335,7 +342,8 @@ export default function FeaturesPage() {
                 {
                   icon: Smartphone,
                   title: "No app for customers",
-                  body: "Card opens in &lt;1 second from a QR scan. No app store, no install, no account.",
+                  body: "Their card opens in the browser from a QR scan — or saves to Apple &amp; Google Wallet. No app store, no install, no account.",
+                  badges: true,
                 },
                 {
                   icon: Languages,
@@ -347,7 +355,7 @@ export default function FeaturesPage() {
                   title: "Built to scale with you",
                   body: "Start free with the full single-shop experience. Upgrade for multi-shop, unlimited staff logins, and CSV exports when your business grows.",
                 },
-              ].map(({ icon: Icon, title, body }) => (
+              ].map(({ icon: Icon, title, body, badges }) => (
                 <div
                   key={title}
                   className="rounded-2xl border border-stone-200 bg-stone-50 p-6"
@@ -362,6 +370,7 @@ export default function FeaturesPage() {
                     className="mt-2 text-base leading-relaxed text-stone-600"
                     dangerouslySetInnerHTML={{ __html: body }}
                   />
+                  {badges && <WalletBadges className="mt-4" />}
                 </div>
               ))}
             </div>

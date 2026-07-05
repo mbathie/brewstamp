@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Customer } from "@/models";
+import { syncWalletPassesForCustomer } from "@/lib/wallet";
 import bcrypt from "bcrypt";
 
 export async function PATCH(
@@ -35,6 +36,12 @@ export async function PATCH(
   const customer = await Customer.findByIdAndUpdate(id, update, { new: true });
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+  }
+
+  // The customer's name shows on their wallet passes — push the change to every
+  // pass they hold (all shops). Fire-and-forget; never block the save.
+  if (name !== undefined) {
+    void syncWalletPassesForCustomer(id);
   }
 
   return NextResponse.json({ customer });

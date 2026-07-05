@@ -20,12 +20,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
     "@types/nodemailer": "^7.0.10",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "google-auth-library": "^10.7.0",
     "hero-patterns": "^2.1.0",
     "jspdf": "^4.1.0",
     "lucide-react": "^0.574.0",
@@ -34,6 +36,7 @@
     "next-auth": "^5.0.0-beta.30",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
+    "passkit-generator": "^3.5.7",
     "qrcode": "^1.5.4",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",

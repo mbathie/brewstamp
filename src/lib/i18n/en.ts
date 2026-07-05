@@ -43,6 +43,7 @@ const en = {
   // Switch shop
   switchShop: "Switch shop",
   updateDetails: "Update details",
+  saveDetails: "Save details",
   yourDetails: "Your details",
   back: "Back",
   saveChanges: "Save changes",
@@ -60,6 +61,21 @@ const en = {
   buyXGetFree: "Buy {n}. Get one free.",
   scanWithCamera: "Scan with your phone camera",
   noAppRequired: "No app required · Works on any phone",
+
+  // Wallet passes (Apple/Google) — text baked into the customer's pass
+  walletBalanceLabel: "Stamps",
+  walletRedeemedLabel: "Redeemed",
+  walletPerkPointsLabel: "Free rewards",
+  walletRedeemedValue: "{count} redeemed",
+  walletMemberLabel: "Member",
+  walletRewardLabel: "Reward",
+  walletRewardValue: "Free at {threshold}",
+  walletRecoverLabel: "Your card",
+  walletRecoverValue: "Open your card online: {url}",
+  walletRecoverLinkDescription: "View or recover my card",
+  walletProgramName: "{shop} loyalty",
+  walletPerkProgramName: "Staff perk",
+  walletLogoDescription: "{shop} logo",
 
   // Footer
   poweredBy: "Powered by",

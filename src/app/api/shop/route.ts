@@ -5,6 +5,8 @@ import { getShopPlanLimits } from "@/lib/plan-limits";
 import { StampRequest } from "@/models";
 import { isLanguage } from "@/lib/i18n";
 import { normalizeDomain } from "@/lib/perk";
+import { syncWalletBranding } from "@/lib/wallet";
+import { uploadShopLogo } from "@/lib/spaces";
 
 export async function GET() {
   const ctx = await getCurrentShopContext();
@@ -72,6 +74,7 @@ export async function PATCH(req: Request) {
     bgPattern,
     language,
     perkMode,
+    walletPasses,
     allowedEmailDomains,
     dailyDrinkLimit,
     timezone,
@@ -79,7 +82,20 @@ export async function PATCH(req: Request) {
 
   if (name) shop.name = name;
   if (stampThreshold) shop.stampThreshold = stampThreshold;
-  if (logo !== undefined) shop.logo = logo || null;
+  if (logo !== undefined) {
+    shop.logo = logo || null;
+    // Mirror the logo to Spaces so wallet providers have a public URL to fetch.
+    // Keep the data: URI in `logo` for the in-app card. No-ops if Spaces isn't
+    // configured (logoUrl stays as-is); clears logoUrl when the logo is removed.
+    if (logo && String(logo).startsWith("data:")) {
+      const url = await uploadShopLogo(shop._id.toString(), logo);
+      if (url) shop.logoUrl = url;
+    } else if (!logo) {
+      shop.logoUrl = null;
+    } else if (/^https?:\/\//i.test(String(logo))) {
+      shop.logoUrl = logo; // already a URL
+    }
+  }
   if (bgColor !== undefined) shop.bgColor = bgColor;
   if (fgColor !== undefined) shop.fgColor = fgColor;
   if (bgPattern !== undefined) shop.bgPattern = bgPattern;
@@ -102,6 +118,12 @@ export async function PATCH(req: Request) {
     }
     shop.perkMode = !!perkMode;
   }
+
+  if (walletPasses !== undefined) {
+    // Apple/Google Wallet passes are available on every plan (incl. Free), so
+    // there's no tier gate here — the shop just opts in or out.
+    shop.walletPasses = !!walletPasses;
+  }
   if (Array.isArray(allowedEmailDomains)) {
     shop.allowedEmailDomains = allowedEmailDomains
       .map((d: string) => normalizeDomain(String(d)))
@@ -117,5 +139,19 @@ export async function PATCH(req: Request) {
   }
 
   await shop.save();
+
+  // If wallet-relevant branding changed, push it to saved Apple/Google passes
+  // so existing wallets reflect the new logo/colour/name. Fire-and-forget —
+  // never block or fail the settings save on a wallet API hiccup.
+  const brandingChanged =
+    name !== undefined ||
+    logo !== undefined ||
+    fgColor !== undefined ||
+    bgColor !== undefined ||
+    perkMode !== undefined;
+  if (brandingChanged && shop.walletPasses) {
+    void syncWalletBranding(shop._id.toString());
+  }
+
   return NextResponse.json({ shop });
 }

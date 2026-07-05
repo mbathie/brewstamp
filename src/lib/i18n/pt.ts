@@ -45,10 +45,26 @@ const pt = {
   scanWithCamera: "Lê com a câmara do telemóvel",
   noAppRequired: "Sem app · Funciona em qualquer telemóvel",
 
+  // Wallet passes (Apple/Google) — texto incorporado no cartão do cliente
+  walletBalanceLabel: "Carimbos",
+  walletRedeemedLabel: "Trocadas",
+  walletPerkPointsLabel: "Recompensas grátis",
+  walletRedeemedValue: "{count} trocadas",
+  walletMemberLabel: "Membro",
+  walletRewardLabel: "Recompensa",
+  walletRewardValue: "Grátis aos {threshold}",
+  walletRecoverLabel: "O seu cartão",
+  walletRecoverValue: "Abra o seu cartão online: {url}",
+  walletRecoverLinkDescription: "Ver ou recuperar o meu cartão",
+  walletProgramName: "Fidelidade {shop}",
+  walletPerkProgramName: "Benefício da equipa",
+  walletLogoDescription: "Logótipo {shop}",
+
   poweredBy: "Tecnologia",
 
   // Customer edit-details flow (synced from en.ts)
   updateDetails: "Atualizar dados",
+  saveDetails: "Salvar dados",
   yourDetails: "Seus dados",
   back: "Voltar",
   saveChanges: "Salvar alterações",
