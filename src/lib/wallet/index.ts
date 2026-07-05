@@ -78,49 +78,78 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
 
   // One recovery token per card, shared by both providers and reused across
   // re-issues. The pass embeds `${APP_URL}/api/wallet/recover?t=…`, which
-  // restores this customer's browser cookie if they lose it.
-  const existingToken = (
-    await WalletPass.findOne({ card: d.cardId }).select("authToken").lean<any>()
-  )?.authToken;
-  const recoverToken = existingToken || crypto.randomBytes(24).toString("hex");
+  // restores this customer's browser cookie if they lose it. Falls back to a
+  // legacy pass's authToken so already-issued passes keep the same link.
+  const existing = await WalletPass.findOne({ card: d.cardId })
+    .select("recoverToken authToken")
+    .lean<any>();
+  const recoverToken =
+    existing?.recoverToken ||
+    existing?.authToken ||
+    crypto.randomBytes(24).toString("hex");
   d.recoverUrl = `${APP_URL}/api/wallet/recover?t=${recoverToken}`;
 
   const links: SaveLinks = { google: null, apple: null };
 
+  // Each provider is isolated: a Google outage must not abort the Apple link
+  // (or vice versa). The customer still gets whichever provider succeeded.
   if (avail.google) {
-    links.google = await googleSaveUrl(d);
-    if (links.google) {
-      await WalletPass.updateOne(
-        { card: d.cardId, provider: "google" },
-        {
-          card: d.cardId,
-          shop: d.shopId,
-          customer: customerId,
-          provider: "google",
-          serial: `card_${d.cardId}`,
-          authToken: recoverToken,
-        },
-        { upsert: true },
-      );
+    try {
+      links.google = await googleSaveUrl(d);
+      if (links.google) {
+        await WalletPass.updateOne(
+          { card: d.cardId, provider: "google" },
+          {
+            card: d.cardId,
+            shop: d.shopId,
+            customer: customerId,
+            provider: "google",
+            serial: `card_${d.cardId}`,
+            recoverToken,
+          },
+          { upsert: true },
+        );
+      }
+    } catch (err) {
+      console.error("[Wallet] google save link failed for card", cardId, err);
     }
   }
 
   if (avail.apple && isAppleWalletConfigured()) {
-    const serial = `card_${d.cardId}`;
-    await WalletPass.updateOne(
-      { card: d.cardId, provider: "apple" },
-      {
+    try {
+      // Reuse the existing serial + web-service authToken across re-issues so
+      // the pass already in the customer's wallet keeps matching our records.
+      // The serial is a RANDOM token, not `card_<id>`: it's the only key on the
+      // unauthenticated .pkpass download route, so it must not be derivable from
+      // the (non-secret) card id.
+      const existingApple = await WalletPass.findOne({
         card: d.cardId,
-        shop: d.shopId,
-        customer: customerId,
         provider: "apple",
-        serial,
-        authToken: recoverToken,
-      },
-      { upsert: true },
-    );
-    // Direct .pkpass download — Wallet opens it natively on iOS.
-    links.apple = `${APP_URL}/api/wallet/apple/download/${serial}`;
+      })
+        .select("serial authToken")
+        .lean<any>();
+      const serial =
+        existingApple?.serial || `apple_${crypto.randomBytes(24).toString("hex")}`;
+      const authToken =
+        existingApple?.authToken || crypto.randomBytes(24).toString("hex");
+      await WalletPass.updateOne(
+        { card: d.cardId, provider: "apple" },
+        {
+          card: d.cardId,
+          shop: d.shopId,
+          customer: customerId,
+          provider: "apple",
+          serial,
+          authToken,
+          recoverToken,
+        },
+        { upsert: true },
+      );
+      // Direct .pkpass download — Wallet opens it natively on iOS.
+      links.apple = `${APP_URL}/api/wallet/apple/download/${serial}`;
+    } catch (err) {
+      console.error("[Wallet] apple save link failed for card", cardId, err);
+    }
   }
 
   return links;
@@ -135,12 +164,15 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
 export async function pkpassForSerial(serial: string): Promise<Buffer | null> {
   await connectDB();
   const pass = await WalletPass.findOne({ serial, provider: "apple" })
-    .select("card authToken")
+    .select("card authToken recoverToken")
     .lean<any>();
   if (!pass?.card || !pass.authToken) return null;
   const d = await buildCardData(pass.card.toString());
   if (!d) return null;
-  const recoverUrl = `${APP_URL}/api/wallet/recover?t=${pass.authToken}`;
+  // Recover link uses the recover token, NOT the web-service authToken, so a
+  // pass never exposes the credential that authenticates its refreshes.
+  const recoverToken = pass.recoverToken || pass.authToken;
+  const recoverUrl = `${APP_URL}/api/wallet/recover?t=${recoverToken}`;
   return buildPkpass(d, pass.authToken, serial, recoverUrl);
 }
 
@@ -163,7 +195,10 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
       await googleUpdateClassBranding({
         shopId: shop._id.toString(),
         shopName: shop.name,
-        shopLogo: shop.logo || null,
+        // Prefer the public Spaces URL (content-hashed, so logo changes bust
+        // Google's server-side cache) — matches buildCardData. Passing shop.logo
+        // alone drops logoUrl and reverts the pass to the fallback mark.
+        shopLogo: shop.logoUrl || shop.logo || null,
         bgColor: shop.bgColor || "stone-800",
         fgColor: shop.fgColor || "amber-600",
         perkMode: !!shop.perkMode,

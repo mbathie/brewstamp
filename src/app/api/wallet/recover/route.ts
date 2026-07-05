@@ -17,7 +17,11 @@ export async function GET(req: Request) {
   if (!token) return new Response("Missing token", { status: 400 });
 
   await connectDB();
-  const pass = await WalletPass.findOne({ authToken: token })
+  // Prefer the dedicated recover token; fall back to authToken for legacy passes
+  // issued before the two were split.
+  const pass = await WalletPass.findOne({
+    $or: [{ recoverToken: token }, { authToken: token }],
+  })
     .select("customer shop")
     .lean<any>();
   if (!pass?.customer || !pass.shop) {

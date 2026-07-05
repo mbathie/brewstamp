@@ -397,6 +397,13 @@ export default function CustomerClient({
         body: JSON.stringify(update),
       });
       if (!res.ok) throw new Error("save-failed");
+      // Mirror the state the old inline save used to set: providing a name means
+      // the customer now has an account (hides "Log in", shows "Update details"),
+      // and saving details suppresses the "save your details" prompt from firing
+      // again this session (the customerName/customerEmail props stay stale until
+      // a reload, so detailsSaved is what actually gates the prompt).
+      if (update.name) setAccountCreated(true);
+      setDetailsSaved(true);
       setPassword("");
       toast.success(t(lang, "detailsUpdated"));
       setView("card");

@@ -160,6 +160,7 @@ export async function PATCH(req: Request) {
     name !== undefined ||
     logo !== undefined ||
     fgColor !== undefined ||
+    bgColor !== undefined ||
     perkMode !== undefined;
   if (brandingChanged && shop.walletPasses) {
     void syncWalletBranding(shop._id.toString());

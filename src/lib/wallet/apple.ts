@@ -188,18 +188,33 @@ export async function applePushUpdate(pushTokens: string[]): Promise<void> {
     return;
   }
 
+  // http2.connect() connects asynchronously — a DNS/TLS/cert failure surfaces as
+  // an 'error' event on the SESSION (not a throw above). Without this listener
+  // Node treats it as an uncaught exception and crashes the whole process, which
+  // is fatal because we're called fire-and-forget on every stamp change.
+  client.on("error", (err) => {
+    console.error("[Wallet/apple] APNs session error:", err);
+  });
+
   await Promise.all(
     pushTokens.map(
       (token) =>
         new Promise<void>((resolve) => {
-          const req = client.request({
-            ":method": "POST",
-            ":path": `/3/device/${token}`,
-            "apns-topic": creds.passTypeId,
-            "apns-push-type": "background",
-            "apns-priority": "5",
-            "content-type": "application/json",
-          });
+          let req: http2.ClientHttp2Stream;
+          try {
+            req = client.request({
+              ":method": "POST",
+              ":path": `/3/device/${token}`,
+              "apns-topic": creds.passTypeId,
+              "apns-push-type": "background",
+              "apns-priority": "5",
+              "content-type": "application/json",
+            });
+          } catch (err) {
+            // Session already destroyed (e.g. after a connection error).
+            console.error("[Wallet/apple] APNs request failed:", err);
+            return resolve();
+          }
           let status = 0;
           req.on("response", (h) => {
             status = Number(h[":status"]) || 0;
