@@ -2,8 +2,10 @@ import http2 from "http2";
 import { readFile } from "fs/promises";
 import path from "path";
 import { PKPass } from "passkit-generator";
-import { getColorHex } from "@/lib/tailwind-colors";
+import { getColorHex, hexToRgb } from "@/lib/tailwind-colors";
+import { t } from "@/lib/i18n";
 import { APP_URL, appleWalletCreds } from "./config";
+import { balanceString } from "./content";
 import type { WalletCardData } from "./google";
 
 /**
@@ -24,19 +26,8 @@ const APNS_HOST = "https://api.push.apple.com:443";
 
 // Apple wants rgb(r, g, b) strings, not hex. Convert from the shop's accent.
 function rgb(hex: string): string {
-  const h = hex.replace("#", "");
-  const n = parseInt(
-    h.length === 3
-      ? h.split("").map((c) => c + c).join("")
-      : h.slice(0, 6),
-    16,
-  );
-  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
-}
-
-function balanceString(d: WalletCardData): string {
-  if (d.perkMode) return `${d.freeRedeemed} redeemed`;
-  return `${d.stamps} / ${d.threshold}`;
+  const [r, g, b] = hexToRgb(hex);
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 // PNG bytes for the pass icon/logo. Prefer the shop's uploaded logo (fetched
@@ -134,19 +125,19 @@ export async function buildPkpass(
   // merchant-scans-the-pass, so a QR on the pass would be misleading.
   pass.primaryFields.push({
     key: "balance",
-    label: d.perkMode ? "Redeemed" : "Stamps",
+    label: t(d.language, d.perkMode ? "walletRedeemedLabel" : "walletBalanceLabel"),
     value: balanceString(d),
   });
   pass.secondaryFields.push({
     key: "member",
-    label: "Member",
+    label: t(d.language, "walletMemberLabel"),
     value: d.customerName,
   });
   if (!d.perkMode) {
     pass.auxiliaryFields.push({
       key: "reward",
-      label: "Reward",
-      value: `Free at ${d.threshold}`,
+      label: t(d.language, "walletRewardLabel"),
+      value: t(d.language, "walletRewardValue", { threshold: d.threshold }),
     });
   }
   // Back of pass: a tappable "recover my card" link. Only the wallet owner can
@@ -154,8 +145,8 @@ export async function buildPkpass(
   if (recoverUrl) {
     pass.backFields.push({
       key: "recover",
-      label: "Your card",
-      value: `Open your card online: ${recoverUrl}`,
+      label: t(d.language, "walletRecoverLabel"),
+      value: t(d.language, "walletRecoverValue", { url: recoverUrl }),
     });
   }
 

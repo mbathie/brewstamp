@@ -60,6 +60,21 @@ const tr = {
   scanWithCamera: "Telefon kameranızla tarayın",
   noAppRequired: "Uygulama gerekmez · Her telefonda çalışır",
 
+  // Wallet passes (Apple/Google) — müşterinin kartına gömülü metin
+  walletBalanceLabel: "Damgalar",
+  walletRedeemedLabel: "Kullanıldı",
+  walletPerkPointsLabel: "Ücretsiz ödüller",
+  walletRedeemedValue: "{count} kullanıldı",
+  walletMemberLabel: "Üye",
+  walletRewardLabel: "Ödül",
+  walletRewardValue: "{threshold} damgada ücretsiz",
+  walletRecoverLabel: "Kartınız",
+  walletRecoverValue: "Kartınızı çevrimiçi açın: {url}",
+  walletRecoverLinkDescription: "Kartımı görüntüle veya kurtar",
+  walletProgramName: "{shop} sadakat",
+  walletPerkProgramName: "Personel avantajı",
+  walletLogoDescription: "{shop} logosu",
+
   // Footer
   poweredBy: "Sağlayan",
 } as const;

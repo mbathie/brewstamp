@@ -24,6 +24,16 @@ type CardDoc = {
   freeRedeemed: number;
 };
 
+type ApplePassLike = { registrations?: Array<{ pushToken?: string }> };
+
+// Every device push token registered across the given Apple passes.
+function applePushTokens(passes: ApplePassLike[]): string[] {
+  return passes
+    .flatMap((p) => p.registrations || [])
+    .map((r) => r.pushToken)
+    .filter((tok): tok is string => Boolean(tok));
+}
+
 export async function buildCardData(
   cardId: string,
 ): Promise<WalletCardData | null> {
@@ -50,6 +60,7 @@ export async function buildCardData(
     totalEarned: card.totalEarned || 0,
     freeRedeemed: card.freeRedeemed || 0,
     threshold: shop.stampThreshold || 8,
+    language: shop.language || "en",
   };
 }
 
@@ -76,17 +87,30 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
     await StampCard.findById(cardId).select("customer").lean<any>()
   )?.customer;
 
-  // One recovery token per card, shared by both providers and reused across
-  // re-issues. The pass embeds `${APP_URL}/api/wallet/recover?t=…`, which
-  // restores this customer's browser cookie if they lose it. Falls back to a
-  // legacy pass's authToken so already-issued passes keep the same link.
-  const existing = await WalletPass.findOne({ card: d.cardId })
+  // One recovery token per card, shared by both providers. The pass embeds
+  // `${APP_URL}/api/wallet/recover?t=…`, which restores the customer's browser
+  // cookie if they lose it. Prefer a legacy pass's token (issued before the
+  // token moved onto the card) so already-saved passes keep the same link;
+  // otherwise claim one ATOMICALLY on the StampCard, so two simultaneous
+  // first-time saves converge on a single value instead of racing.
+  const legacy = await WalletPass.findOne({ card: d.cardId })
     .select("recoverToken authToken")
     .lean<any>();
-  const recoverToken =
-    existing?.recoverToken ||
-    existing?.authToken ||
-    crypto.randomBytes(24).toString("hex");
+  let recoverToken: string | undefined =
+    legacy?.recoverToken || legacy?.authToken || undefined;
+  if (!recoverToken) {
+    // Only the first writer's filter matches; concurrent callers no-op and then
+    // read back the same token.
+    await StampCard.updateOne(
+      { _id: d.cardId, walletRecoverToken: { $exists: false } },
+      { $set: { walletRecoverToken: crypto.randomBytes(24).toString("hex") } },
+    );
+    recoverToken = (
+      await StampCard.findById(d.cardId)
+        .select("walletRecoverToken")
+        .lean<any>()
+    )?.walletRecoverToken;
+  }
   d.recoverUrl = `${APP_URL}/api/wallet/recover?t=${recoverToken}`;
 
   const links: SaveLinks = { google: null, apple: null };
@@ -202,18 +226,15 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
         bgColor: shop.bgColor || "stone-800",
         fgColor: shop.fgColor || "amber-600",
         perkMode: !!shop.perkMode,
+        language: shop.language || "en",
       });
     }
 
     if (avail.apple) {
       const passes = await WalletPass.find({ shop: shopId, provider: "apple" })
         .select("registrations")
-        .lean<any[]>();
-      const tokens = passes
-        .flatMap((p) => p.registrations || [])
-        .map((r: any) => r.pushToken)
-        .filter(Boolean);
-      await applePushUpdate(tokens);
+        .lean<ApplePassLike[]>();
+      await applePushUpdate(applePushTokens(passes));
       await WalletPass.updateMany(
         { shop: shopId, provider: "apple" },
         { lastPushedAt: new Date() },
@@ -268,10 +289,7 @@ export async function syncWalletPasses(cardId: string): Promise<void> {
         // Empty APNs push wakes each registered device; it then re-fetches the
         // freshly-built pass from our web service. The pass body itself is
         // rebuilt on demand in the download/web-service route.
-        const tokens = (p.registrations || [])
-          .map((r: any) => r.pushToken)
-          .filter(Boolean);
-        await applePushUpdate(tokens);
+        await applePushUpdate(applePushTokens([p]));
         await WalletPass.updateOne(
           { card: cardId, provider: "apple" },
           { lastPushedAt: new Date() },

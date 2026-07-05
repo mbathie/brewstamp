@@ -43,6 +43,21 @@ const id = {
   scanWithCamera: "Pindai dengan kamera HP",
   noAppRequired: "Tanpa aplikasi · Bekerja di semua HP",
 
+  // Wallet passes (Apple/Google) — teks yang tertanam di kartu pelanggan
+  walletBalanceLabel: "Stempel",
+  walletRedeemedLabel: "Ditukar",
+  walletPerkPointsLabel: "Hadiah gratis",
+  walletRedeemedValue: "{count} ditukar",
+  walletMemberLabel: "Anggota",
+  walletRewardLabel: "Hadiah",
+  walletRewardValue: "Gratis pada {threshold}",
+  walletRecoverLabel: "Kartu Anda",
+  walletRecoverValue: "Buka kartu Anda secara online: {url}",
+  walletRecoverLinkDescription: "Lihat atau pulihkan kartu saya",
+  walletProgramName: "Loyalitas {shop}",
+  walletPerkProgramName: "Tunjangan staf",
+  walletLogoDescription: "Logo {shop}",
+
   poweredBy: "Didukung oleh",
 
   // Customer edit-details flow (synced from en.ts)

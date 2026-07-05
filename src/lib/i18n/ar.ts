@@ -45,6 +45,21 @@ const ar = {
   scanWithCamera: "امسح بكاميرا هاتفك",
   noAppRequired: "بدون تطبيق · يعمل على أي هاتف",
 
+  // Wallet passes (Apple/Google) — النص المضمّن في بطاقة العميل
+  walletBalanceLabel: "الأختام",
+  walletRedeemedLabel: "مُستلمة",
+  walletPerkPointsLabel: "مكافآت مجانية",
+  walletRedeemedValue: "{count} مُستلمة",
+  walletMemberLabel: "عضو",
+  walletRewardLabel: "مكافأة",
+  walletRewardValue: "مجاناً عند {threshold}",
+  walletRecoverLabel: "بطاقتك",
+  walletRecoverValue: "افتح بطاقتك عبر الإنترنت: {url}",
+  walletRecoverLinkDescription: "عرض بطاقتي أو استعادتها",
+  walletProgramName: "ولاء {shop}",
+  walletPerkProgramName: "ميزة الموظفين",
+  walletLogoDescription: "شعار {shop}",
+
   poweredBy: "مدعوم من",
 
   // Customer edit-details flow (synced from en.ts)

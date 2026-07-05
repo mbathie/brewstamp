@@ -43,7 +43,6 @@ export async function GET() {
     aggregate: false,
     shop: ctx.shop,
     canUsePerkMode: limits.plan.hasPerkMode,
-    canUseWalletPasses: limits.plan.hasWalletPasses,
     hasActivity,
   });
 }
@@ -121,20 +120,8 @@ export async function PATCH(req: Request) {
   }
 
   if (walletPasses !== undefined) {
-    // Apple/Google Wallet passes are a Plus & Max feature (reuses the perk
-    // gate as the paid-tier check). Turning off is always allowed.
-    if (walletPasses) {
-      const limits = await getShopPlanLimits(shop._id.toString());
-      if (!limits.plan.hasWalletPasses) {
-        return NextResponse.json(
-          {
-            error: "Wallet passes require the Pro plan or higher.",
-            code: "PLAN_REQUIRED",
-          },
-          { status: 403 },
-        );
-      }
-    }
+    // Apple/Google Wallet passes are available on every plan (incl. Free), so
+    // there's no tier gate here — the shop just opts in or out.
     shop.walletPasses = !!walletPasses;
   }
   if (Array.isArray(allowedEmailDomains)) {

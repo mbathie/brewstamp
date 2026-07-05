@@ -44,6 +44,21 @@ const ja = {
   scanWithCamera: "スマホのカメラでスキャン",
   noAppRequired: "アプリ不要 · どのスマホでも",
 
+  // Wallet passes (Apple/Google) — お客様のカードに埋め込まれるテキスト
+  walletBalanceLabel: "スタンプ",
+  walletRedeemedLabel: "引換済み",
+  walletPerkPointsLabel: "無料リワード",
+  walletRedeemedValue: "{count}回引換",
+  walletMemberLabel: "メンバー",
+  walletRewardLabel: "リワード",
+  walletRewardValue: "{threshold}個で無料",
+  walletRecoverLabel: "あなたのカード",
+  walletRecoverValue: "カードをオンラインで開く: {url}",
+  walletRecoverLinkDescription: "カードを表示または復元",
+  walletProgramName: "{shop} ロイヤリティ",
+  walletPerkProgramName: "スタッフ特典",
+  walletLogoDescription: "{shop} ロゴ",
+
   poweredBy: "提供",
 
   // Customer edit-details flow (synced from en.ts)

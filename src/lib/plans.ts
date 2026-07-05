@@ -36,7 +36,8 @@ export interface PlanConfig {
   hasCrossShopReporting: boolean;
   // Corporate "perk mode" — employer-subsidised staff coffee. Plus & Max.
   hasPerkMode: boolean;
-  // Apple & Google Wallet passes. Pro and up (Free is browser-card only).
+  // Apple & Google Wallet passes — included on every plan (shown in the billing
+  // feature comparison; not a gate).
   hasWalletPasses: boolean;
   prioritySupport: boolean;
   dedicatedSupport: boolean;

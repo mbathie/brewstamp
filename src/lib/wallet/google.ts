@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import { GoogleAuth } from "google-auth-library";
 import { getColorHex } from "@/lib/tailwind-colors";
+import { t } from "@/lib/i18n";
 import { APP_URL, googleWalletCreds } from "./config";
+import { balanceString } from "./content";
 
 /**
  * Google Wallet (Android) loyalty passes. Server-side only.
@@ -24,6 +26,8 @@ export interface WalletClassData {
   bgColor: string;
   fgColor: string;
   perkMode: boolean;
+  // Shop's customer-facing language — localizes the pass text.
+  language: string;
 }
 
 // Stamp-card branding shared by class + object.
@@ -41,6 +45,8 @@ export interface WalletCardData {
   totalEarned: number;
   freeRedeemed: number;
   threshold: number;
+  // Shop's customer-facing language — localizes the pass text.
+  language: string;
   // "Recover my card" deep link embedded in the pass — restores the browser
   // cookie for this customer if they lose it. Optional (set at issue time).
   recoverUrl?: string | null;
@@ -89,12 +95,17 @@ function loyaltyClassBody(issuerId: string, d: WalletClassData) {
   const logoUri = classLogoUri(d);
   const hasRealLogo = logoUri !== FALLBACK_LOGO;
   const desc = {
-    defaultValue: { language: "en", value: `${d.shopName} logo` },
+    defaultValue: {
+      language: d.language,
+      value: t(d.language, "walletLogoDescription", { shop: d.shopName }),
+    },
   };
   return {
     id: classId(issuerId, d.shopId),
     issuerName: d.shopName,
-    programName: d.perkMode ? "Staff perk" : `${d.shopName} loyalty`,
+    programName: d.perkMode
+      ? t(d.language, "walletPerkProgramName")
+      : t(d.language, "walletProgramName", { shop: d.shopName }),
     reviewStatus: "UNDER_REVIEW",
     // Match the customer card: its dark background colour is the pass
     // background. Google auto-derives a legible (white/black) text colour from
@@ -111,10 +122,13 @@ function loyaltyClassBody(issuerId: string, d: WalletClassData) {
   };
 }
 
-function balanceString(d: WalletCardData): string {
-  if (d.perkMode) return `${d.freeRedeemed} redeemed`;
-  // Just "5 / 8" — the "Stamps" label sits above it, so no need to repeat it.
-  return `${d.stamps} / ${d.threshold}`;
+// The label + balance block, shared by object create (loyaltyObjectBody) and
+// the balance PATCH (googleUpdateObject) so they can't disagree.
+function loyaltyPoints(d: WalletCardData) {
+  return {
+    label: t(d.language, d.perkMode ? "walletPerkPointsLabel" : "walletBalanceLabel"),
+    balance: { string: balanceString(d) },
+  };
 }
 
 function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
@@ -124,10 +138,7 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
     state: "ACTIVE",
     accountName: d.customerName,
     accountId: d.cardId,
-    loyaltyPoints: {
-      label: d.perkMode ? "Free rewards" : "Stamps",
-      balance: { string: balanceString(d) },
-    },
+    loyaltyPoints: loyaltyPoints(d),
     // No barcode: Brewstamp's flow is customer-scans-the-shop-QR, not
     // merchant-scans-the-pass, so a QR on the pass is misleading. null (not
     // omitted) so a PATCH clears it from already-saved passes too.
@@ -141,7 +152,7 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
             uris: [
               {
                 uri: d.recoverUrl,
-                description: "View or recover my card",
+                description: t(d.language, "walletRecoverLinkDescription"),
                 id: "recover",
               },
             ],
@@ -154,6 +165,24 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
 async function apiGet(token: string, path: string): Promise<Response> {
   return fetch(`${BASE}/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// POST/PATCH a JSON body to the walletobjects API. Centralizes the auth +
+// content-type headers that were otherwise respelled at every call site.
+async function apiWrite(
+  token: string,
+  method: "POST" | "PATCH",
+  path: string,
+  body: unknown,
+): Promise<Response> {
+  return fetch(`${BASE}/${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
   });
 }
 
@@ -174,20 +203,12 @@ async function ensureClass(token: string, issuerId: string, d: WalletCardData) {
   if (res.status === 404) {
     await logIfError(
       "class create",
-      await fetch(`${BASE}/loyaltyClass`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(loyaltyClassBody(issuerId, d)),
-      }),
+      await apiWrite(token, "POST", "loyaltyClass", loyaltyClassBody(issuerId, d)),
     );
   } else if (res.ok) {
     await logIfError(
       "class update",
-      await fetch(`${BASE}/loyaltyClass/${id}`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(loyaltyClassBody(issuerId, d)),
-      }),
+      await apiWrite(token, "PATCH", `loyaltyClass/${id}`, loyaltyClassBody(issuerId, d)),
     );
   }
 }
@@ -210,22 +231,14 @@ export async function googleSaveUrl(d: WalletCardData): Promise<string | null> {
   if (existing.status === 404) {
     await logIfError(
       "object create",
-      await fetch(`${BASE}/loyaltyObject`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
-      }),
+      await apiWrite(token, "POST", "loyaltyObject", loyaltyObjectBody(creds.issuerId, d)),
     );
   } else if (existing.ok) {
     // Object already exists (re-add / re-issue) — PATCH so the recovery link and
     // balance are present/current on the already-saved pass.
     await logIfError(
       "object update",
-      await fetch(`${BASE}/loyaltyObject/${oid}`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(loyaltyObjectBody(creds.issuerId, d)),
-      }),
+      await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, loyaltyObjectBody(creds.issuerId, d)),
     );
   }
 
@@ -266,14 +279,7 @@ export async function googleUpdateClassBranding(
   if (!res.ok) return; // 404 → no class yet; nothing saved to update
   await logIfError(
     "class branding update",
-    await fetch(`${BASE}/loyaltyClass/${id}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(loyaltyClassBody(creds.issuerId, d)),
-    }),
+    await apiWrite(token, "PATCH", `loyaltyClass/${id}`, loyaltyClassBody(creds.issuerId, d)),
   );
 }
 
@@ -287,16 +293,9 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
   const token = await accessToken();
   if (!token) return;
   const oid = objectId(creds.issuerId, d.cardId);
-  await fetch(`${BASE}/loyaltyObject/${oid}`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      // accountName so a customer name change propagates to the saved pass.
-      accountName: d.customerName,
-      loyaltyPoints: {
-        label: d.perkMode ? "Free rewards" : "Stamps",
-        balance: { string: balanceString(d) },
-      },
-    }),
+  await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, {
+    // accountName so a customer name change propagates to the saved pass.
+    accountName: d.customerName,
+    loyaltyPoints: loyaltyPoints(d),
   });
 }

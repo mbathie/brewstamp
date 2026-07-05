@@ -134,12 +134,10 @@ export default function SettingsPage() {
   const [perkDomains, setPerkDomains] = useState(""); // comma/space separated
   const [dailyDrinkLimit, setDailyDrinkLimit] = useState<number | null>(2);
   const [timezone, setTimezone] = useState("UTC");
-  // Apple/Google Wallet passes (Plus/Max). Reuses the perk plan gate.
+  // Apple/Google Wallet passes — available on every plan, so no tier gate.
   const [walletPasses, setWalletPasses] = useState(false);
   // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
   const [canUsePerkMode, setCanUsePerkMode] = useState(false);
-  // Whether the shop's plan (Pro+) unlocks Apple/Google Wallet passes.
-  const [canUseWalletPasses, setCanUseWalletPasses] = useState(false);
   // The shop already has loyalty/perk history — switching program type strands
   // it, so we warn before applying. `pendingMode` holds the target while the
   // confirmation modal is open.
@@ -165,7 +163,6 @@ export default function SettingsPage() {
         if (!data.shop) return;
         setShop(data.shop);
         setCanUsePerkMode(!!data.canUsePerkMode);
-        setCanUseWalletPasses(!!data.canUseWalletPasses);
         setHasActivity(!!data.hasActivity);
         const initial = {
           name: data.shop.name ?? "",
@@ -798,39 +795,19 @@ export default function SettingsPage() {
           <CardContent className="space-y-6 p-6">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
               <div className="min-w-0">
-                <h2 className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+                <h2 className="text-base font-semibold text-foreground">
                   Wallet passes
-                  {!canUseWalletPasses && (
-                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                  )}
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Let customers add their card to Apple &amp; Google Wallet — the
                   browser card stays available either way.
                 </p>
               </div>
-              {canUseWalletPasses ? (
-                <Switch
-                  checked={walletPasses}
-                  onCheckedChange={setWalletPasses}
-                  aria-label="Wallet passes"
-                />
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => router.push("/dashboard/billing")}
-                      className="shrink-0 cursor-pointer rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                    >
-                      Upgrade
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[240px] text-center">
-                    Wallet passes are on the Pro plan and up.
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <Switch
+                checked={walletPasses}
+                onCheckedChange={setWalletPasses}
+                aria-label="Wallet passes"
+              />
             </div>
 
             <div className="space-y-2">

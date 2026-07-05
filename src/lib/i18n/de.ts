@@ -45,6 +45,21 @@ const de = {
   scanWithCamera: "Mit der Handykamera scannen",
   noAppRequired: "Keine App nötig · Auf jedem Handy",
 
+  // Wallet passes (Apple/Google) — Text auf der Karte des Kunden
+  walletBalanceLabel: "Stempel",
+  walletRedeemedLabel: "Eingelöst",
+  walletPerkPointsLabel: "Gratis-Belohnungen",
+  walletRedeemedValue: "{count} eingelöst",
+  walletMemberLabel: "Mitglied",
+  walletRewardLabel: "Belohnung",
+  walletRewardValue: "Gratis bei {threshold}",
+  walletRecoverLabel: "Deine Karte",
+  walletRecoverValue: "Öffne deine Karte online: {url}",
+  walletRecoverLinkDescription: "Meine Karte ansehen oder wiederherstellen",
+  walletProgramName: "{shop} Treue",
+  walletPerkProgramName: "Mitarbeitervorteil",
+  walletLogoDescription: "{shop} Logo",
+
   poweredBy: "Bereitgestellt von",
 
   // Customer edit-details flow (synced from en.ts)

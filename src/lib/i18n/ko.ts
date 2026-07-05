@@ -44,6 +44,21 @@ const ko = {
   scanWithCamera: "휴대폰 카메라로 스캔",
   noAppRequired: "앱 설치 불필요 · 모든 스마트폰 호환",
 
+  // Wallet passes (Apple/Google) — 고객 카드에 포함되는 텍스트
+  walletBalanceLabel: "스탬프",
+  walletRedeemedLabel: "사용됨",
+  walletPerkPointsLabel: "무료 리워드",
+  walletRedeemedValue: "{count}회 사용",
+  walletMemberLabel: "회원",
+  walletRewardLabel: "리워드",
+  walletRewardValue: "{threshold}개에서 무료",
+  walletRecoverLabel: "내 카드",
+  walletRecoverValue: "온라인에서 카드 열기: {url}",
+  walletRecoverLinkDescription: "내 카드 보기 또는 복구",
+  walletProgramName: "{shop} 로열티",
+  walletPerkProgramName: "직원 혜택",
+  walletLogoDescription: "{shop} 로고",
+
   poweredBy: "제공",
 
   // Customer edit-details flow (synced from en.ts)
