@@ -69,6 +69,29 @@ async function logoBytes(shopLogo: string | null): Promise<Buffer | null> {
   }
 }
 
+// Round the corners of a logo bitmap so it reads as a soft chip on the coloured
+// pass instead of a hard rectangle. Masks the corners to transparent; returns
+// null (caller falls back to the square original) on any failure.
+async function roundedCorners(buf: Buffer): Promise<Buffer | null> {
+  try {
+    const meta = await sharp(buf).metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+    if (!w || !h) return null;
+    const radius = Math.round(Math.min(w, h) * 0.16);
+    const mask = Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${radius}" ry="${radius}"/></svg>`,
+    );
+    return await sharp(buf)
+      .composite([{ input: mask, blend: "dest-in" }])
+      .png()
+      .toBuffer();
+  } catch (err) {
+    console.error("[Wallet/apple] logo rounding failed:", err);
+    return null;
+  }
+}
+
 /**
  * Render a "punch card" strip: a row (or two, for large cards) of stamp tokens,
  * filled up to the current count. Returns the @1x/@2x/@3x PNGs Apple wants for a
@@ -163,14 +186,18 @@ export async function buildPkpass(
     ? null
     : await renderStampStrip(d.stamps, d.threshold, accent);
 
+  // The logo shows as a chip on the coloured card — round its corners. Keep the
+  // square original for icon.png (Apple applies its own mask to the icon).
+  const logoImg = (await roundedCorners(img)) ?? img;
+
   let pass: PKPass;
   try {
     pass = new PKPass(
       {
         "icon.png": img,
         "icon@2x.png": img,
-        "logo.png": img,
-        "logo@2x.png": img,
+        "logo.png": logoImg,
+        "logo@2x.png": logoImg,
         ...(strip ?? {}),
       },
       {
@@ -185,7 +212,9 @@ export async function buildPkpass(
         serialNumber: serial,
         description: `${d.shopName} loyalty card`,
         organizationName: d.shopName,
-        logoText: d.shopName,
+        // No logoText: the uploaded logo already carries the shop name, so a
+        // second copy next to it just truncated ("Byron Bay Br…"). Icon-only
+        // logos still identify the shop via organizationName in Wallet.
         foregroundColor: rgb(accent),
         backgroundColor: rgb(background),
         labelColor: rgb(accent),
