@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function SelectShopPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
 
   const memberships = await getMembershipsForUser(userId);
   if (memberships.length === 0) redirect("/setup");

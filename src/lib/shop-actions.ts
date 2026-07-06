@@ -14,7 +14,7 @@ import {
 export async function selectShopAction(target: string) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
 
   const memberships = await getMembershipsForUser(userId);
 

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Shop name is required" }, { status: 400 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
 
   const limits = await getUserPlanLimits(userId);
   if (limits.atShopLimit) {

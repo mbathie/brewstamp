@@ -60,7 +60,7 @@ export const getCurrentShopContext = cache(
   async (): Promise<CurrentShopContext | null> => {
     const session = await auth();
     if (!session?.user) return null;
-    const userId = (session.user as any).id as string;
+    const userId = session.user.id as string;
 
     const memberships = await getMembershipsForUser(userId);
     const cookieValue = await readCurrentShopCookie();

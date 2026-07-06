@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
 
   let body: { target?: string } = {};
   try {
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   if (!session?.user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
   const memberships = await getMembershipsForUser(userId);
 
   const switchTo = req.nextUrl.searchParams.get("switch");

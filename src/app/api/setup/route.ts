@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Shop name is required" }, { status: 400 });
   }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const user = await User.findById(userId);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });

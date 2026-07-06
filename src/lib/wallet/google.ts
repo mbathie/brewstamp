@@ -59,16 +59,33 @@ function objectId(issuerId: string, cardId: string) {
   return `${issuerId}.card_${cardId}`;
 }
 
+// Cache the OAuth token across calls — googleUpdateObject runs on every stamp
+// change, and minting a fresh token (RSA sign + round-trip) each time is waste.
+// Google tokens last ~1h; refresh a minute early. Keyed by client email so a
+// creds rotation invalidates the cache.
+let tokenCache: { key: string; token: string; expiresAt: number } | null = null;
+
 async function accessToken(): Promise<string | null> {
   const creds = googleWalletCreds();
   if (!creds) return null;
+  const now = Date.now();
+  if (
+    tokenCache &&
+    tokenCache.key === creds.clientEmail &&
+    tokenCache.expiresAt > now
+  ) {
+    return tokenCache.token;
+  }
   const auth = new GoogleAuth({
     credentials: { client_email: creds.clientEmail, private_key: creds.privateKey },
     scopes: [SCOPE],
   });
   const client = await auth.getClient();
   const { token } = await client.getAccessToken();
-  return token ?? null;
+  if (!token) return null;
+  // google-auth-library refreshes internally; cache conservatively for 55 min.
+  tokenCache = { key: creds.clientEmail, token, expiresAt: now + 55 * 60_000 };
+  return token;
 }
 
 // Google requires a programLogo on every loyalty class — fall back to the
@@ -317,11 +334,14 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
   const token = await accessToken();
   if (!token) return;
   const oid = objectId(creds.issuerId, d.cardId);
-  await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, {
-    // accountName so a customer name change propagates to the saved pass.
-    accountName: d.customerName,
-    loyaltyPoints: loyaltyPoints(d),
-    // Recompute so the "Reward ready!" note appears/clears with the balance.
-    textModulesData: objectTextModules(d),
-  });
+  await logIfError(
+    "object update",
+    await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, {
+      // accountName so a customer name change propagates to the saved pass.
+      accountName: d.customerName,
+      loyaltyPoints: loyaltyPoints(d),
+      // Recompute so the "Reward ready!" note appears/clears with the balance.
+      textModulesData: objectTextModules(d),
+    }),
+  );
 }

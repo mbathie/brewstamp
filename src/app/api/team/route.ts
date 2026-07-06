@@ -213,7 +213,7 @@ export async function POST(req: Request) {
     invite.role = role;
     invite.token = token;
     invite.expiresAt = expiresAt;
-    invite.invitedBy = (session.user as any).id;
+    invite.invitedBy = session.user.id;
     await invite.save();
   } else {
     invite = await Invite.create({
@@ -221,7 +221,7 @@ export async function POST(req: Request) {
       email,
       role,
       token,
-      invitedBy: (session.user as any).id,
+      invitedBy: session.user.id,
       expiresAt,
     });
   }

@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   await connectDB();
-  const user = await User.findById((session.user as any).id).select(
+  const user = await User.findById(session.user.id).select(
     "name email phone"
   );
 
@@ -33,7 +33,7 @@ export async function PATCH(req: Request) {
   }
 
   await connectDB();
-  const user = await User.findById((session.user as any).id);
+  const user = await User.findById(session.user.id);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

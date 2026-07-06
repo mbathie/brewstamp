@@ -260,7 +260,9 @@ export async function buildPkpass(
     // Perk passes (or a strip-render failure): the original field-only layout.
     pass.primaryFields.push({
       key: "balance",
-      label: t(d.language, d.perkMode ? "walletRedeemedLabel" : "walletBalanceLabel"),
+      // Match Google's perk label ("Free rewards") — the value already reads
+      // "N redeemed", so "Redeemed" here was both redundant and inconsistent.
+      label: t(d.language, d.perkMode ? "walletPerkPointsLabel" : "walletBalanceLabel"),
       value: balanceString(d),
     });
     pass.secondaryFields.push({

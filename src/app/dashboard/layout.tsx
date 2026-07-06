@@ -34,7 +34,7 @@ export default async function DashboardLayout({
   // /setup → /setup sees user.shopId and redirects to /dashboard → loop.
   // Mint the owner membership lazily on first dashboard visit.
   await connectDB();
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
   const dbUser = await User.findById(userId);
   if (dbUser?.shopId) {
     const exists = await ShopMembership.exists({

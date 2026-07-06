@@ -8,7 +8,7 @@ import NewShopForm from "./new-shop-form";
 export default async function NewShopPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id as string;
 
   // Server-side plan-limit guard — if the user is already at their plan's
   // shop quota, bounce them to the billing page where they can upgrade

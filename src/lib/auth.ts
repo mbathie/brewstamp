@@ -222,8 +222,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.sub;
-        (session.user as any).shopId = token.shopId;
+        session.user.id = token.sub as string;
+        session.user.shopId = token.shopId as string | undefined;
       }
       return session;
     },
@@ -246,7 +246,7 @@ export async function getMerchant() {
   const session = await auth();
   if (!session?.user) return null;
   await connectDB();
-  const user = await User.findById((session.user as any).id);
+  const user = await User.findById(session.user.id);
   if (!user) return null;
 
   const cookieStore = await cookies();

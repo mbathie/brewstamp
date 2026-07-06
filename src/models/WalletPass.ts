@@ -35,6 +35,8 @@ const walletPassSchema = new mongoose.Schema(
 
 walletPassSchema.index({ card: 1, provider: 1 }, { unique: true });
 walletPassSchema.index({ shop: 1 });
+// syncWalletPassesForCustomer() queries by customer on every name change.
+walletPassSchema.index({ customer: 1 });
 // Lookup for the "recover my card" wallet link.
 walletPassSchema.index({ recoverToken: 1 });
 // Legacy passes stored the recover token in authToken — kept for the
