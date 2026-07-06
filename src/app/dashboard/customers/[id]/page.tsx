@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/mongoose";
-import { getMerchant } from "@/lib/auth";
-import { Customer, StampCard, StampRequest } from "@/models";
+import { getCurrentShopContext } from "@/lib/shop-context";
+import { Customer, StampCard, StampRequest, Shop } from "@/models";
 import { redirect, notFound } from "next/navigation";
 import { generateAnimalName } from "@/lib/animal-names";
 import CustomerDetailContent from "@/components/customer-detail-content";
@@ -19,22 +19,34 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const merchant = await getMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentShopContext();
+  if (!ctx || ctx.memberships.length === 0) redirect("/login");
 
-  const { shop } = merchant;
   await connectDB();
 
-  const customer = await Customer.findById(id);
-  if (!customer) notFound();
+  // Scope to the merchant's OWN shops. Prefer the active shop; in aggregate mode
+  // (or when the customer has no card at the active shop) fall back to their most
+  // recent card across the merchant's shops. No card at any owned shop → this
+  // isn't the merchant's customer (prevents viewing arbitrary customers by id).
+  const shopIds = ctx.memberships.map((m) => m.shopId);
+  const stampCard =
+    (ctx.shopId
+      ? await StampCard.findOne({ shop: ctx.shopId, customer: id })
+      : null) ||
+    (await StampCard.findOne({
+      shop: { $in: shopIds },
+      customer: id,
+    }).sort({ updatedAt: -1 }));
+  if (!stampCard) notFound();
 
-  const stampCard = await StampCard.findOne({
-    shop: shop._id,
-    customer: customer._id,
-  });
+  const [customer, shop] = await Promise.all([
+    Customer.findById(id),
+    Shop.findById(stampCard.shop),
+  ]);
+  if (!customer || !shop) notFound();
 
   const requests = (await StampRequest.find({
-    shop: shop._id,
+    shop: stampCard.shop,
     customer: customer._id,
     status: { $in: ["approved", "rejected"] },
   })

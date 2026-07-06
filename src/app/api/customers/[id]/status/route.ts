@@ -16,7 +16,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { disabled } = await req.json();
+  const { disabled } = await req.json().catch(() => ({}));
   if (typeof disabled !== "boolean") {
     return NextResponse.json(
       { error: "disabled must be a boolean" },

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   }
 
   await connectDB();
-  const { shopName, name, phone } = await req.json();
+  const { shopName, name, phone } = await req.json().catch(() => ({}));
 
   if (!shopName) {
     return NextResponse.json({ error: "Shop name is required" }, { status: 400 });

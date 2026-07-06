@@ -39,7 +39,7 @@ export async function PATCH(req: Request) {
   }
 
   const { name, email, phone, currentPassword, newPassword } =
-    await req.json();
+    await req.json().catch(() => ({}));
 
   // Update name
   if (name !== undefined) {
@@ -80,6 +80,17 @@ export async function PATCH(req: Request) {
     if (!currentPassword) {
       return NextResponse.json(
         { error: "Current password is required to set a new password" },
+        { status: 400 }
+      );
+    }
+    // OAuth / magic-link users have no password hash — bcrypt.compare(…, undefined)
+    // throws, so guide them to set one via reset instead of 500ing.
+    if (!user.hash) {
+      return NextResponse.json(
+        {
+          error:
+            "Your account has no password yet. Use “Forgot password” to set one.",
+        },
         { status: 400 }
       );
     }

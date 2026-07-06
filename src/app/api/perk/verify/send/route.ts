@@ -16,7 +16,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // customer echoes the code back to /api/perk/verify/confirm.
 export async function POST(req: Request) {
   await connectDB();
-  const { shopId, customerId, email } = await req.json();
+  const { shopId, customerId, email } = await req.json().catch(() => ({}));
 
   if (!shopId || !customerId || !email) {
     return NextResponse.json(

@@ -98,7 +98,10 @@ export function t(
   const dict = dictionaries[resolved];
   let str = dict[key] ?? dictionaries.en[key] ?? String(key);
   for (const [k, v] of Object.entries(params)) {
-    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+    // Use a replacement FUNCTION, not a string: a string replacement treats `$`
+    // sequences ($&, $1, …) in the value as patterns, corrupting names/shops
+    // like "Bob's $2 Brews" that flow into wallet passes.
+    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), () => String(v));
   }
   return str;
 }

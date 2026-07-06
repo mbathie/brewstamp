@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { invoiceId } = await req.json();
+  const { invoiceId } = await req.json().catch(() => ({}));
   if (!invoiceId) {
     return NextResponse.json({ error: "Missing invoiceId" }, { status: 400 });
   }

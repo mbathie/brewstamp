@@ -6,7 +6,7 @@ import { sendResetEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   await connectDB();
-  const { email } = await req.json();
+  const { email } = await req.json().catch(() => ({}));
 
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });

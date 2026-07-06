@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 export async function POST(req: Request) {
   await connectDB();
 
-  const { email, password } = await req.json();
+  const { email, password } = await req.json().catch(() => ({}));
 
   if (!email || !password) {
     return NextResponse.json(
@@ -16,7 +16,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const customer = await Customer.findOne({ email });
+  // password is select:false on the model — opt in for the comparison.
+  const customer = await Customer.findOne({ email }).select("+password");
 
   if (!customer || !customer.password) {
     return NextResponse.json(
@@ -52,5 +53,8 @@ export async function POST(req: Request) {
   customer.cookieId = currentCookieId;
   await customer.save();
 
-  return NextResponse.json({ customer });
+  // Never return the (now-loaded) password hash to the client.
+  const safe = customer.toObject();
+  delete safe.password;
+  return NextResponse.json({ customer: safe });
 }

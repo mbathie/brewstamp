@@ -4,6 +4,7 @@ import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
 import { countPerkDrinksToday } from "@/lib/perk";
 import { syncWalletPasses } from "@/lib/wallet";
+import { requireMerchant, unauthorized } from "@/lib/api-auth";
 
 // GET: the current status of a single request. The customer card polls this
 // while "waiting" so a resolved request (approved/rejected) is never missed if
@@ -49,9 +50,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Approving a request mints stamps / redeems free drinks — it must be an
+  // authenticated merchant acting on their OWN shop, not anyone with the id.
+  const merchant = await requireMerchant();
+  if (!merchant) return unauthorized();
+
   await connectDB();
 
-  const { status, stampsAwarded, redeem } = await req.json();
+  const { status, stampsAwarded, redeem } = await req.json().catch(() => ({}));
 
   if (!["approved", "rejected"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -60,6 +67,9 @@ export async function PATCH(
   const request = await StampRequest.findById(id);
   if (!request || request.status !== "pending") {
     return NextResponse.json({ error: "Request not found or already processed" }, { status: 404 });
+  }
+  if (!merchant.shopIds.includes(request.shop.toString())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   request.status = status;
@@ -91,6 +101,18 @@ export async function PATCH(
           return NextResponse.json(
             { error: `Daily limit of ${limit} reached.`, code: "DAILY_LIMIT_REACHED" },
             { status: 403 },
+          );
+        }
+        // Atomically claim the request so two concurrent approvals can't both
+        // redeem (the loser gets 409 and awards nothing).
+        const claimed = await StampRequest.updateOne(
+          { _id: id, status: "pending" },
+          { $set: { status: "approved" }, $unset: { expiresAt: 1 } },
+        );
+        if (claimed.modifiedCount !== 1) {
+          return NextResponse.json(
+            { error: "Request already processed", code: "ALREADY_PROCESSED" },
+            { status: 409 },
           );
         }
         stampCard.freeRedeemed += 1;
@@ -132,6 +154,19 @@ export async function PATCH(
             );
           }
         }
+      }
+
+      // Atomically claim the request before mutating the balance, so two
+      // concurrent approvals can't both award (the loser gets 409).
+      const claimed = await StampRequest.updateOne(
+        { _id: id, status: "pending" },
+        { $set: { status: "approved" }, $unset: { expiresAt: 1 } },
+      );
+      if (claimed.modifiedCount !== 1) {
+        return NextResponse.json(
+          { error: "Request already processed", code: "ALREADY_PROCESSED" },
+          { status: 409 },
+        );
       }
 
       if (redeem && stampCard.stamps >= threshold) {

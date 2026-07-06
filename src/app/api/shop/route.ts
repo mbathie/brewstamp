@@ -78,7 +78,7 @@ export async function PATCH(req: Request) {
     allowedEmailDomains,
     dailyDrinkLimit,
     timezone,
-  } = await req.json();
+  } = await req.json().catch(() => ({}));
 
   if (name) shop.name = name;
   if (stampThreshold) shop.stampThreshold = stampThreshold;

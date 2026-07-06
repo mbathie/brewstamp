@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
-import { Customer } from "@/models";
+import { Customer, StampCard } from "@/models";
+import { requireMerchant, unauthorized } from "@/lib/api-auth";
 import { syncWalletPassesForCustomer } from "@/lib/wallet";
 import bcrypt from "bcrypt";
+
+// Confirm the signed-in merchant may act on this customer: the customer must
+// hold a stamp card at one of the merchant's shops. Without this any anonymous
+// caller could read or rewrite an arbitrary customer by id (IDOR). Returns a
+// Response to short-circuit with, or null when access is allowed.
+async function denyIfNotOwned(customerId: string): Promise<Response | null> {
+  const merchant = await requireMerchant();
+  if (!merchant) return unauthorized();
+  const owns = await StampCard.exists({
+    shop: { $in: merchant.shopIds },
+    customer: customerId,
+  });
+  if (!owns) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return null;
+}
 
 export async function PATCH(
   req: Request,
@@ -11,7 +27,10 @@ export async function PATCH(
   const { id } = await params;
   await connectDB();
 
-  const { name, email, password } = await req.json();
+  const denied = await denyIfNotOwned(id);
+  if (denied) return denied;
+
+  const { name, email, password } = await req.json().catch(() => ({}));
   const update: any = {};
   if (name) update.name = name;
   if (email) update.email = email;
@@ -53,6 +72,9 @@ export async function GET(
 ) {
   const { id } = await params;
   await connectDB();
+
+  const denied = await denyIfNotOwned(id);
+  if (denied) return denied;
 
   const customer = await Customer.findById(id);
   if (!customer) {

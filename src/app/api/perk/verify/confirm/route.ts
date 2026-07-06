@@ -7,7 +7,7 @@ import { perkCodeMatches, PERK_CODE_MAX_ATTEMPTS } from "@/lib/perk-verify";
 // On success the email is marked verified (persisted) and the code is cleared.
 export async function POST(req: Request) {
   await connectDB();
-  const { customerId, code } = await req.json();
+  const { customerId, code } = await req.json().catch(() => ({}));
 
   if (!customerId || !code) {
     return NextResponse.json(
@@ -16,7 +16,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const customer = await Customer.findById(customerId);
+  // emailVerifyCodeHash is select:false on the model — opt in to compare it.
+  const customer = await Customer.findById(customerId).select(
+    "+emailVerifyCodeHash",
+  );
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
   }

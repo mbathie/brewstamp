@@ -72,7 +72,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   await connectDB();
-  const { shopId, customerId, redeem } = await req.json();
+  const { shopId, customerId, redeem } = await req.json().catch(() => ({}));
 
   if (!shopId || !customerId) {
     return NextResponse.json(

@@ -43,7 +43,7 @@ export async function PUT(
   }
 
   const { id } = await params;
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const notes =
     typeof body.notes === "string" ? body.notes.slice(0, 2000) : undefined;
   const tags = Array.isArray(body.tags)

@@ -6,7 +6,7 @@ import { readSignupAttribution } from "@/lib/signup-attr";
 
 export async function POST(req: Request) {
   await connectDB();
-  const { email, password } = await req.json();
+  const { email, password } = await req.json().catch(() => ({}));
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });

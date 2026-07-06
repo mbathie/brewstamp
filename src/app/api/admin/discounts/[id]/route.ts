@@ -16,7 +16,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { active } = await req.json();
+  const { active } = await req.json().catch(() => ({}));
   if (typeof active !== "boolean") {
     return NextResponse.json(
       { error: "active must be a boolean" },

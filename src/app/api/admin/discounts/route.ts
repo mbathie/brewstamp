@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const percentOff = Number(body.percentOff);
   const plan = (body.plan || "any") as PlanScope;
   const duration = (body.duration || "once") as DurationType;

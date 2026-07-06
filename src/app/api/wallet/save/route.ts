@@ -9,7 +9,7 @@ import { walletAvailable } from "@/lib/wallet/config";
 // providers. No merchant auth — this mirrors the cookie-based customer card.
 export async function POST(req: Request) {
   await connectDB();
-  const { shopId, customerId } = await req.json();
+  const { shopId, customerId } = await req.json().catch(() => ({}));
   if (!shopId || !customerId) {
     return NextResponse.json({ error: "Missing shopId or customerId" }, { status: 400 });
   }

@@ -22,15 +22,27 @@ export async function GET(req: Request) {
   let until: Date | undefined;
   const isAll = range === "all" && !dateParam && !fromParam;
 
-  if (fromParam && toParam) {
-    const [fy, fm, fd] = fromParam.split("-").map(Number);
-    const [ty, tm, td] = toParam.split("-").map(Number);
-    since = new Date(fy, fm - 1, fd);
-    until = new Date(ty, tm - 1, td + 1); // end-of-day exclusive
-  } else if (dateParam) {
-    const [y, m, d] = dateParam.split("-").map(Number);
-    since = new Date(y, m - 1, d);
-    until = new Date(y, m - 1, d + 1);
+  // Parse a YYYY-MM-DD param into calendar parts, rejecting anything that isn't
+  // three real numbers — a malformed param must not become `new Date(NaN,…)`,
+  // which silently poisons the $gte/$lt match. Invalid → treated as absent
+  // (falls through to the range switch below).
+  const parseYmd = (s: string | null): [number, number, number] | null => {
+    if (!s) return null;
+    const parts = s.split("-").map(Number);
+    if (parts.length !== 3 || !parts.every(Number.isFinite)) return null;
+    return parts as [number, number, number];
+  };
+
+  const from = parseYmd(fromParam);
+  const to = parseYmd(toParam);
+  const single = parseYmd(dateParam);
+
+  if (from && to) {
+    since = new Date(from[0], from[1] - 1, from[2]);
+    until = new Date(to[0], to[1] - 1, to[2] + 1); // end-of-day exclusive
+  } else if (single) {
+    since = new Date(single[0], single[1] - 1, single[2]);
+    until = new Date(single[0], single[1] - 1, single[2] + 1);
   } else if (!isAll) {
     switch (range) {
       case "week":

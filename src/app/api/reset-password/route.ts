@@ -6,7 +6,7 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
   await connectDB();
-  const { token, email, password } = await req.json();
+  const { token, email, password } = await req.json().catch(() => ({}));
 
   if (!token || !email || !password) {
     return NextResponse.json(

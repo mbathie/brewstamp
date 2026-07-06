@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   await connectDB();
-  const { name, language, stampThreshold } = await req.json();
+  const { name, language, stampThreshold } = await req.json().catch(() => ({}));
 
   if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "Shop name is required" }, { status: 400 });

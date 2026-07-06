@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
   let body: { plan?: string; interval?: string } = {};
   try {
-    body = await req.json();
+    body = await req.json().catch(() => ({}));
   } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
