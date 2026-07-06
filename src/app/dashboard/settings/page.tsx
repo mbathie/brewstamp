@@ -50,6 +50,7 @@ import QrDisplay from "@/components/qr-display";
 import LogoEditor from "@/components/logo-editor";
 import CardPreview from "@/components/card-preview";
 import PerkCardPreview from "@/components/perk-card-preview";
+import WalletPassPreview from "@/components/wallet-pass-preview";
 import ColorPicker from "@/components/ui/color-picker";
 import PatternPicker from "@/components/ui/pattern-picker";
 import { getColorHex, getContrastRatio } from "@/lib/tailwind-colors";
@@ -136,6 +137,12 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("UTC");
   // Apple/Google Wallet passes — available on every plan, so no tier gate.
   const [walletPasses, setWalletPasses] = useState(false);
+  // Preview controls: which surface (browser card vs wallet pass) and how full
+  // the demo card is. Purely local — they don't touch saved shop data.
+  const [previewFormat, setPreviewFormat] = useState<"card" | "wallet">("card");
+  const [previewState, setPreviewState] = useState<"empty" | "mid" | "reward">(
+    "mid",
+  );
   // Whether the shop's plan (Plus/Max) unlocks corporate perk mode.
   const [canUsePerkMode, setCanUsePerkMode] = useState(false);
   // The shop already has loyalty/perk history — switching program type strands
@@ -456,8 +463,14 @@ export default function SettingsPage() {
   if (!shop) return <p className="text-sm text-muted-foreground">Loading...</p>;
 
   const previewThreshold = threshold ?? 8;
-  // Demo state for the preview: half-full card to show the visual
-  const previewStamps = Math.max(1, Math.floor(previewThreshold / 2));
+  // Demo fill for the preview, driven by the state stepper: empty, half-full,
+  // or reward-ready (full). Lets the merchant see every state of their card.
+  const previewStamps =
+    previewState === "empty"
+      ? 0
+      : previewState === "reward"
+        ? previewThreshold
+        : Math.max(1, Math.floor(previewThreshold / 2));
 
   return (
     <div className="space-y-6">
@@ -838,9 +851,33 @@ export default function SettingsPage() {
             would leave no room to stick). */}
         <Card className="self-start md:sticky md:top-32">
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-base font-semibold text-foreground">
-              Customer Preview
-            </h2>
+            {/* Header: title + a surface switcher so merchants can preview both
+                the in-browser card and the native wallet pass (same colours,
+                logo, and copy the real .pkpass ships with). */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-foreground">
+                Customer Preview
+              </h2>
+              {!perkMode && (
+                <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs font-medium">
+                  {(["card", "wallet"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setPreviewFormat(f)}
+                      className={`cursor-pointer rounded-md px-2.5 py-1 transition ${
+                        previewFormat === f
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {f === "card" ? "Browser" : "Wallet"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {perkMode ? (
               <PerkCardPreview
                 shopName={name || "Your Shop"}
@@ -850,6 +887,20 @@ export default function SettingsPage() {
                 bgPattern={bgPattern}
                 dailyLimit={dailyDrinkLimit ?? 2}
               />
+            ) : previewFormat === "wallet" ? (
+              <div className="py-2">
+                <WalletPassPreview
+                  shopName={name || "Your Shop"}
+                  shopLogo={logo}
+                  stamps={previewStamps}
+                  threshold={previewThreshold}
+                  bgColor={bgColor}
+                  fgColor={fgColor}
+                  bgPattern={bgPattern}
+                  displayName="Sam"
+                  language={language}
+                />
+              </div>
             ) : (
               <CardPreview
                 shopName={name || "Your Shop"}
@@ -876,10 +927,41 @@ export default function SettingsPage() {
                 </div>
               </CardPreview>
             )}
-            <p className="mt-3 text-center text-xs text-muted-foreground">
+
+            {/* State stepper: flip the demo card through the states a real
+                customer moves through, so colour/contrast choices can be judged
+                empty, mid-way, and reward-ready. */}
+            {!perkMode && (
+              <div className="flex items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5 text-xs font-medium">
+                {(
+                  [
+                    ["empty", "Empty"],
+                    ["mid", "Half full"],
+                    ["reward", "Reward ready"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setPreviewState(key)}
+                    className={`flex-1 cursor-pointer rounded-md px-2 py-1 transition ${
+                      previewState === key
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-center text-xs text-muted-foreground">
               {perkMode
                 ? "Staff scan, pick up a reward, and the barista approves — capped at your daily limit."
-                : "Showing demo state — your customers will see real stamp counts."}
+                : previewFormat === "wallet"
+                  ? "How the card looks in Apple & Google Wallet — customers add it in one tap."
+                  : "Showing demo state — your customers will see real stamp counts."}
             </p>
           </CardContent>
         </Card>

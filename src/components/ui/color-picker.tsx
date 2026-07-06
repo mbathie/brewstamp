@@ -49,23 +49,34 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
 
   return (
     <div className="space-y-3">
-      {/* Mode toggle — makes it obvious whether you're choosing from the
-          palette or entering an exact hex. */}
-      <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs font-medium">
-        {(["palette", "custom"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={`cursor-pointer rounded-md px-2.5 py-1 transition ${
-              mode === m
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {m === "palette" ? "Palette" : "Custom hex"}
-          </button>
-        ))}
+      {/* Mode toggle + a live chip of the current colour, so the active choice
+          is unambiguous even when its swatch is one of two dozen tints. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs font-medium">
+          {(["palette", "custom"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`cursor-pointer rounded-md px-2.5 py-1 transition ${
+                mode === m
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m === "palette" ? "Palette" : "Custom hex"}
+            </button>
+          ))}
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 py-1 pl-1 pr-2">
+          <span
+            className="size-4 rounded-sm ring-1 ring-inset ring-black/10"
+            style={{ backgroundColor: getColorHex(value) }}
+          />
+          <span className="font-mono text-[11px] text-muted-foreground">
+            {isCustom ? getColorHex(value).toUpperCase() : value}
+          </span>
+        </span>
       </div>
 
       {mode === "palette" ? (

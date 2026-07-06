@@ -833,8 +833,8 @@ export default function DashboardContent({
                             (window.location.href = `/dashboard/customers/${c.id}`)
                           }
                         >
-                          <TableCell className="text-muted-foreground">
-                            {c.rank}
+                          <TableCell>
+                            <RankMedal rank={c.rank} />
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
@@ -1048,6 +1048,25 @@ export default function DashboardContent({
   );
 }
 
+// Podium styling for the top three regulars — gold/silver/bronze — so the
+// leaderboard reads at a glance. Everyone else keeps a plain muted number.
+function RankMedal({ rank }: { rank: number }) {
+  const medal: Record<number, string> = {
+    1: "bg-amber-500/15 text-amber-400 ring-amber-500/30",
+    2: "bg-zinc-400/15 text-zinc-300 ring-zinc-400/30",
+    3: "bg-orange-700/15 text-orange-400 ring-orange-600/30",
+  };
+  if (rank > 3)
+    return <span className="pl-2 text-muted-foreground">{rank}</span>;
+  return (
+    <span
+      className={`inline-flex size-6 items-center justify-center rounded-full text-xs font-bold ring-1 ring-inset ${medal[rank]}`}
+    >
+      {rank}
+    </span>
+  );
+}
+
 interface KpiCardProps {
   label: string;
   value: number;
@@ -1081,7 +1100,14 @@ function KpiCard({
           : "vs prev day";
 
   return (
-    <Card className="gap-2 py-4">
+    <Card className="relative gap-2 overflow-hidden py-4">
+      {/* Left accent rail in the metric's own colour — gives the row of KPIs a
+          quick visual key and a bit of life without adding chrome. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: color, opacity: 0.8 }}
+      />
       <CardHeader className="pb-0">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>
@@ -1092,8 +1118,8 @@ function KpiCard({
             whether a subline is present. */}
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-2xl font-bold leading-none text-foreground">
-              {loading ? "..." : value}
+            <p className="text-3xl font-bold leading-none tracking-tight text-foreground">
+              {loading ? "…" : value}
             </p>
             {!loading && showCompare && (
               <div className="flex items-center gap-1.5 text-xs">
