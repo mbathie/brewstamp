@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Pager } from "@/components/ui/pager";
 import {
   Table,
   TableBody,
@@ -394,7 +396,6 @@ export default function DashboardContent({
   // Customer-grouping: identify consecutive runs of the same customer so we
   // render the name + email only on the first row of each run.
   const PAGE_SIZE = 10;
-  const totalPages = Math.max(1, Math.ceil(checkins.length / PAGE_SIZE));
   const pageStart = page * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
 
@@ -990,16 +991,7 @@ export default function DashboardContent({
                             />
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={
-                                c.status === "approved"
-                                  ? "border-green-500/50 text-green-500"
-                                  : "border-red-400/50 text-red-400"
-                              }
-                            >
-                              {c.status}
-                            </Badge>
+                            <StatusBadge status={c.status} />
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {formatTime(c.createdAt)}
@@ -1010,35 +1002,13 @@ export default function DashboardContent({
                   </TableBody>
                 </Table>
               )}
-              {!loading && checkins.length > PAGE_SIZE && (
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    {pageStart + 1}–{Math.min(pageEnd, checkins.length)} of{" "}
-                    {checkins.length}
-                  </p>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="cursor-pointer disabled:opacity-50"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="cursor-pointer disabled:opacity-50"
-                      disabled={page >= totalPages - 1}
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages - 1, p + 1))
-                      }
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+              {!loading && (
+                <Pager
+                  page={page}
+                  pageSize={PAGE_SIZE}
+                  count={checkins.length}
+                  onPage={setPage}
+                />
               )}
             </CardContent>
           </Card>

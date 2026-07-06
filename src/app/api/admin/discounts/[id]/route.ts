@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/api-auth";
 import { stripe } from "@/lib/stripe";
-
-const ADMIN_EMAIL = "mbathie@gmail.com";
 
 // PATCH: activate / deactivate a promotion code. Deactivating stops new
 // redemptions immediately without deleting the (immutable) coupon behind it.
@@ -10,8 +8,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (session?.user?.email !== ADMIN_EMAIL) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription } from "@/models";
 import { resolveSub, type PlanSlug } from "@/lib/plans";
-
-const ADMIN_EMAIL = "mbathie@gmail.com";
 
 // A customer counts as "active" if they've engaged within this window. The
 // admin views hide everyone older so the numbers reflect a live business, not
@@ -12,8 +10,7 @@ const ADMIN_EMAIL = "mbathie@gmail.com";
 const ACTIVE_DAYS = 90;
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

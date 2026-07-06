@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { LANDING_LANGS } from "@/lib/i18n/landing";
+import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
+  const baseUrl = SITE_URL;
 
   return [
     { url: baseUrl, lastModified: new Date(), priority: 1 },

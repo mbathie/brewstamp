@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/api-auth";
 import { stripe } from "@/lib/stripe";
 import { resolvePlanPriceId, getPlanBySlug, type PlanSlug } from "@/lib/plans";
 
-const ADMIN_EMAIL = "mbathie@gmail.com";
-
 type PlanScope = "any" | PlanSlug;
 type DurationType = "once" | "forever" | "repeating";
-
-async function requireAdmin() {
-  const session = await auth();
-  return session?.user?.email === ADMIN_EMAIL;
-}
 
 // Resolve a plan slug to its Stripe product id (shared across monthly+annual
 // prices) so a coupon can be restricted to that plan only.

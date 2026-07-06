@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { getCurrentShopContext, type MembershipRole } from "@/lib/shop-context";
+
+// The platform admin. Overridable via env; falls back to the founder's email so
+// existing deployments keep working. Was hardcoded + duplicated in 4 routes.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "mbathie@gmail.com";
+
+/** True when the signed-in user is the platform admin. */
+export async function requireAdmin(): Promise<boolean> {
+  const session = await auth();
+  return session?.user?.email === ADMIN_EMAIL;
+}
 
 export interface Merchant {
   userId: string;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site";
 import { Geist, Geist_Mono, Kaushan_Script } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,9 +23,7 @@ const kaushanScript = Kaushan_Script({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app"
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
     default:
       "Brewstamp — Digital Coffee Loyalty Card & Stamp Rewards for Cafes",

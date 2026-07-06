@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Pager } from "@/components/ui/pager";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, ChevronDown, ChevronUp, X, Pencil, Ban } from "lucide-react";
@@ -28,6 +30,7 @@ import MerchantCheckin from "@/components/merchant-checkin";
 import { getProgram } from "@/lib/program";
 import { ActivityValue } from "@/components/activity-value";
 import { avatarTint, initialsOf } from "@/lib/avatar";
+import { timeAgo, shortDateTime, membershipDuration } from "@/lib/date";
 import { toast } from "sonner";
 
 interface HistoryRow {
@@ -195,65 +198,9 @@ export default function CustomerDetailContent({
     setNotesDirty(true);
   }
 
-  const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE));
   const pagedHistory = useMemo(() => {
     return history.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   }, [history, page]);
-
-  function formatHistoryTime(iso: string) {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffMin < 1) return "just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHr < 24) return `${diffHr}h ago`;
-    if (d.toDateString() === now.toDateString()) {
-      return d.toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    }
-    const sameYear = d.getFullYear() === now.getFullYear();
-    return d.toLocaleString(undefined, {
-      day: "numeric",
-      month: "short",
-      ...(sameYear ? {} : { year: "2-digit" }),
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }
-
-  function relativeDay(iso: string | null) {
-    if (!iso) return "Never";
-    const d = new Date(iso);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffHr = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHr / 24);
-    if (diffMin < 1) return "just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHr < 24) return `${diffHr}h ago`;
-    if (diffDay < 30) return `${diffDay}d ago`;
-    if (diffDay < 365) return `${Math.floor(diffDay / 30)}mo ago`;
-    return `${Math.floor(diffDay / 365)}y ago`;
-  }
-
-  function memberDuration(iso: string) {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffDays = Math.max(
-      1,
-      Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)),
-    );
-    if (diffDays < 30) return `${diffDays}d`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo`;
-    const years = Math.floor(diffDays / 365);
-    const months = Math.floor((diffDays % 365) / 30);
-    return months > 0 ? `${years}y ${months}mo` : `${years}y`;
-  }
 
   return (
     <div className="space-y-6">
@@ -310,7 +257,7 @@ export default function CustomerDetailContent({
                 className="font-normal"
                 suppressHydrationWarning
               >
-                Last visit · {relativeDay(lastVisit)}
+                Last visit · {timeAgo(lastVisit)}
               </Badge>
               <Badge variant="outline" className="font-normal">
                 {visitsLast30d} visit{visitsLast30d === 1 ? "" : "s"} · last 30d
@@ -320,7 +267,7 @@ export default function CustomerDetailContent({
                 className="font-normal"
                 suppressHydrationWarning
               >
-                Member · {memberDuration(memberSince)}
+                Member · {membershipDuration(memberSince)}
               </Badge>
               {tags.map((t) => (
                 <Badge
@@ -590,7 +537,7 @@ export default function CustomerDetailContent({
                             </Badge>
                           )}
                           <span suppressHydrationWarning>
-                            {formatHistoryTime(req.createdAt)}
+                            {shortDateTime(req.createdAt)}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -603,53 +550,19 @@ export default function CustomerDetailContent({
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge
-                            variant="outline"
-                            className={
-                              req.status === "approved"
-                                ? "border-green-500/50 text-green-500"
-                                : "border-red-400/50 text-red-400"
-                            }
-                          >
-                            {req.status}
-                          </Badge>
+                          <StatusBadge status={req.status} />
                         </TableCell>
                       </TableRow>
                     );
                   })}
                 </TableBody>
               </Table>
-              {history.length > PAGE_SIZE && (
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    {page * PAGE_SIZE + 1}–
-                    {Math.min((page + 1) * PAGE_SIZE, history.length)} of{" "}
-                    {history.length}
-                  </p>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="cursor-pointer disabled:opacity-50"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="cursor-pointer disabled:opacity-50"
-                      disabled={page >= totalPages - 1}
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages - 1, p + 1))
-                      }
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <Pager
+                page={page}
+                pageSize={PAGE_SIZE}
+                count={history.length}
+                onPage={setPage}
+              />
             </>
           )}
         </CardContent>

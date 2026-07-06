@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { generateAnimalName } from "@/lib/animal-names";
 import { avatarTint, initialsOf } from "@/lib/avatar";
+import { Pager } from "@/components/ui/pager";
 
 interface Customer {
   _id: string;
@@ -311,7 +312,6 @@ export default function CustomerSearch({
     [validCards],
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageStart = page * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
   const paged = filtered.slice(pageStart, pageEnd);
@@ -626,34 +626,12 @@ export default function CustomerSearch({
           </TableBody>
         </Table>
       )}
-      {filtered.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {pageStart + 1}–{Math.min(pageEnd, filtered.length)} of{" "}
-            {filtered.length}
-          </p>
-          <div className="flex gap-1">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="cursor-pointer disabled:opacity-50"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="cursor-pointer disabled:opacity-50"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <Pager
+        page={page}
+        pageSize={PAGE_SIZE}
+        count={filtered.length}
+        onPage={setPage}
+      />
     </>
   );
 }

@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, Account } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
 import { resolveSub } from "@/lib/plans";
 
-const ADMIN_EMAIL = "mbathie@gmail.com";
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

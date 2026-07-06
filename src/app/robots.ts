@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
 
 // Generative-AI and AI-search crawlers we explicitly welcome so they can read
 // and cite the public marketing/content pages (GEO). They're already covered by
@@ -28,6 +29,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: "*", allow, disallow },
       ...AI_BOTS.map((userAgent) => ({ userAgent, allow, disallow })),
     ],
-    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app"}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
