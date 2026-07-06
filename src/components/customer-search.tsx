@@ -42,6 +42,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { generateAnimalName } from "@/lib/animal-names";
+import { avatarTint, initialsOf } from "@/lib/avatar";
 
 interface Customer {
   _id: string;
@@ -527,55 +528,60 @@ export default function CustomerSearch({
           <TableBody>
             {paged.map((card) => {
               const rowThreshold = card.shop?.stampThreshold ?? threshold;
+              const displayName =
+                card.customer.name ||
+                generateAnimalName(card.customer.cookieId);
               return (
                 <TableRow
                   key={card._id}
-                  className="cursor-pointer"
+                  className="cursor-pointer transition-colors hover:bg-muted/40"
                   onClick={() =>
                     router.push(
                       `/dashboard/customers/${card.customer._id}`,
                     )
                   }
                 >
-                  <TableCell className="max-w-[220px]">
-                    <div>
-                      <p className="flex items-center gap-2 font-medium">
-                        <span className={card.disabled ? "text-muted-foreground line-through" : ""}>
-                          {card.customer.name ||
-                            generateAnimalName(card.customer.cookieId)}
-                        </span>
-                        {card.disabled && (
-                          <Badge
-                            variant="outline"
-                            className="border-red-500/40 px-1.5 py-0 text-[10px] font-normal text-red-400"
-                          >
-                            Disabled
-                          </Badge>
-                        )}
-                      </p>
-                      {card.customer.email && (
-                        <p className="truncate text-xs text-muted-foreground">
-                          {card.customer.email}
-                        </p>
-                      )}
-                      {(card.tags || []).length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {(card.tags || []).slice(0, 3).map((t) => (
+                  <TableCell className="max-w-[260px]">
+                    <div className="flex items-center gap-3">
+                      <Monogram name={displayName} dimmed={!!card.disabled} />
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2 font-medium">
+                          <span className={card.disabled ? "text-muted-foreground line-through" : ""}>
+                            {displayName}
+                          </span>
+                          {card.disabled && (
                             <Badge
-                              key={t}
                               variant="outline"
-                              className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
+                              className="border-red-500/40 px-1.5 py-0 text-[10px] font-normal text-red-400"
                             >
-                              {t}
+                              Disabled
                             </Badge>
-                          ))}
-                          {(card.tags || []).length > 3 && (
-                            <span className="text-[10px] text-muted-foreground">
-                              +{(card.tags || []).length - 3}
-                            </span>
                           )}
-                        </div>
-                      )}
+                        </p>
+                        {card.customer.email && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {card.customer.email}
+                          </p>
+                        )}
+                        {(card.tags || []).length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {(card.tags || []).slice(0, 3).map((t) => (
+                              <Badge
+                                key={t}
+                                variant="outline"
+                                className="border-amber-500/50 px-1.5 py-0 text-[10px] font-normal text-amber-500"
+                              >
+                                {t}
+                              </Badge>
+                            ))}
+                            {(card.tags || []).length > 3 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                +{(card.tags || []).length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   {aggregate && (
@@ -585,13 +591,28 @@ export default function CustomerSearch({
                   )}
                   {!perkMode && (
                     <TableCell>
-                      <Badge variant="outline">
-                        {card.stamps} / {rowThreshold}
-                      </Badge>
+                      <StampProgress
+                        stamps={card.stamps}
+                        threshold={rowThreshold}
+                      />
                     </TableCell>
                   )}
-                  {!perkMode && <TableCell>{card.totalEarned}</TableCell>}
-                  <TableCell>{card.freeRedeemed}</TableCell>
+                  {!perkMode && (
+                    <TableCell
+                      className={`tabular-nums ${card.totalEarned ? "" : "text-muted-foreground"}`}
+                    >
+                      {card.totalEarned}
+                    </TableCell>
+                  )}
+                  <TableCell className="tabular-nums">
+                    {card.freeRedeemed > 0 ? (
+                      <span className="font-medium text-amber-500">
+                        {card.freeRedeemed}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">0</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {new Date(card.updatedAt).toLocaleDateString("en-AU", {
                       day: "numeric",
@@ -634,6 +655,52 @@ export default function CustomerSearch({
         </div>
       )}
     </>
+  );
+}
+
+// Disabled customers fall back to a plain muted chip; everyone else gets their
+// stable per-name tint (shared with the detail header + team list).
+function Monogram({ name, dimmed }: { name: string; dimmed: boolean }) {
+  const tint = dimmed ? "bg-muted text-muted-foreground" : avatarTint(name);
+  return (
+    <span
+      className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${tint}`}
+    >
+      {initialsOf(name)}
+    </span>
+  );
+}
+
+// Compact progress readout for the stamps column: the count plus a thin track
+// that fills toward the threshold, turning green the moment a reward is ready.
+function StampProgress({
+  stamps,
+  threshold,
+}: {
+  stamps: number;
+  threshold: number;
+}) {
+  const pct =
+    threshold > 0 ? Math.min(100, Math.round((stamps / threshold) * 100)) : 0;
+  const ready = threshold > 0 && stamps >= threshold;
+  return (
+    <div className="flex w-24 flex-col gap-1.5">
+      <span className="text-sm tabular-nums">
+        <span className="font-semibold text-foreground">{stamps}</span>
+        <span className="text-muted-foreground"> / {threshold}</span>
+      </span>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: ready
+              ? "var(--color-emerald-500)"
+              : "var(--color-amber-500)",
+          }}
+        />
+      </div>
+    </div>
   );
 }
 

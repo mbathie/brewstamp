@@ -167,10 +167,16 @@ export async function GET() {
   ]);
 
   const shopsByDate: Record<string, number> = {};
+  // Some legacy rows have a null/invalid createdAt — Date.toISOString() throws
+  // "Invalid time value" on those, which 500s the whole stats endpoint. Skip
+  // any row we can't bucket to a valid day rather than blowing up the report.
+  const isoDay = (v: unknown): string | null => {
+    const d = new Date(v as string | number | Date);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  };
   for (const shop of shops) {
-    const d = new Date((shop as { createdAt: Date }).createdAt)
-      .toISOString()
-      .slice(0, 10);
+    const d = isoDay((shop as { createdAt?: Date }).createdAt);
+    if (!d) continue;
     shopsByDate[d] = (shopsByDate[d] || 0) + 1;
   }
   const dailyShops = Object.entries(shopsByDate)
@@ -179,9 +185,8 @@ export async function GET() {
 
   const upgradesByDate: Record<string, number> = {};
   for (const sub of activeSubs) {
-    const d = new Date((sub as { createdAt: Date }).createdAt)
-      .toISOString()
-      .slice(0, 10);
+    const d = isoDay((sub as { createdAt?: Date }).createdAt);
+    if (!d) continue;
     upgradesByDate[d] = (upgradesByDate[d] || 0) + 1;
   }
   const dailyUpgrades = Object.entries(upgradesByDate)

@@ -30,6 +30,7 @@ import {
   Lock,
   Users,
 } from "lucide-react";
+import { avatarTint } from "@/lib/avatar";
 
 type Role = "owner" | "manager" | "staff";
 
@@ -62,6 +63,8 @@ interface TeamData {
   invites: Invite[];
 }
 
+// Email-aware initials (splits on @ . _ - too, so avatars work before a member
+// has set a display name). Tint is shared with the rest of the dashboard.
 function initials(name: string, email: string) {
   const src = (name || email || "").trim();
   if (!src) return "?";
@@ -384,7 +387,11 @@ export default function TeamClient() {
                 viewerRoleHere === "owner" || viewerRoleHere === "manager";
               return (
                 <div key={m._id} className="flex items-center gap-3 px-6 py-3">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-300">
+                  <div
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTint(
+                      m.user.name || m.user.email,
+                    )}`}
+                  >
                     {initials(m.user.name, m.user.email)}
                   </div>
                   <div className="min-w-0 flex-1">

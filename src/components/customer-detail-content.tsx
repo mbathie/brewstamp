@@ -27,6 +27,7 @@ import StampDisplay from "@/components/stamp-display";
 import MerchantCheckin from "@/components/merchant-checkin";
 import { getProgram } from "@/lib/program";
 import { ActivityValue } from "@/components/activity-value";
+import { avatarTint, initialsOf } from "@/lib/avatar";
 import { toast } from "sonner";
 
 interface HistoryRow {
@@ -264,6 +265,15 @@ export default function CustomerDetailContent({
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
+          {/* Monogram — same colour this customer carries in the list, so the
+              detail page reads as "the same person" at a glance. */}
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+              disabled ? "bg-muted text-muted-foreground" : avatarTint(displayName)
+            }`}
+          >
+            {initialsOf(displayName)}
+          </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold text-foreground">
