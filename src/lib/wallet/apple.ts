@@ -117,6 +117,10 @@ async function renderStampStrip(
     const rowStride = 2 * r + 18;
     const contentH = rows * 2 * r + (rows - 1) * 18;
     const startY = (H - contentH) / 2 + r;
+    // Reward-ready celebration: once the card is full, the stamps turn gold
+    // instead of the shop accent so the "you've earned it" moment pops.
+    const ready = stamps >= threshold;
+    const fill = ready ? "#f5b301" : fgHex;
     const marks: string[] = [];
     for (let i = 0; i < threshold; i++) {
       const row = Math.floor(i / perRow);
@@ -128,7 +132,7 @@ async function renderStampStrip(
       if (i < stamps) {
         // Filled stamp: solid disc with a small inset ring so it reads as
         // "stamped", not just a coloured dot.
-        marks.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fgHex}"/>`);
+        marks.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`);
         marks.push(
           `<circle cx="${cx}" cy="${cy}" r="${(r * 0.62).toFixed(1)}" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.5"/>`,
         );
@@ -246,7 +250,11 @@ export async function buildPkpass(
     pass.auxiliaryFields.push({
       key: "reward",
       label: t(d.language, "walletRewardLabel"),
-      value: t(d.language, "walletRewardValue", { threshold: d.threshold }),
+      // Once full, the reward field celebrates instead of restating the target.
+      value:
+        d.stamps >= d.threshold
+          ? t(d.language, "rewardReady")
+          : t(d.language, "walletRewardValue", { threshold: d.threshold }),
     });
   } else {
     // Perk passes (or a strip-render failure): the original field-only layout.
@@ -268,6 +276,16 @@ export async function buildPkpass(
       });
     }
   }
+  // Back of pass (the ⓘ flip side). A short "how it works" reusing the already-
+  // localized card copy, the recover link, and a Brewstamp footer — so the back
+  // isn't bare and gives the customer something to tap.
+  if (!d.perkMode) {
+    pass.backFields.push({
+      key: "howto",
+      label: t(d.language, "walletRewardLabel"),
+      value: t(d.language, "stampsAwayGeneric", { n: d.threshold }),
+    });
+  }
   // Back of pass: a tappable "recover my card" link. Only the wallet owner can
   // open it, so it safely restores their browser card if they lose the cookie.
   if (recoverUrl) {
@@ -277,6 +295,13 @@ export async function buildPkpass(
       value: t(d.language, "walletRecoverValue", { url: recoverUrl }),
     });
   }
+  // Brand footer — Apple linkifies the URL so it's tappable. Constant across
+  // languages (brand name + domain), so no translation needed.
+  pass.backFields.push({
+    key: "about",
+    label: "Brewstamp",
+    value: `${APP_URL.replace(/^https?:\/\//, "")}`,
+  });
 
   try {
     return pass.getAsBuffer();
