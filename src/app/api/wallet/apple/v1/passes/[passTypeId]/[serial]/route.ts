@@ -15,13 +15,18 @@ export async function GET(
   const pass = await WalletPass.findOne({ serial, provider: "apple" })
     .select("authToken")
     .lean<any>();
-  if (!pass) return new Response("Not found", { status: 404 });
+  if (!pass) {
+    console.log(`[Wallet/apple] refresh: NO PASS serial=${serial}`);
+    return new Response("Not found", { status: 404 });
+  }
 
   const auth = req.headers.get("authorization") || "";
   if (auth !== `ApplePass ${pass.authToken}`) {
+    console.log(`[Wallet/apple] refresh: AUTH FAILED serial=${serial}`);
     return new Response("Unauthorized", { status: 401 });
   }
 
+  console.log(`[Wallet/apple] refresh: serving latest pass serial=${serial}`);
   const buf = await pkpassForSerial(serial);
   if (!buf) return new Response("Not found", { status: 404 });
   return new Response(new Uint8Array(buf), {

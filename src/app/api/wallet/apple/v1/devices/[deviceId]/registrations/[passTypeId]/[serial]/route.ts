@@ -24,12 +24,21 @@ export async function POST(
 ) {
   const { deviceId, serial } = await params;
   const { pass, ok } = await authPass(serial, req);
-  if (!pass) return new Response("Not found", { status: 404 });
-  if (!ok) return new Response("Unauthorized", { status: 401 });
+  if (!pass) {
+    console.log(`[Wallet/apple] register: NO PASS for serial=${serial}`);
+    return new Response("Not found", { status: 404 });
+  }
+  if (!ok) {
+    console.log(`[Wallet/apple] register: AUTH FAILED serial=${serial} device=${deviceId}`);
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const body = await req.json().catch(() => ({}));
   const pushToken = body?.pushToken;
-  if (!pushToken) return new Response("Bad request", { status: 400 });
+  if (!pushToken) {
+    console.log(`[Wallet/apple] register: NO pushToken serial=${serial} device=${deviceId}`);
+    return new Response("Bad request", { status: 400 });
+  }
 
   const already = (pass.registrations || []).some(
     (r: any) => r.deviceLibraryIdentifier === deviceId,
@@ -40,6 +49,7 @@ export async function POST(
       { _id: pass._id, "registrations.deviceLibraryIdentifier": deviceId },
       { $set: { "registrations.$.pushToken": pushToken } },
     );
+    console.log(`[Wallet/apple] register: UPDATED token serial=${serial} device=${deviceId}`);
     return new Response(null, { status: 200 });
   }
 
@@ -51,6 +61,7 @@ export async function POST(
       },
     },
   );
+  console.log(`[Wallet/apple] register: NEW device serial=${serial} device=${deviceId} token=${String(pushToken).slice(0, 8)}…`);
   return new Response(null, { status: 201 });
 }
 

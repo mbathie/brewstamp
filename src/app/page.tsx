@@ -348,7 +348,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="scroll-mt-20 bg-white py-24">
+      <section id="how-it-works" className="scroll-mt-20 border-y border-stone-200 bg-stone-50 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
@@ -383,7 +383,7 @@ export default function Home() {
                 desc: "After collecting enough stamps, they automatically earn a reward. You choose the threshold — 6, 8, 10, it's up to you.",
               },
             ].map(({ icon: Icon, step, title, desc }) => (
-              <div key={step} className="relative rounded-2xl border border-stone-200 bg-stone-50 p-8">
+              <div key={step} className="relative rounded-2xl border border-stone-200 bg-white p-8">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
                   <Icon className="h-6 w-6 text-amber-700" />
                 </div>
@@ -401,7 +401,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="border-y border-stone-200 bg-stone-50 py-24">
+      <section className="bg-white py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
@@ -465,7 +465,7 @@ export default function Home() {
               return (
                 <div
                   key={title}
-                  className={`rounded-xl border border-stone-200 bg-white p-6 transition-shadow hover:shadow-md ${
+                  className={`rounded-xl border border-stone-200 bg-stone-50 p-6 transition-shadow hover:shadow-md ${
                     isLastOrphan ? "lg:col-start-2" : ""
                   }`}
                 >
@@ -483,7 +483,7 @@ export default function Home() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white py-20">
+      <section className="border-y border-stone-200 bg-stone-50 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
             Loyalty should be simple
@@ -517,7 +517,7 @@ export default function Home() {
       </section>
 
       {/* Languages */}
-      <section className="relative overflow-hidden border-y border-stone-200 bg-stone-50 py-20">
+      <section className="relative overflow-hidden bg-white py-20">
         <img
           src="/world-map.svg"
           alt=""
@@ -556,7 +556,7 @@ export default function Home() {
               <Link
                 key={name}
                 href={href}
-                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-stone-700 transition-colors hover:border-amber-300 hover:bg-amber-50"
+                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-4 py-1.5 text-stone-700 transition-colors hover:border-amber-300 hover:bg-amber-50"
               >
                 <span aria-hidden>{flag}</span>
                 <span className="text-stone-400">{hello}</span>

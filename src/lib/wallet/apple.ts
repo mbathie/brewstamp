@@ -2,6 +2,7 @@ import http2 from "http2";
 import { readFile } from "fs/promises";
 import path from "path";
 import { PKPass } from "passkit-generator";
+import sharp from "sharp";
 import { getColorHex, hexToRgb } from "@/lib/tailwind-colors";
 import { t } from "@/lib/i18n";
 import { APP_URL, appleWalletCreds } from "./config";
@@ -69,6 +70,70 @@ async function logoBytes(shopLogo: string | null): Promise<Buffer | null> {
 }
 
 /**
+ * Render a "punch card" strip: a row (or two, for large cards) of stamp tokens,
+ * filled up to the current count. Returns the @1x/@2x/@3x PNGs Apple wants for a
+ * storeCard strip, on a transparent background so the pass's own colour shows
+ * through. Best-effort — returns null on any failure so the pass still builds.
+ */
+async function renderStampStrip(
+  stamps: number,
+  threshold: number,
+  fgHex: string,
+): Promise<Record<string, Buffer> | null> {
+  try {
+    if (!Number.isFinite(threshold) || threshold < 1) return null;
+    const W = 375;
+    const H = 132;
+    const padX = 24;
+    const perRow = threshold <= 10 ? threshold : Math.ceil(threshold / 2);
+    const rows = Math.ceil(threshold / perRow);
+    const r = Math.max(
+      7,
+      Math.min((W - 2 * padX) / perRow / 2 - 6, rows === 1 ? 22 : 17),
+    );
+    const rowStride = 2 * r + 18;
+    const contentH = rows * 2 * r + (rows - 1) * 18;
+    const startY = (H - contentH) / 2 + r;
+    const marks: string[] = [];
+    for (let i = 0; i < threshold; i++) {
+      const row = Math.floor(i / perRow);
+      const countThisRow = Math.min(perRow, threshold - row * perRow);
+      const col = i - row * perRow;
+      const cell = (W - 2 * padX) / countThisRow;
+      const cx = padX + cell * col + cell / 2;
+      const cy = startY + row * rowStride;
+      if (i < stamps) {
+        // Filled stamp: solid disc with a small inset ring so it reads as
+        // "stamped", not just a coloured dot.
+        marks.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fgHex}"/>`);
+        marks.push(
+          `<circle cx="${cx}" cy="${cy}" r="${(r * 0.62).toFixed(1)}" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.5"/>`,
+        );
+      } else {
+        // Empty slot: outline ring at low opacity.
+        marks.push(
+          `<circle cx="${cx}" cy="${cy}" r="${(r - 1.5).toFixed(1)}" fill="none" stroke="${fgHex}" stroke-opacity="0.32" stroke-width="2.5"/>`,
+        );
+      }
+    }
+    const body = marks.join("");
+    const svg = (w: number, h: number) =>
+      Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${W} ${H}">${body}</svg>`,
+      );
+    const [x1, x2, x3] = await Promise.all([
+      sharp(svg(W, H)).png().toBuffer(),
+      sharp(svg(W * 2, H * 2)).png().toBuffer(),
+      sharp(svg(W * 3, H * 3)).png().toBuffer(),
+    ]);
+    return { "strip.png": x1, "strip@2x.png": x2, "strip@3x.png": x3 };
+  } catch (err) {
+    console.error("[Wallet/apple] strip render failed:", err);
+    return null;
+  }
+}
+
+/**
  * Build a signed .pkpass for a card. Returns null if Apple Wallet isn't
  * configured or assets can't be loaded. `authToken` is the per-pass secret the
  * device sends back on web-service calls; `serial` is the pass serialNumber.
@@ -91,6 +156,13 @@ export async function buildPkpass(
   const background = getColorHex(d.bgColor);
   const accent = getColorHex(d.fgColor);
 
+  // Loyalty passes get a punch-card strip that visualises the stamps — it fills
+  // the otherwise-empty card body with the progress customers actually care
+  // about. Perk passes have no stamp progression, so they keep the plain layout.
+  const strip = d.perkMode
+    ? null
+    : await renderStampStrip(d.stamps, d.threshold, accent);
+
   let pass: PKPass;
   try {
     pass = new PKPass(
@@ -99,6 +171,7 @@ export async function buildPkpass(
         "icon@2x.png": img,
         "logo.png": img,
         "logo@2x.png": img,
+        ...(strip ?? {}),
       },
       {
         wwdr: creds.wwdr,
@@ -128,22 +201,43 @@ export async function buildPkpass(
   pass.type = "storeCard";
   // No barcode: Brewstamp's flow is customer-scans-the-shop-QR, not
   // merchant-scans-the-pass, so a QR on the pass would be misleading.
-  pass.primaryFields.push({
-    key: "balance",
-    label: t(d.language, d.perkMode ? "walletRedeemedLabel" : "walletBalanceLabel"),
-    value: balanceString(d),
-  });
-  pass.secondaryFields.push({
-    key: "member",
-    label: t(d.language, "walletMemberLabel"),
-    value: d.customerName,
-  });
-  if (!d.perkMode) {
+  if (strip) {
+    // The strip carries the stamps visually; a header field keeps the running
+    // count visible even when the pass is collapsed in the stacked Wallet view.
+    pass.headerFields.push({
+      key: "count",
+      label: t(d.language, "walletBalanceLabel"),
+      value: `${d.stamps}/${d.threshold}`,
+    });
+    pass.secondaryFields.push({
+      key: "member",
+      label: t(d.language, "walletMemberLabel"),
+      value: d.customerName,
+    });
     pass.auxiliaryFields.push({
       key: "reward",
       label: t(d.language, "walletRewardLabel"),
       value: t(d.language, "walletRewardValue", { threshold: d.threshold }),
     });
+  } else {
+    // Perk passes (or a strip-render failure): the original field-only layout.
+    pass.primaryFields.push({
+      key: "balance",
+      label: t(d.language, d.perkMode ? "walletRedeemedLabel" : "walletBalanceLabel"),
+      value: balanceString(d),
+    });
+    pass.secondaryFields.push({
+      key: "member",
+      label: t(d.language, "walletMemberLabel"),
+      value: d.customerName,
+    });
+    if (!d.perkMode) {
+      pass.auxiliaryFields.push({
+        key: "reward",
+        label: t(d.language, "walletRewardLabel"),
+        value: t(d.language, "walletRewardValue", { threshold: d.threshold }),
+      });
+    }
   }
   // Back of pass: a tappable "recover my card" link. Only the wallet owner can
   // open it, so it safely restores their browser card if they lose the cookie.
@@ -170,7 +264,17 @@ export async function buildPkpass(
  */
 export async function applePushUpdate(pushTokens: string[]): Promise<void> {
   const creds = appleWalletCreds();
-  if (!creds || pushTokens.length === 0) return;
+  if (!creds) {
+    console.log("[Wallet/apple] push: SKIPPED — Apple Wallet not configured");
+    return;
+  }
+  if (pushTokens.length === 0) {
+    console.log(
+      "[Wallet/apple] push: SKIPPED — 0 registered devices (pass never registered; re-add the pass to fix)",
+    );
+    return;
+  }
+  console.log(`[Wallet/apple] push: sending to ${pushTokens.length} device(s)`);
 
   let client: http2.ClientHttp2Session;
   try {
@@ -220,6 +324,10 @@ export async function applePushUpdate(pushTokens: string[]): Promise<void> {
           req.on("end", () => {
             if (status && status !== 200) {
               console.error(`[Wallet/apple] APNs ${status}:`, body);
+            } else {
+              console.log(
+                `[Wallet/apple] APNs ${status || "?"} ok for ${token.slice(0, 8)}…`,
+              );
             }
             resolve();
           });

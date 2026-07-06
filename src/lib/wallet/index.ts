@@ -275,9 +275,18 @@ export async function syncWalletPasses(cardId: string): Promise<void> {
     const passes = await WalletPass.find({ card: cardId })
       .select("provider registrations")
       .lean<any[]>();
-    if (!passes.length) return;
+    if (!passes.length) {
+      console.log(`[Wallet] sync: no passes for card=${cardId} (nothing to push)`);
+      return;
+    }
     const d = await buildCardData(cardId);
     if (!d) return;
+    const applePass = passes.find((p) => p.provider === "apple");
+    console.log(
+      `[Wallet] sync card=${cardId} stamps=${d.stamps}/${d.threshold} providers=[${passes
+        .map((p) => p.provider)
+        .join(",")}] appleRegs=${(applePass?.registrations || []).length}`,
+    );
     for (const p of passes) {
       if (p.provider === "google") {
         await googleUpdateObject(d);

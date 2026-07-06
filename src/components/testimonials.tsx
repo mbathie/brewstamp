@@ -56,14 +56,14 @@ export default function Testimonials() {
           </h2>
         </div>
 
-        <div className="relative mt-14 overflow-hidden" style={{ minHeight: 220 }}>
+        <div className="relative mt-14 overflow-hidden" style={{ minHeight: 240 }}>
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className={`absolute inset-0 flex flex-col items-center text-center transition-all duration-700 ease-in-out ${
+              className={`absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-700 ease-in-out ${
                 i === active
                   ? "translate-y-0 opacity-100"
-                  : "translate-y-8 opacity-0 pointer-events-none"
+                  : "translate-y-4 opacity-0 pointer-events-none"
               }`}
             >
               <Quote className="mb-6 h-8 w-8 text-amber-500/30" />
