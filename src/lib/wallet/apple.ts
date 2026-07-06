@@ -21,7 +21,12 @@ import type { WalletCardData } from "./google";
  * (appleWalletCreds() returns null) — the app behaves as browser-card-only.
  */
 
-const WEB_SERVICE_URL = `${APP_URL}/api/wallet/apple/v1`;
+// Apple appends the versioned path itself: iOS calls
+// `{webServiceURL}/v1/devices/…`, `{webServiceURL}/v1/passes/…`, etc. So the
+// baked-in webServiceURL must be the BASE (no `/v1`) — our routes live at
+// `/api/wallet/apple/v1/…`. Including `/v1` here doubled it to `…/v1/v1/…`,
+// which 404s, so devices never registered and balances never pushed.
+const WEB_SERVICE_URL = `${APP_URL}/api/wallet/apple`;
 const APNS_HOST = "https://api.push.apple.com:443";
 
 // Apple wants rgb(r, g, b) strings, not hex. Convert from the shop's accent.
