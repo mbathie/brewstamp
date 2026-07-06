@@ -131,6 +131,29 @@ function loyaltyPoints(d: WalletCardData) {
   };
 }
 
+// Detail-view text blocks, mirroring the Apple pass back fields: a short "how it
+// works" (reusing the already-localized card copy) plus a "Reward ready!" note
+// once the card is full. Recomputed on every balance PATCH so the ready note
+// appears/clears as stamps change. Empty for perk passes (no stamp progression).
+function objectTextModules(d: WalletCardData) {
+  if (d.perkMode) return [];
+  const mods = [
+    {
+      id: "howto",
+      header: t(d.language, "walletRewardLabel"),
+      body: t(d.language, "stampsAwayGeneric", { n: d.threshold }),
+    },
+  ];
+  if (d.stamps >= d.threshold) {
+    mods.push({
+      id: "ready",
+      header: t(d.language, "walletRewardLabel"),
+      body: t(d.language, "rewardReady"),
+    });
+  }
+  return mods;
+}
+
 function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
   return {
     id: objectId(issuerId, d.cardId),
@@ -139,6 +162,7 @@ function loyaltyObjectBody(issuerId: string, d: WalletCardData) {
     accountName: d.customerName,
     accountId: d.cardId,
     loyaltyPoints: loyaltyPoints(d),
+    textModulesData: objectTextModules(d),
     // No barcode: Brewstamp's flow is customer-scans-the-shop-QR, not
     // merchant-scans-the-pass, so a QR on the pass is misleading. null (not
     // omitted) so a PATCH clears it from already-saved passes too.
@@ -297,5 +321,7 @@ export async function googleUpdateObject(d: WalletCardData): Promise<void> {
     // accountName so a customer name change propagates to the saved pass.
     accountName: d.customerName,
     loyaltyPoints: loyaltyPoints(d),
+    // Recompute so the "Reward ready!" note appears/clears with the balance.
+    textModulesData: objectTextModules(d),
   });
 }
