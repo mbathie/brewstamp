@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, Maximize, Check, Printer, Wifi, WifiOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { generateQRCodeWithLogo } from "@/lib/qr";
 import { getColorHex } from "@/lib/tailwind-colors";
 import { getPatternCSS } from "@/lib/patterns";
@@ -238,25 +239,33 @@ export default function PresentMode({
         </div>
       </div>
 
-      {/* Footer — per-device default toggle + printing pointer. Small, for staff. */}
-      <div
-        className="relative z-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 px-4 py-3 text-xs"
-        style={{ color: fgHex, opacity: 0.6 }}
-      >
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isDefault}
-            onChange={onToggleDefault}
-            className="size-3.5 cursor-pointer accent-current"
-          />
-          Open this screen automatically on this device
+      {/* Footer — per-device default toggle + printing pointer. Staff controls,
+          styled as clear pills on a subtle scrim so they read on any brand
+          colour without shouting at the customer. */}
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 px-4 py-4 text-sm">
+        <label
+          className="flex cursor-pointer items-center gap-3 rounded-full border px-4 py-2"
+          style={{
+            color: fgHex,
+            borderColor: `${fgHex}55`,
+            backgroundColor: "rgba(0,0,0,0.16)",
+          }}
+        >
+          <Switch checked={isDefault} onCheckedChange={onToggleDefault} />
+          <span className="font-medium">
+            Open automatically on this device
+          </span>
         </label>
         <a
           href="/dashboard/settings"
-          className="flex items-center gap-1.5 underline-offset-2 hover:underline"
+          className="flex items-center gap-2 rounded-full border px-4 py-2 font-medium transition-colors hover:bg-black/10"
+          style={{
+            color: fgHex,
+            borderColor: `${fgHex}33`,
+            backgroundColor: "rgba(0,0,0,0.16)",
+          }}
         >
-          <Printer className="size-3.5" />
+          <Printer className="size-4" />
           Prefer a printout?
         </a>
       </div>
