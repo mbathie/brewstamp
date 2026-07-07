@@ -87,9 +87,9 @@ export default function DashboardClient({
   }, []);
 
   function enterPresent() {
-    // The click is a user gesture, so we can request fullscreen for a true
-    // kiosk feel (best-effort — ignored where unsupported/denied).
-    document.documentElement.requestFullscreen?.().catch(() => {});
+    // Stays contained in the browser window (the overlay is fixed inset-0) —
+    // no OS fullscreen. Staff can opt into true fullscreen via the button
+    // inside the overlay if they want a dedicated kiosk.
     setPresenting(true);
   }
 
