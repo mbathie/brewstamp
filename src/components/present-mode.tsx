@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { X, Maximize, Check, Printer, Wifi, WifiOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { generateQRCodeWithLogo } from "@/lib/qr";
@@ -256,8 +257,11 @@ export default function PresentMode({
             Always show the check-in code on this device
           </span>
         </label>
-        <a
+        {/* Exits present mode AND navigates client-side (no full reload) so that,
+            with "always show" on, it doesn't just bounce straight back to the QR. */}
+        <Link
           href="/dashboard/settings"
+          onClick={onExit}
           className="flex items-center gap-2 rounded-full border px-4 py-2 font-medium transition-colors hover:bg-black/10"
           style={{
             color: fgHex,
@@ -267,7 +271,7 @@ export default function PresentMode({
         >
           <Printer className="size-4" />
           Prefer a printout?
-        </a>
+        </Link>
       </div>
 
       {/* Success flash — 1.5s confirmation after an approval, then the parent

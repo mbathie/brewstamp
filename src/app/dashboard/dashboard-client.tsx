@@ -100,6 +100,27 @@ export default function DashboardClient({
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
   }
 
+  // Kiosk return-to-QR: when "always show on this device" is on and the merchant
+  // has exited to do admin, bring the QR back once the device is genuinely
+  // unattended. Any interaction resets the timer, so active use never gets
+  // yanked back — it only returns when someone walks away from the counter.
+  const IDLE_RETURN_MS = 90_000;
+  useEffect(() => {
+    if (!isDefault || presenting) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setPresenting(true), IDLE_RETURN_MS);
+    };
+    const events = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, arm, { passive: true }));
+    arm();
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, arm));
+    };
+  }, [isDefault, presenting]);
+
   function toggleDefault() {
     setIsDefault((prev) => {
       const next = !prev;
