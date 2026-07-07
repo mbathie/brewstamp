@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket } from "@/lib/websocket";
 import StampRequestModal from "@/components/stamp-request-modal";
+import PresentMode, { type PresentFlash } from "@/components/present-mode";
+import { Button } from "@/components/ui/button";
+import { QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 interface StampRequestData {
@@ -24,13 +27,91 @@ interface Props {
   shopCode: string;
   shopId: string;
   threshold: number;
+  // Branding for the full-screen "present" (counter display) view.
+  shopName: string;
+  shopLogo: string | null;
+  perkMode: boolean;
+  dailyDrinkLimit: number;
+  bgColor: string;
+  fgColor: string;
+  bgPattern: string;
+  language: string;
 }
 
-export default function DashboardClient({ shopCode, shopId, threshold }: Props) {
+export default function DashboardClient({
+  shopCode,
+  shopId,
+  threshold,
+  shopName,
+  shopLogo,
+  perkMode,
+  dailyDrinkLimit,
+  bgColor,
+  fgColor,
+  bgPattern,
+  language,
+}: Props) {
   const router = useRouter();
   const [currentRequest, setCurrentRequest] = useState<StampRequestData | null>(null);
   const currentRequestRef = useRef<StampRequestData | null>(null);
   const { connected, send, on } = useWebSocket(shopCode, "merchant", "merchant");
+
+  // Present ("counter display") mode. A per-device localStorage flag lets a
+  // dedicated counter tablet boot straight into it while the owner's laptop
+  // still opens to the dashboard. `flash` shows the 1.5s ✓ after an approval.
+  const PRESENT_KEY = `bs_present_default:${shopId}`;
+  const [presenting, setPresenting] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
+  const [flash, setFlash] = useState<PresentFlash | null>(null);
+  const presentingRef = useRef(false);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    presentingRef.current = presenting;
+  }, [presenting]);
+
+  // Restore the per-device preference on mount.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(PRESENT_KEY) === "1") {
+        setIsDefault(true);
+        setPresenting(true);
+      }
+    } catch {
+      /* private mode / no storage */
+    }
+    return () => {
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function enterPresent() {
+    // The click is a user gesture, so we can request fullscreen for a true
+    // kiosk feel (best-effort — ignored where unsupported/denied).
+    document.documentElement.requestFullscreen?.().catch(() => {});
+    setPresenting(true);
+  }
+
+  function exitPresent() {
+    setPresenting(false);
+    setFlash(null);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  }
+
+  function toggleDefault() {
+    setIsDefault((prev) => {
+      const next = !prev;
+      try {
+        if (next) localStorage.setItem(PRESENT_KEY, "1");
+        else localStorage.removeItem(PRESENT_KEY);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   // Keep ref in sync so the event handler always has the latest value
   useEffect(() => {
@@ -186,7 +267,8 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
         router.refresh();
         window.dispatchEvent(new Event("stamp-approved"));
 
-        if (currentRequest?.perk || data.perk) {
+        const isPerk = !!(currentRequest?.perk || data.perk);
+        if (isPerk) {
           toast.success(`${name} — free reward approved`);
         } else {
           const parts: string[] = [];
@@ -199,11 +281,25 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
           parts.push(`(${data.stampCard.stamps}/${threshold} stamps)`);
           toast.success(`${name} — ${parts.join(", ")}`);
         }
+
+        // In present mode, flash a ✓ confirmation over the QR for staff, then
+        // fall back to the QR for the next customer.
+        if (presentingRef.current) {
+          if (flashTimer.current) clearTimeout(flashTimer.current);
+          setFlash({
+            name,
+            stamps: data.stampCard.stamps,
+            threshold,
+            redeemed: !!redeem,
+            perk: isPerk,
+          });
+          flashTimer.current = setTimeout(() => setFlash(null), 1500);
+        }
       }
 
       setCurrentRequest(null);
     },
-    [currentRequest, send, router]
+    [currentRequest, send, router, threshold]
   );
 
   const handleReject = useCallback(
@@ -235,6 +331,39 @@ export default function DashboardClient({ shopCode, shopId, threshold }: Props) 
           {connected ? "Live" : "Disconnected"}
         </span>
       </div>
+
+      {/* Zero-print onboarding path: flip the screen and let the customer scan. */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={enterPresent}
+        className="cursor-pointer gap-1.5"
+        title="Show a full-screen QR to flip toward your customer"
+      >
+        <QrCode className="size-4" />
+        <span className="hidden sm:inline">Show QR</span>
+      </Button>
+
+      {presenting && (
+        <PresentMode
+          shopCode={shopCode}
+          shopName={shopName}
+          shopLogo={shopLogo}
+          threshold={threshold}
+          perkMode={perkMode}
+          dailyDrinkLimit={dailyDrinkLimit}
+          bgColor={bgColor}
+          fgColor={fgColor}
+          bgPattern={bgPattern}
+          language={language}
+          connected={connected}
+          flash={flash}
+          isDefault={isDefault}
+          onToggleDefault={toggleDefault}
+          onExit={exitPresent}
+        />
+      )}
+
       <StampRequestModal
         request={currentRequest}
         onApprove={handleApprove}

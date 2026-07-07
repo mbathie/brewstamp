@@ -482,21 +482,24 @@ export default function DashboardContent({
                     <div className="flex items-center gap-2">
                       <Download className="h-4 w-4 text-amber-700" />
                       <p className="font-medium text-foreground">
-                        Download &amp; print your QR code
+                        Show your QR code — print it, or use your screen
                       </p>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Go to{" "}
+                      <strong className="text-foreground">No printer?</strong>{" "}
+                      Tap{" "}
+                      <span className="font-medium text-amber-700">Show QR</span>{" "}
+                      in the top bar to fill your screen with the code, then flip
+                      your laptop or tablet around so the customer can scan it —
+                      no printout needed. Prefer paper? Go to{" "}
                       <Link
                         href="/dashboard/settings"
                         className="font-medium text-amber-700 hover:underline"
                       >
                         Shop Setup
                       </Link>{" "}
-                      to download a printable PDF with your shop&apos;s unique
-                      QR code. Print it out and place it where customers can
-                      easily scan it — at the register, on the counter, or next
-                      to the menu.
+                      to download a printable PDF and place it at the register or
+                      on the counter.
                     </p>
                   </div>
                 </div>

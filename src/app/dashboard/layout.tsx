@@ -149,6 +149,14 @@ export default async function DashboardLayout({
                 shopCode={ctx.shop.code}
                 shopId={ctx.shop._id.toString()}
                 threshold={ctx.shop.stampThreshold || 8}
+                shopName={ctx.shop.name}
+                shopLogo={ctx.shop.logo || null}
+                perkMode={!!ctx.shop.perkMode}
+                dailyDrinkLimit={ctx.shop.dailyDrinkLimit || 2}
+                bgColor={ctx.shop.bgColor || "stone-800"}
+                fgColor={ctx.shop.fgColor || "amber-600"}
+                bgPattern={ctx.shop.bgPattern || "none"}
+                language={ctx.shop.language || "en"}
               />
             )}
             <div className="ml-auto flex items-center gap-3">
