@@ -253,7 +253,7 @@ export default function PresentMode({
         >
           <Switch checked={isDefault} onCheckedChange={onToggleDefault} />
           <span className="font-medium">
-            Open automatically on this device
+            Always show the check-in code on this device
           </span>
         </label>
         <a
