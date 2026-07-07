@@ -253,37 +253,20 @@ export default function QrDisplay({
     }
   }
 
-  async function handleDownloadQrImage() {
-    // Generate a high-res, transparent QR PNG so it scales nicely.
-    const hiResQr = await generateQRCodeWithLogo(`${appUrl}/s/${shopCode}`, {
-      width: 1200,
-      logoColor: fgHex,
-    });
-    const filename = `brewstamp-${shopCode}-qr.png`;
-    const a = document.createElement("a");
-    a.href = hiResQr;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast.success(`${filename} downloaded`, {
-      description: "Check your Downloads folder.",
-    });
-  }
-
   const actionButtons = (
     <>
       <Button
         variant={variant === "compact" ? "default" : "outline"}
         size={variant === "compact" ? "sm" : "default"}
-        onClick={handleDownloadQrImage}
-        disabled={!qrUrl}
+        // Open the full-screen counter display (same as the top-bar "Show QR").
+        // DashboardClient (in the layout) listens for this event.
+        onClick={() => window.dispatchEvent(new Event("bs:open-present"))}
         className={
           variant === "compact" ? "cursor-pointer" : "flex-1 cursor-pointer"
         }
       >
         <QrCode className="mr-2 h-4 w-4" />
-        QR
+        Show QR
       </Button>
       <Button
         variant={variant === "compact" ? "default" : "outline"}

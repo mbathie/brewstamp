@@ -134,6 +134,14 @@ export default function DashboardClient({
     });
   }
 
+  // Other parts of the dashboard (e.g. the "QR" button in Shop Setup) live in a
+  // different subtree, so they ask us to open present mode via a window event.
+  useEffect(() => {
+    const open = () => setPresenting(true);
+    window.addEventListener("bs:open-present", open);
+    return () => window.removeEventListener("bs:open-present", open);
+  }, []);
+
   // Keep ref in sync so the event handler always has the latest value
   useEffect(() => {
     currentRequestRef.current = currentRequest;
