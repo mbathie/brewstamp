@@ -13,6 +13,7 @@ import { ArrowLeft, Coffee } from "lucide-react";
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,6 +25,16 @@ function RegisterForm() {
   const rawCallback = searchParams.get("callbackUrl");
   const callbackUrl =
     rawCallback && rawCallback.startsWith("/") ? rawCallback : "/dashboard";
+
+  // If the visitor is already signed in (e.g. they returned here after an
+  // OAuth round-trip, or reloaded), send them to the callbackUrl rather than
+  // hard-coding /dashboard — otherwise invitees get bounced into the
+  // "create a shop" onboarding and never reach /invite/<token> to accept.
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callbackUrl);
+    }
+  }, [status, router, callbackUrl]);
 
   async function handlePasswordRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -199,19 +210,6 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  const { status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/dashboard");
-    }
-  }, [status, router]);
-
-  if (status === "authenticated") {
-    return null;
-  }
-
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
       <img
