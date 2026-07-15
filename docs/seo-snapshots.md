@@ -15,10 +15,23 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 |---|---|---|---|---|---|
 | 2026-07-10 | 06-10 → 07-07 | 6,294 (+65%) | 105 (+5%) | 1.7% | 15.0 |
 | 2026-07-13 | 06-14 → 07-11 | 6,314 (+61%) | 96 (−16%) | 1.5% | 14.7 |
+| 2026-07-15 | 06-16 → 07-13 | 6,511 (+61%) | 95 (−12%) | 1.5% | 14.5 |
 
 **Trend:** impressions compounding (+60%+ MoM) but clicks have turned negative —
 visibility is stuck on page 2 (avg pos ~15) where it doesn't convert. The click
-decline is driven by the **homepage** (see 2026-07-13 note).
+decline is driven by the **homepage** (see 2026-07-13 note). No recommendations
+actioned as of 2026-07-15, so the trend continues unchanged.
+
+---
+
+## 2026-07-15
+
+- **Impressions:** 6,511 (+61%) · **Clicks:** 95 (−12%) · **CTR:** 1.5% (−1.2pp) · **Avg pos:** 14.5
+- **No changes shipped** since 07-13 — homepage meta still the experiment copy (not reverted), key blog page not pushed, `/coffee-rewards-app` untouched. Numbers hold flat-to-eroding as predicted.
+- Homepage `/`: still 71 clicks, pos 19.0, 2.4% CTR — unchanged (confirms the meta hasn't been touched).
+- `/blog/coffee-shop-loyalty-cards`: 3,510 impr (54% of site), pos **14.8** — drifting up on its own across the three snapshots (15.7 → 15.2 → 14.8), inching toward page 1. Still 0.2% CTR. A small push (internal links / content refresh) would likely tip it over.
+- `/coffee-rewards-app`: 510 impr, pos 41.6 — still broken.
+- New rising long-tail: "coffeeshop loyalty program" (+457%, pos 19.3), "coffee shop loyalty program" (+443%, pos 26).
 
 ---
 
