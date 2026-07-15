@@ -28,12 +28,14 @@ export const metadata: Metadata = {
     absolute:
       "Coffee Loyalty Card App — Free, No Customer App | Brewstamp",
   },
-  // CTR experiment (2026-06-13): front-load the pain→solution hook and a clear
-  // CTA. Meta descriptions are ranking-neutral, so this only moves CTR — the
-  // homepage carries ~83% of impressions, so it's the highest-leverage SERP
-  // copy. Compare CTR vs the prior description in the early-July GSC report.
+  // The 2026-06-13 "punchier" experiment (which dropped "stamp card" /
+  // "collect stamps") underperformed: homepage CTR fell 3.34% → 2.40% over the
+  // following 4 weeks (see docs/seo-snapshots.md, 2026-07-13). Restore the
+  // stamp-card keywords Google bolds against high-impression queries
+  // ("coffee stamp card", "coffee shop loyalty cards"), while keeping the
+  // accurate "Free to start" (the old "first 100 stamps" claim is now stale).
   description:
-    "Replace paper punch cards with a digital coffee loyalty card. Customers scan a QR code — no app, no signup — and earn a free coffee. Free to start.",
+    "A digital coffee loyalty card and stamp card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free to start.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
   // Homepage owns the "loyalty card / stamp card" cluster. The "coffee rewards
   // app/card" cluster is deliberately left to /coffee-rewards-app so the two
