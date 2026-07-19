@@ -16,11 +16,23 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-07-10 | 06-10 → 07-07 | 6,294 (+65%) | 105 (+5%) | 1.7% | 15.0 |
 | 2026-07-13 | 06-14 → 07-11 | 6,314 (+61%) | 96 (−16%) | 1.5% | 14.7 |
 | 2026-07-15 | 06-16 → 07-13 | 6,511 (+61%) | 95 (−12%) | 1.5% | 14.5 |
+| 2026-07-19 | 06-20 → 07-17 | 6,890 (+56%) | 99 (−11%) | 1.4% | 14.2 |
 
 **Trend:** impressions compounding (+60%+ MoM) but clicks have turned negative —
 visibility is stuck on page 2 (avg pos ~15) where it doesn't convert. The click
-decline is driven by the **homepage** (see 2026-07-13 note). No recommendations
-actioned as of 2026-07-15, so the trend continues unchanged.
+decline was driven by the **homepage** (see 2026-07-13 note); homepage meta
+restored 2026-07-15 (commit 45ab3f5), too early to judge. Avg position is
+steadily improving (15.0 → 14.2) — the money page is drifting toward page 1.
+
+---
+
+## 2026-07-19
+
+- **Impressions:** 6,890 (+56%) · **Clicks:** 99 (−11%) · **CTR:** 1.4% · **Avg pos:** 14.2
+- **Homepage meta revert (07-15) — too early to judge.** Only ~3 days of post-deploy data; the 28d window is still dominated by the old snippet. Homepage `/` this window: 76 clicks, pos 18.9, 2.5% CTR (≈unchanged, as expected). Re-evaluate in the ~2026-08-05 snapshot.
+- `/blog/coffee-shop-loyalty-cards`: 3,732 impr (54% of site), pos **14.1** — continues climbing (15.7 → 15.2 → 14.8 → 14.1), right at the page-1 boundary. Still page-2 CTR (~0.1%).
+- `/coffee-rewards-app`: pos 37.1 (was 41.6) — improving but still deep.
+- Watch: `/alternatives/square-loyalty` slipped to pos 14.7 (was ~6) — fell off page 1 this window. `/alternatives/punchpass` still strong (pos 4.1, 4.6% CTR).
 
 ---
 
