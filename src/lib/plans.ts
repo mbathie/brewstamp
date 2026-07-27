@@ -200,6 +200,25 @@ export function resolvePlanPriceId(
 // Match a Stripe price ID back to a plan slug, regardless of interval. Used
 // by the billing page to identify the user's current plan tier from their
 // Subscription doc.
+// Historical AUD price IDs from before the 2026-07-28 switch to USD pricing.
+// Existing subscriptions still carry these, and they no longer match the
+// current STRIPE_PRICE_* env vars (now USD), so without this map every legacy
+// sub would fall through to "legacy Pro" — mis-reporting MRR and mis-labelling
+// tiers. Map each to its plan + interval so classification keeps working
+// without re-pricing anyone. (The US$5 STRIPE_PRICE_ID Pro is intentionally
+// absent — it stays a genuine legacy $5 sub.)
+const LEGACY_PRICE_IDS: Record<
+  string,
+  { slug: PlanSlug; interval: BillingInterval }
+> = {
+  price_1TdLiFHxHWKx0vW1hxK3RRYW: { slug: "pro", interval: "month" }, // Pro A$7/mo
+  price_1Tgb6SHxHWKx0vW11dqmu96g: { slug: "pro", interval: "year" }, // Pro A$77/yr
+  price_1TdLiHHxHWKx0vW189oSCDPX: { slug: "plus", interval: "month" }, // Plus A$19/mo
+  price_1Tgb6THxHWKx0vW1pSsb9qQ7: { slug: "plus", interval: "year" }, // Plus A$209/yr
+  price_1TdLiIHxHWKx0vW1BLazXMgu: { slug: "max", interval: "month" }, // Max A$29/mo
+  price_1Tgb6UHxHWKx0vW1H90R8Xhx: { slug: "max", interval: "year" }, // Max A$319/yr
+};
+
 export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
   for (const p of PLANS) {
     if (
@@ -210,6 +229,8 @@ export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
       return p;
     }
   }
+  const legacy = LEGACY_PRICE_IDS[priceId];
+  if (legacy) return getPlanBySlug(legacy.slug);
   return undefined;
 }
 
@@ -267,5 +288,7 @@ export function getIntervalByPriceId(
       return "year";
     }
   }
+  const legacy = LEGACY_PRICE_IDS[priceId];
+  if (legacy) return legacy.interval;
   return undefined;
 }
