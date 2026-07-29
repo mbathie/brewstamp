@@ -59,9 +59,72 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-cards",
   datePublished: "2026-05-05",
-  dateModified: "2026-05-29",
+  dateModified: "2026-07-29",
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+};
+
+// Single source of truth for the FAQ — drives both the visible accordion and
+// the FAQPage structured data below, so they can never drift apart.
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: "How many stamps should a coffee shop loyalty card require?",
+    a: "Eight is the most common threshold and works for most cafes. Six is friendlier for newer shops trying to build regulars; ten makes sense if your average drink price is lower or your margins are tight. <a href=\"/blog/how-many-stamps-for-a-free-coffee\" class=\"font-medium text-amber-700 underline hover:text-amber-800\">See the full breakdown of stamp thresholds and the maths behind each →</a>",
+  },
+  {
+    q: "What's the best reward for a coffee shop loyalty card?",
+    a: "A free regular coffee. It&apos;s simple to explain, has a clear perceived value, and consistently outperforms percentage discounts in customer testing.",
+  },
+  {
+    q: "Are digital coffee shop loyalty cards better than punch cards?",
+    a: "For most coffee shops, yes. Digital coffee shop loyalty cards eliminate lost cards and stamp fraud, give you customer data you can actually use, and remove the recurring cost of printing cards and stamp pads.",
+  },
+  {
+    q: "Do customers need to download an app to use a digital loyalty card?",
+    a: "Not with the right platform. Browser-based digital loyalty cards open a web page when the customer scans the QR code — no App Store, no install, no account creation.",
+  },
+  {
+    q: "How much does a coffee shop loyalty program cost?",
+    a: "Paper cards cost a few cents each plus stamps and ink. Digital coffee shop loyalty programs start free and typically cap at $5–10/month for unlimited stamps on small-business plans.",
+  },
+  {
+    q: "What's the difference between a coffee rewards card and a coffee loyalty card?",
+    a: "In practice, none. &quot;Coffee rewards card&quot; and &quot;coffee loyalty card&quot; describe the same thing — a card (paper or digital) that earns the customer a reward after a number of purchases. Some chains use &quot;rewards&quot; for points-based systems and &quot;loyalty&quot; for stamp-based, but the line is fuzzy and not worth defending.",
+  },
+  {
+    q: "Is there a good coffee loyalty app or cafe loyalty app for independent shops?",
+    a: "Most coffee loyalty apps are built for chains and require customers to download an app — which kills uptake in independent cafes. The simpler model is a browser-based cafe loyalty app: customers scan a QR, get a stamp, no install. <a href=\"/alternatives\" class=\"font-medium text-amber-700 underline hover:text-amber-800\">See how the common cafe loyalty apps compare →</a>",
+  },
+  {
+    q: "What are some good loyalty program ideas for coffee shops?",
+    a: "The best coffee shop loyalty program ideas keep the core reward dead simple and layer extras on top: a free coffee after 8 stamps as the base, a free-pastry milestone on the 10th visit, a birthday coffee to capture an email, and a lower launch threshold (buy 5, get 1) while you build a base. Skip percentage discounts and points tiers — for a cafe doing mostly coffee, stamps toward a free drink out-perform both.",
+  },
+  {
+    q: "How long does it take customers to fill a coffee shop loyalty card?",
+    a: "From our own data: daily regulars fill an 8-stamp card in about 2 weeks. Weekly-ish customers take 2 months. Casual visitors take 3+ months and many never finish. If you&apos;re seeing &lt;10% redemption rates after 90 days, the threshold may be too high or the reward too small.",
+  },
+];
+
+// Strip inline HTML + decode the handful of entities we use, so the FAQPage
+// schema carries clean plain-text answers (what Google expects).
+const faqPlain = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+→/g, "")
+    .trim();
+
+const faqLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: faqPlain(f.a) },
+  })),
 };
 
 export default function BlogPost() {
@@ -70,6 +133,10 @@ export default function BlogPost() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-28 pb-16">
@@ -88,7 +155,8 @@ export default function BlogPost() {
               in someone&apos;s back pocket is quietly costing you customers.
             </p>
             <p className="mt-3 text-sm text-stone-400">
-              Published <time dateTime="2026-05-05">5 May 2026</time>
+              Published <time dateTime="2026-05-05">5 May 2026</time> · Updated{" "}
+              <time dateTime="2026-07-29">29 Jul 2026</time>
             </p>
           </header>
 
@@ -417,6 +485,62 @@ export default function BlogPost() {
             </p>
           </section>
 
+          {/* Section — Coffee loyalty app angle (targets the "coffee loyalty
+              app" / "cafe loyalty app" query cluster the page ranks ~p12 for
+              but had no dedicated section on). */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+              Do you need a coffee loyalty app?
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-stone-600">
+              Search &quot;coffee loyalty app&quot; and you&apos;ll find dozens of
+              apps that ask <em>your customers</em> to download something. For a
+              chain with a marketing team, that can work. For an independent
+              coffee shop, a downloadable cafe loyalty app is usually the wrong
+              tool: most people won&apos;t install an app to save 50 cents on a
+              flat white, and every install step is a place to lose them.
+            </p>
+            <p className="mt-4 text-base leading-relaxed text-stone-600">
+              There are really two kinds of &quot;coffee loyalty app&quot;:
+            </p>
+            <ul className="mt-6 space-y-4">
+              <li className="flex gap-3 text-base leading-relaxed text-stone-600">
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                <span>
+                  <strong className="text-stone-800">
+                    A customer-facing app they install.
+                  </strong>{" "}
+                  Highest friction, lowest uptake. Only worth it if you have the
+                  volume and budget to push downloads.
+                </span>
+              </li>
+              <li className="flex gap-3 text-base leading-relaxed text-stone-600">
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                <span>
+                  <strong className="text-stone-800">
+                    A browser-based cafe loyalty app.
+                  </strong>{" "}
+                  The customer scans a QR code and their digital coffee loyalty
+                  card opens in the browser — no App Store, no install. You get
+                  the data and stamp-approval control of an app without asking
+                  anyone to download one.
+                </span>
+              </li>
+            </ul>
+            <p className="mt-6 text-base leading-relaxed text-stone-600">
+              For most cafes the second option wins: the same result as a coffee
+              loyalty app, none of the friction that kills sign-ups. We go deeper
+              on this in our guide to{" "}
+              <Link
+                href="/cafe-loyalty-app"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                the cafe loyalty app with no customer download
+              </Link>
+              .
+            </p>
+          </section>
+
           {/* Section 5 — Picking the right one */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
@@ -511,40 +635,7 @@ export default function BlogPost() {
               Frequently asked questions
             </h2>
             <div className="mt-6 space-y-6">
-              {[
-                {
-                  q: "How many stamps should a coffee shop loyalty card require?",
-                  a: "Eight is the most common threshold and works for most cafes. Six is friendlier for newer shops trying to build regulars; ten makes sense if your average drink price is lower or your margins are tight. <a href=\"/blog/how-many-stamps-for-a-free-coffee\" class=\"font-medium text-amber-700 underline hover:text-amber-800\">See the full breakdown of stamp thresholds and the maths behind each →</a>",
-                },
-                {
-                  q: "What's the best reward for a coffee shop loyalty card?",
-                  a: "A free regular coffee. It&apos;s simple to explain, has a clear perceived value, and consistently outperforms percentage discounts in customer testing.",
-                },
-                {
-                  q: "Are digital coffee shop loyalty cards better than punch cards?",
-                  a: "For most coffee shops, yes. Digital coffee shop loyalty cards eliminate lost cards and stamp fraud, give you customer data you can actually use, and remove the recurring cost of printing cards and stamp pads.",
-                },
-                {
-                  q: "Do customers need to download an app to use a digital loyalty card?",
-                  a: "Not with the right platform. Browser-based digital loyalty cards open a web page when the customer scans the QR code — no App Store, no install, no account creation.",
-                },
-                {
-                  q: "How much does a coffee shop loyalty program cost?",
-                  a: "Paper cards cost a few cents each plus stamps and ink. Digital coffee shop loyalty programs start free and typically cap at $5–10/month for unlimited stamps on small-business plans.",
-                },
-                {
-                  q: "What's the difference between a coffee rewards card and a coffee loyalty card?",
-                  a: "In practice, none. &quot;Coffee rewards card&quot; and &quot;coffee loyalty card&quot; describe the same thing — a card (paper or digital) that earns the customer a reward after a number of purchases. Some chains use &quot;rewards&quot; for points-based systems and &quot;loyalty&quot; for stamp-based, but the line is fuzzy and not worth defending.",
-                },
-                {
-                  q: "Is there a good coffee rewards app or cafe loyalty app for independent shops?",
-                  a: "Most coffee rewards apps are built for chains and require customers to download an app — which kills uptake in independent cafes. The simpler model is a browser-based digital loyalty card: customers scan a QR, get a stamp, no install. <a href=\"/alternatives\" class=\"font-medium text-amber-700 underline hover:text-amber-800\">See how the common cafe loyalty apps compare →</a>",
-                },
-                {
-                  q: "How long does it take customers to fill a coffee shop loyalty card?",
-                  a: "From our own data: daily regulars fill an 8-stamp card in about 2 weeks. Weekly-ish customers take 2 months. Casual visitors take 3+ months and many never finish. If you&apos;re seeing &lt;10% redemption rates after 90 days, the threshold may be too high or the reward too small.",
-                },
-              ].map(({ q, a }) => (
+              {FAQS.map(({ q, a }) => (
                 <details
                   key={q}
                   className="group rounded-xl border border-stone-200 bg-white px-6 py-5"
