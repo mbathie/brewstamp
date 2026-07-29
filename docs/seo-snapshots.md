@@ -20,12 +20,22 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-07-21 | 06-22 → 07-19 | 6,930 (+47%) | 106 (−6%) | 1.5% | 13.9 |
 | 2026-07-24 | 06-25 → 07-22 | 6,950 (+42%) | 107 (−7%) | 1.5% | 13.7 |
 | 2026-07-27 | 06-29 → 07-26 | 6,705 (+25%) | 114 (−1%) | 1.7% | 13.3 |
+| 2026-07-29 | 06-30 → 07-27 | 6,587 (+18%) | 114 (−4%) | 1.7% | 13.0 |
 
 **Trend:** impressions compounding but clicks had turned negative — visibility
 stuck on page 2. Homepage meta restored 2026-07-15 (commit 45ab3f5). First
 positive read on 2026-07-21: clicks recovering (95 → 99 → 106), avg position
 steadily improving (15.0 → 13.9), and homepage clicks/CTR ticking up as
 post-revert days enter the window. Still early; full homepage verdict ~early Aug.
+
+---
+
+## 2026-07-29
+
+- **Impressions:** 6,587 (+18%) · **Clicks:** 114 (−4%) · **CTR:** 1.7% · **Avg pos:** 13.0
+- Holding steady at the post-revert level; the −4% is a comparison-baseline artifact (prior window rolled onto stronger June days), not a real decline. Avg position at its best (13.0).
+- Homepage `/`: 93 clicks, 3.1% CTR — durably recovered. `/blog/coffee-shop-loyalty-cards`: pos **12.5**, still climbing toward top 10. `/coffee-rewards-app`: pos 28.8.
+- No SEO impact from the 07-28 USD pricing switch / wallet-secret incident.
 
 ---
 
