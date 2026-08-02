@@ -21,12 +21,22 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-07-24 | 06-25 → 07-22 | 6,950 (+42%) | 107 (−7%) | 1.5% | 13.7 |
 | 2026-07-27 | 06-29 → 07-26 | 6,705 (+25%) | 114 (−1%) | 1.7% | 13.3 |
 | 2026-07-29 | 06-30 → 07-27 | 6,587 (+18%) | 114 (−4%) | 1.7% | 13.0 |
+| 2026-08-03 | 07-04 → 07-31 | 6,762 (+13%) | 119 (−1%) | 1.8% | 12.9 |
 
 **Trend:** impressions compounding but clicks had turned negative — visibility
 stuck on page 2. Homepage meta restored 2026-07-15 (commit 45ab3f5). First
 positive read on 2026-07-21: clicks recovering (95 → 99 → 106), avg position
 steadily improving (15.0 → 13.9), and homepage clicks/CTR ticking up as
 post-revert days enter the window. Still early; full homepage verdict ~early Aug.
+
+---
+
+## 2026-08-03
+
+- **Impressions:** 6,762 (+13%) · **Clicks:** 119 (−1%) · **CTR:** 1.8% · **Avg pos:** 12.9
+- **Avg position crossed below 13 (12.9) — new best.** Steady forward grind continues.
+- `/blog/coffee-shop-loyalty-cards`: pos **12.2** (12.5 → 12.4 → 12.2) — the 07-29 content refresh (FAQPage schema, freshness, "coffee loyalty app" section, commit fd678f1) may be starting to register ~5 days post-deploy; still just outside top 10.
+- Homepage `/`: pos **16.4** (improved from 17.2), 96 clicks, 3.0% CTR. `/coffee-rewards-app`: pos 27.3, still climbing.
 
 ---
 
