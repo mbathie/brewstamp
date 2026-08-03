@@ -252,37 +252,44 @@ export async function getMerchant() {
   const cookieStore = await cookies();
   const cookieVal = cookieStore.get(CURRENT_SHOP_COOKIE)?.value;
 
-  let shopId: string | null = null;
+  // Resolve the active shop, trying candidates in priority order: the
+  // active-shop cookie, the user's legacy shopId pointer, then any membership
+  // (owned shops first, then manager/staff). Crucially, only accept a
+  // candidate whose Shop document still EXISTS — a shopId or membership that
+  // points at a deleted shop must be skipped, otherwise this returns a null
+  // shop and the dashboard redirect-loops to /setup (a staff member whose old
+  // duplicate shop was deleted; see Stockyard/Dave, 2026-08). Previously this
+  // only fell back to `role: "owner"`, which also stranded staff/manager-only
+  // users with no resolvable shop.
+  let shop: any = null;
 
-  if (cookieVal && cookieVal !== "all") {
-    const ms = await ShopMembership.exists({
-      user: user._id,
-      shop: cookieVal,
-    });
-    if (ms) shopId = cookieVal;
-  }
-
-  if (!shopId) {
-    // Aggregate mode OR no cookie — fall back to a shop the user owns so
-    // legacy callers see a usable Shop doc. Prefer the user.shopId pointer
-    // if it's still membership-valid, otherwise pick any owned membership.
-    if (user.shopId) {
-      const has = await ShopMembership.exists({
-        user: user._id,
-        shop: user.shopId,
-      });
-      if (has) shopId = user.shopId.toString();
-    }
-    if (!shopId) {
-      const owned = await ShopMembership.findOne({
-        user: user._id,
-        role: "owner",
-      });
-      if (owned) shopId = owned.shop.toString();
+  const candidates: any[] = [];
+  if (cookieVal && cookieVal !== "all") candidates.push(cookieVal);
+  if (user.shopId) candidates.push(user.shopId);
+  for (const cand of candidates) {
+    const isMember = await ShopMembership.exists({ user: user._id, shop: cand });
+    if (!isMember) continue;
+    const s = await Shop.findById(cand);
+    if (s) {
+      shop = s;
+      break;
     }
   }
 
-  const shop = shopId ? await Shop.findById(shopId) : null;
+  if (!shop) {
+    const memberships = await ShopMembership.find({ user: user._id }).lean();
+    const ordered = [
+      ...memberships.filter((m: any) => m.role === "owner"),
+      ...memberships.filter((m: any) => m.role !== "owner"),
+    ];
+    for (const m of ordered) {
+      const s = await Shop.findById(m.shop);
+      if (s) {
+        shop = s;
+        break;
+      }
+    }
+  }
 
   // The caller's role on the resolved shop. Billing/owner-only routes gate
   // on this — getMerchant now resolves shops the user is merely staff/manager
