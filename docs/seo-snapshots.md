@@ -22,12 +22,23 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-07-27 | 06-29 → 07-26 | 6,705 (+25%) | 114 (−1%) | 1.7% | 13.3 |
 | 2026-07-29 | 06-30 → 07-27 | 6,587 (+18%) | 114 (−4%) | 1.7% | 13.0 |
 | 2026-08-03 | 07-04 → 07-31 | 6,762 (+13%) | 119 (−1%) | 1.8% | 12.9 |
+| 2026-08-05 | 07-07 → 08-03 | 6,467 (+4%) | 122 (+8%) | 1.9% | 12.8 |
 
 **Trend:** impressions compounding but clicks had turned negative — visibility
 stuck on page 2. Homepage meta restored 2026-07-15 (commit 45ab3f5). First
 positive read on 2026-07-21: clicks recovering (95 → 99 → 106), avg position
 steadily improving (15.0 → 13.9), and homepage clicks/CTR ticking up as
 post-revert days enter the window. Still early; full homepage verdict ~early Aug.
+
+---
+
+## 2026-08-05
+
+- **Impressions:** 6,467 (+4%) · **Clicks:** 122 (+8%) · **CTR:** 1.9% · **Avg pos:** 12.8
+- **Best read of the series — clicks AND CTR both positive** for the first time (clicks +8%, CTR +0.1pp). The full recovery from the June meta regression is complete and now compounding.
+- Homepage `/`: pos **15.7** (from 16.4), 99 clicks, 3.2% CTR — durable recovery.
+- `/blog/coffee-shop-loyalty-cards`: pos **12.1** (12.4 → 12.2 → 12.1) — refresh (07-29) continuing to help; still just outside top 10, closing slowly.
+- `/coffee-rewards-app`: pos 26.8, still climbing.
 
 ---
 
