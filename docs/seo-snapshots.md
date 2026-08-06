@@ -23,12 +23,22 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-07-29 | 06-30 → 07-27 | 6,587 (+18%) | 114 (−4%) | 1.7% | 13.0 |
 | 2026-08-03 | 07-04 → 07-31 | 6,762 (+13%) | 119 (−1%) | 1.8% | 12.9 |
 | 2026-08-05 | 07-07 → 08-03 | 6,467 (+4%) | 122 (+8%) | 1.9% | 12.8 |
+| 2026-08-06 | 07-08 → 08-04 | 6,705 (+7%) | 136 (+30%) | 2.0% | 12.8 |
 
 **Trend:** impressions compounding but clicks had turned negative — visibility
 stuck on page 2. Homepage meta restored 2026-07-15 (commit 45ab3f5). First
 positive read on 2026-07-21: clicks recovering (95 → 99 → 106), avg position
 steadily improving (15.0 → 13.9), and homepage clicks/CTR ticking up as
 post-revert days enter the window. Still early; full homepage verdict ~early Aug.
+
+---
+
+## 2026-08-06
+
+- **Impressions:** 6,705 (+7%) · **Clicks:** 136 (+30%) · **CTR:** 2.0% · **Avg pos:** 12.8
+- Acceleration: clicks jumped 122 → 136, CTR crossed **2.0%** for the first time. (+30% is partly a favourable comparison baseline, but absolute clicks are a genuine high.)
+- Homepage `/`: **111 clicks, 3.5% CTR**, pos 15.6 — CTR now *exceeds* the pre-experiment 3.34%; the revert fully paid off and then some.
+- `/blog/coffee-shop-loyalty-cards`: pos **12.2** (holding ~12, still just outside top 10). `/coffee-rewards-app`: pos 26.5.
 
 ---
 
