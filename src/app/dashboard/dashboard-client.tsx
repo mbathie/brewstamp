@@ -363,10 +363,9 @@ export default function DashboardClient({
 
       {/* Zero-print onboarding path: flip the screen and let the customer scan. */}
       <Button
-        variant="outline"
         size="sm"
         onClick={enterPresent}
-        className="cursor-pointer gap-1.5"
+        className="cursor-pointer gap-1.5 bg-amber-700 text-white hover:bg-amber-800"
         title="Show a full-screen QR to flip toward your customer"
       >
         <QrCode className="size-4" />
