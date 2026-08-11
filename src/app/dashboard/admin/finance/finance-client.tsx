@@ -52,6 +52,19 @@ const fmtCombined = (m: CurrencyMap) =>
   `$${combinedDollars(m).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+// Dark-theme recharts tooltip (default is a white box + light hover cursor,
+// which looks broken on the dark dashboard).
+const TOOLTIP_CONTENT = {
+  backgroundColor: "#1c1917",
+  border: "1px solid #292524",
+  borderRadius: "0.5rem",
+  color: "#e7e5e4",
+  fontSize: "0.8rem",
+  padding: "0.4rem 0.65rem",
+} as const;
+const TOOLTIP_LABEL = { color: "#a8a29e", marginBottom: "0.1rem" } as const;
+const TOOLTIP_ITEM = { color: "#e7e5e4" } as const;
+
 type PresetKey = "30d" | "90d" | "12m" | "ytd" | "all";
 const PRESETS: { key: PresetKey; label: string }[] = [
   { key: "30d", label: "30 days" },
@@ -231,7 +244,13 @@ export default function FinanceClient() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis fontSize={12} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, "Revenue (at par)"]} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(255,255,255,0.06)" }}
+                    contentStyle={TOOLTIP_CONTENT}
+                    labelStyle={TOOLTIP_LABEL}
+                    itemStyle={TOOLTIP_ITEM}
+                    formatter={(v: number) => [`$${v.toFixed(2)}`, "Revenue (at par)"]}
+                  />
                   <Bar dataKey="revenue" fill="#0065ed" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -300,7 +319,13 @@ export default function FinanceClient() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis fontSize={12} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(v: number) => [`$${v.toFixed(0)}`, "Projected MRR"]} />
+                  <Tooltip
+                    cursor={{ stroke: "#57534e", strokeWidth: 1 }}
+                    contentStyle={TOOLTIP_CONTENT}
+                    labelStyle={TOOLTIP_LABEL}
+                    itemStyle={TOOLTIP_ITEM}
+                    formatter={(v: number) => [`$${v.toFixed(0)}`, "Projected MRR"]}
+                  />
                   <Line type="monotone" dataKey="mrr" stroke="#0065ed" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
