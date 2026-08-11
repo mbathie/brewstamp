@@ -59,7 +59,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-cards",
   datePublished: "2026-05-05",
-  dateModified: "2026-07-29",
+  dateModified: "2026-08-12",
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -102,6 +102,14 @@ const FAQS: { q: string; a: string }[] = [
   {
     q: "How long does it take customers to fill a coffee shop loyalty card?",
     a: "From our own data: daily regulars fill an 8-stamp card in about 2 weeks. Weekly-ish customers take 2 months. Casual visitors take 3+ months and many never finish. If you&apos;re seeing &lt;10% redemption rates after 90 days, the threshold may be too high or the reward too small.",
+  },
+  {
+    q: "Do coffee shop loyalty cards actually work?",
+    a: "Yes, when the reward is simple and the friction is low. A stamp-toward-a-free-coffee card gives regulars a reason to pick you over the cafe next door, and it turns casual buyers into repeat ones. What kills a program is friction (a customer app to download) or a reward that&apos;s too hard to reach — get those right and a loyalty card reliably lifts repeat visits.",
+  },
+  {
+    q: "How do I promote my coffee shop loyalty card?",
+    a: "Keep it in-store and let the counter do the work: a QR poster at the till, a line on the receipt, and a one-sentence barista script (&quot;scan that and your 8th coffee&apos;s free&quot;). That&apos;s enough for most cafes — the moment someone&apos;s already paying for a coffee is the highest-converting time to sign them up. Add a table-tent or a mention on your socials if you want a bigger push.",
   },
 ];
 
@@ -156,7 +164,7 @@ export default function BlogPost() {
             </p>
             <p className="mt-3 text-sm text-stone-400">
               Published <time dateTime="2026-05-05">5 May 2026</time> · Updated{" "}
-              <time dateTime="2026-07-29">29 Jul 2026</time>
+              <time dateTime="2026-08-12">12 Aug 2026</time>
             </p>
           </header>
 
@@ -362,6 +370,76 @@ export default function BlogPost() {
               identical. Nobody has ever told a friend &quot;you have to try
               this place, they do 15% off&quot;. People respond to{" "}
               <em>free</em>, not <em>cheaper</em>.
+            </p>
+          </section>
+
+          {/* Section — Loyalty program ideas (targets "loyalty ideas for
+              coffee shops" / "coffee shop loyalty program" — high-impression,
+              low-rank queries the page had no dedicated section for). */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+              Coffee shop loyalty program ideas that actually work
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-stone-600">
+              The reward is only half of a coffee shop loyalty program — the
+              other half is the little design choices that decide whether people
+              sign up, come back, and tell a friend. Here are the loyalty
+              program ideas that consistently earn their keep in independent
+              cafes:
+            </p>
+            <ul className="mt-6 space-y-4">
+              {[
+                {
+                  b: "The classic 8-stamp card.",
+                  t: "Buy 8 coffees, get one free. Start here — it&apos;s the baseline every regular already understands, and everything below is a layer on top.",
+                },
+                {
+                  b: "A welcome stamp on sign-up.",
+                  t: "Give the first stamp for free the moment they join. A card that&apos;s 1/8 full feels started; a card that&apos;s 0/8 feels like a chore. It measurably lifts the number who come back for a second.",
+                },
+                {
+                  b: "Double-stamp happy hours.",
+                  t: "Two stamps per coffee during your dead 2–4pm window. It pulls regulars into the quiet hours instead of just rewarding the visits you&apos;d get anyway.",
+                },
+                {
+                  b: "A birthday coffee.",
+                  t: "A free drink on their birthday. Costs you cents, feels personal, and gives you a reason to capture an email or phone number when they sign up.",
+                },
+                {
+                  b: "A refer-a-friend stamp.",
+                  t: "Both people get a bonus stamp when a regular brings someone new. Word of mouth is how cafes actually grow, so pay for it.",
+                },
+                {
+                  b: "Seasonal bonus stamps.",
+                  t: "An extra stamp for trying the new seasonal drink. It launches your specials for you and nudges people off their usual flat white.",
+                },
+                {
+                  b: "A milestone reward.",
+                  t: "A free pastry on the 10th visit, on top of the free-coffee reward. Milestones make loyal regulars feel seen and quietly lift average spend.",
+                },
+                {
+                  b: "A members-only perk.",
+                  t: "A secret-menu item or first dibs on limited beans for card-holders. Turning the program into a small club beats another discount.",
+                },
+              ].map(({ b, t }) => (
+                <li
+                  key={b}
+                  className="flex gap-3 text-base leading-relaxed text-stone-600"
+                >
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                  <span>
+                    <strong className="text-stone-800">{b}</strong>{" "}
+                    <span dangerouslySetInnerHTML={{ __html: t }} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-base leading-relaxed text-stone-600">
+              You don&apos;t need all of these. Pick the classic 8-stamp card,
+              add a welcome stamp and one nudge that fits your shop (double-stamp
+              hours if you have dead periods, a birthday coffee if you capture
+              emails), and leave the rest for later. A loyalty program that&apos;s
+              simple to run beats a clever one that your baristas forget.
             </p>
           </section>
 
@@ -593,6 +671,57 @@ export default function BlogPost() {
                 </li>
               ))}
             </ul>
+          </section>
+
+          {/* Section — Measuring success (depth + E-E-A-T from our own data;
+              targets ROI / "does it work" intent). */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
+              How to tell if your coffee shop loyalty program is working
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-stone-600">
+              A paper punch card tells you nothing, so most cafes never actually
+              know if their loyalty program works. A digital one gives you a few
+              numbers worth watching — here are the ones that matter and the
+              rough benchmarks we see across the cafes we run cards for:
+            </p>
+            <ul className="mt-6 space-y-4">
+              {[
+                {
+                  b: "Enrolment rate.",
+                  t: "The share of customers who scan and join. If it&apos;s low, the QR code is in the wrong place or your baristas aren&apos;t mentioning it — move it next to the EFTPOS machine and give them a one-line script.",
+                },
+                {
+                  b: "Weekly active rate.",
+                  t: "The share of enrolled customers who scan in a given week. In our data that sits around 14% — the rest go dormant. This is the truest measure of program health; a rising number means the habit is sticking.",
+                },
+                {
+                  b: "Redemption rate.",
+                  t: "How many started cards reach the reward. Under ~10% after 90 days usually means the threshold is too high or the reward too small — drop from 10 stamps to 8, or from 8 to 6.",
+                },
+                {
+                  b: "Time to first reward.",
+                  t: "How long until a new customer earns their free coffee. Daily regulars hit an 8-stamp card in about 2 weeks; if most of your customers are taking months, a lower threshold will build the habit faster.",
+                },
+              ].map(({ b, t }) => (
+                <li
+                  key={b}
+                  className="flex gap-3 text-base leading-relaxed text-stone-600"
+                >
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                  <span>
+                    <strong className="text-stone-800">{b}</strong>{" "}
+                    <span dangerouslySetInnerHTML={{ __html: t }} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-base leading-relaxed text-stone-600">
+              You don&apos;t need a dashboard obsession — checking these once a
+              month is plenty. The point a paper card can never give you: if a
+              number looks wrong, you can change the reward or threshold and
+              watch it move.
+            </p>
           </section>
 
           {/* Section 6 — Setup */}
