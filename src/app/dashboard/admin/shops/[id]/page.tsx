@@ -92,6 +92,7 @@ interface ShopDetail {
     language: string;
     isPro: boolean;
     perkMode: boolean;
+    walletPasses: boolean;
     planSlug: string;
     planLabel: string;
     owner: {
@@ -426,6 +427,7 @@ export default function AdminShopDetailPage() {
       on: true,
       icon: langFlag(shop.language || "en"),
     },
+    { label: "Wallet passes", on: shop.walletPasses },
   ];
   const outreachItems: Array<{ label: string; on: boolean }> = [
     { label: "1st-stamp email", on: !!shop.firstCustomerEmailSent },

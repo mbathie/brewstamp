@@ -137,6 +137,7 @@ export async function GET(
       owner: { ...(shop as any).owner, authMethods, signupReferrer, signupLandingPage },
       isPro: !!activeSub,
       perkMode: !!(shop as any).perkMode,
+      walletPasses: !!(shop as any).walletPasses,
       planSlug: plan?.slug ?? "free",
       planLabel: plan?.label ?? "Free",
     },
