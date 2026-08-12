@@ -26,12 +26,33 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-08-06 | 07-08 → 08-04 | 6,705 (+7%) | 136 (+30%) | 2.0% | 12.8 |
 | 2026-08-10 | 07-12 → 08-08 | 6,376 (−4%) | 135 (+38%) | 2.1% | 12.6 |
 | 2026-08-12 | 07-13 → 08-09 | 6,563 (−2%) | 144 (+48%) | 2.2% | 12.5 |
+| 2026-08-13 | 07-14 → 08-10 | 6,558 (−3%) | 152 (+57%) | 2.3% | 12.4 |
 
-**Trend:** impressions compounding but clicks had turned negative — visibility
-stuck on page 2. Homepage meta restored 2026-07-15 (commit 45ab3f5). First
-positive read on 2026-07-21: clicks recovering (95 → 99 → 106), avg position
-steadily improving (15.0 → 13.9), and homepage clicks/CTR ticking up as
-post-revert days enter the window. Still early; full homepage verdict ~early Aug.
+**Trend:** the mid-July inflection has held. Homepage meta restored 2026-07-15
+(commit 45ab3f5); since then clicks 95 → 152, CTR 1.5% → 2.3%, avg pos 14.5 →
+12.4, while impressions went flat — i.e. the site is monetising existing
+visibility rather than adding more. The meta-revert experiment is closed
+(homepage CTR 3.8%, vs 3.34% pre-experiment baseline). Remaining problem has
+shifted from "stuck on page 2" to "page 1 without clicks" on head terms.
+
+---
+
+## 2026-08-13
+
+- **Impressions:** 6,558 (−3%) · **Clicks:** 152 (+57%) · **CTR:** 2.3% · **Avg pos:** 12.4
+- New highs again on all three of clicks / CTR / avg pos. Impressions flat-to-down is fine — the site is converting the same visibility far better than it was a month ago.
+- **Branded search is now material:** query `brewstamp` = 40 clicks (+135%), 52 impr (+117%), 76.9% CTR, pos 1.0. Stripping it out, non-branded clicks went 80 → 112 (+40%), so the lift is real and not just brand.
+- Homepage `/`: **122 clicks, 3.8% CTR**, pos 14.6 — best CTR recorded, comfortably past the 3.34% pre-experiment baseline. The 07-15 meta revert is fully vindicated; consider this experiment closed.
+- `/blog/coffee-shop-loyalty-cards`: 3,009 impr (46% of site), pos **11.9** — first reading under 12, but still page 2 at 0.3% CTR. **The 08-12 content expansion (commit `be779f2`) contributes zero days to this window** (window ends 08-10); earliest signal ~2026-08-16.
+- `/coffee-rewards-app`: pos 24.4 (was 24.7) — grinding up from 42 in July but still far from useful.
+- New page-1 entrant: query "coffee shop digital stamp card" — 50 impr from zero, pos **4.3**, but 0 clicks. Same pattern as the other head terms: ranking without earning the click.
+- **The standing gap:** almost every top-25 query has 0 clicks despite positions 8–16. Ranking is no longer the only problem for a chunk of them — `coffee shop loyalty card printing` (pos 6.2), `coffee stamp card` (pos 8.6), `coffee cards loyalty` (pos 9.9), `coffee shop digital stamp card` (pos 4.3) are all page 1 with 0 clicks. That is a title/snippet problem, not a rankings problem.
+- By country: USA still the biggest impression pool (1,909) at 0.9% CTR vs AUS 3.8% on 1,118 — unchanged, still the largest latent upside. Mobile CTR 3.8% vs desktop 1.6%.
+
+**Next levers, in order:**
+1. Wait for the blog expansion to land in-window (~08-16), then judge.
+2. Title/meta rewrite for the page-1-but-0-click queries — the SERP snippets for `/blog/coffee-shop-loyalty-card-printing` and whatever ranks for "coffee stamp card" / "coffee shop digital stamp card" are not earning clicks despite top-10 placement.
+3. `/alternatives/square-loyalty` (pos 14.6) still hasn't recovered its old page-1 spot.
 
 ---
 
