@@ -365,11 +365,17 @@ export default function CustomerClient({
     if (email.trim()) update.email = email.trim();
     if (password.trim()) update.password = password.trim();
     if (Object.keys(update).length > 0) {
-      await fetch(`/api/customers/${customerId}`, {
+      // Surface a failed save. This used to ignore the response entirely, so a
+      // rejected PATCH still reported success and silently dropped the details.
+      const res = await fetch(`/api/customers/${customerId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(update),
       });
+      if (!res.ok) {
+        setEmailError(t(lang, "couldNotSave"));
+        return;
+      }
       if (update.name) setAccountCreated(true);
     }
     setDetailsSaved(true);

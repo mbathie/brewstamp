@@ -1,15 +1,38 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/mongoose";
 import { Customer, StampCard } from "@/models";
 import { requireMerchant, unauthorized } from "@/lib/api-auth";
 import { syncWalletPassesForCustomer } from "@/lib/wallet";
 import bcrypt from "bcrypt";
 
-// Confirm the signed-in merchant may act on this customer: the customer must
-// hold a stamp card at one of the merchant's shops. Without this any anonymous
-// caller could read or rewrite an arbitrary customer by id (IDOR). Returns a
-// Response to short-circuit with, or null when access is allowed.
+// Two legitimate callers reach this route, and both must be allowed:
+//
+//  1. The customer themselves, from the /s/[code] card page ("Save details" /
+//     "Update details"). They are anonymous — no merchant session — and are
+//     identified by the httpOnly `brewstamp_id` cookie that middleware sets on
+//     /s/ pages. That cookie is exactly the identity the card page is rendered
+//     from, so matching it against the target's cookieId proves self-ownership.
+//  2. A signed-in merchant, acting on a customer who holds a stamp card at one
+//     of their own shops.
+//
+// Anything else is rejected — that is the IDOR this guard exists to close.
+// Returns a Response to short-circuit with, or null when access is allowed.
 async function denyIfNotOwned(customerId: string): Promise<Response | null> {
+  // A malformed id would otherwise throw a CastError out of the query (500).
+  if (!isValidObjectId(customerId)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // (1) The customer editing their own record.
+  const cookieId = (await cookies()).get("brewstamp_id")?.value;
+  if (cookieId) {
+    const isSelf = await Customer.exists({ _id: customerId, cookieId });
+    if (isSelf) return null;
+  }
+
+  // (2) A merchant acting on one of their own shops' customers.
   const merchant = await requireMerchant();
   if (!merchant) return unauthorized();
   const owns = await StampCard.exists({
