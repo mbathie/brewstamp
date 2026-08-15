@@ -573,10 +573,8 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Wide 3:1 landscape works best — at least 900 × 300 px
-                    (1200 × 400 or larger for a crisp, retina-sharp result).
-                    You&apos;ll crop it to fit; it&apos;s saved as JPEG, so
-                    transparent backgrounds aren&apos;t kept.
+                    Wide 3:1 landscape, at least 900 × 300px. Cropped to fit
+                    and saved as JPEG.
                   </p>
                 </div>
                 <div className="space-y-2">
