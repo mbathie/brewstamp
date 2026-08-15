@@ -573,8 +573,7 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Wide 3:1 landscape, at least 900 × 300px. Cropped to fit
-                    and saved as JPEG.
+                    Wide 3:1 landscape, at least 900 × 300px. Cropped to fit.
                   </p>
                 </div>
                 <div className="space-y-2">
