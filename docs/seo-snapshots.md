@@ -28,6 +28,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-08-12 | 07-13 → 08-09 | 6,563 (−2%) | 144 (+48%) | 2.2% | 12.5 |
 | 2026-08-13 | 07-14 → 08-10 | 6,558 (−3%) | 152 (+57%) | 2.3% | 12.4 |
 | 2026-08-15 | 07-17 → 08-13 | 6,623 (−4%) | 155 (+58%) | 2.3% | 12.3 |
+| 2026-08-16 | 07-18 → 08-14 | 6,415 (−7%) | 152 (+54%) | 2.4% | 12.3 |
 
 **Trend:** the mid-July inflection has held. Homepage meta restored 2026-07-15
 (commit 45ab3f5); since then clicks 95 → 152, CTR 1.5% → 2.3%, avg pos 14.5 →
@@ -35,6 +36,15 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 visibility rather than adding more. The meta-revert experiment is closed
 (homepage CTR 3.8%, vs 3.34% pre-experiment baseline). Remaining problem has
 shifted from "stuck on page 2" to "page 1 without clicks" on head terms.
+
+---
+
+## 2026-08-16
+
+- **Impressions:** 6,415 (−7%) · **Clicks:** 152 (+54%) · **CTR:** 2.4% · **Avg pos:** 12.3
+- CTR crossed **2.4%** and homepage `/` crossed **4.0% CTR** (123 clicks, pos 14.0) — both new highs.
+- `/blog/coffee-shop-loyalty-cards`: pos **11.9**, still 0.3% CTR. The 08-12 expansion now has ~3 days in-window but **no ranking movement yet** — ~4 days post-deploy is still early (content expansions typically take 1–2 weeks to register). Keep watching to ~08-22.
+- `/coffee-rewards-app`: pos 25.1. Standing gap unchanged: head terms page-1 with ~0 clicks (title/snippet problem).
 
 ---
 
