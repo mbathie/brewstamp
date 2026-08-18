@@ -29,6 +29,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-08-13 | 07-14 → 08-10 | 6,558 (−3%) | 152 (+57%) | 2.3% | 12.4 |
 | 2026-08-15 | 07-17 → 08-13 | 6,623 (−4%) | 155 (+58%) | 2.3% | 12.3 |
 | 2026-08-16 | 07-18 → 08-14 | 6,415 (−7%) | 152 (+54%) | 2.4% | 12.3 |
+| 2026-08-18 | 07-20 → 08-16 | 6,287 (−9%) | 143 (+35%) | 2.3% | 12.2 |
 
 **Trend:** the mid-July inflection has held. Homepage meta restored 2026-07-15
 (commit 45ab3f5); since then clicks 95 → 152, CTR 1.5% → 2.3%, avg pos 14.5 →
@@ -36,6 +37,15 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 visibility rather than adding more. The meta-revert experiment is closed
 (homepage CTR 3.8%, vs 3.34% pre-experiment baseline). Remaining problem has
 shifted from "stuck on page 2" to "page 1 without clicks" on head terms.
+
+---
+
+## 2026-08-18
+
+- **Impressions:** 6,287 (−9%) · **Clicks:** 143 (+35%) · **CTR:** 2.3% · **Avg pos:** 12.2
+- First mild softening off the peak: clicks eased 155 → 143 over four days, impressions −9%. Avg position still improving (12.2, new best) and homepage holding (115 clicks, 3.9% CTR, pos 13.7), so it reads as normal fluctuation, not a reversal — worth watching.
+- `/blog/coffee-shop-loyalty-cards`: pos **12.0**, 0.3% CTR. The 08-12 expansion now has ~6 days in-window and **still no movement** — decision point ~08-22. If flat by then, the expansion didn't push it to page 1 → pivot to the title/snippet angle.
+- `/coffee-rewards-app`: pos 25.1.
 
 ---
 
