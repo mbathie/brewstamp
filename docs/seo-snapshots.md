@@ -30,6 +30,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-08-15 | 07-17 → 08-13 | 6,623 (−4%) | 155 (+58%) | 2.3% | 12.3 |
 | 2026-08-16 | 07-18 → 08-14 | 6,415 (−7%) | 152 (+54%) | 2.4% | 12.3 |
 | 2026-08-18 | 07-20 → 08-16 | 6,287 (−9%) | 143 (+35%) | 2.3% | 12.2 |
+| 2026-08-27 | 07-29 → 08-25 | 7,197 (+5%) | 161 (+36%) | 2.2% | 12.2 |
 
 **Trend:** the mid-July inflection has held. Homepage meta restored 2026-07-15
 (commit 45ab3f5); since then clicks 95 → 152, CTR 1.5% → 2.3%, avg pos 14.5 →
@@ -37,6 +38,15 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 visibility rather than adding more. The meta-revert experiment is closed
 (homepage CTR 3.8%, vs 3.34% pre-experiment baseline). Remaining problem has
 shifted from "stuck on page 2" to "page 1 without clicks" on head terms.
+
+---
+
+## 2026-08-27
+
+- **Impressions:** 7,197 (+5%) · **Clicks:** 161 (+36%) · **CTR:** 2.2% · **Avg pos:** 12.2
+- **The blog expansion (08-12, commit be779f2) has landed** — right on the ~2-week timeline. `/blog/coffee-shop-loyalty-cards`: pos **11.3** (from 12.0), CTR **0.5%** (from 0.3%), **clicks 8 → 17 (doubled)**. It's the #1 page by impressions (3,501) and now finally earning clicks. Approaching the top-10 line.
+- Clicks new high (161); impressions turned positive (+5%, first up-move in weeks). Homepage `/`: 117 clicks, 3.8% CTR, pos 13.1.
+- `/coffee-rewards-app`: pos 25.7. Verdict: the content-expansion lever worked — worth repeating on other thin/near-top-10 pages.
 
 ---
 
