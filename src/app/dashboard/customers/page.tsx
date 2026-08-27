@@ -23,7 +23,24 @@ export default async function CustomersPage() {
     .populate("shop", "name stampThreshold")
     .sort({ updatedAt: -1 });
 
-  const serialized = JSON.parse(JSON.stringify(stampCards));
+  // In perk mode the work email is the identity, so collapse any records that
+  // share one (a legacy cleared-cookie duplicate) to a single, most-recently
+  // active row. Anonymous, no-email scanners are left untouched.
+  const perkShop = !aggregate && !!ctx.shop.perkMode;
+  const deduped = perkShop
+    ? (() => {
+        const seen = new Set<string>();
+        return stampCards.filter((card: any) => {
+          const email = card.customer?.email?.trim().toLowerCase();
+          if (!email) return true;
+          if (seen.has(email)) return false;
+          seen.add(email);
+          return true;
+        });
+      })()
+    : stampCards;
+
+  const serialized = JSON.parse(JSON.stringify(deduped));
 
   // CSV export is a Plus+ feature. On Free/Pro the button still
   // renders but is disabled with an upgrade tooltip — so people see the

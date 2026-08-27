@@ -254,7 +254,7 @@ export default function PerkCustomerClient({
       const res = await fetch("/api/perk/verify/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, code: value }),
+        body: JSON.stringify({ customerId, code: value, shopId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -266,6 +266,14 @@ export default function PerkCustomerClient({
         // Clear the field so they can retype cleanly (and re-trigger
         // auto-submit) rather than editing a wrong code in place.
         setCode("");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      // The server folded this cleared-cookie session back into an existing
+      // identity and swapped the id cookie — reload so SSR resolves the
+      // canonical customer (correct card, today's count, verified state).
+      if (data.merged) {
+        window.location.reload();
         return;
       }
       setStep("done");
