@@ -5,6 +5,62 @@ import { Shop, StampCard, StampRequest, User, Subscription, Account } from "@/mo
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
 import { resolveSub } from "@/lib/plans";
+import { stripe } from "@/lib/stripe";
+
+// Pull this shop's Stripe payment history from its subscription's customer.
+// Admin-only, live Stripe — wrapped by the caller so a Stripe hiccup never
+// blocks the rest of the page. Returns null when the shop has never paid.
+async function getBilling(customerId: string, subStatus: string, cancelAtPeriodEnd: boolean, currentPeriodEnd: Date | null | undefined) {
+  const invoices: Array<{
+    id: string;
+    number: string | null;
+    created: number;
+    amountPaid: number;
+    currency: string;
+    status: string | null;
+    description: string | null;
+    hostedUrl: string | null;
+  }> = [];
+  const totalPaid: Record<string, number> = {};
+  let paidCount = 0;
+  let firstPaidAt: number | null = null;
+
+  for await (const inv of stripe.invoices.list({ customer: customerId, limit: 100 })) {
+    const paid = inv.amount_paid > 0;
+    if (paid) {
+      paidCount += 1;
+      totalPaid[inv.currency] = (totalPaid[inv.currency] ?? 0) + inv.amount_paid;
+      const ms = inv.created * 1000;
+      if (firstPaidAt === null || ms < firstPaidAt) firstPaidAt = ms;
+    }
+    invoices.push({
+      id: inv.id ?? "",
+      number: inv.number ?? null,
+      created: inv.created * 1000,
+      amountPaid: inv.amount_paid,
+      currency: inv.currency,
+      status: inv.status ?? null,
+      description: inv.lines?.data?.[0]?.description ?? null,
+      hostedUrl: inv.hosted_invoice_url ?? null,
+    });
+  }
+
+  invoices.sort((a, b) => b.created - a.created);
+
+  return {
+    stripeCustomerId: customerId,
+    status: subStatus,
+    cancelAtPeriodEnd,
+    currentPeriodEnd: currentPeriodEnd ?? null,
+    totalPaid,
+    memberSince: firstPaidAt,
+    // The first paid invoice is the initial signup; everything after it is a
+    // renewal (a successfully billed recurring cycle).
+    renewals: Math.max(0, paidCount - 1),
+    paidCount,
+    invoices,
+  };
+}
 
 export async function GET(
   _req: Request,
@@ -103,6 +159,24 @@ export async function GET(
   const activeSub = await Subscription.findOne({ shop: shop._id, status: "active" }).lean();
   const plan = activeSub ? resolveSub(activeSub as any) : null;
 
+  // Billing / payment history — any subscription for this shop (a canceled one
+  // still has a payment history worth showing). Fetched live from Stripe.
+  const anySub = (activeSub ||
+    (await Subscription.findOne({ shop: shop._id }).lean())) as any;
+  let billing = null;
+  if (anySub?.stripeCustomerId) {
+    try {
+      billing = await getBilling(
+        anySub.stripeCustomerId,
+        anySub.status,
+        !!anySub.cancelAtPeriodEnd,
+        anySub.currentPeriodEnd,
+      );
+    } catch (err) {
+      console.error("[admin/shops] Stripe billing fetch failed:", err);
+    }
+  }
+
   // Determine auth methods for shop owner
   const ownerId = (shop as any).owner._id;
   const ownerDoc = await User.findById(ownerId)
@@ -141,6 +215,7 @@ export async function GET(
       planSlug: plan?.slug ?? "free",
       planLabel: plan?.label ?? "Free",
     },
+    billing,
     customers: stampCards.map((sc: any) => ({
       name: sc.customer?.name || (sc.customer?.cookieId ? generateAnimalName(sc.customer.cookieId) : null),
       email: sc.customer?.email || null,

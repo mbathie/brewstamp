@@ -129,6 +129,28 @@ interface ShopDetail {
     redeems: number;
   }[];
   recentRequests: RequestRow[];
+  billing: Billing | null;
+}
+
+interface Billing {
+  stripeCustomerId: string;
+  status: string;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+  totalPaid: Record<string, number>;
+  memberSince: number | null;
+  renewals: number;
+  paidCount: number;
+  invoices: {
+    id: string;
+    number: string | null;
+    created: number;
+    amountPaid: number;
+    currency: string;
+    status: string | null;
+    description: string | null;
+    hostedUrl: string | null;
+  }[];
 }
 
 interface RequestRow {
@@ -531,6 +553,7 @@ export default function AdminShopDetailPage() {
       {/* Anchor pill nav */}
       <nav className="sticky top-0 z-10 -mx-6 flex flex-wrap gap-2 border-b border-border/40 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <AnchorPill href="#overview" label="Overview" />
+        {data.billing && <AnchorPill href="#billing" label="Billing" />}
         <AnchorPill href="#activity" label="Activity" />
         <AnchorPill href="#customers" label="Customers" />
         {data.recentRequests.length > 0 && (
@@ -573,6 +596,132 @@ export default function AdminShopDetailPage() {
           <ChecklistCard title="Outreach emails" items={outreachItems} />
         </div>
       </section>
+
+      {/* Billing — Stripe payment history for this shop */}
+      {data.billing && (
+        <section id="billing" className="scroll-mt-16 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold text-foreground">Billing</h2>
+            <Badge
+              variant="outline"
+              className={
+                data.billing.status === "active"
+                  ? "border-green-500/50 text-green-500"
+                  : data.billing.status === "past_due" || data.billing.status === "unpaid"
+                    ? "border-red-400/50 text-red-400"
+                    : "text-muted-foreground"
+              }
+            >
+              {data.billing.status}
+              {data.billing.cancelAtPeriodEnd && data.billing.currentPeriodEnd
+                ? ` · cancels ${new Date(data.billing.currentPeriodEnd).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" })}`
+                : ""}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <BillingStat
+              label="Total paid"
+              value={formatTotalPaid(data.billing.totalPaid)}
+              sub={`${data.billing.paidCount} payment${data.billing.paidCount === 1 ? "" : "s"}`}
+            />
+            <BillingStat
+              label="Member since"
+              value={
+                data.billing.memberSince
+                  ? new Date(data.billing.memberSince).toLocaleDateString("en-AU", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "—"
+              }
+              sub={
+                data.billing.memberSince
+                  ? timeAgo(new Date(data.billing.memberSince))
+                  : "no payments yet"
+              }
+            />
+            <BillingStat label="Renewals" value={data.billing.renewals.toLocaleString()} />
+            <BillingStat
+              label="Next renewal"
+              value={
+                data.billing.currentPeriodEnd && !data.billing.cancelAtPeriodEnd
+                  ? new Date(data.billing.currentPeriodEnd).toLocaleDateString("en-AU", {
+                      day: "numeric",
+                      month: "short",
+                      year: "2-digit",
+                    })
+                  : "—"
+              }
+            />
+          </div>
+
+          {data.billing.invoices.length > 0 && (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.billing.invoices.map((inv) => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(inv.created).toLocaleDateString("en-AU", {
+                          day: "numeric",
+                          month: "short",
+                          year: "2-digit",
+                        })}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {inv.description || (
+                          <span className="text-muted-foreground">&mdash;</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatMoney(
+                          inv.amountPaid > 0 ? inv.amountPaid : 0,
+                          inv.currency,
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            INVOICE_STATUS_CLASS[inv.status ?? ""] ??
+                            "text-muted-foreground"
+                          }
+                        >
+                          {inv.status ?? "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {inv.hostedUrl && (
+                          <a
+                            href={inv.hostedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground"
+                            title="Open invoice in Stripe"
+                          >
+                            <ExternalLink className="size-4" />
+                          </a>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Customers table */}
       <section id="customers" className="scroll-mt-16">
@@ -891,6 +1040,41 @@ function safeHost(url: string): string {
     return url;
   }
 }
+
+function formatMoney(cents: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(cents / 100);
+}
+
+// Sum of paid invoices, keyed by currency (a shop may have legacy AUD + USD).
+function formatTotalPaid(totalPaid: Record<string, number>): string {
+  const parts = Object.entries(totalPaid)
+    .filter(([, cents]) => cents > 0)
+    .map(([cur, cents]) => formatMoney(cents, cur));
+  return parts.length ? parts.join(" + ") : "$0.00";
+}
+
+function BillingStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <Card>
+      <CardContent className="space-y-1 px-4 py-3">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-2xl font-bold leading-none text-foreground">{value}</p>
+        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+const INVOICE_STATUS_CLASS: Record<string, string> = {
+  paid: "border-green-500/50 text-green-500",
+  open: "border-yellow-500/50 text-yellow-500",
+  draft: "text-muted-foreground",
+  void: "border-red-400/50 text-red-400",
+  uncollectible: "border-red-400/50 text-red-400",
+};
 
 function AnchorPill({ href, label }: { href: string; label: string }) {
   return (
