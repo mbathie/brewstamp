@@ -31,13 +31,28 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-08-16 | 07-18 → 08-14 | 6,415 (−7%) | 152 (+54%) | 2.4% | 12.3 |
 | 2026-08-18 | 07-20 → 08-16 | 6,287 (−9%) | 143 (+35%) | 2.3% | 12.2 |
 | 2026-08-27 | 07-29 → 08-25 | 7,197 (+5%) | 161 (+36%) | 2.2% | 12.2 |
+| 2026-08-31 | 08-01 → 08-28 | 8,046 (+19%) | 170 (+43%) | 2.1% | 11.6 |
 
-**Trend:** the mid-July inflection has held. Homepage meta restored 2026-07-15
-(commit 45ab3f5); since then clicks 95 → 152, CTR 1.5% → 2.3%, avg pos 14.5 →
-12.4, while impressions went flat — i.e. the site is monetising existing
-visibility rather than adding more. The meta-revert experiment is closed
-(homepage CTR 3.8%, vs 3.34% pre-experiment baseline). Remaining problem has
-shifted from "stuck on page 2" to "page 1 without clicks" on head terms.
+**Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
+restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 170, avg pos 14.5
+→ 11.6 (new best), and — after months flat — impressions have turned up again
+(+19%). The money page `/blog/coffee-shop-loyalty-cards` finally **crossed into
+the top 10** (pos 10.6) after the 08-12 content expansion. The meta-revert
+experiment is closed (homepage CTR 3.8%, vs 3.34% pre-experiment baseline).
+Remaining problem is still "page 1 without clicks" on head terms.
+
+---
+
+## 2026-08-31
+
+- **Impressions:** 8,046 (+19%) · **Clicks:** 170 (+43%) · **CTR:** 2.1% · **Avg pos:** 11.6
+- **Breakthrough: the money page cracked the top 10.** `/blog/coffee-shop-loyalty-cards` is now at pos **10.6** (from 11.3 → 12.0), **clicks 20** (from 17), **4,080 impressions** (new high, 51% of the whole site). The 08-12 content expansion has fully compounded — this page was parked at pos ~15 in July and is now knocking on the first-page result set. CTR still only 0.5%, so there's a second gear here once it's solidly top-5.
+- **New highs across the board:** clicks 170, impressions 8,046, avg pos 11.6 — all the best on record. Impressions turning up (+19%) after months flat means new visibility is being *added* again, not just better-monetised.
+- Homepage `/`: 124 clicks, 3.8% CTR, pos 12.9 — steady, still the #2 traffic source.
+- `/coffee-rewards-app`: pos **25.9**, 4 clicks — unchanged, still stuck at ~25. This is the clear next content-expansion target (same play that just worked on the blog post).
+- **"Page 1, zero clicks" head terms** (the standing snippet opportunity): "coffee shop loyalty card printing" (pos 6.3), "coffee stamp card" (pos 7.8), "loyalty card coffee shop" (pos 9.6), "loyalty cards for coffee shops" (pos 9.2) — all ranking page-1 but 0 clicks. Title/snippet rewrites are the lever.
+- New ranking of note: "a cafe's punch-card promise" debuts at pos **3.7** (35 impr) — an editorial/long-tail phrase worth a glance.
+- **By country:** USA still the biggest impression market (2,303) at just 0.5% CTR — the largest latent upside, a pure ranking gap. AUS converts best (47 clicks, 3.9%); GBR 15 clicks at 1.2%; PHL punching above weight (10 clicks, 3.4%).
 
 ---
 
