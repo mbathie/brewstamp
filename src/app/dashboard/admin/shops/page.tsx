@@ -709,14 +709,21 @@ export default function AdminShopsPage() {
                     }
                   >
                     <TableCell className="font-medium">
-                      <span className="flex items-center gap-1.5">
-                        {shop.name}
-                        <PlanBadge
-                          slug={shop.planSlug}
-                          label={shop.planLabel}
-                          monthlyCents={shop.monthlyCents}
-                        />
-                        {shop.perkMode && <PerkBadge />}
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          className="truncate max-w-[22rem]"
+                          title={shop.name}
+                        >
+                          {shop.name}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <PlanBadge
+                            slug={shop.planSlug}
+                            label={shop.planLabel}
+                            monthlyCents={shop.monthlyCents}
+                          />
+                          {shop.perkMode && <PerkBadge />}
+                        </span>
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
