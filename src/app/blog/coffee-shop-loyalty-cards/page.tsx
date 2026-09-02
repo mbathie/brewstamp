@@ -7,9 +7,9 @@ import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title:
-    "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
+    "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
   description:
-    "How a coffee shop loyalty card works, the 8-stamp rule, the rewards that actually keep customers coming back, and how to launch one in under 2 minutes.",
+    "How coffee shop loyalty cards work, how many stamps to ask for, and the rewards regulars actually return for. Set one up free in 2 minutes — no app.",
   alternates: {
     canonical: "/blog/coffee-shop-loyalty-cards",
   },
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     type: "article",
     url: "/blog/coffee-shop-loyalty-cards",
     title:
-      "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
+      "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
     description:
-      "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
+      "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
     images: [
       {
         url: "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title:
-      "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
+      "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
     description:
-      "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
+      "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
     images: [
       "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -45,9 +45,9 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline:
-    "Coffee Shop Loyalty Cards: Best Rewards & Setup Guide (2026)",
+    "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
   description:
-    "The best coffee shop loyalty card rewards, the 8-stamp rule, and how to set one up in under 2 minutes — without a customer app.",
+    "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -154,7 +154,7 @@ export default function BlogPost() {
               Guide
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              Coffee Shop Loyalty Cards: Best Rewards & Setup Guide
+              Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
               Everything you need to know about coffee shop loyalty cards — how
