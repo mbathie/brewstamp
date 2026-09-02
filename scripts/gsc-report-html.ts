@@ -300,8 +300,21 @@ async function main() {
     });
   }
   const pageQueries: Record<string, Array<{ q: string; clicks: number; impressions: number; position: number }>> = {};
+  const pageQueryStats: Record<
+    string,
+    { queries: number; impressions: number; clicks: number; headroom: number }
+  > = {};
   for (const [pg, rows] of perPage) {
     pageQueries[pg] = rows.sort((a, b) => b.impressions - a.impressions).slice(0, 6);
+    pageQueryStats[pg] = {
+      queries: rows.length,
+      impressions: rows.reduce((s, r) => s + r.impressions, 0),
+      clicks: rows.reduce((s, r) => s + r.clicks, 0),
+      headroom: rows.reduce(
+        (s, r) => s + Math.max(0, r.impressions * benchCtr(r.position) - r.clicks),
+        0,
+      ),
+    };
   }
 
   // Rank distribution, weighted by impressions, current vs prior.
@@ -362,6 +375,7 @@ async function main() {
     queries,
     pages,
     pageQueries,
+    pageQueryStats,
     countries: countryUpside,
     bestCtr,
     bestCtrCountry,
@@ -634,7 +648,9 @@ footer { color: var(--muted); font-size: 12px; margin-top: 48px; border-top: 1px
 </div>
 
 <h2>Pages</h2>
-<p class="note">Click a row to see the queries that page ranks for.</p>
+<p class="note">Click a row to see the queries that page ranks for. Headroom is summed over the
+  named queries for that page, not derived from the page's average position — a page average blends
+  its whole tail, so putting it through a rank-CTR curve badly overstates the opportunity.</p>
 <div class="card"><div class="scroll"><table data-table="pages"></table></div></div>
 
 <h2>Markets</h2>
@@ -1125,13 +1141,25 @@ buildTable(document.querySelector('[data-table="pages"]'), [
   { label: "Pos", key: "position", cell: (r) => posf(r.position), sortValue: (r) => -r.position },
   { label: "Δ pos", sortable: false, cell: (r) => posDeltaCell(r.position, r.pPosition) },
   { label: "Share", sortable: false, cell: (r) => ((r.impressions / DATA.curr.impressions) * 100).toFixed(0) + "%" },
+  {
+    label: "Headroom", sortable: false,
+    cell: (r) => {
+      const st = DATA.pageQueryStats[r.key];
+      return st && st.headroom >= 1 ? '<span class="pill warn">+' + Math.round(st.headroom) + "</span>"
+        : '<span style="color:var(--muted)">—</span>';
+    },
+  },
 ], DATA.pages.slice(0, 40), {
   rowKey: (r) => r.key,
   expandable: true,
   detail: (pg) => {
     const qs = DATA.pageQueries[pg];
     if (!qs || !qs.length) return '<span style="color:var(--muted)">No query breakdown for this page.</span>';
-    return '<div style="font-size:12.5px"><b>Top queries for ' + esc(pg) + "</b><table style='margin-top:6px'>" +
+    const st = DATA.pageQueryStats[pg];
+    const cov = st ? " — GSC names " + st.queries + " queries for this page, covering " +
+      nf(st.impressions) + " of its impressions; the remainder is anonymised long tail" : "";
+    return '<div style="font-size:12.5px"><b>Top queries for ' + esc(pg) + "</b>" +
+      '<span style="color:var(--muted)">' + cov + "</span><table style='margin-top:6px'>" +
       "<thead><tr><th class='nosort'>Query</th><th class='nosort'>Clicks</th><th class='nosort'>Impr</th><th class='nosort'>Pos</th></tr></thead><tbody>" +
       qs.map((q) => "<tr><td>" + esc(q.q) + "</td><td>" + nf(q.clicks) + "</td><td>" + nf(q.impressions) + "</td><td>" + posf(q.position) + "</td></tr>").join("") +
       "</tbody></table></div>";
@@ -1190,10 +1218,17 @@ if (DATA.history.length > 1) {
   const snippetPages = DATA.pages.filter((p) => p.impressions >= 150 && p.position <= 14 && p.ctr < 0.015)
     .sort((a, b) => b.impressions - a.impressions).slice(0, 3);
   for (const p of snippetPages) {
-    add("Rewrite the title + meta description on <code>" + esc(p.key) + "</code>",
-      nf(p.impressions) + " impressions at position " + posf(p.position) + " but only " + pf(p.ctr) +
-      " CTR. At a normal CTR for that rank it would earn about " + Math.round(p.impressions * benchCtrJs(p.position)) +
-      " clicks — it earned " + p.clicks + ". Rule: page-1-ish rank, ≥150 impressions, CTR under 1.5%.");
+    const st = DATA.pageQueryStats[p.key];
+    let why = nf(p.impressions) + " impressions at position " + posf(p.position) + " but only " + pf(p.ctr) +
+      " CTR (" + p.clicks + " clicks). ";
+    if (st && st.headroom >= 1) {
+      why += "Across the " + st.queries + " queries GSC names for it (" + nf(st.impressions) +
+        " impressions, " + Math.round((st.impressions / p.impressions) * 100) + "% of the page's total), " +
+        "about <b>" + Math.round(st.headroom) + " clicks</b> go unclaimed at their current ranks. " +
+        "The rest of the page's impressions come from queries GSC won't name, so the true figure is higher. ";
+    }
+    why += "Rule: page-1-ish rank, ≥150 impressions, CTR under 1.5%.";
+    add("Rewrite the title + meta description on <code>" + esc(p.key) + "</code>", why);
   }
 
   const expand = DATA.pages.filter((p) => p.impressions >= 100 && p.position > 18)
@@ -1236,16 +1271,6 @@ if (DATA.history.length > 1) {
     '<li><span class="n">' + (i + 1) + '</span><div><div>' + a.title + '</div><div class="why">' + a.why + "</div></div></li>").join("")
     || '<li><div class="why">Nothing crossed the thresholds this window.</div></li>';
 })();
-
-function benchCtrJs(pos) {
-  const t = [0, .281, .157, .11, .08, .061, .048, .039, .032, .028, .025];
-  const p = Math.max(1, Math.round(pos));
-  if (p <= 10) return t[p];
-  if (p <= 15) return .015;
-  if (p <= 20) return .01;
-  if (p <= 30) return .006;
-  return .003;
-}
 
 /* Theme toggle */
 document.getElementById("theme").addEventListener("click", () => {
