@@ -5,6 +5,9 @@
  *   GSC_CLIENT_ID=... GSC_CLIENT_SECRET=... \
  *     npx tsx scripts/gsc-report.ts [--days 28] [--site sc-domain:brewstamp.app]
  *
+ * The window is a trailing --days ending on the last day Search Console has
+ * data for (its lag moves, so this is not a fixed offset from today).
+ *
  * Refresh token is read from ~/.config/brewstamp/gsc-oauth-token.json.
  * The OAuth client id/secret must belong to the same project that minted
  * the refresh token — re-use the app's Google OAuth client (the same
@@ -170,9 +173,30 @@ function table(
 
 async function main() {
   const today = new Date();
-  // GSC has ~2-day reporting delay; bias windows to data that exists.
-  const end = new Date(today);
-  end.setDate(end.getDate() - 2);
+  const token = await getAccessToken();
+
+  // GSC's reporting delay isn't a fixed two days — it moves. Anchor the window
+  // to the last day that actually reported, so it never includes a dead
+  // trailing day: that understates the totals and makes two runs a day apart
+  // look like a decline when nothing changed.
+  const probeStart = new Date(today);
+  probeStart.setDate(probeStart.getDate() - (DAYS * 2 + 10));
+  const probe = await querySearchAnalytics(
+    token,
+    isoDate(probeStart),
+    isoDate(today),
+    ["date"],
+    1000,
+  );
+  const lastReported = probe.length
+    ? probe
+        .map((r) => r.keys?.[0] ?? "")
+        .sort()
+        .slice(-1)[0]
+    : null;
+
+  const end = lastReported ? new Date(`${lastReported}T12:00:00Z`) : new Date(today);
+  if (!lastReported) end.setDate(end.getDate() - 2);
   const start = new Date(end);
   start.setDate(start.getDate() - (DAYS - 1));
   const prevEnd = new Date(start);
@@ -187,10 +211,9 @@ async function main() {
 
   console.log(`Site: ${SITE}`);
   console.log(
-    `Window: ${startISO} → ${endISO}  (vs ${prevStartISO} → ${prevEndISO})\n`,
+    `Window: ${startISO} → ${endISO}  (vs ${prevStartISO} → ${prevEndISO})`,
   );
-
-  const token = await getAccessToken();
+  console.log(`Last day reported by GSC: ${endISO}\n`);
 
   const [
     currTotalsRows,
@@ -199,7 +222,6 @@ async function main() {
     pagesRows,
     countriesRows,
     devicesRows,
-    dailyRows,
   ] = await Promise.all([
     querySearchAnalytics(token, startISO, endISO, [], 1),
     querySearchAnalytics(token, prevStartISO, prevEndISO, [], 1),
@@ -207,8 +229,11 @@ async function main() {
     querySearchAnalytics(token, startISO, endISO, ["page"], 200),
     querySearchAnalytics(token, startISO, endISO, ["country"], 20),
     querySearchAnalytics(token, startISO, endISO, ["device"], 5),
-    querySearchAnalytics(token, startISO, endISO, ["date"], 1000),
   ]);
+  const dailyRows = probe.filter((r) => {
+    const d = r.keys?.[0] ?? "";
+    return d >= startISO && d <= endISO;
+  });
 
   const curr = totals(currTotalsRows);
   const prev = totals(prevTotalsRows);

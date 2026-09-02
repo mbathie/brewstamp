@@ -1,11 +1,17 @@
 # Brewstamp SEO snapshots
 
 Point-in-time pulls from Google Search Console (`sc-domain:brewstamp.app`).
-Append a new row + detail block each time you snapshot. GSC has a ~2-day
-reporting lag, so each window ends ~2 days before the snapshot date.
+Append a new row + detail block each time you snapshot. Each window is a
+trailing 28 days ending on the last day GSC has data for — usually 2–3 days
+before the snapshot date, but the lag moves, so the window end can repeat from
+one day to the next. When it does, the numbers are unchanged and there's nothing
+new to append.
 
 Generate with: `source ~/.config/brewstamp/gsc-oauth.env && npx tsx scripts/gsc-report.ts --days 28`
 (OAuth refresh token: `~/.config/brewstamp/gsc-oauth-token.json`.)
+
+For the browsable version — trends, opportunity analysis and derived actions —
+`npx tsx scripts/gsc-report-html.ts`, which writes `~/Downloads/brewstamp-seo-report.html`.
 
 ## Summary over time
 
