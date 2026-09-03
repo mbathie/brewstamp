@@ -132,6 +132,25 @@ function bucketise(rows: CadenceDay[], grain: Grain, count: number): Bucket[] {
   return out;
 }
 
+/**
+ * A rounded axis maximum plus its tick stops. Bars scale to this rather than to
+ * the raw peak, so the top gridline is a round number the eye can read a value
+ * against instead of an arbitrary "tallest bar".
+ */
+function axisScale(max: number): { axisMax: number; ticks: number[] } {
+  if (max <= 1) return { axisMax: 1, ticks: [0, 1] };
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  const rough = max / 3; // aim for ~3 intervals
+  const step = steps.find((t) => t >= rough) ?? Math.ceil(rough / 1000) * 1000;
+  const axisMax = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+  for (let v = 0; v <= axisMax; v += step) ticks.push(v);
+  return { axisMax, ticks };
+}
+
+/** Plot height in px — shared by the bars, the gridlines and the axis gutter. */
+const PLOT_H = 88;
+
 export default function VisitCadence({
   cadence,
   perkMode = false,
@@ -140,6 +159,7 @@ export default function VisitCadence({
   perkMode?: boolean;
 }) {
   const [grain, setGrain] = useState<Grain>("week");
+  const [hover, setHover] = useState<number | null>(null);
   const config = GRAINS.find((g) => g.value === grain)!;
 
   const buckets = useMemo(
@@ -150,10 +170,11 @@ export default function VisitCadence({
   // A perk shop never accrues stamps, so it gets a single series rather than an
   // always-empty one beside it.
   const showStamps = !perkMode;
-  const max = Math.max(
+  const peak = Math.max(
     1,
     ...buckets.map((b) => Math.max(showStamps ? b.stamps : 0, b.rewards)),
   );
+  const { axisMax, ticks } = axisScale(peak);
   const totalStamps = buckets.reduce((s, b) => s + b.stamps, 0);
   const totalRewards = buckets.reduce((s, b) => s + b.rewards, 0);
 
@@ -208,41 +229,97 @@ export default function VisitCadence({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-end gap-1.5">
-          {buckets.map((b, i) => {
-            const empty = b.stamps === 0 && b.rewards === 0;
-            return (
-              <div key={b.key} className="flex flex-1 flex-col items-center gap-1">
-                <div className="flex h-20 w-full items-end justify-center gap-[2px]">
-                  {empty ? (
-                    <div className="h-[3px] w-full rounded-sm bg-muted" />
-                  ) : (
-                    <>
-                      {showStamps && (
-                        <Bar
-                          value={b.stamps}
-                          max={max}
-                          color={STAMP_COLOR}
-                          title={`${b.sublabel} — ${b.stamps} stamp${b.stamps === 1 ? "" : "s"}`}
-                        />
+        <div className="flex gap-2">
+          {/* Y axis gutter — labels sit on the gridlines they belong to. */}
+          <div className="relative w-6 shrink-0" style={{ height: PLOT_H }}>
+            {ticks.map((t) => (
+              <span
+                key={t}
+                className="absolute right-0 translate-y-1/2 text-[10px] tabular-nums text-muted-foreground"
+                style={{ bottom: `${(t / axisMax) * 100}%` }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+
+          <div className="relative flex-1">
+            {hover !== null && (
+              <Tooltip
+                bucket={buckets[hover]}
+                index={hover}
+                count={buckets.length}
+                showStamps={showStamps}
+              />
+            )}
+
+            {/* Gridlines behind the bars: solid hairlines, one shade off the surface. */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0"
+              style={{ height: PLOT_H }}
+            >
+              {ticks.map((t) => (
+                <div
+                  key={t}
+                  className={`absolute inset-x-0 border-t ${
+                    t === 0 ? "border-border" : "border-border/50"
+                  }`}
+                  style={{ bottom: `${(t / axisMax) * 100}%` }}
+                />
+              ))}
+            </div>
+
+            <div className="relative flex items-end gap-1.5">
+              {buckets.map((b, i) => {
+                const empty = b.stamps === 0 && b.rewards === 0;
+                return (
+                  // The whole column is the hit target, empty ones included, so
+                  // you never have to land on a 2px bar to read a value.
+                  // Focusable so keyboard users get the same readout as hover.
+                  <div
+                    key={b.key}
+                    tabIndex={0}
+                    onMouseEnter={() => setHover(i)}
+                    onFocus={() => setHover(i)}
+                    onMouseLeave={() => setHover((h) => (h === i ? null : h))}
+                    onBlur={() => setHover((h) => (h === i ? null : h))}
+                    className={`flex flex-1 cursor-default flex-col items-center gap-1 rounded-sm outline-none transition-colors ${
+                      hover === i ? "bg-muted/40" : ""
+                    }`}
+                  >
+                    <div
+                      className="flex w-full items-end justify-center gap-[2px]"
+                      style={{ height: PLOT_H }}
+                    >
+                      {empty ? (
+                        <div className="h-[2px] w-full rounded-sm bg-muted" />
+                      ) : (
+                        <>
+                          {showStamps && (
+                            <Bar
+                              value={b.stamps}
+                              max={axisMax}
+                              color={STAMP_COLOR}
+                            />
+                          )}
+                          <Bar
+                            value={b.rewards}
+                            max={axisMax}
+                            color={REWARD_COLOR}
+                          />
+                        </>
                       )}
-                      <Bar
-                        value={b.rewards}
-                        max={max}
-                        color={REWARD_COLOR}
-                        title={`${b.sublabel} — ${b.rewards} reward${b.rewards === 1 ? "" : "s"}`}
-                      />
-                    </>
-                  )}
-                </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {i % labelEvery === 0 || i === buckets.length - 1
-                    ? b.label
-                    : " "}
-                </span>
-              </div>
-            );
-          })}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {i % labelEvery === 0 || i === buckets.length - 1
+                        ? b.label
+                        : " "}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -254,16 +331,14 @@ function Bar({
   value,
   max,
   color,
-  title,
 }: {
   value: number;
   max: number;
   color: string;
-  title: string;
 }) {
   const pct = (value / max) * 100;
   return (
-    <div className="flex h-full flex-1 items-end" title={title}>
+    <div className="flex h-full flex-1 items-end">
       <div
         className="w-full rounded-sm transition-all"
         style={{
@@ -271,6 +346,59 @@ function Bar({
           backgroundColor: value > 0 ? color : "var(--muted)",
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * Hover/focus readout for one bucket. Anchored over the column it describes and
+ * flipped at the edges so it can't run off the card. Pointer-events off so it
+ * can never steal the hover that opened it.
+ */
+function Tooltip({
+  bucket,
+  index,
+  count,
+  showStamps,
+}: {
+  bucket: Bucket;
+  index: number;
+  count: number;
+  showStamps: boolean;
+}) {
+  const centre = ((index + 0.5) / count) * 100;
+  const transform =
+    centre < 15
+      ? "translateX(0)"
+      : centre > 85
+        ? "translateX(-100%)"
+        : "translateX(-50%)";
+
+  return (
+    <div
+      role="status"
+      className="pointer-events-none absolute -top-1 z-10 -translate-y-full whitespace-nowrap rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs shadow-md"
+      style={{ left: `${centre}%`, transform }}
+    >
+      <p className="mb-1 font-medium text-foreground">{bucket.sublabel}</p>
+      {showStamps && (
+        <p className="flex items-center gap-1.5 text-muted-foreground">
+          <span
+            className="inline-block size-2 rounded-[2px]"
+            style={{ backgroundColor: STAMP_COLOR }}
+          />
+          Stamps
+          <span className="tabular-nums text-foreground">{bucket.stamps}</span>
+        </p>
+      )}
+      <p className="flex items-center gap-1.5 text-muted-foreground">
+        <span
+          className="inline-block size-2 rounded-[2px]"
+          style={{ backgroundColor: REWARD_COLOR }}
+        />
+        Rewards
+        <span className="tabular-nums text-foreground">{bucket.rewards}</span>
+      </p>
     </div>
   );
 }
