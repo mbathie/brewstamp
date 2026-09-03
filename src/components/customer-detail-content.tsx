@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import VisitCadence, { type CadenceDay } from "@/components/visit-cadence";
 import {
   Table,
   TableBody,
@@ -55,7 +56,7 @@ interface Props {
   memberSince: string;
   lastVisit: string | null;
   visitsLast30d: number;
-  weeklyVisits: number[]; // last 12 weeks
+  cadence: CadenceDay[];
   history: HistoryRow[];
   initialNotes: string;
   initialTags: string[];
@@ -78,7 +79,7 @@ export default function CustomerDetailContent({
   memberSince,
   lastVisit,
   visitsLast30d,
-  weeklyVisits,
+  cadence,
   history,
   initialNotes,
   initialTags,
@@ -395,44 +396,8 @@ export default function CustomerDetailContent({
         </CardContent>
       </Card>
 
-      {weeklyVisits.length > 0 && weeklyVisits.some((v) => v > 0) && (
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Visit cadence</CardTitle>
-            <p className="text-xs text-muted-foreground">Last 12 weeks</p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-1.5">
-              {weeklyVisits.map((v, i) => {
-                const max = Math.max(...weeklyVisits, 1);
-                const pct = (v / max) * 100;
-                return (
-                  <div
-                    key={i}
-                    className="flex flex-1 flex-col items-center gap-1"
-                  >
-                    <div className="flex h-16 w-full items-end">
-                      <div
-                        className={`w-full rounded-sm transition-colors ${
-                          v > 0 ? "bg-amber-500" : "bg-muted"
-                        }`}
-                        style={{
-                          height: v > 0 ? `${Math.max(8, pct)}%` : "4px",
-                        }}
-                        title={`${v} visit${v === 1 ? "" : "s"}`}
-                      />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      {i === weeklyVisits.length - 1
-                        ? "now"
-                        : `${weeklyVisits.length - 1 - i}w`}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+      {cadence.length > 0 && (
+        <VisitCadence cadence={cadence} perkMode={perkMode} />
       )}
 
       <Card>

@@ -65,27 +65,48 @@ export default async function CustomerDetailPage({
     (r) => new Date(r.createdAt) >= thirtyDaysAgo,
   ).length;
 
-  // 12-week cadence: count of approved visits per week, oldest first.
-  const weeklyVisits = Array(12).fill(0) as number[];
-  const weekZeroStart = new Date(now);
-  weekZeroStart.setHours(0, 0, 0, 0);
-  weekZeroStart.setDate(weekZeroStart.getDate() - 6); // start of current week-window
-  for (const r of approvedReqs) {
-    const d = new Date(r.createdAt);
-    const diffDays = Math.floor(
-      (weekZeroStart.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    // diffDays >= 0 means in past, before this week
-    if (diffDays < 0) {
-      // current week
-      weeklyVisits[11] += 1;
-    } else {
-      const weekIdx = 11 - 1 - Math.floor(diffDays / 7);
-      if (weekIdx >= 0 && weekIdx < 11) {
-        weeklyVisits[weekIdx] += 1;
-      }
-    }
-  }
+  // Cadence: one bucket per local day for the last year, aggregated in Mongo
+  // rather than derived from `requests` — that list is capped at 200 rows, which
+  // would silently truncate a monthly view for a heavy customer. The client
+  // rolls these days up into weeks and months.
+  //
+  // Mode-agnostic by construction: a stamp shop accrues `stampsAwarded` and
+  // marks redemptions with `redeem`; a perk shop leaves stampsAwarded unset and
+  // sets redeem on every approval, so it simply reads as rewards-only.
+  const cadenceStart = new Date(now);
+  cadenceStart.setDate(cadenceStart.getDate() - 364);
+  cadenceStart.setHours(0, 0, 0, 0);
+
+  const cadenceRows = await StampRequest.aggregate([
+    {
+      $match: {
+        shop: stampCard.shop,
+        customer: customer._id,
+        status: "approved",
+        createdAt: { $gte: cadenceStart },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: {
+            format: "%Y-%m-%d",
+            date: "$createdAt",
+            timezone: shop.timezone || "UTC",
+          },
+        },
+        stamps: { $sum: { $ifNull: ["$stampsAwarded", 0] } },
+        rewards: { $sum: { $cond: ["$redeem", 1, 0] } },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const cadence = cadenceRows.map((r: any) => ({
+    day: r._id as string,
+    stamps: r.stamps as number,
+    rewards: r.rewards as number,
+  }));
 
   const memberSince = (
     stampCard?.createdAt instanceof Date
@@ -116,7 +137,7 @@ export default async function CustomerDetailPage({
       memberSince={memberSince}
       lastVisit={lastVisit}
       visitsLast30d={visitsLast30d}
-      weeklyVisits={weeklyVisits}
+      cadence={cadence}
       history={history}
       initialNotes={stampCard?.notes || ""}
       initialTags={stampCard?.tags || []}
