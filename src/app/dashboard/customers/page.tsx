@@ -2,10 +2,55 @@ import { redirect } from "next/navigation";
 import { getCurrentShopContext } from "@/lib/shop-context";
 import { getShopPlanLimits, getUserPlanLimits } from "@/lib/plan-limits";
 import { connectDB } from "@/lib/mongoose";
-import { StampCard } from "@/models";
+import { StampCard, StampRequest } from "@/models";
+import { startOfDayInTz } from "@/lib/perk";
 import CustomerSearch from "@/components/customer-search";
 
-export default async function CustomersPage() {
+/**
+ * Reporting windows for perk shops. `freeRedeemed` on the card is a lifetime
+ * counter, which can't answer "how many did this person have this week" — the
+ * question an employer paying for the perk actually asks.
+ */
+export type PerkRange = "7d" | "30d" | "mtd" | "all";
+
+export const PERK_RANGE_LABELS: Record<PerkRange, string> = {
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+  mtd: "This month",
+  all: "All time",
+};
+
+function isPerkRange(v: string | undefined): v is PerkRange {
+  return v === "7d" || v === "30d" || v === "mtd" || v === "all";
+}
+
+/**
+ * Start of the reporting window as a UTC instant, snapped to local midnight in
+ * the shop's timezone. Each candidate is re-snapped with `startOfDayInTz`
+ * rather than trusted as a 24h multiple, so a DST shift can't leave the
+ * boundary an hour inside the wrong day.
+ */
+function perkRangeStart(range: PerkRange, tz: string): Date | null {
+  if (range === "all") return null;
+  const today = startOfDayInTz(tz);
+  if (range === "mtd") {
+    // Local day-of-month, so we can step back to the 1st.
+    const dom = Number(
+      new Intl.DateTimeFormat("en-US", { timeZone: tz, day: "numeric" }).format(
+        today,
+      ),
+    );
+    return startOfDayInTz(tz, new Date(today.getTime() - (dom - 1) * 864e5));
+  }
+  const days = range === "7d" ? 6 : 29;
+  return startOfDayInTz(tz, new Date(today.getTime() - days * 864e5));
+}
+
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
   const ctx = await getCurrentShopContext();
   if (!ctx) redirect("/login");
   if (ctx.memberships.length === 0) redirect("/setup");
@@ -42,6 +87,55 @@ export default async function CustomersPage() {
 
   const serialized = JSON.parse(JSON.stringify(deduped));
 
+  // Perk usage is counted by EMAIL, not by stamp card — the same identity the
+  // daily cap uses (see countPerkDrinksToday). Counting by card would under-
+  // report anyone holding a duplicate customer record, which is exactly the
+  // person an employer is trying to look at.
+  const { range: rangeParam } = await searchParams;
+  const range: PerkRange = isPerkRange(rangeParam) ? rangeParam : "30d";
+  let perkStats: Record<
+    string,
+    { inRange: number; today: number; lifetime: number }
+  > | null = null;
+
+  if (perkShop) {
+    const tz = ctx.shop.timezone || "UTC";
+    const start = perkRangeStart(range, tz);
+    const todayStart = startOfDayInTz(tz);
+
+    const rows = await StampRequest.aggregate([
+      // Approved only — a rejected or expired request was never a drink. No
+      // `redeem` filter: in perk mode every approved request is a free drink,
+      // which is the same set the daily cap counts.
+      {
+        $match: {
+          shop: ctx.shop._id,
+          status: "approved",
+          email: { $type: "string" },
+        },
+      },
+      {
+        $group: {
+          _id: "$email",
+          lifetime: { $sum: 1 },
+          inRange: {
+            $sum: start ? { $cond: [{ $gte: ["$createdAt", start] }, 1, 0] } : 1,
+          },
+          today: { $sum: { $cond: [{ $gte: ["$createdAt", todayStart] }, 1, 0] } },
+        },
+      },
+    ]);
+
+    perkStats = {};
+    for (const r of rows) {
+      perkStats[r._id] = {
+        inRange: r.inRange,
+        today: r.today,
+        lifetime: r.lifetime,
+      };
+    }
+  }
+
   // CSV export is a Plus+ feature. On Free/Pro the button still
   // renders but is disabled with an upgrade tooltip — so people see the
   // capability exists and know where it lives once they upgrade.
@@ -60,7 +154,11 @@ export default async function CustomersPage() {
         stampCards={serialized}
         threshold={aggregate ? 8 : ctx.shop.stampThreshold}
         aggregate={aggregate}
-        perkMode={!aggregate && !!ctx.shop.perkMode}
+        perkMode={perkShop}
+        perkStats={perkStats}
+        perkRange={range}
+        perkRangeLabel={PERK_RANGE_LABELS[range]}
+        perkDailyLimit={perkShop ? ctx.shop.dailyDrinkLimit || 2 : undefined}
         canExportCsv={limits.plan.hasCsvExport}
         planLabel={limits.plan.label}
       />

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { auth } from "./auth";
+import { getImpersonationFor } from "./impersonation";
 import { connectDB } from "./mongoose";
 import { Shop, ShopMembership } from "@/models";
 
@@ -18,6 +19,13 @@ export interface MembershipSummary {
 
 export interface CurrentShopContext {
   userId: string;
+  /**
+   * Set when the platform admin is viewing this dashboard as another user.
+   * `userId` above is already the impersonated user — everything downstream
+   * scopes to them without needing to know. This flag exists so the UI can say
+   * so, and so writes can be refused.
+   */
+  impersonatedUserId?: string;
   memberships: MembershipSummary[];
   // 'single' = scoped to one shop; 'all' = aggregate; 'unset' = needs picker.
   mode: "single" | "all" | "unset";
@@ -60,7 +68,13 @@ export const getCurrentShopContext = cache(
   async (): Promise<CurrentShopContext | null> => {
     const session = await auth();
     if (!session?.user) return null;
-    const userId = session.user.id as string;
+
+    // Admin "view as": resolve the whole context through the target user, so
+    // every page and API that funnels through here is scoped to them with no
+    // further changes. Returns null unless the real session is the admin.
+    const impersonation = await getImpersonationFor(session.user.email);
+    const userId = impersonation?.userId ?? (session.user.id as string);
+    const impersonatedUserId = impersonation?.userId;
 
     const memberships = await getMembershipsForUser(userId);
     const cookieValue = await readCurrentShopCookie();
@@ -69,6 +83,7 @@ export const getCurrentShopContext = cache(
     if (memberships.length === 0) {
       return {
         userId,
+        impersonatedUserId,
         memberships,
         mode: "unset",
         shopId: null,
@@ -84,6 +99,7 @@ export const getCurrentShopContext = cache(
       });
       return {
         userId,
+        impersonatedUserId,
         memberships,
         mode: "all",
         shopId: null,
@@ -103,6 +119,7 @@ export const getCurrentShopContext = cache(
     if (!targetShopId) {
       return {
         userId,
+        impersonatedUserId,
         memberships,
         mode: "unset",
         shopId: null,
@@ -117,6 +134,7 @@ export const getCurrentShopContext = cache(
       // Stale cookie pointing at a deleted shop — fall back to unset.
       return {
         userId,
+        impersonatedUserId,
         memberships,
         mode: "unset",
         shopId: null,
@@ -127,6 +145,7 @@ export const getCurrentShopContext = cache(
 
     return {
       userId,
+      impersonatedUserId,
       memberships,
       mode: "single",
       shopId: targetShopId,

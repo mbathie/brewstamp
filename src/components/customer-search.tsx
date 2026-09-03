@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,24 @@ interface StampCardData {
 
 type StatusFilter = "active" | "disabled" | "all";
 
+type PerkRange = "7d" | "30d" | "mtd" | "all";
+
+const PERK_RANGE_OPTIONS: { value: PerkRange; label: string }[] = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "mtd", label: "This month" },
+  { value: "all", label: "All time" },
+];
+
+/** Free drinks for one work email: in the chosen window, today, and lifetime. */
+interface PerkStat {
+  inRange: number;
+  today: number;
+  lifetime: number;
+}
+
+const NO_PERK_STAT: PerkStat = { inRange: 0, today: 0, lifetime: 0 };
+
 interface Props {
   stampCards: StampCardData[];
   threshold: number;
@@ -82,6 +100,12 @@ interface Props {
   aggregate?: boolean;
   // Perk shops earn no stamps — report on free coffees redeemed instead.
   perkMode?: boolean;
+  // Free drinks per work email, counted server-side over the selected window.
+  // Keyed by lowercased email; absent for non-perk shops.
+  perkStats?: Record<string, PerkStat> | null;
+  perkRange?: PerkRange;
+  perkRangeLabel?: string;
+  perkDailyLimit?: number;
   // CSV export is a Plus+ feature. On lower plans we still render the
   // button (so customers know the capability exists) but disable it and
   // surface a tooltip nudging them to upgrade.
@@ -106,6 +130,8 @@ function downloadCsv(
   rows: StampCardData[],
   aggregate: boolean,
   perkMode: boolean,
+  statOf: (card: StampCardData) => PerkStat,
+  rangeLabel: string,
 ) {
   const header = [
     ...(aggregate ? ["Shop"] : []),
@@ -114,9 +140,10 @@ function downloadCsv(
     "Status",
     "Tags",
     "Notes",
-    // Perk reports are reimbursement-focused: just the free coffees per person.
+    // Perk reports are reimbursement-focused: free coffees per person, for the
+    // window on screen plus today and lifetime for context.
     ...(perkMode
-      ? ["Free Rewards Redeemed"]
+      ? [`Rewards (${rangeLabel})`, "Rewards Today", "Rewards All Time"]
       : ["Current Stamps", "Total Earned", "Free Rewards Redeemed"]),
     "Last Visit",
   ];
@@ -133,7 +160,11 @@ function downloadCsv(
         csvCell((c.tags || []).join("; ")),
         csvCell((c.notes || "").replace(/\s+/g, " ").trim()),
         ...(perkMode
-          ? [csvCell(c.freeRedeemed)]
+          ? [
+              csvCell(statOf(c).inRange),
+              csvCell(statOf(c).today),
+              csvCell(statOf(c).lifetime),
+            ]
           : [
               csvCell(c.stamps),
               csvCell(c.totalEarned),
@@ -149,7 +180,11 @@ function downloadCsv(
   const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `brewstamp-customers-${stamp}.csv`;
+  // Name the window into the file — a reimbursement CSV is meaningless once
+  // it's detached from the period it covers.
+  a.download = perkMode
+    ? `brewstamp-perk-rewards-${rangeLabel.toLowerCase().replace(/\s+/g, "-")}-${stamp}.csv`
+    : `brewstamp-customers-${stamp}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -161,6 +196,10 @@ export default function CustomerSearch({
   threshold,
   aggregate = false,
   perkMode = false,
+  perkStats = null,
+  perkRange = "30d",
+  perkRangeLabel = "Last 30 days",
+  perkDailyLimit,
   canExportCsv = true,
   planLabel,
 }: Props) {
@@ -201,6 +240,26 @@ export default function CustomerSearch({
 
   const validCards = stampCards.filter((card) => card.customer != null);
 
+  // Perk usage is keyed by work email — the same identity the daily cap counts.
+  // A customer with no email (shouldn't happen in a perk shop) reads as zero
+  // rather than throwing off the sort.
+  const statOf = useCallback(
+    (card: StampCardData): PerkStat => {
+      const email = card.customer.email?.trim().toLowerCase();
+      if (!email || !perkStats) return NO_PERK_STAT;
+      return perkStats[email] || NO_PERK_STAT;
+    },
+    [perkStats],
+  );
+
+  // Switching the window is a server round-trip (the counts are aggregated in
+  // Mongo), so drive it through the URL rather than refiltering on the client.
+  function setRange(next: PerkRange) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("range", next);
+    router.push(`?${params.toString()}`);
+  }
+
   const allTags = useMemo(() => {
     const set = new Set<string>();
     for (const c of validCards) (c.tags || []).forEach((t) => set.add(t));
@@ -223,8 +282,14 @@ export default function CustomerSearch({
     | "stamps"
     | "totalEarned"
     | "freeRedeemed"
+    | "perkRange"
+    | "perkToday"
     | "lastVisit";
-  const [sortKey, setSortKey] = useState<SortKey>("lastVisit");
+  // Perk shops open on heaviest-user-first for the selected window — the
+  // question an employer is on this page to answer.
+  const [sortKey, setSortKey] = useState<SortKey>(
+    perkMode ? "perkRange" : "lastVisit",
+  );
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   // Click a header: toggle dir if it's the active column, otherwise switch
@@ -289,6 +354,10 @@ export default function CustomerSearch({
           return (a.totalEarned - b.totalEarned) * mul;
         case "freeRedeemed":
           return (a.freeRedeemed - b.freeRedeemed) * mul;
+        case "perkRange":
+          return (statOf(a).inRange - statOf(b).inRange) * mul;
+        case "perkToday":
+          return (statOf(a).today - statOf(b).today) * mul;
         case "lastVisit":
           return (
             (new Date(a.updatedAt).getTime() -
@@ -298,7 +367,7 @@ export default function CustomerSearch({
       }
     };
     return [...list].sort(compare);
-  }, [validCards, query, tagFilter, sortKey, sortDir]);
+  }, [validCards, query, tagFilter, sortKey, sortDir, statOf]);
 
   // Table view applies the status filter on top of the sorted base.
   const filtered = useMemo(() => {
@@ -311,6 +380,20 @@ export default function CustomerSearch({
     () => validCards.filter((c) => c.disabled).length,
     [validCards],
   );
+
+  // Headline for the perk report: drinks in the window, and how many distinct
+  // people claimed them. Derived from the rows on screen so it always agrees
+  // with the table beneath it.
+  const perkTotals = useMemo(() => {
+    let drinks = 0;
+    let people = 0;
+    for (const c of filtered) {
+      const n = statOf(c).inRange;
+      drinks += n;
+      if (n > 0) people += 1;
+    }
+    return { drinks, people };
+  }, [filtered, statOf]);
 
   const pageStart = page * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
@@ -343,10 +426,35 @@ export default function CustomerSearch({
             <SelectItem value="all">All</SelectItem>
           </SelectContent>
         </Select>
+        {perkMode && (
+          <Select
+            value={perkRange}
+            onValueChange={(v) => setRange(v as PerkRange)}
+          >
+            <SelectTrigger className="w-[150px] cursor-pointer">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERK_RANGE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {canExportCsv ? (
           <Button
             variant="outline"
-            onClick={() => downloadCsv(sortedAll, aggregate, perkMode)}
+            onClick={() =>
+              downloadCsv(
+                sortedAll,
+                aggregate,
+                perkMode,
+                statOf,
+                perkRangeLabel,
+              )
+            }
             disabled={sortedAll.length === 0}
             className="cursor-pointer"
             title="Download all customers (active + disabled) as CSV"
@@ -430,6 +538,24 @@ export default function CustomerSearch({
           </DialogContent>
         </Dialog>
       </div>
+      {perkMode && (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {perkTotals.drinks}
+          </span>{" "}
+          free {perkTotals.drinks === 1 ? "reward" : "rewards"} claimed by{" "}
+          <span className="font-medium text-foreground">
+            {perkTotals.people}
+          </span>{" "}
+          {perkTotals.people === 1 ? "person" : "people"} ·{" "}
+          {perkRangeLabel.toLowerCase()}
+          {perkDailyLimit
+            ? ` · limit ${perkDailyLimit}/person/day`
+            : ""}
+          . Counted by work email, so duplicate sign-ups don&apos;t split a
+          person&apos;s total.
+        </p>
+      )}
       {allTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Filter by tag:</span>
@@ -508,13 +634,39 @@ export default function CustomerSearch({
                   onClick={toggleSort}
                 />
               )}
-              <SortHeader
-                label={perkMode ? "Free rewards" : "Free Redeemed"}
-                k="freeRedeemed"
-                activeKey={sortKey}
-                dir={sortDir}
-                onClick={toggleSort}
-              />
+              {perkMode ? (
+                <>
+                  <SortHeader
+                    label={`Rewards · ${perkRangeLabel}`}
+                    k="perkRange"
+                    activeKey={sortKey}
+                    dir={sortDir}
+                    onClick={toggleSort}
+                  />
+                  <SortHeader
+                    label="Today"
+                    k="perkToday"
+                    activeKey={sortKey}
+                    dir={sortDir}
+                    onClick={toggleSort}
+                  />
+                  <SortHeader
+                    label="All time"
+                    k="freeRedeemed"
+                    activeKey={sortKey}
+                    dir={sortDir}
+                    onClick={toggleSort}
+                  />
+                </>
+              ) : (
+                <SortHeader
+                  label="Free Redeemed"
+                  k="freeRedeemed"
+                  activeKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+              )}
               <SortHeader
                 label="Last Visit"
                 k="lastVisit"
@@ -604,15 +756,62 @@ export default function CustomerSearch({
                       {card.totalEarned}
                     </TableCell>
                   )}
-                  <TableCell className="tabular-nums">
-                    {card.freeRedeemed > 0 ? (
-                      <span className="font-medium text-amber-500">
-                        {card.freeRedeemed}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">0</span>
-                    )}
-                  </TableCell>
+                  {perkMode ? (
+                    <>
+                      <TableCell className="tabular-nums">
+                        {statOf(card).inRange > 0 ? (
+                          <span className="font-medium text-amber-500">
+                            {statOf(card).inRange}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {statOf(card).today > 0 ? (
+                          <span
+                            className={
+                              perkDailyLimit &&
+                              statOf(card).today >= perkDailyLimit
+                                ? "font-medium text-foreground"
+                                : "text-foreground"
+                            }
+                            title={
+                              perkDailyLimit &&
+                              statOf(card).today >= perkDailyLimit
+                                ? `At today's limit of ${perkDailyLimit}`
+                                : undefined
+                            }
+                          >
+                            {statOf(card).today}
+                            {perkDailyLimit ? (
+                              <span className="text-muted-foreground">
+                                /{perkDailyLimit}
+                              </span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            0
+                            {perkDailyLimit ? `/${perkDailyLimit}` : ""}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="tabular-nums text-muted-foreground">
+                        {statOf(card).lifetime}
+                      </TableCell>
+                    </>
+                  ) : (
+                    <TableCell className="tabular-nums">
+                      {card.freeRedeemed > 0 ? (
+                        <span className="font-medium text-amber-500">
+                          {card.freeRedeemed}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">0</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right text-muted-foreground">
                     {new Date(card.updatedAt).toLocaleDateString("en-AU", {
                       day: "numeric",

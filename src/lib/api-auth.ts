@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCurrentShopContext, type MembershipRole } from "@/lib/shop-context";
+import { getImpersonationFor, isAdminEmail } from "@/lib/impersonation";
 
-// The platform admin. Overridable via env; falls back to the founder's email so
-// existing deployments keep working. Was hardcoded + duplicated in 4 routes.
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "mbathie@gmail.com";
-
-/** True when the signed-in user is the platform admin. */
+/**
+ * True when the caller may use the admin surfaces.
+ *
+ * Deliberately false while impersonating: "view as" should show what that
+ * merchant sees, and an admin wearing someone else's identity must not still
+ * be holding platform-wide powers. Routes that manage impersonation itself
+ * check `isPlatformAdmin()` instead, which ignores the impersonation cookie.
+ */
 export async function requireAdmin(): Promise<boolean> {
-  const session = await auth();
-  return session?.user?.email === ADMIN_EMAIL;
+  const email = (await auth())?.user?.email;
+  if (!isAdminEmail(email)) return false;
+  // Wearing someone else's identity means giving up admin for its duration.
+  return !(await getImpersonationFor(email));
 }
 
 export interface Merchant {

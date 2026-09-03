@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Nodemailer from "next-auth/providers/nodemailer";
 import bcrypt from "bcrypt";
+import { getImpersonationFor } from "./impersonation";
 import { cookies } from "next/headers";
 import { connectDB } from "./mongoose";
 import {
@@ -246,7 +247,12 @@ export async function getMerchant() {
   const session = await auth();
   if (!session?.user) return null;
   await connectDB();
-  const user = await User.findById(session.user.id);
+  // Admin "view as" resolves through the target user here too. getMerchant is
+  // a second, independent resolution path from getCurrentShopContext — miss it
+  // and the layout renders as the merchant while the page below still renders
+  // as the admin.
+  const impersonation = await getImpersonationFor(session.user.email);
+  const user = await User.findById(impersonation?.userId ?? session.user.id);
   if (!user) return null;
 
   const cookieStore = await cookies();

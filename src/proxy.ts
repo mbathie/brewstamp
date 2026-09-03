@@ -3,9 +3,37 @@ import type { NextRequest } from "next/server";
 
 const ATTR_COOKIE = "bs_attr";
 const ID_COOKIE = "brewstamp_id";
+const IMPERSONATE_COOKIE = "bs_impersonate";
+
+// Admin "view as" is strictly read-only: seeing a merchant's dashboard must
+// never turn into acting as them (emailing their customers, editing their
+// settings, touching their billing). Anything that isn't a safe method is
+// refused here, before it reaches a route handler.
+//
+// Presence of the cookie is enough to DENY — a forged cookie only locks its
+// bearer out of writes, it can't grant anything. Whether the cookie is
+// honoured at all is decided in impersonation.ts, against the real session.
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const IMPERSONATION_ESCAPE_HATCH = "/api/admin/impersonate";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (
+    request.cookies.get(IMPERSONATE_COOKIE)?.value &&
+    !SAFE_METHODS.has(request.method) &&
+    // ...except stopping the impersonation, which is itself a DELETE.
+    pathname !== IMPERSONATION_ESCAPE_HATCH
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "You're viewing as another account. Exit 'view as' to make changes.",
+        code: "IMPERSONATION_READ_ONLY",
+      },
+      { status: 403 },
+    );
+  }
 
   // Dev-only: forward ?stamp=N as a header for dashboard layout
   if (

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { StampCard, Subscription, User, ShopMembership } from "@/models";
 import { getCurrentShopContext } from "@/lib/shop-context";
+import ImpersonationBanner from "@/components/impersonation-banner";
 import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
@@ -123,8 +124,19 @@ export default async function DashboardLayout({
     ? ctx.memberships.some((m) => m.role === "owner")
     : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role === "owner";
 
+  // Only hit the DB for this when a "view as" is actually active.
+  const viewingAs = ctx.impersonatedUserId
+    ? await User.findById(ctx.impersonatedUserId).select("email").lean()
+    : null;
+
   return (
     <div className="dark">
+      {viewingAs && (
+        <ImpersonationBanner
+          email={(viewingAs as any).email || "unknown account"}
+          shopName={aggregate ? "All shops" : ctx.shop.name}
+        />
+      )}
       <SidebarProvider defaultOpen={defaultOpen}>
         <DashboardSidebar
           userName={session.user.name || "Merchant"}

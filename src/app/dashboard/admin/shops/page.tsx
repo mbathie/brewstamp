@@ -10,7 +10,9 @@ import {
   ChevronRight,
   Trophy,
   Coffee,
+  Eye,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -687,13 +689,14 @@ export default function AdminShopsPage() {
                   onClick={toggleSort}
                 />
                 <TableHead className="w-8" />
+                <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="py-8 text-center text-muted-foreground"
                   >
                     No shops found
@@ -747,6 +750,9 @@ export default function AdminShopsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap">
                       {fmtDateTime(shop.lastActive)}
+                    </TableCell>
+                    <TableCell>
+                      <ViewAsButton shopId={shop._id} name={shop.name} />
                     </TableCell>
                     <TableCell>
                       <ChevronRight className="size-4 text-muted-foreground" />
@@ -967,5 +973,44 @@ function KpiCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Enter "view as" for a shop's owner, then hard-navigate to their dashboard.
+ * A full load (not router.push) because the server context, sidebar and any
+ * cached segments were all rendered as the admin.
+ */
+function ViewAsButton({ shopId, name }: { shopId: string; name: string }) {
+  const [busy, setBusy] = useState(false);
+
+  async function viewAs(e: React.MouseEvent) {
+    // The row itself is a link into the shop detail page.
+    e.stopPropagation();
+    setBusy(true);
+    const res = await fetch("/api/admin/impersonate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopId }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "Couldn't view as that account.");
+      setBusy(false);
+      return;
+    }
+    window.location.href = "/dashboard";
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={viewAs}
+      disabled={busy}
+      title={`View the dashboard as ${name}'s owner`}
+      className="cursor-pointer rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+    >
+      <Eye className="size-4" />
+    </button>
   );
 }
