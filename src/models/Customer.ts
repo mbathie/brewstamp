@@ -18,6 +18,12 @@ const customerSchema = new mongoose.Schema(
     emailVerifyCodeHash: { type: String, select: false },
     emailVerifyExpires: { type: Date },
     emailVerifyAttempts: { type: Number, default: 0 },
+    // How many times this email has been verified at a perk shop, including
+    // verifications from throwaway sessions that were merged into this record.
+    // A high count means the person's phone keeps losing its cookie (camera-app
+    // viewers, private browsing, a different browser). Otherwise untraceable,
+    // because the merge deletes the duplicate record.
+    perkVerifications: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

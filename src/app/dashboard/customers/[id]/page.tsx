@@ -138,6 +138,7 @@ export default async function CustomerDetailPage({
       lastVisit={lastVisit}
       visitsLast30d={visitsLast30d}
       cadence={cadence}
+      perkVerifications={customer.perkVerifications || 0}
       history={history}
       initialNotes={stampCard?.notes || ""}
       initialTags={stampCard?.tags || []}

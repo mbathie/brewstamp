@@ -66,6 +66,7 @@ export async function POST(req: Request) {
 
   customer.emailVerified = true;
   customer.emailVerifiedAt = new Date();
+  customer.perkVerifications = (customer.perkVerifications || 0) + 1;
   customer.emailVerifyCodeHash = undefined;
   customer.emailVerifyExpires = undefined;
   customer.emailVerifyAttempts = 0;
@@ -121,6 +122,12 @@ async function reconcileDuplicate(
   await StampRequest.updateMany(
     { shop: shopId, customer: current._id },
     { customer: canonical._id },
+  );
+  // The throwaway is about to be deleted — carry its verification onto the
+  // survivor so repeat re-verifiers stay countable.
+  await Customer.updateOne(
+    { _id: canonical._id },
+    { $inc: { perkVerifications: 1 } },
   );
   // Drop the duplicate's (empty) perk card at this shop — canonical has one.
   await StampCard.deleteOne({ shop: shopId, customer: current._id });

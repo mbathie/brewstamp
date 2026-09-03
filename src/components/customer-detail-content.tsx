@@ -57,6 +57,9 @@ interface Props {
   lastVisit: string | null;
   visitsLast30d: number;
   cadence: CadenceDay[];
+  // Perk mode: how many times this email has been verified. >1 means the
+  // phone keeps losing its cookie between scans.
+  perkVerifications?: number;
   history: HistoryRow[];
   initialNotes: string;
   initialTags: string[];
@@ -80,6 +83,7 @@ export default function CustomerDetailContent({
   lastVisit,
   visitsLast30d,
   cadence,
+  perkVerifications = 0,
   history,
   initialNotes,
   initialTags,
@@ -331,12 +335,22 @@ export default function CustomerDetailContent({
           {perkMode ? (
             // Perk customers earn no stamps — the meaningful number is how many
             // free coffees they've redeemed (the reimbursement figure).
-            <div className="text-sm text-foreground">
-              <strong className="text-2xl font-bold">{freeRedeemed}</strong>{" "}
-              <span className="text-muted-foreground">
-                {freeRedeemed === 1 ? program.unit : program.unitPlural}{" "}
-                redeemed
-              </span>
+            <div className="space-y-2 text-sm text-foreground">
+              <div>
+                <strong className="text-2xl font-bold">{freeRedeemed}</strong>{" "}
+                <span className="text-muted-foreground">
+                  {freeRedeemed === 1 ? program.unit : program.unitPlural}{" "}
+                  redeemed
+                </span>
+              </div>
+              {perkVerifications >= 2 && (
+                <p className="text-xs text-muted-foreground">
+                  Email verified{" "}
+                  <strong className="text-foreground">{perkVerifications}</strong>{" "}
+                  times — their phone isn&apos;t keeping the cookie between
+                  scans, so they&apos;re re-entering the code.
+                </p>
+              )}
             </div>
           ) : (
             <>
