@@ -80,3 +80,41 @@ export async function countPerkDrinksToday(
     createdAt: { $gte: startOfDayInTz(tz) },
   });
 }
+
+/**
+ * Today's usage for this email, split two ways: drinks actually handed over,
+ * and requests still waiting with the barista from OTHER sessions (a second
+ * phone, an incognito window that re-verified the same email).
+ *
+ * The scan-time gate uses both so the employee hears "you're at the limit" on
+ * their own screen, rather than the barista discovering it when the approve
+ * button refuses. The caller's own pending request is deliberately excluded:
+ * creating a new request expires it anyway, so counting it would tell someone
+ * who refreshed while waiting that they'd hit a limit they haven't.
+ *
+ * Approval-time rechecks must keep using `countPerkDrinksToday` (approved only)
+ * — a pending request elsewhere is not a drink, and must never block a real one.
+ * A stale pending request lingers for at most its 10-minute TTL.
+ */
+export async function perkUsageToday(
+  shopId: string,
+  email: string | null | undefined,
+  tz: string,
+  ownCustomerId: string,
+): Promise<{ approved: number; pendingElsewhere: number }> {
+  if (!email) return { approved: 0, pendingElsewhere: 0 };
+  const base = {
+    shop: shopId,
+    email: email.trim().toLowerCase(),
+    createdAt: { $gte: startOfDayInTz(tz) },
+  };
+  const [approved, pendingElsewhere] = await Promise.all([
+    StampRequest.countDocuments({ ...base, status: "approved" }),
+    StampRequest.countDocuments({
+      ...base,
+      status: "pending",
+      customer: { $ne: ownCustomerId },
+    }),
+  ]);
+  return { approved, pendingElsewhere };
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { StampRequest, Shop, Customer, StampCard } from "@/models";
-import { emailDomainAllowed, countPerkDrinksToday } from "@/lib/perk";
+import { emailDomainAllowed, perkUsageToday } from "@/lib/perk";
 import { getCurrentShopContext } from "@/lib/shop-context";
 import { generateAnimalName } from "@/lib/animal-names";
 
@@ -124,15 +124,30 @@ export async function POST(req: Request) {
     const limit = shop.dailyDrinkLimit || 2;
     // Cap by email, not the device cookie — same email on a second phone can't
     // earn a second allowance.
-    const today = await countPerkDrinksToday(
+    const { approved, pendingElsewhere } = await perkUsageToday(
       shopId,
       perkEmail,
       shop.timezone || "UTC",
+      customerId,
     );
-    if (today >= limit) {
+    if (approved >= limit) {
       return NextResponse.json(
         {
           error: `Daily limit of ${limit} reached. Try again tomorrow.`,
+          code: "DAILY_LIMIT_REACHED",
+        },
+        { status: 403 },
+      );
+    }
+    // Requests already waiting with the barista from another session count
+    // too, so the limit is reported here on the employee's screen instead of
+    // at the counter when approval refuses. Same code so the client treats it
+    // as at-limit; a different message because "tomorrow" would be wrong.
+    if (approved + pendingElsewhere >= limit) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have a drink request waiting with the barista on another device. Once it's approved you'll be at today's limit.",
           code: "DAILY_LIMIT_REACHED",
         },
         { status: 403 },

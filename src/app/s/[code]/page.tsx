@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { generateAnimalName } from "@/lib/animal-names";
 import {
   emailDomainAllowed,
-  countPerkDrinksToday,
+  perkUsageToday,
 } from "@/lib/perk";
 import CustomerClient from "./client";
 import PerkCustomerClient from "./perk-client";
@@ -103,11 +103,15 @@ export default async function CustomerScanPage({
 
   if (shop.perkMode) {
     const dailyLimit = shop.dailyDrinkLimit || 2;
-    const drinksToday = await countPerkDrinksToday(
+    // Includes requests waiting with the barista from other sessions, so the
+    // "N left" readout agrees with what a scan would actually be allowed.
+    const usage = await perkUsageToday(
       shop._id.toString(),
       customer.email,
       shop.timezone || "UTC",
+      customer._id.toString(),
     );
+    const drinksToday = usage.approved + usage.pendingElsewhere;
     const emailAllowed = emailDomainAllowed(
       customer.email,
       shop.allowedEmailDomains,
