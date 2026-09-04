@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { redirect, useParams } from "next/navigation";
+import { redirect, useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -105,6 +105,7 @@ interface ShopDetail {
     };
   };
   customers: {
+    customerId: string | null;
     name: string | null;
     email: string | null;
     cookieId: string | null;
@@ -192,6 +193,7 @@ function timeAgo(date: Date): string {
 }
 
 export default function AdminShopDetailPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const params = useParams();
   const [data, setData] = useState<ShopDetail | null>(null);
@@ -774,7 +776,13 @@ export default function AdminShopDetailPage() {
                 </TableRow>
               ) : (
                 pagedCustomers.map((c, i) => (
-                  <TableRow key={i}>
+                  <TableRow
+                    key={c.customerId ?? i}
+                    className={c.customerId ? "cursor-pointer transition-colors hover:bg-muted/40" : undefined}
+                    onClick={() => {
+                      if (c.customerId) router.push(`/dashboard/admin/shops/${shop._id}/customers/${c.customerId}`);
+                    }}
+                  >
                     <TableCell className="font-medium">
                       {c.name || (
                         <span className="text-muted-foreground">Anonymous</span>

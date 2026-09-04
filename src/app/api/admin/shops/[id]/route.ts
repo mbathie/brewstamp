@@ -217,6 +217,7 @@ export async function GET(
     },
     billing,
     customers: stampCards.map((sc: any) => ({
+      customerId: sc.customer?._id?.toString() || null,
       name: sc.customer?.name || (sc.customer?.cookieId ? generateAnimalName(sc.customer.cookieId) : null),
       email: sc.customer?.email || null,
       cookieId: sc.customer?.cookieId || null,

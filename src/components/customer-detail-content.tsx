@@ -64,6 +64,11 @@ interface Props {
   initialNotes: string;
   initialTags: string[];
   initialDisabled?: boolean;
+  // Admin view: no editing, no check-in, no disable — the write APIs are
+  // merchant-scoped, and support shouldn't be changing a shop's records.
+  readOnly?: boolean;
+  // Where the back arrow goes; defaults to the merchant's customer list.
+  backHref?: string;
 }
 
 const PAGE_SIZE = 10;
@@ -88,6 +93,8 @@ export default function CustomerDetailContent({
   initialNotes,
   initialTags,
   initialDisabled = false,
+  readOnly = false,
+  backHref = "/dashboard/customers",
 }: Props) {
   const [showCardPreview, setShowCardPreview] = useState(false);
   const [page, setPage] = useState(0);
@@ -212,7 +219,7 @@ export default function CustomerDetailContent({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <Link
-            href="/dashboard/customers"
+            href={backHref}
             className="mt-1 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -231,14 +238,16 @@ export default function CustomerDetailContent({
               <h1 className="text-xl font-semibold text-foreground">
                 {displayName}
               </h1>
-              <button
-                type="button"
-                onClick={openEdit}
-                aria-label="Edit customer"
-                className="cursor-pointer text-muted-foreground/60 transition-colors hover:text-foreground"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  aria-label="Edit customer"
+                  className="cursor-pointer text-muted-foreground/60 transition-colors hover:text-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               {disabled && (
                 <Badge
                   variant="outline"
@@ -287,7 +296,16 @@ export default function CustomerDetailContent({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {disabled ? (
+          {readOnly ? (
+            disabled && (
+              <Badge
+                variant="outline"
+                className="border-red-500/40 px-3 py-1.5 font-normal text-red-400"
+              >
+                Disabled — can&apos;t earn or claim
+              </Badge>
+            )
+          ) : disabled ? (
             <>
               <Badge
                 variant="outline"
@@ -414,6 +432,33 @@ export default function CustomerDetailContent({
         <VisitCadence cadence={cadence} perkMode={perkMode} />
       )}
 
+      {readOnly ? (
+        (tags.length > 0 || notes.trim()) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((t) => (
+                    <Badge
+                      key={t}
+                      variant="outline"
+                      className="border-amber-500/50 font-normal text-amber-500"
+                    >
+                      {t}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {notes.trim() && (
+                <p className="whitespace-pre-wrap text-sm text-foreground">{notes}</p>
+              )}
+            </CardContent>
+          </Card>
+        )
+      ) : (
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base">Notes &amp; tags</CardTitle>
@@ -483,6 +528,7 @@ export default function CustomerDetailContent({
           </div>
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>
