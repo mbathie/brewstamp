@@ -229,8 +229,8 @@ async function main() {
     query(token, PS, PE, ["query"], 500),
     query(token, S, E, ["page"], 500),
     query(token, PS, PE, ["page"], 500),
-    query(token, S, E, ["country"], 40),
-    query(token, PS, PE, ["country"], 40),
+    query(token, S, E, ["country"], 250),
+    query(token, PS, PE, ["country"], 250),
     query(token, S, E, ["device"], 5),
     query(token, PS, PE, ["device"], 5),
     query(token, S, E, ["page", "query"], 3000),
@@ -387,7 +387,7 @@ async function main() {
     totalHeadroom,
   };
 
-  writeFileSync(OUT, renderHtml(data), "utf8");
+  writeFileSync(OUT, renderHtml(data, worldMapSvg()), "utf8");
   console.log(`\nWrote ${OUT}`);
   console.log(
     `  Clicks ${curr.clicks} · Impressions ${curr.impressions} · CTR ${(curr.ctr * 100).toFixed(
@@ -397,9 +397,41 @@ async function main() {
   console.log(`  Modelled click headroom at current ranks: ~${Math.round(totalHeadroom)}/28d`);
 }
 
+/* ── world map ────────────────────────────────────────────────────────── */
+
+/**
+ * Inline SVG of the world, one <path> per country keyed by ISO alpha-3 (what
+ * Search Console reports), from the cached Natural Earth asset built by
+ * scripts/build-world-paths.ts. The page colours it client-side. Returns "" if
+ * the asset is missing so the report still renders without a map.
+ */
+function worldMapSvg(): string {
+  const path = join(process.cwd(), "scripts/assets/world-paths.json");
+  if (!existsSync(path)) return "";
+  const world = JSON.parse(readFileSync(path, "utf8")) as {
+    width: number;
+    height: number;
+    countries: Record<string, { name: string; d: string }>;
+  };
+  const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const paths = Object.entries(world.countries)
+    // Antarctica is a third of the canvas and never has traffic.
+    .filter(([iso]) => iso !== "ATA")
+    .map(
+      ([iso, c]) =>
+        `<path data-iso="${iso}" data-name="${esc(c.name)}" d="${c.d}"/>`,
+    )
+    .join("");
+  return `<svg id="worldmap" viewBox="0 0 ${world.width} ${world.height}" role="img" aria-label="Impressions by country">${paths}</svg>`;
+}
+
 /* ── html ─────────────────────────────────────────────────────────────── */
 
-function renderHtml(d: any): string {
+function renderHtml(d: any, worldSvg: string): string {
+  const generated = new Date(d.generatedAt).toLocaleString("en-AU", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const json = JSON.stringify(d).replace(/</g, "\\u003c");
   const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
   const dlt = (c: number, p: number) => {
@@ -436,6 +468,9 @@ function renderHtml(d: any): string {
   --good:        #006300;
   --bad:         #d03b3b;
   --wash:        rgba(42,120,214,0.10);
+  /* sequential blue, low→high; on the light surface the low end recedes */
+  --seq1: #b7d3f6; --seq2: #86b6ef; --seq3: #5598e7; --seq4: #2a78d6; --seq5: #184f95;
+  --map-none:    #ececea;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -454,6 +489,9 @@ function renderHtml(d: any): string {
     --good:    #0ca30c;
     --bad:     #e66767;
     --wash:    rgba(57,135,229,0.14);
+    /* on the dark surface the ramp runs dark→light so the high end pops */
+    --seq1: #184f95; --seq2: #256abf; --seq3: #3987e5; --seq4: #6da7ec; --seq5: #9ec5f4;
+    --map-none: #232322;
   }
 }
 :root[data-theme="dark"] {
@@ -461,6 +499,7 @@ function renderHtml(d: any): string {
   --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --neutral:#52514e;
   --good:#0ca30c; --bad:#e66767; --wash:rgba(57,135,229,0.14);
+  --seq1:#184f95; --seq2:#256abf; --seq3:#3987e5; --seq4:#6da7ec; --seq5:#9ec5f4; --map-none:#232322;
 }
 * { box-sizing: border-box; }
 body {
@@ -545,6 +584,13 @@ ul.actions .n {
 }
 ul.actions .why { color: var(--ink-2); font-size: 12.5px; }
 .mono { font-variant-numeric: tabular-nums; }
+#worldmap { width: 100%; height: auto; display: block; }
+#worldmap path { fill: var(--map-none); stroke: var(--surface); stroke-width: 0.6; transition: opacity .1s; }
+#worldmap path[data-has] { cursor: default; }
+#worldmap path:hover { opacity: .8; }
+.map-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-2); margin-top: 8px; }
+.map-legend i { display: inline-block; width: 22px; height: 10px; border-radius: 2px; }
+.map-legend span { margin-right: 8px; }
 .hidden { display: none !important; }
 footer { color: var(--muted); font-size: 12px; margin-top: 48px; border-top: 1px solid var(--grid); padding-top: 14px; }
 </style>
@@ -557,6 +603,7 @@ footer { color: var(--muted); font-size: 12px; margin-top: 48px; border-top: 1px
     <h1>Brewstamp organic search</h1>
     <div class="sub">${d.window.days}-day window <b>${d.window.start} → ${d.window.end}</b>,
       compared with <b>${d.window.prevStart} → ${d.window.prevEnd}</b> · ${d.site}</div>
+    <div class="sub" style="margin-top:-22px">Generated <b>${generated}</b> · data to ${d.window.end}</div>
   </div>
   <button class="ghost" id="theme">Toggle theme</button>
 </header>
@@ -655,6 +702,12 @@ footer { color: var(--muted); font-size: 12px; margin-top: 48px; border-top: 1px
 
 <h2>Markets</h2>
 <p class="note">Upside is what each market would earn at ${d.bestCtrCountry ? `<b>${d.bestCtrCountry.toUpperCase()}</b>'s` : "the best"} CTR of ${fmtPct(d.bestCtr)} — the site's best-converting market with real volume. It sizes the ranking-quality gap, it is not a forecast.</p>
+${worldSvg ? `<div class="card" style="margin-bottom:14px">
+  <div class="chart-head"><div class="chart-title">Impressions by country</div>
+    <div class="legend"><span>Log scale · hover a country</span></div></div>
+  <div class="plot">${worldSvg}<div class="tt" id="map-tt"></div></div>
+  <div class="map-legend" id="map-legend"></div>
+</div>` : ""}
 <div class="grid two">
   <div class="card">
     <div class="chart-head"><div class="chart-title">By country</div></div>
@@ -1209,6 +1262,45 @@ if (DATA.history.length > 1) {
     });
   });
 }
+
+/* World map — sequential fill by impressions, one hue, log-binned so a market
+   with 7 impressions and one with 2,500 both read. */
+(function worldMap() {
+  const svg = document.getElementById("worldmap");
+  if (!svg) return;
+  const byIso = new Map(DATA.countries.map((c) => [String(c.key).toUpperCase(), c]));
+  const max = Math.max(1, ...DATA.countries.map((c) => c.impressions));
+  const ramp = ["var(--seq1)", "var(--seq2)", "var(--seq3)", "var(--seq4)", "var(--seq5)"];
+  const bin = (v) => Math.min(4, Math.floor((Math.log(v + 1) / Math.log(max + 1)) * 5));
+  const tip = document.getElementById("map-tt");
+  const plot = tip.parentElement;
+
+  svg.querySelectorAll("path").forEach((p) => {
+    const c = byIso.get(p.dataset.iso);
+    if (!c || !c.impressions) return;
+    p.style.fill = ramp[bin(c.impressions)];
+    p.setAttribute("data-has", "1");
+    p.addEventListener("pointermove", (ev) => {
+      const r = plot.getBoundingClientRect();
+      tip.innerHTML = "<b>" + esc(p.dataset.name) + "</b> · " + p.dataset.iso +
+        "<br>" + nf(c.impressions) + " impressions · " + nf(c.clicks) + " clicks<br>CTR " +
+        pf(c.ctr) + " · pos " + posf(c.position);
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - 200) + "px";
+      tip.style.top = Math.max(0, ev.clientY - r.top - 70) + "px";
+    });
+    p.addEventListener("pointerleave", () => (tip.style.opacity = 0));
+  });
+
+  // Legend: the lower bound of each bin, on the same log scale.
+  const legend = document.getElementById("map-legend");
+  const lower = (i) => Math.round(Math.exp((i / 5) * Math.log(max + 1)) - 1);
+  legend.innerHTML =
+    '<i style="background:var(--map-none)"></i><span>no traffic</span>' +
+    ramp.map((col, i) =>
+      '<i style="background:' + col + '"></i><span>' + nf(Math.max(1, lower(i))) +
+      (i === 4 ? "+" : "–" + nf(lower(i + 1))) + "</span>").join("");
+})();
 
 /* Recommendations */
 (function actions() {
