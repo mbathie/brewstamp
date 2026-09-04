@@ -361,9 +361,12 @@ async function main() {
   const significant = countries.filter((c) => c.impressions >= 200);
   const bestCtr = significant.length ? Math.max(...significant.map((c) => c.ctr)) : curr.ctr;
   const bestCtrCountry = significant.find((c) => c.ctr === bestCtr)?.key ?? "";
-  const countryUpside = significant.map((c) => ({
+  // Every country goes to the page (the map needs the long tail); the upside
+  // figure is only meaningful where there's real volume to compare against.
+  const countryUpside = countries.map((c) => ({
     ...c,
-    upside: Math.max(0, c.impressions * bestCtr - c.clicks),
+    upside:
+      c.impressions >= 200 ? Math.max(0, c.impressions * bestCtr - c.clicks) : 0,
   }));
 
   const data = {
