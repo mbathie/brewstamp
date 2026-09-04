@@ -65,8 +65,14 @@ export async function getBrewstampFinance(opts?: {
     return pid ? brewIds.has(pid) : false;
   };
 
-  // ---- Active subscriptions → MRR ----
+  // ---- Active subscriptions → MRR (and MRR as it stood a month ago) ----
   const mrr: CurrencyMap = {};
+  const mrrMonthAgo: CurrencyMap = {};
+  let newSubscriptions = 0;
+  let churnedSubscriptions = 0;
+  // "A month ago" = 30 days, so the figure is stable day to day rather than
+  // jumping at month boundaries.
+  const monthAgoSec = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
   const planAgg = new Map<string, PlanMrr>();
   const activeCustomerIds = new Set<string>();
   let activeSubscriptions = 0;
@@ -75,9 +81,26 @@ export async function getBrewstampFinance(opts?: {
     limit: 100,
     expand: ["data.items.data.price"],
   })) {
-    if (!["active", "trialing", "past_due"].includes(s.status)) continue;
     const brewItems = s.items.data.filter((it) => isBrew(it.price));
     if (brewItems.length === 0) continue;
+    const live = ["active", "trialing", "past_due"].includes(s.status);
+    const startedBy = (s.start_date ?? s.created) <= monthAgoSec;
+    const endedSec = s.ended_at ?? s.canceled_at ?? null;
+
+    // Was this subscription counting toward MRR a month ago? Either it's still
+    // live and had started by then, or it has since ended but was live then.
+    // Uses today's price for the whole period — a mid-month plan change is
+    // read as growth/shrink now, which is the honest answer for a run-rate.
+    const wasLiveMonthAgo = startedBy && (live || (endedSec != null && endedSec > monthAgoSec));
+    if (wasLiveMonthAgo) {
+      for (const it of brewItems) {
+        addCur(mrrMonthAgo, it.price.currency, monthlyCents(it.price, it.quantity ?? 1));
+      }
+    }
+    if (live && !startedBy) newSubscriptions += 1;
+    if (!live && wasLiveMonthAgo) churnedSubscriptions += 1;
+
+    if (!live) continue;
     activeSubscriptions += 1;
     activeCustomerIds.add(typeof s.customer === "string" ? s.customer : s.customer.id);
     for (const it of brewItems) {
@@ -152,6 +175,8 @@ export async function getBrewstampFinance(opts?: {
     generatedAt: new Date().toISOString(),
     mrr,
     arr,
+    mrrMonthAgo,
+    mrrMovement: { newSubscriptions, churnedSubscriptions },
     activeSubscriptions,
     activeCustomers: activeCustomerIds.size,
     mrrByPlan: [...planAgg.values()].sort((a, b) => b.monthlyCents - a.monthlyCents),

@@ -181,8 +181,15 @@ export default function FinanceClient() {
       )}
 
       {/* Headline metrics (point-in-time, not affected by date range) */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <Metric label="MRR" loading={loading} value={data && fmtCombined(data.mrr)} sub={data && fmtMap(data.mrr)} />
+        <Metric
+          label="MRR growth (30d)"
+          loading={loading}
+          value={data && growth(data).value}
+          sub={data && growth(data).sub}
+          tone={data ? growth(data).tone : undefined}
+        />
         <Metric label="ARR (run-rate)" loading={loading} value={data && fmtCombined(data.arr)} sub={data && fmtMap(data.arr)} />
         <Metric label="Active subscriptions" loading={loading} value={data ? String(data.activeSubscriptions) : undefined} sub={data ? `${data.activeCustomers} customers` : undefined} />
         <Metric label="Lifetime revenue" loading={loading} value={data && fmtCombined(data.lifetimeRevenue)} sub={data ? `${data.lifetimeInvoiceCount} payments · since ${data.firstPaymentAt ?? "—"}` : undefined} />
@@ -376,7 +383,28 @@ export default function FinanceClient() {
   );
 }
 
-function Metric({ label, value, sub, loading }: { label: string; value?: string | null; sub?: string | null; loading: boolean }) {
+// Month-over-month MRR, from real subscription start/end dates (not revenue).
+function growth(d: FinanceSummary): { value: string; sub: string; tone: "up" | "down" | "flat" } {
+  const now = combineAtRate(d.mrr);
+  const then = combineAtRate(d.mrrMonthAgo);
+  const { newSubscriptions: n, churnedSubscriptions: c } = d.mrrMovement;
+  const movement = `${n} new · ${c} churned`;
+  if (then === 0) {
+    return now > 0
+      ? { value: "new", sub: `from $0 to ${fmtCombined(d.mrr)} · ${movement}`, tone: "up" }
+      : { value: "—", sub: "no MRR yet", tone: "flat" };
+  }
+  const pct = ((now - then) / then) * 100;
+  const sign = pct > 0 ? "+" : "";
+  return {
+    value: `${sign}${pct.toFixed(1)}%`,
+    sub: `${fmtCombined(d.mrrMonthAgo)} → ${fmtCombined(d.mrr)} · ${movement}`,
+    tone: pct > 0.05 ? "up" : pct < -0.05 ? "down" : "flat",
+  };
+}
+
+function Metric({ label, value, sub, loading, tone }: { label: string; value?: string | null; sub?: string | null; loading: boolean; tone?: "up" | "down" | "flat" }) {
+  const toneClass = tone === "up" ? "text-emerald-500" : tone === "down" ? "text-red-400" : "";
   return (
     <Card>
       <CardContent className="p-4">
@@ -384,7 +412,7 @@ function Metric({ label, value, sub, loading }: { label: string; value?: string 
         {loading || value == null ? (
           <Skeleton className="mt-2 h-7 w-24" />
         ) : (
-          <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
+          <div className={`mt-1 text-2xl font-semibold tabular-nums ${toneClass}`}>{value}</div>
         )}
         {sub && !loading && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
       </CardContent>

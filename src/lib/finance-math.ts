@@ -24,6 +24,10 @@ export interface FinanceSummary {
   generatedAt: string;
   mrr: CurrencyMap;
   arr: CurrencyMap;
+  // Point-in-time MRR ~30 days ago, rebuilt from subscription start/end dates,
+  // so growth is real new-minus-churned MRR rather than a revenue proxy.
+  mrrMonthAgo: CurrencyMap;
+  mrrMovement: { newSubscriptions: number; churnedSubscriptions: number };
   activeSubscriptions: number;
   activeCustomers: number;
   mrrByPlan: PlanMrr[];
