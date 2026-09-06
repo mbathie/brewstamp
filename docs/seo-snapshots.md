@@ -41,18 +41,34 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-02 | 08-03 → 08-30 | 8,285 (+24%) | 172 (+38%) | 2.1% | 11.4 |
 | 2026-09-03 | 08-04 → 08-31 | 8,411 (+26%) | 165 (+26%) | 2.0% | 11.3 |
 | 2026-09-05 | 08-06 → 09-02 | 8,785 (+30%) | 170 (+26%) | 1.9% | 11.1 |
+| 2026-09-07 | 08-08 → 09-04 | 9,222 (+38%) | 175 (+28%) | 1.9% | 10.8 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
 → 11.4 (new best), and — after months flat — impressions have turned up again
-(+30%). The money page `/blog/coffee-shop-loyalty-cards` is now **inside the
-top 10** (pos 9.8) after the 08-12 content expansion, and a second blog page
-(`/blog/coffee-shop-loyalty-card-printing`) is in too (pos 9.0). The
+(+38%), and avg position is under 11 for the first time (10.8). The money
+page `/blog/coffee-shop-loyalty-cards` is **inside the top 10** (pos 9.5)
+after the 08-12 content expansion, and a second blog page
+(`/blog/coffee-shop-loyalty-card-printing`) sits at the line (9.5). The
 meta-revert experiment is closed (homepage CTR ~3.7%, vs 3.34% pre-experiment
 baseline). Remaining problem is still "page 1 without clicks" on head terms —
 the money page's title/meta were rewritten 2026-09-02 (commit 1c80809) to
-attack exactly that; the 09-05 window only reaches 09-02, so the first
-readable CTR data is the ~09-10 snapshot onward.
+attack exactly that; three days in, no lift visible yet. First fair read is
+the ~09-10 snapshot.
+
+---
+
+## 2026-09-07
+
+- **Impressions:** 9,222 (+38%) · **Clicks:** 175 (+28%) · **CTR:** 1.9% · **Avg pos:** 10.8
+- **Three new highs:** impressions (first time past 9,000), clicks (175), and avg position (10.8 — first sub-11). Impressions are now growing ~4× faster than clicks, which is the "arriving on page 1 without converting snippets" shape; CTR is flat at 1.9%.
+- `/blog/coffee-shop-loyalty-cards`: pos **9.5** (from 9.8), **4,851 impressions** (new high, 53% of the site), 20 clicks, CTR 0.4%. The title/meta rewrite (commit 1c80809, live 09-02) has three days in this window and **no visible lift yet** — clicks stuck at 20 for four snapshots running. Too early to call, but it's the number to watch; if it's still 20 on the 09-10 snapshot the rewrite isn't working and it's a rank problem, not a snippet one.
+- Its target queries keep swelling without paying: "loyalty card coffee shop" **140 impr (+119%), pos 9.8, 0 clicks**; "loyalty card cafe" 135 (+67%), 10.9; "coffee card" 88 (+76%), 11.9; "loyalty cards for coffee shops" 67, pos 8.2, 0 clicks.
+- `/blog/coffee-shop-loyalty-card-printing`: pos **9.5** (slipped from 9.0), 225 impr, still 0 clicks. Head query "coffee shop loyalty card printing" pos 6.3 / 70 impr / 0 clicks — still the next snippet job.
+- `/coffee-rewards-app`: pos **28.0** — sixth snapshot stuck, drifting the wrong way. Content-expansion target, unchanged.
+- Homepage `/`: 131 clicks (new high), 3.7% CTR, pos 12.1. Still three-quarters of all clicks.
+- "coffee cart rewards" +720% to 41 impressions at pos 34 — a long-tail phrase worth a section somewhere.
+- **By country:** USA 2,700 impressions at **0.4%** (12 clicks) — the pool keeps growing, the CTR keeps falling. AUS 47 clicks (3.6%), GBR 20 (1.4%), PHL 7, IND 6, NLD 6 at 5.5%. New: IDN 4 clicks at 5.9%. Mobile 2.8% vs desktop 1.4%.
 
 ---
 
