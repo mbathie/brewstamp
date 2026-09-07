@@ -10,6 +10,9 @@ const shopSchema = new mongoose.Schema(
     },
     stampThreshold: { type: Number, default: 8 },
     code: { type: String, required: true, unique: true },
+    // Codes of shops merged into this one. A QR printed for a retired code
+    // redirects here instead of dead-ending on a deleted shop.
+    retiredCodes: { type: [String], default: [] },
     // Corporate "perk" mode: instead of collecting stamps toward a reward,
     // every approved scan is itself a free drink, gated to a set of email
     // domains and capped per person per day. Built for employer-subsidised

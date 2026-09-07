@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, Customer } from "@/models";
 import { getOrCreateCustomer } from "@/lib/cookies";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { generateAnimalName } from "@/lib/animal-names";
 import {
   emailDomainAllowed,
@@ -67,7 +67,12 @@ export default async function CustomerScanPage({
   await connectDB();
 
   const shop = await Shop.findOne({ code });
-  if (!shop) notFound();
+  if (!shop) {
+    // A code retired by a shop merge — send the customer to the surviving shop.
+    const merged = await Shop.findOne({ retiredCodes: code }).select("code");
+    if (merged) redirect(`/s/${merged.code}`);
+    notFound();
+  }
 
   // Dev-only impersonation: ?cust=<customerId> loads that customer's card
   // without touching cookies — used to verify the "Top customer" badge and

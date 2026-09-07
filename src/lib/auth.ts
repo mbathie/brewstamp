@@ -211,6 +211,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.shopId = (user as any).shopId;
+        token.userCheckedAt = Date.now();
+      }
+      // A session whose account has been deleted (e.g. a duplicate merged
+      // away) must end, not limp on into "set up your first shop" and create a
+      // third. Re-verify the user exists every few minutes; returning null
+      // invalidates the session so the next request lands on sign-in, where
+      // either casing of the email now resolves to the surviving account.
+      const RECHECK_MS = 5 * 60 * 1000;
+      const checkedAt = (token.userCheckedAt as number | undefined) ?? 0;
+      if (token.sub && Date.now() - checkedAt > RECHECK_MS) {
+        await connectDB();
+        const exists = await User.exists({ _id: token.sub });
+        if (!exists) return null;
+        token.userCheckedAt = Date.now();
       }
       // For OAuth/magic link users, load shopId from DB if not set
       if (!token.shopId && token.sub) {
