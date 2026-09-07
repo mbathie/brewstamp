@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findUserByEmail, normalizeEmail } from "@/lib/user-email";
 import bcrypt from "bcrypt";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
@@ -60,14 +61,16 @@ export async function PATCH(req: Request) {
         { status: 400 }
       );
     }
-    const existing = await User.findOne({ email: email.trim() });
-    if (existing) {
+    // Case-insensitive, but changing only the casing of your own address
+    // must not read as a collision with yourself.
+    const existing = await findUserByEmail(email);
+    if (existing && existing._id.toString() !== user._id.toString()) {
       return NextResponse.json(
         { error: "Email already in use" },
         { status: 400 }
       );
     }
-    user.email = email.trim();
+    user.email = normalizeEmail(email);
   }
 
   // Update phone

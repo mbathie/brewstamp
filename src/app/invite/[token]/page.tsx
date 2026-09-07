@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { findUserByEmail } from "@/lib/user-email";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Coffee, Mail } from "lucide-react";
@@ -66,7 +67,7 @@ export default async function InviteLandingPage({
   // Not signed in → send them to /login (or /register if no account exists
   // for this email yet) with a callback back to this invite page.
   if (!session?.user) {
-    const existing = await User.findOne({ email: invite.email });
+    const existing = await findUserByEmail(invite.email);
     const callback = `/invite/${encodeURIComponent(token)}`;
     const target = existing
       ? `/login?callbackUrl=${encodeURIComponent(callback)}`

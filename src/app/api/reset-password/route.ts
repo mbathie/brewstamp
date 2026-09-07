@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findUserByEmail } from "@/lib/user-email";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/mongoose";
@@ -24,11 +25,16 @@ export async function POST(req: Request) {
 
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-  const user = await User.findOne({
-    email,
-    resetToken: hashedToken,
-    resetTokenExpiry: { $gt: new Date() },
-  });
+  // Match the email case-insensitively, then check the token on that account —
+  // same test as before, just not defeated by how the address was typed.
+  const candidate = await findUserByEmail(email);
+  const user =
+    candidate &&
+    candidate.resetToken === hashedToken &&
+    candidate.resetTokenExpiry &&
+    candidate.resetTokenExpiry > new Date()
+      ? candidate
+      : null;
 
   if (!user) {
     return NextResponse.json(

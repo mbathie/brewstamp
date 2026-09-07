@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Nodemailer from "next-auth/providers/nodemailer";
 import bcrypt from "bcrypt";
+import { findUserByEmail, normalizeEmail } from "./user-email";
 import { getImpersonationFor } from "./impersonation";
 import { cookies } from "next/headers";
 import { connectDB } from "./mongoose";
@@ -25,7 +26,7 @@ const MongoDBAdapter = {
     await connectDB();
     // If a user with this email already exists (registered via credentials),
     // just update emailVerified and return them
-    const existing = await User.findOne({ email: user.email });
+    const existing = await findUserByEmail(user.email);
     if (existing) {
       existing.emailVerified = user.emailVerified;
       await existing.save();
@@ -40,7 +41,7 @@ const MongoDBAdapter = {
     const attr = await readSignupAttribution();
     const newUser = await User.create({
       name: user.name || user.email?.split("@")[0] || "User",
-      email: user.email,
+      email: normalizeEmail(user.email),
       emailVerified: user.emailVerified,
       ...attr,
     });
@@ -66,7 +67,7 @@ const MongoDBAdapter = {
 
   async getUserByEmail(email: string) {
     await connectDB();
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
     if (!user) return null;
     return {
       id: user._id.toString(),
@@ -190,7 +191,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         await connectDB();
-        const user = await User.findOne({ email: credentials?.email });
+        const user = await findUserByEmail(credentials?.email as string);
         if (!user || !user.hash) return null;
         const valid = await bcrypt.compare(
           credentials?.password as string,

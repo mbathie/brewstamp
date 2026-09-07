@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findUserByEmail, normalizeEmail } from "@/lib/user-email";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/mongoose";
 import { User } from "@/models";
@@ -16,14 +17,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
   }
 
-  const existing = await User.findOne({ email });
+  const existing = await findUserByEmail(email);
   if (existing) {
     return NextResponse.json({ error: "Email already registered" }, { status: 400 });
   }
 
   const hash = await bcrypt.hash(password, 10);
   const attr = await readSignupAttribution();
-  await User.create({ name: email.split("@")[0], email, hash, ...attr });
+  const normalized = normalizeEmail(email);
+  await User.create({ name: normalized.split("@")[0], email: normalized, hash, ...attr });
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

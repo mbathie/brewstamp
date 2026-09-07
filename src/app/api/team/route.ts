@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findUserByEmail } from "@/lib/user-email";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
@@ -185,7 +186,7 @@ export async function POST(req: Request) {
   }
 
   // No-op if the target email already has a membership on this shop.
-  const existingUser = await User.findOne({ email });
+  const existingUser = await findUserByEmail(email);
   if (existingUser) {
     const already = await ShopMembership.findOne({
       user: existingUser._id,

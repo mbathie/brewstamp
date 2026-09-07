@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findUserByEmail } from "@/lib/user-email";
 import crypto from "crypto";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  const user = await User.findOne({ email });
+  const user = await findUserByEmail(email);
 
   if (user) {
     const token = crypto.randomBytes(32).toString("hex");
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
-    sendResetEmail({ to: email, token }).catch((err) =>
+    sendResetEmail({ to: user.email, token }).catch((err) =>
       console.error("[ForgotPassword] Reset email failed:", err)
     );
   }
