@@ -45,22 +45,36 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-08 | 08-09 → 09-05 | 9,438 (+44%) | 174 (+24%) | 1.8% | 10.7 |
 | 2026-09-09 | 08-10 → 09-06 | 9,520 (+45%) | 176 (+22%) | 1.8% | 10.6 |
 | 2026-09-12 | 08-13 → 09-09 | 9,982 (+51%) | 192 (+22%) | 1.9% | 10.4 |
+| 2026-09-14 | 08-15 → 09-11 | 10,166 (+54%) | 198 (+29%) | 1.9% | 10.2 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
 → 11.4 (new best), and — after months flat — impressions have turned up again
-(+51%), and avg position is 10.4. The money page
-`/blog/coffee-shop-loyalty-cards` is **inside the top 10** (pos 9.1) after
-the 08-12 content expansion, and a second blog page
-(`/blog/coffee-shop-loyalty-card-printing`) sits at the line (10.1). The
-meta-revert experiment is closed (homepage CTR ~3.8%, vs 3.34% pre-experiment
+(+54%) and **past 10,000 for the first time**; avg position 10.2. The money
+page `/blog/coffee-shop-loyalty-cards` is **inside the top 10** (pos 9.0)
+after the 08-12 content expansion, and a second blog page
+(`/blog/coffee-shop-loyalty-card-printing`) sits at the line (10.0). The
+meta-revert experiment is closed (homepage CTR ~3.9%, vs 3.34% pre-experiment
 baseline). Remaining problem is still "page 1 without clicks" on head terms.
 The money page's title/meta were rewritten 2026-09-02 (commit 1c80809) to
-attack exactly that; **eight days in, the fair read is: rank and impressions
-up (9.5 → 9.1, +500 impr), page CTR unmoved at 0.4%, clicks 20 → 22.** Not a
-snippet win. The click growth of the last fortnight came from the homepage
-(128 → 143) and from the US and Philippines, not from the blog. Site CTR
-(1.9%) is held down by impressions compounding faster than clicks.
+attack exactly that; **ten days in the verdict stands: rank and impressions
+keep rising (9.0, 5,388 impr), page CTR unmoved at 0.4%, clicks 20 → 23.**
+Not a snippet win; the next lever on that page is rank into the top 5. Click
+growth is coming from the homepage (128 → 148 in a fortnight) and from the
+US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
+faster than clicks.
+
+---
+
+## 2026-09-14
+
+- **Impressions:** 10,166 (+54%) · **Clicks:** 198 (+29%) · **CTR:** 1.9% · **Avg pos:** 10.2
+- **Impressions crossed 10,000** — from 6,294 at the first snapshot in July. Clicks 198 (new high, +6 in two days), position 10.2 (best). CTR flat at 1.9%. The growth gap (+54% vs +29%) is the widest yet, same shape as the last fortnight.
+- `/blog/coffee-shop-loyalty-cards`: pos **9.0**, **5,388 impressions** (new high, 53%), clicks **23** (from 22), CTR 0.4%. Ten days of the rewrite in window; the verdict from 09-12 stands — rank and impressions climb, CTR doesn't. "loyalty card coffee shop" 163 impr (+167%), pos 9.4, 1 click.
+- **New climber:** "coffee one loyalty card" 42 impr (+200%), pos **8.5**, 0 clicks — a branded/competitor phrase landing on page 1. "loyalty cards for coffee shops" improved to 7.2. "coffee stamp card" 7.1 with 1 click.
+- "coffee ticket app": fourth snapshot at **pos 2.8**, 57 impressions, 0 clicks. Still unexplained.
+- Homepage `/`: **148 clicks** (new high), **3.9%** CTR, pos 11.6 (best) — the engine behind the click growth. `/coffee-rewards-app` pos 28.4, tenth snapshot stuck.
+- **By country:** USA 2,972 impr / 16 clicks / 0.5%; AUS 45 (3.3%); **GBR 24 (new high, 1.5%)**; PHL 13 (3.4%); IND 8; NLD 8 at 6.4%; CYP 4, MAR 4. **Mobile 114 clicks at 3.1% vs desktop 82 at 1.3%** — mobile now 58% of clicks on 36% of impressions.
 
 ---
 
