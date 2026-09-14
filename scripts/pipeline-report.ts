@@ -122,7 +122,11 @@ async function main() {
         engagedTrial: isEngaged(s),
       };
     })
-    .sort((a, b) => b.score - a.score);
+    // Band first, then score — the band is what gets read; the score orders within it.
+    .sort((a, b) => {
+      const rank = { high: 0, medium: 1, low: 2 } as const;
+      return rank[a.likelihood] - rank[b.likelihood] || b.score - a.score;
+    });
 
   // Signups per week (12), cohorts per month, free shops stamping per fortnight (8).
   const weeks = Array.from({ length: 12 }, (_, i) => {
