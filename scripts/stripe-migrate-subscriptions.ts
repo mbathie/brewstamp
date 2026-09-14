@@ -87,9 +87,17 @@ async function main() {
     const newPrice = inv.priceMap[s.price];
     if (!newPrice) { console.log(`SKIP ${tag}\n     no new price for ${s.price}`); skipped++; continue; }
 
-    // The copied customer must have a usable payment method.
-    const pms = await newS.paymentMethods.list({ customer: newCust, limit: 10 });
-    const cust = await newS.customers.retrieve(newCust) as Stripe.Customer;
+    // The copied customer must exist in the new account and have a usable
+    // payment method. A bad mapping row skips this one, not the whole run.
+    let cust: Stripe.Customer;
+    let pms: Stripe.ApiList<Stripe.PaymentMethod>;
+    try {
+      cust = await newS.customers.retrieve(newCust) as Stripe.Customer;
+      if ((cust as any).deleted) throw new Error("deleted");
+      pms = await newS.paymentMethods.list({ customer: newCust, limit: 10 });
+    } catch (e: any) {
+      console.log(`SKIP ${tag}\n     ${newCust} not usable in the new account (${e.message})`); skipped++; continue;
+    }
     const defaultPm = cust.invoice_settings?.default_payment_method as string | null;
     const pm = pms.data.find((p) => p.id === defaultPm) ?? pms.data[0];
     if (!pm) { console.log(`SKIP ${tag}\n     ${newCust} has NO payment method in the new account (was ${s.pm_type}) — customer must re-add`); skipped++; continue; }
