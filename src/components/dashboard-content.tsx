@@ -822,7 +822,7 @@ export default function DashboardContent({
                   title="Busiest hours"
                   data={hourData}
                   maxBarSize={12}
-                  tickInterval={2}
+                  tickInterval={3}
                 />
               </>
             )}
@@ -1167,10 +1167,11 @@ function KpiCard({
 
 const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+// Short forms ("8a", "12p") — six of these fit a 240px chart; "12am" does not.
 function fmtHour(h: number): string {
-  if (h === 0) return "12am";
-  if (h === 12) return "12pm";
-  return h < 12 ? `${h}am` : `${h - 12}pm`;
+  if (h === 0) return "12a";
+  if (h === 12) return "12p";
+  return h < 12 ? `${h}a` : `${h - 12}p`;
 }
 
 const patternConfig = {
@@ -1207,17 +1208,20 @@ function PatternCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={patternConfig} className="h-[200px] w-full">
+        {/* Same height as the activity chart, so the three cards sit level. */}
+        <ChartContainer config={patternConfig} className="h-[250px] w-full">
           <BarChart data={data} accessibilityLayer>
+            {/* Axis metrics identical to the activity chart's, so all three
+                baselines and plot areas line up across the row. */}
             <XAxis
               dataKey="label"
               tickLine={false}
               axisLine={false}
-              fontSize={11}
+              fontSize={12}
               tickMargin={8}
               interval={tickInterval}
             />
-            <YAxis tickLine={false} axisLine={false} fontSize={11} allowDecimals={false} width={26} />
+            <YAxis tickLine={false} axisLine={false} fontSize={12} allowDecimals={false} width={30} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="checkins" fill="var(--color-checkins)" radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} />
           </BarChart>
