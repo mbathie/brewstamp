@@ -359,7 +359,7 @@ export default function DashboardContent({
   );
 
   const dowData = useMemo(
-    () => DOW_LABELS.map((label, i) => ({ label, checkins: patterns.dow[i] || 0 })),
+    () => DOW_LABELS.map((label, i) => ({ label, name: DOW_NAMES[i], checkins: patterns.dow[i] || 0 })),
     [patterns],
   );
   const hourData = useMemo(
@@ -760,7 +760,7 @@ export default function DashboardContent({
                           }
                         : chartConfig
                     }
-                    className="h-[250px] w-full"
+                    className="h-[180px] w-full"
                   >
                     <BarChart data={chartData} accessibilityLayer>
                       <XAxis
@@ -798,7 +798,7 @@ export default function DashboardContent({
                 ) : (
                   // All-zero range: an empty axis grid reads as "broken", so show
                   // a friendly message instead.
-                  <div className="flex h-[250px] flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex h-[180px] flex-col items-center justify-center gap-1 text-center">
                     <p className="text-sm font-medium text-muted-foreground">
                       No activity in this {rangeNoun} yet
                     </p>
@@ -1165,7 +1165,9 @@ function KpiCard({
   );
 }
 
-const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+// Single letters on the axis; the tooltip carries the full day name.
+const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const DOW_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 // Short forms ("8a", "12p") — six of these fit a 240px chart; "12am" does not.
 function fmtHour(h: number): string {
@@ -1189,12 +1191,13 @@ function PatternCard({
   tickInterval = 0,
 }: {
   title: string;
-  data: { label: string; checkins: number }[];
+  data: { label: string; name?: string; checkins: number }[];
   maxBarSize: number;
   tickInterval?: number;
 }) {
   const total = data.reduce((a, d) => a + d.checkins, 0);
   const peak = data.reduce((best, d) => (d.checkins > best.checkins ? d : best), data[0]);
+  const peakLabel = peak.name ?? peak.label;
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -1202,14 +1205,14 @@ function PatternCard({
           <span>{title}</span>
           {total > 0 && (
             <span className="text-xs font-normal text-muted-foreground">
-              peak {peak.label}
+              peak {peakLabel}
             </span>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {/* Same height as the activity chart, so the three cards sit level. */}
-        <ChartContainer config={patternConfig} className="h-[250px] w-full">
+        <ChartContainer config={patternConfig} className="h-[180px] w-full">
           <BarChart data={data} accessibilityLayer>
             {/* Axis metrics identical to the activity chart's, so all three
                 baselines and plot areas line up across the row. */}
@@ -1222,7 +1225,7 @@ function PatternCard({
               interval={tickInterval}
             />
             <YAxis tickLine={false} axisLine={false} fontSize={12} allowDecimals={false} width={30} />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip content={<ChartTooltipContent labelFormatter={(_, p) => p?.[0]?.payload?.name ?? p?.[0]?.payload?.label} />} />
             <Bar dataKey="checkins" fill="var(--color-checkins)" radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} />
           </BarChart>
         </ChartContainer>
