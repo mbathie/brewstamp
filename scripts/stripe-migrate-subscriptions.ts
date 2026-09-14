@@ -3,8 +3,8 @@
  * copied the customers + payment methods across.
  *
  * A Stripe Subscription cannot be moved between accounts. The process is:
- *   1. Stripe support copies Customers + PaymentMethods (old → new) and
- *      returns a CSV mapping old customer ids to new ones.
+ *   1. The Dashboard's self-serve PAN copy moves Customers + PaymentMethods
+ *      (old → new). Customer ids are preserved; payment-method ids are new.
  *   2. This script creates each subscription afresh in the new account,
  *      anchored to the OLD subscription's next renewal date with no proration,
  *      so the customer sees one charge per cycle and nothing extra.
@@ -12,8 +12,9 @@
  *      account bills nothing further.
  *   4. It repoints the app's Subscription / Shop records at the new ids.
  *
- *   npx tsx scripts/stripe-migrate-subscriptions.ts --mapping ~/Downloads/mapping.csv            # dry run
- *   npx tsx scripts/stripe-migrate-subscriptions.ts --mapping ~/Downloads/mapping.csv --apply    # do it
+ *   npx tsx scripts/stripe-migrate-subscriptions.ts                                   # dry run (identity mapping)
+ *   npx tsx scripts/stripe-migrate-subscriptions.ts --mapping ~/Downloads/mapping.csv # dry run with Stripe's CSV
+ *   npx tsx scripts/stripe-migrate-subscriptions.ts --mapping … --apply               # do it
  *
  * Reads ~/.config/brewstamp/stripe-live.env (old), stripe-new.env (new), and
  * stripe-migration-inventory.json (written during setup). Mongo writes need a
@@ -39,22 +40,35 @@ interface Inventory {
   oldAccount: string; newAccount: string; subscriptions: InvSub[]; priceMap: Record<string, string>;
 }
 
-/** Stripe's mapping CSV: first column old customer id, second new. Header optional. */
+/**
+ * Stripe's PAN-copy mapping CSV (Dashboard → Documents on the recipient
+ * account). Headers: customer_id_old, source_id_old, customer_id_new,
+ * source_id_new. Customer ids are preserved by the copy — only payment-method
+ * ids change — so the map is normally identity; we read it anyway so a
+ * customer Stripe *didn't* copy is skipped rather than assumed.
+ */
 function readMapping(path: string): Map<string, string> {
   const map = new Map<string, string>();
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+  const lines = readFileSync(path, "utf8").split(/\r?\n/).filter((l) => l.trim());
+  const header = lines[0].split(",").map((c) => c.trim().replace(/^"|"$/g, "").toLowerCase());
+  let iOld = header.indexOf("customer_id_old"), iNew = header.indexOf("customer_id_new");
+  const hasHeader = iOld >= 0 && iNew >= 0;
+  if (!hasHeader) { iOld = 0; iNew = 1; }
+  for (const line of hasHeader ? lines.slice(1) : lines) {
     const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-    if (cells.length < 2) continue;
-    if (cells[0].startsWith("cus_") && cells[1].startsWith("cus_")) map.set(cells[0], cells[1]);
+    const o = cells[iOld], n = cells[iNew] || cells[iOld];
+    if (o?.startsWith("cus_") && n?.startsWith("cus_")) map.set(o, n);
   }
   return map;
 }
 
 async function main() {
   const mappingPath = arg("--mapping");
-  if (!mappingPath) throw new Error("--mapping <csv> is required");
   const inv = JSON.parse(readFileSync(`${cfg}/stripe-migration-inventory.json`, "utf8")) as Inventory;
-  const mapping = readMapping(mappingPath);
+  // Without a CSV, assume identity (customer ids survive the copy); every
+  // customer is still verified to exist in the new account before use.
+  const mapping = mappingPath ? readMapping(mappingPath) : new Map(inv.subscriptions.map((s) => [s.customer, s.customer]));
+  if (!mappingPath) console.log("no --mapping given: assuming customer ids are unchanged (Stripe preserves them on copy)\n");
   const oldS = new Stripe(env("stripe-live.env", "STRIPE_SECRET_KEY"));
   const newS = new Stripe(env("stripe-new.env", "STRIPE_SECRET_KEY_NEW"));
 

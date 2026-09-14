@@ -13,33 +13,41 @@ Moving Brewstamp off the shared Stripe account (`acct_1L5MPrHxHWKx0vW1`, dashboa
 | 1. New account verified — live, charges enabled, was empty | done 2026-09-15 |
 | 2. Products, prices, coupons, webhook recreated in new account | done 2026-09-15 |
 | 3. Inventory of the 10 live subscriptions | done, `~/.config/brewstamp/stripe-migration-inventory.json` |
-| 4. Stripe copies customers + payment methods | **waiting on you — see below** |
+| 4. Copy customers + payment methods (self-serve in Dashboard) | **waiting on you — see below** |
 | 5. Rebuild subscriptions in new account, cancel old at period end | `scripts/stripe-migrate-subscriptions.ts` |
 | 6. Switch brewstamp-app env vars on DigitalOcean | after 5 |
 | 7. Verify, then retire old webhook | after 6 |
 
-## Step 4 — the one only you can do
+## Step 4 — copy the customers and cards (self-serve, ~minutes to hours)
 
-Stripe's payment-method migration is a support process, not an API. From the **old**
-account's dashboard: Support → "I need to migrate my data to another Stripe account".
-Tell them:
+This is **self-serve in the Dashboard** — no support ticket. Stripe's docs:
+[Copy PAN data across Stripe accounts](https://docs.stripe.com/get-started/data-migrations/pan-copy-self-serve).
 
-- Source: `acct_1L5MPrHxHWKx0vW1` · Destination: `acct_1UFi5XIiYU2twPgk`
-- Copy **only these 10 customers** (the account is shared; the rest belong to other products):
-  see the `customer` field for each entry in the inventory JSON.
-- Request the mapping file (old customer id → new customer id).
+From the **old** account's dashboard (named "tippytip"): Settings → Data migrations →
+*Copy PAN data* → recipient `acct_1UFi5XIiYU2twPgk` → **partial copy, select customers**
+(under 15, so no CSV needed) → pick exactly the 10 customer ids in the inventory JSON. The
+account is shared, so do not run a full copy.
 
-Turnaround is typically 1–2 weeks. Nothing bills differently in the meantime.
+What happens: Customer objects and their payment methods are copied. **Customer ids are
+preserved**; payment-method ids are new. Subscriptions are *not* copied. Stripe drops a
+mapping CSV (`customer_id_old, source_id_old, customer_id_new, source_id_new`) into the
+recipient account's Documents section when done.
 
 **Known gap:** 3 of the 10 pay via **Link** (emilykindland, sungatullina, xocohousecorp).
 Card payment methods copy cleanly; Link wallets may not. The rebuild script skips any
 customer that arrives without a payment method and names them, so you'll know exactly
 who (if anyone) needs to re-enter a card. The other 7 are plain cards.
 
+Accounts are rate-limited on how many copies they can run; a second copy between the
+same pair only adds customers/methods not already present, so a missed customer can be
+picked up without duplicating the rest.
+
 ## Step 5 — rebuild
 
 ```
 # dry run: prints exactly what would happen, changes nothing
+# (--mapping is optional: customer ids survive the copy, so identity is assumed
+#  and every customer is verified in the new account before use)
 npx tsx scripts/stripe-migrate-subscriptions.ts --mapping ~/Downloads/mapping.csv
 
 # apply: create in new account, cancel old at period end, repoint Mongo
@@ -50,7 +58,8 @@ MONGODB_URI='<rw uri>' npx tsx scripts/stripe-migrate-subscriptions.ts --mapping
 Each new subscription is created with `billing_cycle_anchor` = the old subscription's
 next renewal and `proration_behavior: none`, so **no one is charged at creation** and the
 first new-account invoice lands on the day the old one would have. The old subscription
-is set to cancel at period end. Legacy $5 USD subscribers are rebuilt on the recreated
+is set to cancel at period end. Because customer ids are preserved, the Mongo update
+only touches `stripeSubscriptionId` / `stripePriceId`; `stripeCustomerId` stays valid. Legacy $5 USD subscribers are rebuilt on the recreated
 $5 price (grandfathered), not moved to $7. Coupons carry over (same ids in both accounts).
 
 Re-runnable: already-migrated subscriptions are detected and skipped.
