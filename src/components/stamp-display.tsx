@@ -19,14 +19,14 @@ interface Props {
  *
  *   ≤ 12   the classic 4-wide grid (97% of shops)
  *   13–30  a 6-wide grid of smaller stamps, so 30 is five rows, not eight
- *   > 30   no grid: a hero count, the bar with milestone ticks, and a strip
- *          of the most recent stamps so it still reads as a stamp card
+ *   > 30   no circles at all: a hero count and the bar with milestone ticks.
+ *          A partial row of "recent" stamps was tried and dropped — seven
+ *          filled out of eight reads as nearly done, contradicting the bar.
  *
  * Every tier reuses the same strings, so nothing new to translate.
  */
 const GRID_MAX = 12;
 const DENSE_GRID_MAX = 30;
-const RECENT_STRIP = 8;
 
 export default function StampDisplay({ stamps, threshold, fgColor, animate, language }: Props) {
   const fg = fgColor || "#d97706";
@@ -95,31 +95,7 @@ export default function StampDisplay({ stamps, threshold, fgColor, animate, lang
         )}
       </div>
 
-      {hero ? (
-        /* Recent stamps: the last few earned plus the next empty ones, so
-           there's still a circle to watch fill when a stamp lands. */
-        <div className="flex items-center justify-between gap-1.5 pt-1">
-          {Array.from({ length: RECENT_STRIP }, (_, i) => {
-            // Window ends one empty slot past the newest stamp; clamp to the card.
-            const start = Math.max(0, Math.min(stamps - (RECENT_STRIP - 1), threshold - RECENT_STRIP));
-            const idx = start + i;
-            const filled = idx < stamps;
-            const isNewest = animate && idx === stamps - 1 && filled;
-            return (
-              <div
-                key={idx}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                  isNewest ? "animate-stamp-pop" : ""
-                }`}
-                style={filled ? filledStyle : emptyStyle}
-                title={`${idx + 1}`}
-              >
-                {filled ? <Check className="size-4" strokeWidth={2.5} /> : <Coffee className="size-4" />}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
+      {!hero && (
         <div
           className={`grid place-items-center pt-1 ${
             dense ? "grid-cols-6 gap-1.5" : "grid-cols-4 gap-2"
