@@ -686,6 +686,13 @@ export default function SettingsPage() {
                     <p className="text-xs text-muted-foreground">
                       Customers collect this many stamps, then earn a free
                       drink.
+                      {(threshold ?? 0) > 12 && (
+                        <>
+                          {" "}
+                          Cards over 12 stamps show a tighter grid of smaller
+                          stamps; most caf&eacute;s use 6&ndash;10.
+                        </>
+                      )}
                     </p>
                   </div>
                 ) : (
