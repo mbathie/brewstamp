@@ -88,10 +88,28 @@ async function main() {
           Math.min(15, a.days.length * 2) +
           setup * 4 +
           Math.min(6, (passes.get(id) || 0) * 2));
+      // Likelihood band — the score made legible. "High" is the profile the
+      // paying shops had when they converted (median 73 stamps / 14 engaged
+      // customers) AND currently active; recency demotes everything.
+      const idle = lastD == null ? Infinity : lastD;
+      const strong = a.stamps >= 40 || cd.engaged >= 15 || a.days.length >= 10;
+      const some = a.stamps >= 15 || cd.engaged >= 6 || a.days.length >= 4;
+      const likelihood: "high" | "medium" | "low" =
+        strong && idle <= 3 ? "high"
+        : (strong && idle <= 14) || (some && idle <= 7) ? "medium"
+        : "low";
+      const why = [
+        idle === Infinity ? "never stamped" : idle < 1 ? "active today" : `idle ${Math.round(idle)}d`,
+        a.stamps >= 40 ? `${a.stamps} stamps` : null,
+        cd.engaged >= 6 ? `${cd.engaged} engaged customers` : null,
+        a.days.length >= 4 ? `${a.days.length} active days` : null,
+      ].filter(Boolean).join(" · ");
       return {
         name: (s.name || "").trim(),
         email: owners.get(String(s.owner)) || "",
         threshold: s.stampThreshold,
+        likelihood,
+        why,
         ageD,
         lastD,
         stamps: a.stamps,
@@ -139,10 +157,11 @@ async function main() {
 
   const freeShops = rows.length;
   const active14 = rows.filter((r) => r.last14 > 0).length;
+  const bands = { high: rows.filter((r) => r.likelihood === "high").length, medium: rows.filter((r) => r.likelihood === "medium").length };
   const engagedFree = rows.filter((r) => r.engagedTrial).length;
   const generated = new Date().toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
   const data = {
-    generated, mrr, mrrAgo, movement: fin.mrrMovement, paying: paid.size, freeShops, active14, engagedFree,
+    generated, mrr, mrrAgo, movement: fin.mrrMovement, paying: paid.size, freeShops, active14, engagedFree, bands,
     weeks, cohorts,
     fortnights: fortnights.map((f) => ({ label: f.label, n: f.shops.size })),
     candidates: rows.slice(0, 20),
@@ -166,12 +185,12 @@ function render(d: any): string {
 *{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding:32px 24px 80px}h1{font-size:22px;font-weight:620;margin:0}.sub{color:var(--ink-2);font-size:13px;margin:2px 0 28px}
 h2{font-size:15px;font-weight:620;margin:40px 0 4px}.note{color:var(--muted);font-size:12.5px;margin:0 0 14px;max-width:70ch}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 18px 14px}.grid{display:grid;gap:14px}.tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.two{grid-template-columns:1fr 1fr}@media(max-width:780px){.two{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 18px 14px}.grid{display:grid;gap:14px}.tiles{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.two{grid-template-columns:1fr 1fr}@media(max-width:780px){.two{grid-template-columns:1fr}}
 .tile .label{color:var(--ink-2);font-size:12px;font-weight:550;letter-spacing:.02em;text-transform:uppercase}.tile .value{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:6px 0 2px}.tile .delta{font-size:12.5px;color:var(--ink-2)}.up{color:var(--good)}.down{color:var(--bad)}
 .chart-title{font-size:13.5px;font-weight:600;margin-bottom:6px}svg{display:block;overflow:visible}.plot{position:relative}
 table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}th,td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--grid);white-space:nowrap}th:first-child,td:first-child,td.l{text-align:left}
 th{color:var(--ink-2);font-weight:550;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--axis)}tbody tr:hover{background:var(--wash)}.scroll{overflow-x:auto}
-.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px;border:1px solid var(--border);color:var(--ink-2)}.pill.hot{color:var(--good);border-color:var(--good)}.pill.warn{color:var(--s2);border-color:var(--s2)}.pill.cold{color:var(--muted)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px;border:1px solid var(--border);color:var(--ink-2)}.pill.hot{color:var(--good);border-color:var(--good)}.pill.warn{color:var(--s2);border-color:var(--s2)}.pill.cold{color:var(--muted)}.lk{font-weight:650;letter-spacing:.02em}.lk.high{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}.lk.medium{color:var(--s2);border-color:var(--s2)}.lk.low{color:var(--muted)}.why{display:block;font-size:11px;color:var(--muted);white-space:normal;max-width:220px}
 .bar-cell{position:relative}.bar-cell .fill{position:absolute;left:0;top:50%;transform:translateY(-50%);height:16px;background:var(--wash);border-radius:3px}.bar-cell span{position:relative}
 .tt{position:absolute;pointer-events:none;opacity:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.1);white-space:nowrap;z-index:5}
 footer{color:var(--muted);font-size:12px;margin-top:48px;border-top:1px solid var(--grid);padding-top:14px}
@@ -182,11 +201,12 @@ footer{color:var(--muted);font-size:12px;margin-top:48px;border-top:1px solid va
  <div class="card tile"><div class="label">MRR</div><div class="value">$${d.mrr.toFixed(0)}</div><div class="delta ${growth >= 0 ? "up" : "down"}">${growth >= 0 ? "+" : ""}${growth.toFixed(1)}% vs 30d ago · ${d.movement.newSubscriptions} new · ${d.movement.churnedSubscriptions} churned</div></div>
  <div class="card tile"><div class="label">Paying shops</div><div class="value">${d.paying}</div><div class="delta">of ${d.paying + d.freeShops} real shops</div></div>
  <div class="card tile"><div class="label">Free, active 14d</div><div class="value">${d.active14}</div><div class="delta">of ${d.freeShops} free shops</div></div>
+ <div class="card tile"><div class="label">Likely to convert</div><div class="value">${d.bands.high}<span style="font-size:18px;color:var(--ink-2);font-weight:500"> high · ${d.bands.medium} med</span></div><div class="delta">high = converter profile and active in the last 3 days</div></div>
  <div class="card tile"><div class="label">Engaged trials</div><div class="value">${d.engagedFree}</div><div class="delta">≥5 stamps · ≥3 customers · ≥2 days · not paying</div></div>
  <div class="card tile"><div class="label">Signups this week</div><div class="value">${d.weeks[11].n}</div><div class="delta">partial · prior 4 weeks avg ${prior4.toFixed(1)}</div></div>
 </div>
 <h2>Candidates</h2>
-<p class="note">Score = recency × (cap proximity + engaged customers + active days + setup + wallet passes). Recency gates everything: a shop idle 30 days scores zero. Historically the converters had a median 73 stamps and 14 customers when they paid; three hit the 100-stamp cap and converted that week. "Nudged" marks shops past 60 stamps, where the automated upgrade email fires.</p>
+<p class="note"><b>High</b> = matches the profile paying shops had when they converted (40+ stamps, or 15+ engaged customers, or 10+ active days — the historical median was 73 stamps / 14 customers) <i>and</i> stamped in the last 3 days. <b>Medium</b> = that profile but idle up to a fortnight, or moderate usage (15+ stamps / 6+ engaged / 4+ days) active this week. <b>Low</b> = everything else. Score = recency × (cap proximity + engaged customers + active days + setup + passes). "Nudged" marks shops past 60 stamps, where the automated upgrade email fires.</p>
 <div class="card"><div class="scroll"><table id="cands"></table></div></div>
 <h2>Trials</h2>
 <div class="grid two">
@@ -203,8 +223,8 @@ const D=${json};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const rec=r=>r.lastD==null?'<span class="pill cold">never</span>':r.lastD<1?'<span class="pill hot">today</span>':r.lastD<=3?'<span class="pill hot">'+Math.round(r.lastD)+'d</span>':r.lastD<=14?'<span class="pill warn">'+Math.round(r.lastD)+'d</span>':'<span class="pill cold">'+Math.round(r.lastD)+'d</span>';
 const maxStamps=Math.max(1,...D.candidates.map(c=>c.stamps));
-document.getElementById('cands').innerHTML='<thead><tr><th>#</th><th>Shop</th><th>Owner</th><th>Age</th><th>Last stamp</th><th>Stamps</th><th>Customers (engaged)</th><th>Active days</th><th>14d</th><th>Passes</th><th>Score</th></tr></thead><tbody>'+
-D.candidates.map((c,i)=>'<tr><td>'+(i+1)+'</td><td class="l"><b>'+esc(c.name)+'</b>'+(c.threshold>12?' <span class="pill">'+c.threshold+' stamps</span>':'')+'</td><td class="l" style="color:var(--ink-2)">'+esc(c.email)+'</td><td>'+Math.round(c.ageD)+'d</td><td>'+rec(c)+'</td><td class="bar-cell"><div class="fill" style="width:'+(c.stamps/maxStamps*100).toFixed(0)+'%"></div><span>'+c.stamps+(c.stamps>=60?' <span class="pill warn">nudged</span>':'')+'</span></td><td>'+c.customers+' ('+c.engaged+')</td><td>'+c.days+'</td><td>'+c.last14+'</td><td>'+(c.passes||'—')+'</td><td><b>'+c.score.toFixed(0)+'</b></td></tr>').join('')+'</tbody>';
+document.getElementById('cands').innerHTML='<thead><tr><th>#</th><th>Shop</th><th>Likelihood</th><th>Owner</th><th>Age</th><th>Last stamp</th><th>Stamps</th><th>Customers (engaged)</th><th>Active days</th><th>14d</th><th>Passes</th><th>Score</th></tr></thead><tbody>'+
+D.candidates.map((c,i)=>'<tr><td>'+(i+1)+'</td><td class="l"><b>'+esc(c.name)+'</b>'+(c.threshold>12?' <span class="pill">'+c.threshold+' stamps</span>':'')+'</td><td class="l"><span class="pill lk '+c.likelihood+'">'+c.likelihood.toUpperCase()+'</span><span class="why">'+esc(c.why)+'</span></td><td class="l" style="color:var(--ink-2)">'+esc(c.email)+'</td><td>'+Math.round(c.ageD)+'d</td><td>'+rec(c)+'</td><td class="bar-cell"><div class="fill" style="width:'+(c.stamps/maxStamps*100).toFixed(0)+'%"></div><span>'+c.stamps+(c.stamps>=60?' <span class="pill warn">nudged</span>':'')+'</span></td><td>'+c.customers+' ('+c.engaged+')</td><td>'+c.days+'</td><td>'+c.last14+'</td><td>'+(c.passes||'—')+'</td><td><b>'+c.score.toFixed(0)+'</b></td></tr>').join('')+'</tbody>';
 document.getElementById('cohorts').innerHTML='<thead><tr><th>Month</th><th>Shops</th><th>Engaged</th><th>Engaged %</th><th>Paying</th><th>Paying %</th></tr></thead><tbody>'+
 D.cohorts.map(c=>'<tr><td>'+c.month+'</td><td>'+c.shops+'</td><td>'+c.engaged+'</td><td>'+(c.shops?(100*c.engaged/c.shops).toFixed(0):0)+'%</td><td>'+c.paying+'</td><td>'+(c.shops?(100*c.paying/c.shops).toFixed(1):0)+'%</td></tr>').join('')+'</tbody>';
 function bars(host,rows){
