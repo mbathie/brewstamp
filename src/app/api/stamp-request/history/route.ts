@@ -63,6 +63,9 @@ export async function GET(req: Request) {
   const prevSince = since ? new Date(since.getTime() - periodMs) : undefined;
   const prevUntil = since;
 
+  // Busiest-day / busiest-hour bins are computed in the shop's own timezone —
+  // the server clock is UTC, and a 7am rush in Byron Bay must read as 7am.
+  const tz = (merchant.shop as { timezone?: string }).timezone || "UTC";
   const match: Record<string, unknown> = {
     shop: merchant.shop._id,
     status: { $in: ["approved", "rejected"] },
@@ -87,7 +90,21 @@ export async function GET(req: Request) {
     createdAt: { $gte: sparkSince },
   };
 
-  const [requests, statsAgg, prevStatsAgg, chartAgg, sparkAgg] = await Promise.all([
+  const [patternAgg, requests, statsAgg, prevStatsAgg, chartAgg, sparkAgg] = await Promise.all([
+    // Approved check-ins in the selected window, by local weekday and hour.
+    // Aggregated rather than derived from `requests`, which is capped at 200.
+    StampRequest.aggregate([
+      { $match: { ...match, status: "approved" } },
+      {
+        $group: {
+          _id: {
+            dow: { $dayOfWeek: { date: "$createdAt", timezone: tz } },
+            hour: { $hour: { date: "$createdAt", timezone: tz } },
+          },
+          n: { $sum: 1 },
+        },
+      },
+    ]),
     StampRequest.find(match)
       .populate("customer", "name email cookieId")
       .sort({ createdAt: -1 })
@@ -249,6 +266,13 @@ export async function GET(req: Request) {
     return { ...r, tags: cid ? tagMap.get(cid) || [] : [] };
   });
 
+  // Mongo's $dayOfWeek is 1 = Sunday … 7 = Saturday; the dashboard reads
+  // Monday-first, so shift to 0 = Monday … 6 = Sunday.
+  const patterns = { dow: Array(7).fill(0) as number[], hour: Array(24).fill(0) as number[] };
+  for (const row of patternAgg as Array<{ _id: { dow: number; hour: number }; n: number }>) {
+    patterns.dow[(row._id.dow + 5) % 7] += row.n;
+    patterns.hour[row._id.hour] += row.n;
+  }
   const stats = {
     customers: statsAgg[0]?.uniqueCustomers?.length || 0,
     stamps: statsAgg[0]?.totalStamps || 0,
@@ -291,5 +315,6 @@ export async function GET(req: Request) {
     prevStats,
     chart: chartAgg,
     sparkline,
+    patterns,
   });
 }

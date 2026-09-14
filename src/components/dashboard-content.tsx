@@ -160,6 +160,8 @@ export default function DashboardContent({
     redeems: [],
   });
   const [chartRaw, setChartRaw] = useState<ChartPoint[]>([]);
+  // Approved check-ins by local weekday (Mon-first) and hour, for the window.
+  const [patterns, setPatterns] = useState<{ dow: number[]; hour: number[] }>({ dow: [], hour: [] });
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
@@ -202,6 +204,7 @@ export default function DashboardContent({
           data.sparkline || { stamps: [], customers: [], redeems: [] },
         );
         setChartRaw(data.chart || []);
+        setPatterns(data.patterns || { dow: [], hour: [] });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -353,6 +356,15 @@ export default function DashboardContent({
   const chartHasData = useMemo(
     () => chartData.some((d) => d.stamps > 0 || d.redeems > 0),
     [chartData],
+  );
+
+  const dowData = useMemo(
+    () => DOW_LABELS.map((label, i) => ({ label, checkins: patterns.dow[i] || 0 })),
+    [patterns],
+  );
+  const hourData = useMemo(
+    () => Array.from({ length: 24 }, (_, h) => ({ label: fmtHour(h), checkins: patterns.hour[h] || 0 })),
+    [patterns],
   );
   const rangeNoun =
     range === "today"
@@ -725,7 +737,13 @@ export default function DashboardContent({
 
           {/* Chart */}
           {!loading && chartData.length > 0 && (
-            <Card>
+            // One row on large screens (activity twice the width of each
+            // pattern); activity full-width above the two patterns on medium;
+            // stacked on small.
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            {/* With nothing to chart the pattern cards are hidden, so the
+                activity card takes the whole row rather than leaving a hole. */}
+            <Card className={`md:col-span-2 ${chartHasData ? "lg:col-span-1" : "lg:col-span-3"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Activity</CardTitle>
               </CardHeader>
@@ -793,6 +811,22 @@ export default function DashboardContent({
                 )}
               </CardContent>
             </Card>
+            {chartHasData && (
+              <>
+                <PatternCard
+                  title="Busiest days"
+                  data={dowData}
+                  maxBarSize={28}
+                />
+                <PatternCard
+                  title="Busiest hours"
+                  data={hourData}
+                  maxBarSize={12}
+                  tickInterval={2}
+                />
+              </>
+            )}
+            </div>
           )}
 
           {/* Top customers — lifetime view, surfaces the regulars the shop wants
@@ -1126,6 +1160,68 @@ function KpiCard({
         {subline && !loading && (
           <p className="pt-2 text-xs text-muted-foreground">{subline}</p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function fmtHour(h: number): string {
+  if (h === 0) return "12am";
+  if (h === 12) return "12pm";
+  return h < 12 ? `${h}am` : `${h - 12}pm`;
+}
+
+const patternConfig = {
+  checkins: { label: "Check-ins", color: "var(--color-amber-500)" },
+} satisfies ChartConfig;
+
+/**
+ * Small single-series bar chart for "when are we busy" — approved check-ins
+ * by weekday or by hour, in the shop's timezone, for the selected range.
+ */
+function PatternCard({
+  title,
+  data,
+  maxBarSize,
+  tickInterval = 0,
+}: {
+  title: string;
+  data: { label: string; checkins: number }[];
+  maxBarSize: number;
+  tickInterval?: number;
+}) {
+  const total = data.reduce((a, d) => a + d.checkins, 0);
+  const peak = data.reduce((best, d) => (d.checkins > best.checkins ? d : best), data[0]);
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-baseline justify-between text-lg">
+          <span>{title}</span>
+          {total > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              peak {peak.label}
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={patternConfig} className="h-[200px] w-full">
+          <BarChart data={data} accessibilityLayer>
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              fontSize={11}
+              tickMargin={8}
+              interval={tickInterval}
+            />
+            <YAxis tickLine={false} axisLine={false} fontSize={11} allowDecimals={false} width={26} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="checkins" fill="var(--color-checkins)" radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} />
+          </BarChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );
