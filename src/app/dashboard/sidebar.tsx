@@ -55,6 +55,7 @@ const navItems = [
 const adminItems = [
   { title: "Stats", href: "/dashboard/admin/shops", icon: BarChart3 },
   { title: "Finance", href: "/dashboard/admin/finance", icon: DollarSign },
+  { title: "Paying customers", href: "/dashboard/admin/customers", icon: CreditCard },
   { title: "Discounts", href: "/dashboard/admin/discounts", icon: Ticket },
 ];
 
