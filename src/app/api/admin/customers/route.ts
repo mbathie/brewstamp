@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Payment, Shop, Subscription, User } from "@/models";
 import { resolveSub, subscriptionTier } from "@/lib/plans";
+import { stripeAmount } from "@/lib/paypal-billing";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,11 @@ export async function GET() {
     const tier = resolveSub(s);
     const interval = subscriptionTier(s)?.interval ?? s.interval ?? "month";
     const live = ["active", "past_due"].includes(s.status);
+    // Exact stored price/currency when backfilled; otherwise derived from the
+    // Stripe price id (AUD legacy tiers included) rather than assuming USD.
+    const amt = stripeAmount(s);
+    const priceCents = s.priceCents ?? amt.amountCents;
+    const currency = (s.currency ?? amt.currency).toLowerCase();
     return {
       shopId: String(s.shop),
       shopName: shop?.name ?? "(deleted shop)",
@@ -69,9 +75,9 @@ export async function GET() {
       planSlug: tier.slug,
       planLabel: tier.label + (tier.legacy ? " (legacy)" : ""),
       interval,
-      priceCents: s.priceCents ?? (interval === "year" ? tier.monthlyCents * 11 : tier.monthlyCents),
-      currency: (s.currency ?? "usd").toLowerCase(),
-      monthlyCents: s.priceCents != null ? (interval === "year" ? Math.round(s.priceCents / 12) : s.priceCents) : tier.monthlyCents,
+      priceCents,
+      currency,
+      monthlyCents: interval === "year" ? Math.round(priceCents / 12) : priceCents,
       startedAt: b?.firstPaidAt ?? s.createdAt,
       lastPaidAt: b?.lastPaidAt ?? null,
       nextBillAt: live && !s.cancelAtPeriodEnd ? s.currentPeriodEnd ?? null : null,
