@@ -52,6 +52,7 @@ export default async function MigratePage({ params }: { params: Promise<{ token:
           <div className="mt-3 space-y-1 border-t border-gray-200 pt-3 text-xs text-gray-500">
             <div className="flex justify-between"><span>Plan</span><span className="text-gray-900">StampyStamp {stampy.planLabel}</span></div>
             <div className="flex justify-between"><span>Charged today</span><span className="text-gray-900">{sym}0.00</span></div>
+            <div className="flex justify-between"><span>Card check</span><span className="text-gray-900">{sym}1.00 hold, released</span></div>
             <div className="flex justify-between"><span>{replacing && stampy.status === "past_due" ? "Next retry" : "Next charge"}</span><span className="text-gray-900">{(replacing && stampy.nextAttemptAt ? new Date(stampy.nextAttemptAt).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : nextLabel) ?? "your usual renewal date"}</span></div>
           </div>
         </div>
@@ -102,6 +103,7 @@ export default async function MigratePage({ params }: { params: Promise<{ token:
         <div className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
           <div className="flex justify-between"><span>Plan</span><span className="text-foreground">{tier.label}{tier.legacy ? " (your original price)" : ""}</span></div>
           <div className="flex justify-between"><span>Charged today</span><span className="text-foreground">{sym}0.00</span></div>
+          <div className="flex justify-between"><span>Card check</span><span className="text-foreground">{sym}1.00 hold, released</span></div>
           <div className="flex justify-between"><span>Next charge</span><span className="text-foreground">{nextLabel ?? "your usual renewal date"}</span></div>
         </div>
       </div>

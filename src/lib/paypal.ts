@@ -152,6 +152,78 @@ export async function captureOrder(orderId: string): Promise<PayPalOrder> {
   return api("POST", `/v2/checkout/orders/${orderId}/capture`, {});
 }
 
+// ── Save a card without charging it ────────────────────────────────────
+// The live account isn't enabled for the standalone Vault v3 API (setup
+// tokens return NOT_AUTHORIZED), but Orders with `vault.store_in_vault:
+// ON_SUCCESS` are. So "save card" = a 1.00 AUTHORIZE-intent order (a hold,
+// never captured), vault on success, then void the authorization. The
+// customer may see a pending 1.00 that drops off within a few days.
+export const VERIFY_CENTS = 100;
+
+export async function createVerifyOrder(opts: { currency: string; customId: string; description: string }): Promise<{ id: string }> {
+  return api("POST", "/v2/checkout/orders", {
+    intent: "AUTHORIZE",
+    purchase_units: [
+      {
+        amount: money(VERIFY_CENTS, opts.currency),
+        description: opts.description.slice(0, 127),
+        custom_id: opts.customId.slice(0, 127),
+      },
+    ],
+    payment_source: {
+      card: {
+        attributes: {
+          vault: { store_in_vault: "ON_SUCCESS" },
+          verification: { method: "SCA_WHEN_REQUIRED" },
+        },
+      },
+    },
+  });
+}
+
+export interface PayPalAuthorizedOrder extends PayPalOrder {
+  purchase_units?: Array<{
+    custom_id?: string;
+    payments?: {
+      captures?: Array<{ id: string; status: string; amount?: { value: string; currency_code: string } }>;
+      authorizations?: Array<{ id: string; status: string }>;
+    };
+  }>;
+}
+
+export async function authorizeOrder(orderId: string): Promise<PayPalAuthorizedOrder> {
+  return api("POST", `/v2/checkout/orders/${orderId}/authorize`, {});
+}
+
+export async function voidAuthorization(authorizationId: string): Promise<void> {
+  try {
+    await api("POST", `/v2/payments/authorizations/${authorizationId}/void`, {});
+  } catch (e) {
+    // Already voided/expired is fine; anything else should be visible.
+    if (!(e instanceof PayPalError && (e.status === 422 || e.status === 404))) throw e;
+  }
+}
+
+// Authorize + vault + void, returning the vault details. Throws if the card
+// was declined or didn't vault.
+export async function verifyAndVaultCard(orderId: string): Promise<{
+  vaultId: string;
+  customerId?: string;
+  card: PayPalCardSummary;
+}> {
+  const order = await authorizeOrder(orderId);
+  const auth = order.purchase_units?.[0]?.payments?.authorizations?.[0];
+  const vault = order.payment_source?.card?.attributes?.vault;
+  if (auth?.id) await voidAuthorization(auth.id);
+  if (!auth || !["CREATED", "CAPTURED", "VOIDED", "PENDING"].includes(auth.status)) {
+    throw new PayPalError(`Card verification ${auth?.status ?? order.status ?? "failed"}`, 402, order);
+  }
+  if (!vault?.id) {
+    throw new PayPalError("Card verified but was not saved — please try again", 502, order);
+  }
+  return { vaultId: vault.id, customerId: vault.customer?.id, card: cardSummaryOf(order) };
+}
+
 export async function getOrder(orderId: string): Promise<PayPalOrder> {
   return api("GET", `/v2/checkout/orders/${orderId}`);
 }

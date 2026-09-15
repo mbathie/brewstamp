@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { Subscription } from "@/models";
-import { createSetupToken, PayPalError } from "@/lib/paypal";
+import { createVerifyOrder, PayPalError } from "@/lib/paypal";
 import { paypalEnabled, requireOwner } from "../_shared";
 
-// Replacing the saved card, step 1: a setup token for the Card Fields to
-// fill in. No charge. Attached to the existing PayPal customer so the old
-// and new cards live under the same record.
+// Replacing the saved card, step 1: an AUTHORIZE order the Card Fields
+// attach to. Nothing is captured — the hold is voided once the card vaults.
 export async function POST() {
   const auth = await requireOwner();
   if ("error" in auth) return auth.error;
@@ -14,10 +13,14 @@ export async function POST() {
   }
   const sub = await Subscription.findOne({ shop: auth.merchant.shop._id });
   try {
-    const token = await createSetupToken({ customerId: sub?.paypalCustomerId || undefined });
-    return NextResponse.json({ setupTokenId: token.id });
+    const order = await createVerifyOrder({
+      currency: sub?.currency || "usd",
+      customId: `${auth.merchant.shop._id}:verify`,
+      description: `Card verification — ${auth.merchant.shop.name}`,
+    });
+    return NextResponse.json({ orderId: order.id });
   } catch (err) {
-    console.error("[PayPal] setup token failed:", err);
+    console.error("[PayPal] verify order failed:", err);
     return NextResponse.json({ error: err instanceof PayPalError ? err.message : "Could not start card update" }, { status: 502 });
   }
 }

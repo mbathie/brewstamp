@@ -158,24 +158,23 @@ export function PayPalCardFields(props: Props) {
               }
             : {
                 ...common,
-                createVaultSetupToken: async () => {
+                // "Save card" is an authorize-and-void order that vaults the
+                // card (the live account has no standalone Vault API access).
+                createOrder: async () => {
                   const cur = propsRef.current;
                   const url = cur.mode === "update" && cur.endpoints ? cur.endpoints.setupToken : "/api/billing/paypal/setup-token";
                   const res = await fetch(url, { method: "POST" });
                   const json = await res.json();
                   if (!res.ok) throw new Error(json.error || "Could not start card update");
-                  return json.setupTokenId as string;
+                  return json.orderId as string;
                 },
                 onApprove: async (data: any) => {
-                  const setupTokenId = data?.vaultSetupToken ?? data?.vault_setup_token ?? data?.setupToken ?? data?.id;
                   const cur = propsRef.current;
                   const url = cur.mode === "update" && cur.endpoints ? cur.endpoints.paymentToken : "/api/billing/paypal/payment-token";
                   const res = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    // approveData is logged server-side if the id is missing —
-                    // the SDK's payload shape for vault approvals varies by version.
-                    body: JSON.stringify({ setupTokenId, approveData: data }),
+                    body: JSON.stringify({ orderId: data.orderID }),
                   });
                   const json = await res.json();
                   setSubmitting(false);
@@ -233,7 +232,9 @@ export function PayPalCardFields(props: Props) {
       await fieldsRef.current.submit();
     } catch (err: any) {
       const msg: string = err?.message || "";
-      setError(/invalid|incomplete|valid/i.test(msg) ? "Please check the card details." : msg || "Payment failed");
+      // Field-validation errors from the SDK read "…invalid…"; anything else
+      // came from our server or PayPal and should be shown as-is.
+      setError(/^(invalid|incomplete)|is invalid|not valid/i.test(msg) ? "Please check the card details." : msg || "Something went wrong — please try again.");
       setSubmitting(false);
     }
   }
