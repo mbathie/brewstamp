@@ -29,6 +29,7 @@ import {
   sendPaymentReceiptEmail,
   sendSubscriptionDowngradedEmail,
 } from "./email";
+import { recordReferralEarning } from "./referrals";
 
 export const CURRENCY = "usd";
 
@@ -164,7 +165,7 @@ export async function activateFromCapture(opts: {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  await Payment.create({
+  const initialPayment = await Payment.create({
     shop: opts.shopId,
     subscription: sub._id,
     orderId: order.id,
@@ -182,6 +183,7 @@ export async function activateFromCapture(opts: {
     periodEnd,
   });
 
+  await recordReferralEarning(initialPayment._id);
   await emailReceipt(sub, opts.amountCents, now);
   return sub;
 }
@@ -282,7 +284,7 @@ export async function switchPaypalPlan(
 
   if (order) {
     const cap = captureOf(order)!;
-    await Payment.create({
+    const upgradePayment = await Payment.create({
       shop: sub.shop,
       subscription: sub._id,
       orderId: order.id,
@@ -299,6 +301,7 @@ export async function switchPaypalPlan(
       periodStart: now,
       periodEnd,
     });
+    await recordReferralEarning(upgradePayment._id);
     await emailReceipt(sub, charge, now);
   }
   return { kind: "immediate", chargedCents: charge, creditCents: carry };
@@ -403,7 +406,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
         if (order) sub.lastPaymentAt = now;
         await sub.save();
         if (order) {
-          await Payment.create({
+          const renewalPayment = await Payment.create({
             shop: sub.shop,
             subscription: sub._id,
             orderId: order.id,
@@ -420,6 +423,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
             periodStart,
             periodEnd,
           });
+          await recordReferralEarning(renewalPayment._id);
           await emailReceipt(sub, amount, now, currency);
         }
         summary.renewed++;

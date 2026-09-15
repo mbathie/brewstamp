@@ -4,6 +4,7 @@ import { Subscription, Shop, User, Payment } from "@/models";
 import { stripe } from "@/lib/stripe";
 import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
 import { sendPaymentReceiptEmail } from "@/lib/email";
+import { recordReferralEarning } from "@/lib/referrals";
 import type Stripe from "stripe";
 
 function getPeriodDates(sub: Stripe.Subscription) {
@@ -126,6 +127,8 @@ export async function POST(req: Request) {
           },
           { upsert: true }
         );
+        const row = await Payment.findOne({ stripeInvoiceId: invoice.id }).select("_id").lean<any>();
+        if (row) await recordReferralEarning(row._id).catch((e) => console.error("[Webhook] referral earning failed:", e));
       }
 
       // Send payment receipt email

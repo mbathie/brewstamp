@@ -16,6 +16,7 @@ import {
   BarChart3,
   Ticket,
   DollarSign,
+  Handshake,
 } from "lucide-react";
 import {
   Sidebar,
@@ -50,6 +51,7 @@ const navItems = [
   { title: "Customers", href: "/dashboard/customers", icon: Users },
   { title: "Team", href: "/dashboard/team", icon: Users2 },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
+  { title: "Partners", href: "/dashboard/partners", icon: Handshake },
 ];
 
 const adminItems = [
@@ -57,6 +59,7 @@ const adminItems = [
   { title: "Finance", href: "/dashboard/admin/finance", icon: DollarSign },
   { title: "Paying customers", href: "/dashboard/admin/customers", icon: CreditCard },
   { title: "Discounts", href: "/dashboard/admin/discounts", icon: Ticket },
+  { title: "Partners", href: "/dashboard/admin/partners", icon: Handshake },
 ];
 
 export function DashboardSidebar({

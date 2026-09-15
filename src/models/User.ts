@@ -18,6 +18,14 @@ const userSchema = new mongoose.Schema(
     // etc.). Both fields are best-effort and may be empty.
     signupReferrer: { type: String },
     signupLandingPage: { type: String },
+    // Referral program. A partner shares brewstamp.app/?ref=<referralCode>;
+    // anyone who signs up after visiting that link is stamped with
+    // referredBy and earns the partner 20% of their payments for 12 months.
+    referralCode: { type: String, unique: true, sparse: true },
+    referralPartner: { type: Boolean, default: false },
+    referralPartnerSince: { type: Date },
+    referralPayoutEmail: { type: String }, // PayPal email for payouts
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

@@ -10,6 +10,7 @@ import Account from "./Account";
 import VerificationToken from "./VerificationToken";
 import WalletPass from "./WalletPass";
 import Payment from "./Payment";
+import ReferralEarning from "./ReferralEarning";
 
 export {
   Shop,
@@ -24,4 +25,5 @@ export {
   VerificationToken,
   WalletPass,
   Payment,
+  ReferralEarning,
 };

@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/mongoose";
 import { User } from "@/models";
 import { readSignupAttribution } from "@/lib/signup-attr";
+import { readReferralPartnerId } from "@/lib/referral-cookie";
 
 export async function POST(req: Request) {
   await connectDB();
@@ -24,8 +25,9 @@ export async function POST(req: Request) {
 
   const hash = await bcrypt.hash(password, 10);
   const attr = await readSignupAttribution();
+  const referredBy = await readReferralPartnerId();
   const normalized = normalizeEmail(email);
-  await User.create({ name: normalized.split("@")[0], email: normalized, hash, ...attr });
+  await User.create({ name: normalized.split("@")[0], email: normalized, hash, ...attr, ...(referredBy ? { referredBy } : {}) });
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

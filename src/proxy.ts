@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const ATTR_COOKIE = "bs_attr";
+const REF_COOKIE = "bs_ref";
 const ID_COOKIE = "brewstamp_id";
 const IMPERSONATE_COOKIE = "bs_impersonate";
 
@@ -57,6 +58,22 @@ export function proxy(request: NextRequest) {
       httpOnly: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365 * 5,
+    });
+    return response;
+  }
+
+  // Referral partner link: ?ref=CODE on any public page → 90-day cookie that
+  // register / OAuth signup reads to stamp User.referredBy. Last click wins.
+  const ref = request.nextUrl.searchParams.get("ref");
+  if (ref && /^[A-Za-z0-9]{4,12}$/.test(ref)) {
+    const clean = request.nextUrl.clone();
+    clean.searchParams.delete("ref");
+    const response = NextResponse.redirect(clean);
+    response.cookies.set(REF_COOKIE, ref.toUpperCase(), {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 90,
     });
     return response;
   }

@@ -15,6 +15,7 @@ import {
   VerificationToken,
 } from "@/models";
 import { readSignupAttribution } from "./signup-attr";
+import { readReferralPartnerId } from "./referral-cookie";
 
 // Cookie name kept inline (vs. importing from ./shop-context) to avoid a
 // circular import — shop-context.ts depends on auth().
@@ -39,7 +40,9 @@ const MongoDBAdapter = {
     }
     // New user via OAuth/magic link — create without hash
     const attr = await readSignupAttribution();
+    const referredBy = await readReferralPartnerId();
     const newUser = await User.create({
+      ...(referredBy ? { referredBy } : {}),
       name: user.name || user.email?.split("@")[0] || "User",
       email: normalizeEmail(user.email),
       emailVerified: user.emailVerified,
