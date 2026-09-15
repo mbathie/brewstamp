@@ -79,12 +79,12 @@ export default function PartnersPage() {
               paid via PayPal.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild size="lg" className="bg-amber-700 text-white hover:bg-amber-800">
+              <Button asChild size="lg" className="cursor-pointer bg-amber-700 px-8 text-base text-white hover:bg-amber-800">
                 <Link href="/register?callbackUrl=%2Fdashboard%2Fpartners">
                   Get my referral link <ArrowRight className="ml-1.5 size-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-stone-300 bg-white text-stone-800 hover:bg-stone-100">
+              <Button asChild size="lg" variant="outline" className="cursor-pointer border-stone-300 !bg-white px-8 text-base !text-stone-900 hover:!bg-stone-100">
                 <Link href="/login?callbackUrl=%2Fdashboard%2Fpartners">I already have an account</Link>
               </Button>
             </div>
@@ -185,7 +185,7 @@ export default function PartnersPage() {
               ))}
             </dl>
             <div className="mt-8 text-center">
-              <Button asChild size="lg" className="bg-amber-700 text-white hover:bg-amber-800">
+              <Button asChild size="lg" className="cursor-pointer bg-amber-700 px-8 text-base text-white hover:bg-amber-800">
                 <Link href="/register?callbackUrl=%2Fdashboard%2Fpartners">
                   Get my referral link <ArrowRight className="ml-1.5 size-4" />
                 </Link>
