@@ -47,19 +47,37 @@ import {
   PLANS,
   getPlanRank,
   annualPriceCents,
+  planPriceCents,
   type PlanSlug,
   type BillingInterval,
 } from "@/lib/plans";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // "$7" for whole dollars, "$6.42" otherwise.
 function formatCents(cents: number): string {
   const dollars = cents / 100;
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
+// With the currency spelled out — a migrated subscriber may be on A$ or US$.
+function moneyWithCode(cents: number, currency: string): string {
+  const sym = currency === "aud" ? "A$" : currency === "usd" ? "US$" : currency.toUpperCase() + " ";
+  return `${sym}${(cents / 100).toFixed(2)}`;
+}
+
+function StatusPill({ status, cancelAtPeriodEnd }: { status: string; cancelAtPeriodEnd: boolean }) {
+  const cls =
+    status === "active" && !cancelAtPeriodEnd ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+    : status === "active" ? "border-amber-500/30 bg-amber-500/15 text-amber-300"
+    : status === "past_due" ? "border-red-500/30 bg-red-500/15 text-red-300"
+    : "border-border text-muted-foreground";
+  const label = status === "active" && cancelAtPeriodEnd ? "cancelling" : status === "past_due" ? "payment due" : status;
+  return <Badge variant="outline" className={`text-xs font-normal ${cls}`}>{label}</Badge>;
+}
 
 interface BillingData {
   totalStamps: number;
   limit: number;
+  ownedShops: number;
   // Provider a NEW subscription would bill through; existing subs carry
   // their own provider below.
   provider: "stripe" | "paypal";
@@ -80,6 +98,8 @@ interface BillingData {
     failedAttempts: number;
     nextAttemptAt: string | null;
     creditCents: number;
+    priceCents: number | null;
+    currency: string;
   } | null;
   invoices: {
     id: string;
@@ -106,6 +126,7 @@ export default function BillingPage() {
   // PayPal inline card dialogs: a first subscription, or replacing the card.
   const [checkout, setCheckout] = useState<{ plan: PlanSlug; interval: BillingInterval } | null>(null);
   const [updatingCard, setUpdatingCard] = useState(false);
+  const [tab, setTab] = useState<"plans" | "history">("plans");
 
   function reload() {
     return fetch("/api/billing")
@@ -148,6 +169,7 @@ export default function BillingPage() {
   const sub = data?.subscription ?? null;
   const isPaypalSub = currentSlug !== "free" && sub?.provider === "paypal";
   const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
+  const currentPlan = PLANS.find((p) => p.slug === currentSlug)!;
 
   async function handleSwitch(target: PlanSlug) {
     setSwitchingTo(target);
@@ -259,18 +281,13 @@ export default function BillingPage() {
   if (!data) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Billing
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Billing</h1>
         <p className="text-muted-foreground">
-          You&apos;re currently on the{" "}
-          <span className="font-medium text-foreground">
-            {PLANS.find((p) => p.slug === currentSlug)?.label}
-          </span>{" "}
-          plan. Switch tiers anytime — unused time is prorated as a credit on
-          your next invoice.
+          {currentSlug === "free"
+            ? "Pick a plan when you're ready — no card is charged until you subscribe."
+            : "Your subscription, payment method and history. Change plan anytime — unused time is credited."}
         </p>
         {isPaypalSub && sub?.status === "past_due" && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
@@ -278,7 +295,7 @@ export default function BillingPage() {
             <span>
               Your last renewal was declined
               {sub.nextAttemptAt ? ` — we'll try again on ${fmtDate(sub.nextAttemptAt)}` : ""}.
-              Update your card below to keep your plan running.
+              Update your card to keep your plan running.
             </span>
           </div>
         )}
@@ -305,14 +322,142 @@ export default function BillingPage() {
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
-              This is a seeded test subscription. Plan switching and the Stripe
-              billing portal are disabled until the shop has a real
-              Stripe-backed subscription.
+              This is a seeded test subscription. Plan switching and billing
+              management are disabled until the shop has a real subscription.
             </span>
           </div>
         )}
       </div>
 
+      {/* Subscription at a glance — paying customers see their own billing
+          first; Free users get a compact usage strip with the CTA. */}
+      {currentSlug !== "free" && sub ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Current plan</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                {currentPlan.label}
+                <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd} />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                <span className="text-2xl font-semibold text-foreground">
+                  {sub.priceCents != null ? moneyWithCode(sub.priceCents, sub.currency) : formatCents(planPriceCents(currentPlan, currentInterval ?? "month"))}
+                </span>{" "}
+                / {currentInterval === "year" ? "year" : "month"}
+              </div>
+              {sub.currentPeriodEnd && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">{sub.cancelAtPeriodEnd ? "Ends on " : "Next bill "}</span>
+                  <span className={sub.cancelAtPeriodEnd ? "text-amber-400" : "text-foreground"}>{fmtDate(sub.currentPeriodEnd)}</span>
+                  {!sub.cancelAtPeriodEnd && sub.creditCents > 0 && (
+                    <span className="text-muted-foreground"> · {formatCents(sub.creditCents)} credit applied</span>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setTab("plans")} disabled={isSeed}>
+                  Change plan
+                </Button>
+                {sub.cancelAtPeriodEnd || sub.pendingPlanSlug ? (
+                  <Button size="sm" variant="outline" className="cursor-pointer" disabled={isSeed || !!switchingTo} onClick={() => handleSwitch(currentSlug)}>
+                    Keep {currentPlan.label}
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="ghost" className="cursor-pointer text-muted-foreground" disabled={isSeed || !!switchingTo} onClick={() => handleSwitch("free")}>
+                    Cancel plan
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Payment method</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <CreditCard className="size-5 text-muted-foreground" />
+                {isPaypalSub
+                  ? `${sub.card?.brand ? sub.card.brand[0] + sub.card.brand.slice(1).toLowerCase() : "Card"} •••• ${sub.card?.last4 ?? "????"}`
+                  : "Card on file"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {isPaypalSub
+                  ? sub.card?.expiry
+                    ? `Expires ${sub.card.expiry.replace("-", "/")} · charged automatically each period.`
+                    : "Charged automatically each period."
+                  : "Managed securely by Stripe — update your card, view invoices or cancel in the portal."}
+              </p>
+              {isPaypalSub ? (
+                <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => setUpdatingCard(true)}>
+                  Update card
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="cursor-pointer" onClick={handlePortal} disabled={portalLoading || isSeed}>
+                  {portalLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <ExternalLink className="mr-2 size-4" />}
+                  Open billing portal
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Usage</CardDescription>
+              <CardTitle className="text-xl">{data.totalStamps.toLocaleString()} stamps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {currentPlan.stampLimit === "unlimited" ? "Unlimited stamps on your plan." : `${data.totalStamps} of ${currentPlan.stampLimit} stamps used.`}
+              </p>
+              <div className="text-sm">
+                <span className="text-foreground">{data.ownedShops}</span>
+                <span className="text-muted-foreground"> of {currentPlan.shopLimit} shop{currentPlan.shopLimit === 1 ? "" : "s"} used</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-amber-600" style={{ width: `${Math.min(100, Math.round((data.ownedShops / currentPlan.shopLimit) * 100))}%` }} />
+              </div>
+              {data.ownedShops >= currentPlan.shopLimit && currentSlug !== "max" && (
+                <button type="button" onClick={() => setTab("plans")} className="cursor-pointer text-xs text-amber-400 hover:underline">
+                  Need another shop? Upgrade →
+                </button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Current plan</div>
+              <div className="text-lg font-semibold text-foreground">Free · {data.totalStamps} of {data.limit} stamps used</div>
+              <div className="mt-2 h-1.5 w-56 max-w-full overflow-hidden rounded-full bg-muted">
+                <div className={`h-full rounded-full ${data.totalStamps >= data.limit ? "bg-red-500" : "bg-amber-600"}`} style={{ width: `${Math.min(100, Math.round((data.totalStamps / data.limit) * 100))}%` }} />
+              </div>
+            </div>
+            <Button className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => { setTab("plans"); document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+              Choose a plan
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "plans" | "history")} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="plans" className="cursor-pointer">Plans</TabsTrigger>
+          <TabsTrigger value="history" className="cursor-pointer">
+            Billing history
+            {data.invoices.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{data.invoices.length}</span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="plans" id="plans" className="space-y-6">
       {/* Billing interval toggle */}
       <div className="flex flex-col items-center gap-2">
         <div className="inline-flex items-center rounded-full border border-border bg-muted/30 p-1 text-sm">
@@ -568,103 +713,9 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* Manage subscription — PayPal (card on file, managed here) */}
-      {isPaypalSub && sub && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage subscription</CardTitle>
-            <CardDescription>
-              Your saved card is charged automatically each billing period.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
-                <CreditCard className="size-5 text-muted-foreground" />
-                <div className="text-sm">
-                  <div className="font-medium capitalize text-foreground">
-                    {sub.card?.brand?.toLowerCase() || "Card"} •••• {sub.card?.last4 || "????"}
-                  </div>
-                  {sub.card?.expiry && (
-                    <div className="text-xs text-muted-foreground">Expires {sub.card.expiry.replace("-", "/")}</div>
-                  )}
-                </div>
-              </div>
-              <Button variant="outline" className="cursor-pointer" onClick={() => setUpdatingCard(true)}>
-                Update card
-              </Button>
-            </div>
-            {sub.currentPeriodEnd && (
-              <p className="text-sm text-muted-foreground">
-                {sub.cancelAtPeriodEnd ? "Cancels on: " : "Next billing date: "}
-                <span className={sub.cancelAtPeriodEnd ? "text-amber-400" : "text-foreground"}>
-                  {fmtDate(sub.currentPeriodEnd)}
-                </span>
-                {sub.cancelAtPeriodEnd && <span className="ml-1">— your plan reverts to Free then.</span>}
-                {!sub.cancelAtPeriodEnd && sub.creditCents > 0 && (
-                  <span className="ml-1">({formatCents(sub.creditCents)} credit will be applied.)</span>
-                )}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+        </TabsContent>
 
-      {/* Manage subscription — Stripe portal */}
-      {data.subscription && !isSeed && !isPaypalSub && currentSlug !== "free" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage subscription</CardTitle>
-            <CardDescription>
-              Update payment method, view invoices, or cancel from Stripe&apos;s
-              billing portal.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={handlePortal}
-              disabled={portalLoading}
-              variant="outline"
-              className="cursor-pointer"
-            >
-              {portalLoading ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <ExternalLink className="mr-2 size-4" />
-              )}
-              Open Billing Portal
-            </Button>
-            {data.subscription.currentPeriodEnd && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                {data.subscription.cancelAtPeriodEnd
-                  ? "Cancels on: "
-                  : "Next billing date: "}
-                <span
-                  className={
-                    data.subscription.cancelAtPeriodEnd
-                      ? "text-amber-400"
-                      : "text-foreground"
-                  }
-                >
-                  {new Date(
-                    data.subscription.currentPeriodEnd,
-                  ).toLocaleDateString("en-AU", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-                {data.subscription.cancelAtPeriodEnd && (
-                  <span className="ml-1">
-                    — your plan reverts to Free then.
-                  </span>
-                )}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
+        <TabsContent value="history" className="space-y-6">
       {/* Transaction history */}
       {data.invoices.length > 0 && (
         <Card>
@@ -746,6 +797,16 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       )}
+          {data.invoices.length === 0 && (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                No payments yet. Your receipts will appear here once you subscribe.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
       {/* PayPal: first subscription — card entered inline, in a side sheet */}
       <Sheet open={!!checkout} onOpenChange={(o) => !o && setCheckout(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-[440px]">

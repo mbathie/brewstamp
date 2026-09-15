@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
-import { Payment, StampCard, Subscription } from "@/models";
+import { Payment, ShopMembership, StampCard, Subscription } from "@/models";
 import { subscriptionTier, type BillingInterval } from "@/lib/plans";
 import { billingProvider } from "@/lib/paypal";
 
@@ -65,9 +65,12 @@ export async function GET() {
   const provider = billingProvider();
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || null;
 
+  const ownedShops = await ShopMembership.countDocuments({ user: merchant.user._id, role: "owner" });
+
   return NextResponse.json({
     totalStamps,
     limit: 100,
+    ownedShops,
     provider,
     paypalClientId,
     paypalEnv: process.env.PAYPAL_ENV === "live" ? "live" : "sandbox",
