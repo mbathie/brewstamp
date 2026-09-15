@@ -1,16 +1,26 @@
 import mongoose from "mongoose";
 
-// One row per charge attempt on a PayPal-billed subscription — the
-// equivalent of a Stripe invoice. Drives the billing page's transaction
-// history, receipt resends, the admin shop view and the finance page.
+// One row per charge attempt, whichever provider took the money. This is
+// the system of record for transaction history — the billing page, receipt
+// resends, the admin shop view and the finance page all read from here and
+// never call Stripe/PayPal. PayPal rows are written by paypal-billing; Stripe
+// rows by the invoice webhook and scripts/backfill-stripe-payments.ts.
 const paymentSchema = new mongoose.Schema(
   {
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true, index: true },
     subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription", index: true },
-    provider: { type: String, enum: ["paypal"], default: "paypal" },
+    provider: { type: String, enum: ["paypal", "stripe"], default: "paypal" },
     // PayPal order id and capture id (capture is what refunds reference).
     orderId: { type: String },
     captureId: { type: String, index: true },
+    // Stripe invoice + charge ids, and the hosted invoice page for the
+    // customer to download a PDF.
+    stripeInvoiceId: { type: String, unique: true, sparse: true },
+    stripeChargeId: { type: String },
+    hostedUrl: { type: String },
+    // When the money actually moved (Stripe: invoice created; PayPal: now).
+    // createdAt is when the row was written, which differs for backfills.
+    paidAt: { type: Date, index: true },
     kind: {
       type: String,
       enum: ["initial", "renewal", "upgrade"],

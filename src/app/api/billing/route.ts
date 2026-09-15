@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Payment, StampCard, Subscription } from "@/models";
-import { stripe } from "@/lib/stripe";
 import { subscriptionTier, type BillingInterval } from "@/lib/plans";
 import { billingProvider } from "@/lib/paypal";
 
@@ -29,39 +28,21 @@ export async function GET() {
   // Look up active subscription
   const subscription = await Subscription.findOne({ shop: shopId });
 
-  let invoices: any[] = [];
-  if (subscription?.provider === "paypal") {
-    const payments = await Payment.find({ shop: shopId, status: { $ne: "failed" } })
-      .sort({ createdAt: -1 })
-      .limit(24)
-      .lean();
-    invoices = payments.map((p: any) => ({
-      id: String(p._id),
-      date: Math.floor(new Date(p.createdAt).getTime() / 1000),
-      amount: p.amountCents,
-      currency: p.currency,
-      status: p.status,
-      description: p.description,
-      pdf: null,
-    }));
-  } else if (subscription && subscription.stripeCustomerId) {
-    try {
-      const stripeInvoices = await stripe.invoices.list({
-        customer: subscription.stripeCustomerId,
-        limit: 10,
-      });
-      invoices = stripeInvoices.data.map((inv) => ({
-        id: inv.id,
-        date: inv.created,
-        amount: inv.amount_paid,
-        currency: inv.currency,
-        status: inv.status,
-        pdf: inv.invoice_pdf,
-      }));
-    } catch {
-      // If Stripe call fails, return empty invoices
-    }
-  }
+  // Transaction history comes from our own ledger for every provider —
+  // Stripe rows are backfilled + written by the invoice webhook.
+  const payments = await Payment.find({ shop: shopId, status: { $ne: "failed" } })
+    .sort({ paidAt: -1, createdAt: -1 })
+    .limit(24)
+    .lean();
+  const invoices = payments.map((p: any) => ({
+    id: String(p._id),
+    date: Math.floor(new Date(p.paidAt ?? p.createdAt).getTime() / 1000),
+    amount: p.amountCents,
+    currency: p.currency,
+    status: p.status,
+    description: p.description,
+    pdf: p.hostedUrl ?? null,
+  }));
 
   // Resolve current plan slug from the subscription's stripePriceId so the
   // billing UI can mark the active plan in its grid. Fall back to planLabel
@@ -107,6 +88,8 @@ export async function GET() {
           failedAttempts: subscription.failedAttempts || 0,
           nextAttemptAt: subscription.nextAttemptAt || null,
           creditCents: subscription.creditCents || 0,
+          priceCents: subscription.priceCents ?? null,
+          currency: subscription.currency || "usd",
         }
       : null,
     invoices,

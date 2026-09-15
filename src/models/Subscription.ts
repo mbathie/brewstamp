@@ -32,8 +32,9 @@ const subscriptionSchema = new mongoose.Schema(
       last4: { type: String },
       expiry: { type: String }, // "2028-05"
     },
-    // Plan the shop is on. Stripe subs derive this from stripePriceId (see
-    // @/lib/plans); PayPal subs store it explicitly.
+    // Plan the shop is on — stored per subscription for both providers (the
+    // backfill script fills it for Stripe subs; stripePriceId remains the
+    // fallback for resolution, see subscriptionTier in @/lib/plans).
     planSlug: { type: String, enum: ["pro", "plus", "max"] },
     interval: { type: String, enum: ["month", "year"] },
     currency: { type: String, default: "usd" },
@@ -41,9 +42,20 @@ const subscriptionSchema = new mongoose.Schema(
     // renewal. Stored here until the cron applies it.
     pendingPlanSlug: { type: String, enum: ["pro", "plus", "max"] },
     pendingInterval: { type: String, enum: ["month", "year"] },
+    // What this subscription pays per period, in `currency`. Set from the
+    // catalogue on PayPal checkout, from the live Stripe price for Stripe subs
+    // (backfill script), and carried across a migration unchanged — so legacy
+    // US$5 Pro and AUD-tier subscribers keep their price until they change
+    // plan (a switch re-prices from the catalogue).
+    priceCents: { type: Number },
     // Unused time credited on an upgrade that exceeded the new charge; applied
     // to the next renewal.
     creditCents: { type: Number, default: 0 },
+    // Stripe → PayPal migration: a non-guessable link emailed to the owner
+    // that lets them save a card without logging in. Cleared once used.
+    migrationToken: { type: String, unique: true, sparse: true },
+    migrationEmailedAt: { type: Date },
+    migratedAt: { type: Date },
     // Dunning: consecutive failed renewal attempts and when to try again.
     failedAttempts: { type: Number, default: 0 },
     nextAttemptAt: { type: Date },

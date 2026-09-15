@@ -669,6 +669,122 @@ export async function sendPaymentFailedEmail({
   }
 }
 
+// Stripe → PayPal migration: asks a paying customer to save their card via
+// a unique link. Price, plan and renewal date don't change; nothing is
+// charged when they save the card.
+export async function sendBillingMigrationEmail({
+  to,
+  merchantName,
+  shopName,
+  planLabel,
+  interval,
+  amountCents,
+  currency,
+  nextChargeAt,
+  link,
+  deadline,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  planLabel: string;
+  interval: "month" | "year";
+  amountCents: number;
+  currency: string;
+  nextChargeAt: Date | null;
+  link: string;
+  deadline: Date | null;
+}) {
+  const amount = `${currency.toUpperCase() === "AUD" ? "A$" : "US$"}${(amountCents / 100).toFixed(2)}`;
+  const per = interval === "year" ? "year" : "month";
+  const fmt = (d: Date) => d.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+  const deadlineLine = deadline
+    ? `Please do this before <strong>${fmt(deadline)}</strong> so your ${planLabel} plan continues without interruption.`
+    : `It takes about a minute and keeps your ${planLabel} plan running without interruption.`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>We're changing payment providers</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 24px 8px;">
+        <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">One quick thing about your subscription</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Hi ${merchantName}, we're moving Brewstamp's card payments from Stripe to
+          PayPal to cut processing fees &mdash; which helps us keep prices where
+          they are. <strong>Your plan, price and billing date don&rsquo;t change.</strong>
+          We just need you to re-enter your card once, using the secure link below.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">${deadlineLine}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 24px 8px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 10px;">
+          <tr><td style="padding: 16px 20px 4px; font-size: 13px; color: #78716c; text-transform: uppercase; letter-spacing: 0.04em;">Your subscription</td></tr>
+          <tr><td style="padding: 0 20px 4px; font-size: 15px; color: #1c1917;"><strong>${shopName}</strong> &mdash; ${planLabel} plan</td></tr>
+          <tr><td style="padding: 0 20px 4px; font-size: 15px; color: #1c1917;">${amount} per ${per}, unchanged</td></tr>
+          ${nextChargeAt ? `<tr><td style="padding: 0 20px 16px; font-size: 15px; color: #1c1917;">Next charge: ${fmt(nextChargeAt)}</td></tr>` : `<tr><td style="padding: 0 0 12px;"></td></tr>`}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 16px 24px 8px; text-align: center;">
+        <a href="${link}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Save my card</span></a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 24px 32px;">
+        <p style="margin: 0 0 12px; font-size: 14px; color: #78716c; line-height: 1.6;">
+          Nothing is charged when you save your card &mdash; your next payment
+          happens on your usual date. You don&rsquo;t need a PayPal account; the card
+          form is hosted by PayPal and your details never touch our servers.
+        </p>
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
+          This link is unique to your account. If you have any questions, just reply
+          to this email.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Action needed: re-enter your card for ${shopName} (price unchanged)`,
+      html,
+      headers: { "X-Mailin-Tag": "billing-migration" },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send billing migration email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendCustomerConsentEmail({
   to,
   shopName,

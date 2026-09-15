@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
-import { Subscription, Shop, User } from "@/models";
+import { Subscription, Shop, User, Payment } from "@/models";
 import { stripe } from "@/lib/stripe";
-import { getPlanByPriceId } from "@/lib/plans";
+import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
 import { sendPaymentReceiptEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
@@ -93,9 +93,43 @@ export async function POST(req: Request) {
         { status: "active", ...period }
       );
 
+      // Record the payment in our own ledger (transaction history + finance
+      // read from here, not from Stripe). Upsert on invoice id: Stripe may
+      // redeliver, and the backfill script may have written it already.
+      const localSub = await Subscription.findOne({ stripeSubscriptionId: sub.id });
+      if (localSub && invoice.amount_paid > 0) {
+        const line = invoice.lines.data[0];
+        const priceId = sub.items.data[0]?.price.id;
+        const plan = priceId ? getPlanByPriceId(priceId) : undefined;
+        const priorPaid = await Payment.countDocuments({ subscription: localSub._id, status: "paid" });
+        await Payment.updateOne(
+          { stripeInvoiceId: invoice.id },
+          {
+            $set: {
+              shop: localSub.shop,
+              subscription: localSub._id,
+              provider: "stripe",
+              stripeInvoiceId: invoice.id,
+              stripeChargeId: ((invoice as any).charge as string | undefined) ?? undefined,
+              hostedUrl: invoice.hosted_invoice_url ?? undefined,
+              paidAt: new Date(invoice.created * 1000),
+              kind: priorPaid === 0 ? "initial" : line && (line as any).proration ? "upgrade" : "renewal",
+              status: "paid",
+              amountCents: invoice.amount_paid,
+              currency: invoice.currency,
+              planSlug: plan?.slug,
+              interval: priceId ? getIntervalByPriceId(priceId) : undefined,
+              description: line?.description ?? plan?.label ?? "Brewstamp",
+              periodStart: line?.period ? new Date(line.period.start * 1000) : undefined,
+              periodEnd: line?.period ? new Date(line.period.end * 1000) : undefined,
+            },
+          },
+          { upsert: true }
+        );
+      }
+
       // Send payment receipt email
       try {
-        const localSub = await Subscription.findOne({ stripeSubscriptionId: sub.id });
         if (localSub) {
           const shop = await Shop.findById(localSub.shop);
           const owner = shop ? await User.findById(shop.owner) : null;

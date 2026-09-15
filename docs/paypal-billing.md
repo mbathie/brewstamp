@@ -105,13 +105,57 @@ Cron without waiting a month: `npx tsx scripts/dev/paypal-cron-test.ts`
 5. Withdraw the USD balance to the US bank on a schedule (weekly), as a
    hedge against account limitation on a non-resident US account.
 
-## Migrating the existing Stripe subscribers
+## Ledger: transaction history in our DB
 
-Stripe → PayPal card migration is a support-arranged PAN export (Stripe
-support → PayPal/Braintree migrations team), not self-serve. Once PayPal
-provides the mapping (old Stripe customer → vault token), a script should:
-for each Stripe sub, set `provider: "paypal"`, `paypalVaultId`, `planSlug`,
-`interval`, keep `currentPeriodEnd`, and set the Stripe sub to
-`cancel_at_period_end`. The cron then takes over on the old renewal date.
-Link-wallet payers (3 of 10) can't be exported and need to re-enter a card
-via *Update card*. Not written yet — waits on the mapping format.
+`payments` is the system of record for every charge, both providers. The
+billing page history, receipt resends, admin shop view and the finance page
+read only Mongo — no Stripe/PayPal API calls.
+
+- PayPal rows: written by `paypal-billing.ts` (initial / renewal / upgrade /
+  failed attempts).
+- Stripe rows: `scripts/backfill-stripe-payments.ts` imports every Brewstamp
+  invoice from the old account (paid / refunded / failed, hosted invoice URL,
+  first-vs-renewal), and the `invoice.paid` webhook keeps writing rows until
+  Stripe is retired. The same script stamps **plan info per subscription**
+  (`planSlug`, `interval`, `priceCents`, `currency`) from the live Stripe
+  price, so grandfathered amounts (US$5 Pro, AUD tiers) are exact.
+
+Run on production once (read-only against Stripe, writes to Mongo — needs
+a temporary read-write user, see the Mongo memory note):
+
+```
+MONGODB_URI='<rw uri>' npx tsx scripts/backfill-stripe-payments.ts          # dry run
+MONGODB_URI='<rw uri>' npx tsx scripts/backfill-stripe-payments.ts --apply
+```
+
+## Migrating the existing Stripe subscribers (email + one-time link)
+
+No PAN export. Each paying customer gets an email with a non-guessable link
+(`/billing/migrate/<64-hex token>`, stored on their Subscription) to a
+public page showing their shop, plan, price and next charge date, with the
+PayPal card form. Saving the card:
+
+1. vaults it with PayPal (no charge),
+2. flips the Subscription to `provider: "paypal"` keeping `priceCents`,
+   `currency`, `interval` and `currentPeriodEnd` unchanged,
+3. sets the Stripe subscription to `cancel_at_period_end` (no double bill),
+4. clears the token (link works once).
+
+The cron then charges on the old renewal date at the old price.
+
+```
+npx tsx scripts/stripe-to-paypal-migration.ts --list                 # who, what price, next date, emailed?
+npx tsx scripts/stripe-to-paypal-migration.ts --send --dry-run       # print links, send nothing
+npx tsx scripts/stripe-to-paypal-migration.ts --send --deadline 2026-10-31
+npx tsx scripts/stripe-to-paypal-migration.ts --send --only a@b.com --resend
+npx tsx scripts/stripe-to-paypal-migration.ts --sample you@x.com --for owner@shop.com
+```
+
+Run against production with the RW `MONGODB_URI` and
+`NEXT_PUBLIC_APP_URL=https://brewstamp.app` (link host). Run the backfill
+first so prices are stored. Send after the live PayPal env is deployed —
+the link needs the live client id and ACDC.
+
+Follow-up: `--list` shows who hasn't saved a card; `--send --resend --only`
+nudges them. Anyone still on Stripe at the deadline keeps renewing on Stripe
+until you disable it, so there is no hard cutover risk.

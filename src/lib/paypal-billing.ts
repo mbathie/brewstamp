@@ -12,6 +12,8 @@ import {
   getPlanBySlug,
   getPlanRank,
   planPriceCents,
+  resolveSub,
+  subscriptionTier,
   type BillingInterval,
   type PlanSlug,
 } from "./plans";
@@ -80,7 +82,7 @@ async function ownerOf(shopId: unknown) {
   return { shop, owner };
 }
 
-async function emailReceipt(sub: { shop: unknown; currentPeriodEnd?: Date }, amountCents: number, when: Date) {
+async function emailReceipt(sub: { shop: unknown; currentPeriodEnd?: Date }, amountCents: number, when: Date, currency = CURRENCY) {
   try {
     const { shop, owner } = await ownerOf(sub.shop);
     if (owner?.email && shop) {
@@ -89,7 +91,7 @@ async function emailReceipt(sub: { shop: unknown; currentPeriodEnd?: Date }, amo
         merchantName: owner.name || "there",
         shopName: shop.name,
         amount: amountCents,
-        currency: CURRENCY,
+        currency,
         invoiceDate: when,
         periodEnd: sub.currentPeriodEnd || when,
       });
@@ -142,6 +144,7 @@ export async function activateFromCapture(opts: {
       card,
       planSlug: slug,
       interval,
+      priceCents: opts.amountCents,
       currency: CURRENCY,
       planLabel: plan.label,
       status: "active",
@@ -166,6 +169,8 @@ export async function activateFromCapture(opts: {
     subscription: sub._id,
     orderId: order.id,
     captureId: capture.id,
+    provider: "paypal",
+    paidAt: now,
     kind: "initial",
     status: "paid",
     amountCents: opts.amountCents,
@@ -232,7 +237,10 @@ export async function switchPaypalPlan(
   // price, charge the difference now, and start a fresh period today.
   if (!sub.paypalVaultId) throw new Error("No saved card on this subscription");
   const now = new Date();
-  const credit = Math.round(priceFor(current.slug, current.interval) * remainingFraction(sub, now)) + (sub.creditCents || 0);
+  // Grandfathered (migrated) prices end on a plan change: the credit is what
+  // they actually paid, the new charge is catalogue USD.
+  const paidPrice = sub.priceCents ?? priceFor(current.slug, current.interval);
+  const credit = Math.round(paidPrice * remainingFraction(sub, now)) + (sub.creditCents || 0);
   const newPrice = priceFor(tgt.slug, tgt.interval);
   const charge = Math.max(0, newPrice - credit);
   const carry = Math.max(0, credit - newPrice);
@@ -261,6 +269,8 @@ export async function switchPaypalPlan(
   sub.pendingPlanSlug = undefined;
   sub.pendingInterval = undefined;
   sub.cancelAtPeriodEnd = false;
+  sub.priceCents = newPrice;
+  sub.currency = CURRENCY;
   sub.creditCents = carry;
   sub.currentPeriodStart = now;
   sub.currentPeriodEnd = periodEnd;
@@ -277,6 +287,8 @@ export async function switchPaypalPlan(
       subscription: sub._id,
       orderId: order.id,
       captureId: cap.id,
+      provider: "paypal",
+      paidAt: now,
       kind: "upgrade",
       status: "paid",
       amountCents: charge,
@@ -344,10 +356,15 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
         sub.planLabel = getPlanBySlug(sub.planSlug)!.label;
         sub.pendingPlanSlug = undefined;
         sub.pendingInterval = undefined;
+        sub.priceCents = priceFor(sub.planSlug as PaidSlug, (sub.interval || "month") as BillingInterval);
+        sub.currency = CURRENCY;
       }
       const slug = sub.planSlug as PaidSlug;
       const interval = (sub.interval || "month") as BillingInterval;
-      const price = priceFor(slug, interval);
+      // The stored price is what this subscriber pays (grandfathered prices
+      // included); the catalogue is only a fallback for older docs.
+      const price = sub.priceCents ?? priceFor(slug, interval);
+      const currency = (sub.currency || CURRENCY) as string;
       const amount = Math.max(0, price - (sub.creditCents || 0));
       const periodStart = sub.currentPeriodEnd as Date;
       const periodEnd = addInterval(periodStart, interval);
@@ -364,7 +381,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
           order = await chargeVault({
             vaultId: sub.paypalVaultId,
             amountCents: amount,
-            currency: CURRENCY,
+            currency,
             description: describe(slug, interval, shopName),
             customId: `${sub.shop}:${slug}:${interval}:renewal`,
             requestId: `renewal-${sub._id}-${periodStart.getTime()}-${attempt}`,
@@ -391,17 +408,19 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
             subscription: sub._id,
             orderId: order.id,
             captureId: captureOf(order)!.id,
+            provider: "paypal",
+            paidAt: now,
             kind: "renewal",
             status: "paid",
             amountCents: amount,
-            currency: CURRENCY,
+            currency,
             planSlug: slug,
             interval,
             description: `${getPlanBySlug(slug)!.label} (${interval}) renewal`,
             periodStart,
             periodEnd,
           });
-          await emailReceipt(sub, amount, now);
+          await emailReceipt(sub, amount, now, currency);
         }
         summary.renewed++;
         console.log(`[PayPal billing] ${shopName}: renewed ${slug}/${interval} $${(amount / 100).toFixed(2)} → next ${periodEnd.toISOString().slice(0, 10)}`);
@@ -413,10 +432,12 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
         shop: sub.shop,
         subscription: sub._id,
         orderId: order?.id,
+        provider: "paypal",
+        paidAt: now,
         kind: "renewal",
         status: "failed",
         amountCents: amount,
-        currency: CURRENCY,
+        currency,
         planSlug: slug,
         interval,
         description: `${getPlanBySlug(slug)!.label} (${interval}) renewal — attempt ${attempt}`,
@@ -463,7 +484,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
             merchantName: owner.name || "there",
             shopName: shop.name,
             amountCents: amount,
-            currency: CURRENCY,
+            currency,
             nextAttemptAt: sub.nextAttemptAt,
             finalAttempt: attempt === MAX_ATTEMPTS - 1,
           });
@@ -482,3 +503,73 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
   );
   return summary;
 }
+
+// ── Stripe → PayPal migration (customer saves a card via emailed link) ────
+
+// Called once the owner has vaulted a card through /billing/migrate/<token>.
+// Keeps price, currency and renewal date exactly as on Stripe; the cron
+// takes over on currentPeriodEnd. The Stripe subscription is set to cancel at
+// period end so nothing is double-billed.
+export async function completeMigration(opts: {
+  subId: unknown;
+  vaultId: string;
+  customerId?: string;
+  card: { brand?: string; last4?: string; expiry?: string };
+  stripe: { subscriptions: { update: (id: string, p: { cancel_at_period_end: boolean; metadata?: Record<string, string> }) => Promise<unknown> } };
+}) {
+  await connectDB();
+  const sub = await Subscription.findById(opts.subId);
+  if (!sub) throw new Error("Subscription not found");
+  if (sub.provider === "paypal") return sub; // already migrated (double submit)
+  const tier = resolveSub(sub);
+  const { amountCents, currency } = stripeAmount(sub);
+
+  sub.provider = "paypal";
+  sub.paypalVaultId = opts.vaultId;
+  if (opts.customerId) sub.paypalCustomerId = opts.customerId;
+  sub.card = opts.card;
+  sub.planSlug = tier.slug;
+  sub.interval = subscriptionTier(sub)?.interval ?? "month";
+  sub.planLabel = tier.label;
+  sub.priceCents = amountCents;
+  sub.currency = currency;
+  sub.status = sub.status === "canceled" ? "canceled" : "active";
+  sub.failedAttempts = 0;
+  sub.nextAttemptAt = undefined;
+  sub.migratedAt = new Date();
+  sub.migrationToken = undefined;
+  await sub.save();
+
+  if (sub.stripeSubscriptionId && !String(sub.stripeSubscriptionId).startsWith("sub_seed_")) {
+    try {
+      await opts.stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+        metadata: { migrated_to: "paypal", migrated_at: new Date().toISOString() },
+      });
+    } catch (err) {
+      console.error(`[PayPal migration] could not set Stripe sub ${sub.stripeSubscriptionId} to cancel at period end:`, err);
+    }
+  }
+  return sub;
+}
+
+// What a Stripe-billed sub actually pays per period, in its own currency.
+export function stripeAmount(sub: { stripePriceId?: string; planLabel?: string; planSlug?: string; interval?: string; priceCents?: number; currency?: string }) {
+  const interval = subscriptionTier(sub)?.interval ?? "month";
+  // Stored by the backfill from the live Stripe price — authoritative.
+  if (sub.priceCents != null && sub.currency) {
+    return { amountCents: sub.priceCents, currency: sub.currency.toLowerCase(), interval };
+  }
+  const tier = resolveSub(sub);
+  const isAud = sub.stripePriceId ? AUD_PRICE_IDS.has(sub.stripePriceId) : false;
+  // resolveSub normalises annual to monthly; undo that for the charge.
+  const amountCents = interval === "year" ? tier.monthlyCents * 11 : tier.monthlyCents;
+  return { amountCents, currency: isAud ? "aud" : "usd", interval };
+}
+
+// Historical AUD price ids (pre 2026-07-28 USD switch). Mirrors finance.ts.
+const AUD_PRICE_IDS = new Set([
+  "price_1TdLiFHxHWKx0vW1hxK3RRYW", "price_1Tgb6SHxHWKx0vW11dqmu96g",
+  "price_1TdLiHHxHWKx0vW189oSCDPX", "price_1Tgb6THxHWKx0vW1pSsb9qQ7",
+  "price_1TdLiIHxHWKx0vW1BLazXMgu", "price_1Tgb6UHxHWKx0vW1H90R8Xhx",
+]);

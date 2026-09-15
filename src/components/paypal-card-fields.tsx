@@ -56,7 +56,12 @@ type Props = {
   onSuccess: (result: any) => void;
 } & (
   | { mode: "checkout"; plan: string; interval: "month" | "year" }
-  | { mode: "update" }
+  | {
+      mode: "update";
+      // Override the token endpoints — the public migration page uses
+      // token-gated routes instead of the logged-in owner ones.
+      endpoints?: { setupToken: string; paymentToken: string };
+    }
 );
 
 export function PayPalCardFields(props: Props) {
@@ -150,14 +155,18 @@ export function PayPalCardFields(props: Props) {
             : {
                 ...common,
                 createVaultSetupToken: async () => {
-                  const res = await fetch("/api/billing/paypal/setup-token", { method: "POST" });
+                  const cur = propsRef.current;
+                  const url = cur.mode === "update" && cur.endpoints ? cur.endpoints.setupToken : "/api/billing/paypal/setup-token";
+                  const res = await fetch(url, { method: "POST" });
                   const json = await res.json();
                   if (!res.ok) throw new Error(json.error || "Could not start card update");
                   return json.setupTokenId as string;
                 },
                 onApprove: async (data: any) => {
                   const setupTokenId = data?.vaultSetupToken ?? data?.vault_setup_token ?? data?.setupToken ?? data?.id;
-                  const res = await fetch("/api/billing/paypal/payment-token", {
+                  const cur = propsRef.current;
+                  const url = cur.mode === "update" && cur.endpoints ? cur.endpoints.paymentToken : "/api/billing/paypal/payment-token";
+                  const res = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     // approveData is logged server-side if the id is missing —

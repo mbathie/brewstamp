@@ -1,8 +1,6 @@
-import { stripe } from "@/lib/stripe";
-import type Stripe from "stripe";
 import { connectDB } from "@/lib/mongoose";
 import { Payment, Shop, Subscription, User } from "@/models";
-import { getPlanBySlug, planPriceCents, type BillingInterval, type PlanSlug } from "@/lib/plans";
+import { getPlanBySlug, resolveSub } from "@/lib/plans";
 import type {
   CurrencyMap,
   FinanceSummary,
@@ -11,188 +9,99 @@ import type {
 } from "@/lib/finance-math";
 
 /**
- * Brewstamp financial aggregation, computed live from Stripe.
+ * Brewstamp financial aggregation, computed from our own records:
+ *   - `subscriptions` → MRR / ARR / active counts / 30-day movement
+ *   - `payments`      → revenue (every charge, whichever provider took it)
  *
- * The Stripe account is SHARED with other apps (stampystamp's "Bean"/coffee
- * plans, etc.), so everything here filters to Brewstamp products by name
- * (`/brewstamp/i`). See docs/revenue-snapshots.md for methodology. Amounts are
- * cents keyed by currency; revenue = paid-invoice `amount_paid` (gross of
- * refunds).
+ * No provider API calls. Stripe history was backfilled into `payments` by
+ * scripts/backfill-stripe-payments.ts and is kept current by the invoice
+ * webhook; PayPal rows are written by paypal-billing. See
+ * docs/revenue-snapshots.md for methodology. Amounts are cents keyed by
+ * currency; revenue = amount charged (gross of refunds).
  */
 
 function addCur(m: CurrencyMap, currency: string, cents: number) {
   m[currency] = (m[currency] ?? 0) + cents;
 }
 
-function monthlyCents(price: Stripe.Price, qty: number): number {
-  if (price.unit_amount == null) return 0;
-  const iv = price.recurring?.interval;
-  const ivc = price.recurring?.interval_count ?? 1;
-  let factor = 1;
-  if (iv === "year") factor = 1 / (12 * ivc);
-  else if (iv === "month") factor = 1 / ivc;
-  else if (iv === "week") factor = 52 / 12 / ivc;
-  else if (iv === "day") factor = 365 / 12 / ivc;
-  return Math.round(price.unit_amount * qty * factor);
-}
+const DAY = (d: Date) => d.toISOString().slice(0, 10);
 
-function priceProductId(price: Stripe.Price | null | undefined): string | null {
-  if (!price) return null;
-  return typeof price.product === "string" ? price.product : price.product?.id ?? null;
+// A Stripe-billed sub's currency isn't stored on the doc; the plan's price
+// currency is what the invoices carry. Legacy AUD price ids are AUD, the
+// current price ids and legacy $5 Pro are USD.
+const AUD_PRICE_IDS = new Set([
+  "price_1TdLiFHxHWKx0vW1hxK3RRYW", "price_1Tgb6SHxHWKx0vW11dqmu96g",
+  "price_1TdLiHHxHWKx0vW189oSCDPX", "price_1Tgb6THxHWKx0vW1pSsb9qQ7",
+  "price_1TdLiIHxHWKx0vW1BLazXMgu", "price_1Tgb6UHxHWKx0vW1H90R8Xhx",
+]);
+function subCurrency(s: any): string {
+  if (s.currency) return String(s.currency).toLowerCase();
+  if (s.stripePriceId && AUD_PRICE_IDS.has(s.stripePriceId)) return "aud";
+  return "usd";
 }
-
-async function brewstampProducts(): Promise<{ ids: Set<string>; name: Map<string, string> }> {
-  const ids = new Set<string>();
-  const name = new Map<string, string>();
-  for await (const p of stripe.products.list({ limit: 100 })) {
-    name.set(p.id, p.name);
-    if (/brewstamp/i.test(p.name)) ids.add(p.id);
-  }
-  return { ids, name };
-}
-
-const DAY = (unixSeconds: number) => new Date(unixSeconds * 1000).toISOString().slice(0, 10);
 
 export async function getBrewstampFinance(opts?: {
   from?: Date;
   to?: Date;
 }): Promise<FinanceSummary> {
+  await connectDB();
   const to = opts?.to ?? new Date();
   const from = opts?.from ?? new Date("2026-01-01T00:00:00Z");
-  const fromSec = Math.floor(from.getTime() / 1000);
-  const toSec = Math.floor(to.getTime() / 1000);
 
-  const { ids: brewIds, name: productName } = await brewstampProducts();
-  const isBrew = (price: Stripe.Price | null | undefined) => {
-    const pid = priceProductId(price);
-    return pid ? brewIds.has(pid) : false;
-  };
-
-  // ---- Active subscriptions → MRR (and MRR as it stood a month ago) ----
+  // ---- Subscriptions → MRR (and MRR as it stood a month ago) ----
   const mrr: CurrencyMap = {};
   const mrrMonthAgo: CurrencyMap = {};
   let newSubscriptions = 0;
   let churnedSubscriptions = 0;
   // "A month ago" = 30 days, so the figure is stable day to day rather than
   // jumping at month boundaries.
-  const monthAgoSec = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+  const monthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const planAgg = new Map<string, PlanMrr>();
-  const activeCustomerIds = new Set<string>();
   let activeSubscriptions = 0;
-  for await (const s of stripe.subscriptions.list({
-    status: "all",
-    limit: 100,
-    expand: ["data.items.data.price"],
-  })) {
-    const brewItems = s.items.data.filter((it) => isBrew(it.price));
-    if (brewItems.length === 0) continue;
-    const live = ["active", "trialing", "past_due"].includes(s.status);
-    const startedBy = (s.start_date ?? s.created) <= monthAgoSec;
-    const endedSec = s.ended_at ?? s.canceled_at ?? null;
+  const activeShops = new Set<string>();
+
+  const subs = (await Subscription.find({}).lean()) as any[];
+  // Seed subs never billed anyone.
+  const real = subs.filter((s) => !String(s.stripeSubscriptionId ?? "").startsWith("sub_seed_"));
+  // First payment per shop tells us when a sub really started (the doc's
+  // createdAt is when the webhook first saw it, which is the same day).
+  const firstPaid = new Map<string, number>();
+  const lastPaid = new Map<string, number>();
+  for (const p of (await Payment.find({ status: { $ne: "failed" } }).select("shop paidAt createdAt").lean()) as any[]) {
+    const k = String(p.shop);
+    const ms = new Date(p.paidAt ?? p.createdAt).getTime();
+    firstPaid.set(k, Math.min(firstPaid.get(k) ?? ms, ms));
+    lastPaid.set(k, Math.max(lastPaid.get(k) ?? ms, ms));
+  }
+
+  for (const s of real) {
+    const tier = resolveSub(s);
+    const cur = subCurrency(s);
+    // Stored per-sub price (exact, incl. grandfathered) → monthly equivalent;
+    // catalogue-derived tier price as the fallback for unbackfilled docs.
+    const m =
+      s.priceCents != null
+        ? s.interval === "year" ? Math.round(s.priceCents / 12) : s.priceCents
+        : tier.monthlyCents;
+    const live = ["active", "past_due"].includes(s.status);
+    const shopKey = String(s.shop);
+    const startedMs = firstPaid.get(shopKey) ?? new Date(s.createdAt).getTime();
+    const startedBy = startedMs <= monthAgoMs;
+    // Ended = when the doc last changed (status flips write updatedAt).
+    const endedMs = live ? null : new Date(s.updatedAt).getTime();
 
     // Was this subscription counting toward MRR a month ago? Either it's still
     // live and had started by then, or it has since ended but was live then.
-    // Uses today's price for the whole period — a mid-month plan change is
-    // read as growth/shrink now, which is the honest answer for a run-rate.
-    const wasLiveMonthAgo = startedBy && (live || (endedSec != null && endedSec > monthAgoSec));
-    if (wasLiveMonthAgo) {
-      for (const it of brewItems) {
-        addCur(mrrMonthAgo, it.price.currency, monthlyCents(it.price, it.quantity ?? 1));
-      }
-    }
-    if (live && !startedBy) newSubscriptions += 1;
-    if (!live && wasLiveMonthAgo) churnedSubscriptions += 1;
-
-    if (!live) continue;
-    activeSubscriptions += 1;
-    activeCustomerIds.add(typeof s.customer === "string" ? s.customer : s.customer.id);
-    for (const it of brewItems) {
-      const cur = it.price.currency;
-      const m = monthlyCents(it.price, it.quantity ?? 1);
-      addCur(mrr, cur, m);
-      const planName = productName.get(priceProductId(it.price) ?? "") ?? "Brewstamp";
-      const key = `${planName}|${cur}`;
-      const existing = planAgg.get(key);
-      if (existing) {
-        existing.monthlyCents += m;
-        existing.subscriptions += 1;
-      } else {
-        planAgg.set(key, { plan: planName, currency: cur, monthlyCents: m, subscriptions: 1 });
-      }
-    }
-  }
-  const arr: CurrencyMap = {};
-  for (const [cur, cents] of Object.entries(mrr)) arr[cur] = cents * 12;
-
-  // ---- Paid invoices → revenue (in-range, by-month, lifetime, recent) ----
-  const revenueInRange: CurrencyMap = {};
-  const lifetimeRevenue: CurrencyMap = {};
-  const byMonth = new Map<string, CurrencyMap>();
-  let invoiceCountInRange = 0;
-  let lifetimeInvoiceCount = 0;
-  let firstPaymentSec: number | null = null;
-  const recent: FinanceSummary["recentTransactions"] = [];
-
-  for await (const inv of stripe.invoices.list({
-    status: "paid",
-    limit: 100,
-    expand: ["data.lines.data"],
-  })) {
-    if (inv.amount_paid <= 0) continue;
-    const prods = inv.lines.data
-      .map((l) => (l as any)?.pricing?.price_details?.product as string | undefined)
-      .filter(Boolean) as string[];
-    const brewProd = prods.find((p) => brewIds.has(p));
-    if (!brewProd) continue; // Brewstamp only
-    const cur = inv.currency;
-
-    lifetimeInvoiceCount += 1;
-    addCur(lifetimeRevenue, cur, inv.amount_paid);
-    firstPaymentSec = firstPaymentSec == null ? inv.created : Math.min(firstPaymentSec, inv.created);
-
-    if (inv.created >= fromSec && inv.created <= toSec) {
-      invoiceCountInRange += 1;
-      addCur(revenueInRange, cur, inv.amount_paid);
-      const mk = new Date(inv.created * 1000).toISOString().slice(0, 7);
-      const bucket = byMonth.get(mk) ?? {};
-      addCur(bucket, cur, inv.amount_paid);
-      byMonth.set(mk, bucket);
-      if (recent.length < 200) {
-        recent.push({
-          date: DAY(inv.created),
-          email: inv.customer_email ?? "?",
-          plan: productName.get(brewProd) ?? "Brewstamp",
-          amountCents: inv.amount_paid,
-          currency: cur,
-        });
-      }
-    }
-  }
-  // ---- PayPal-billed subscriptions (our own Subscription/Payment records) ----
-  // Same shape as the Stripe pass above: live subs → MRR, paid Payment rows →
-  // revenue. Kept in one place so the two providers add up on the same tiles.
-  await connectDB();
-  const monthAgoMs = monthAgoSec * 1000;
-  const ppSubs = await Subscription.find({ provider: "paypal" }).lean();
-  for (const s of ppSubs as any[]) {
-    if (!s.planSlug) continue;
-    const plan = getPlanBySlug(s.planSlug as PlanSlug);
-    if (!plan) continue;
-    const interval = (s.interval || "month") as BillingInterval;
-    const cur = (s.currency || "usd").toLowerCase();
-    const m = interval === "year" ? Math.round(planPriceCents(plan, "year") / 12) : plan.priceCents;
-    const live = ["active", "past_due"].includes(s.status);
-    const startedBy = new Date(s.createdAt).getTime() <= monthAgoMs;
-    const endedMs = !live ? new Date(s.updatedAt).getTime() : null;
     const wasLiveMonthAgo = startedBy && (live || (endedMs != null && endedMs > monthAgoMs));
     if (wasLiveMonthAgo) addCur(mrrMonthAgo, cur, m);
     if (live && !startedBy) newSubscriptions += 1;
     if (!live && wasLiveMonthAgo) churnedSubscriptions += 1;
+
     if (!live) continue;
     activeSubscriptions += 1;
-    activeCustomerIds.add(`paypal:${s.shop}`);
+    activeShops.add(shopKey);
     addCur(mrr, cur, m);
-    const planName = `Brewstamp ${plan.label}`;
+    const planName = `Brewstamp ${tier.label}${tier.legacy ? " (legacy)" : ""}`;
     const key = `${planName}|${cur}`;
     const existing = planAgg.get(key);
     if (existing) {
@@ -202,44 +111,57 @@ export async function getBrewstampFinance(opts?: {
       planAgg.set(key, { plan: planName, currency: cur, monthlyCents: m, subscriptions: 1 });
     }
   }
+  const arr: CurrencyMap = {};
   for (const [cur, cents] of Object.entries(mrr)) arr[cur] = cents * 12;
 
-  const ppPayments = await Payment.find({ status: { $in: ["paid", "refunded", "disputed"] }, amountCents: { $gt: 0 } })
-    .sort({ createdAt: -1 })
-    .lean();
-  const ownerEmail = new Map<string, string>();
-  if (ppPayments.length) {
-    const shopIds = [...new Set(ppPayments.map((p: any) => String(p.shop)))];
-    const shops = await Shop.find({ _id: { $in: shopIds } }).select("owner").lean();
-    const owners = await User.find({ _id: { $in: shops.map((x: any) => x.owner) } }).select("email").lean();
-    const emailById = new Map(owners.map((u: any) => [String(u._id), u.email]));
-    for (const sh of shops as any[]) ownerEmail.set(String(sh._id), emailById.get(String(sh.owner)) ?? "?");
-  }
-  for (const p of ppPayments as any[]) {
-    const createdSec = Math.floor(new Date(p.createdAt).getTime() / 1000);
-    const cur = (p.currency || "usd").toLowerCase();
+  // ---- Payments → revenue (in-range, by-month, lifetime, recent) ----
+  const revenueInRange: CurrencyMap = {};
+  const lifetimeRevenue: CurrencyMap = {};
+  const byMonth = new Map<string, CurrencyMap>();
+  let invoiceCountInRange = 0;
+  let lifetimeInvoiceCount = 0;
+  let firstPaymentMs: number | null = null;
+  const recent: FinanceSummary["recentTransactions"] = [];
+
+  const payments = (await Payment.find({
+    status: { $in: ["paid", "refunded", "disputed"] },
+    amountCents: { $gt: 0 },
+  })
+    .sort({ paidAt: -1, createdAt: -1 })
+    .lean()) as any[];
+
+  // Owner email per shop, for the recent-transactions list.
+  const shopIds = [...new Set(payments.map((p) => String(p.shop)))];
+  const shops = (await Shop.find({ _id: { $in: shopIds } }).select("owner").lean()) as any[];
+  const owners = (await User.find({ _id: { $in: shops.map((x) => x.owner) } }).select("email").lean()) as any[];
+  const emailById = new Map(owners.map((u) => [String(u._id), u.email as string]));
+  const ownerEmail = new Map(shops.map((sh) => [String(sh._id), emailById.get(String(sh.owner)) ?? "?"]));
+
+  for (const p of payments) {
+    const when = new Date(p.paidAt ?? p.createdAt);
+    const cur = String(p.currency || "usd").toLowerCase();
     lifetimeInvoiceCount += 1;
     addCur(lifetimeRevenue, cur, p.amountCents);
-    firstPaymentSec = firstPaymentSec == null ? createdSec : Math.min(firstPaymentSec, createdSec);
-    if (createdSec >= fromSec && createdSec <= toSec) {
+    firstPaymentMs = firstPaymentMs == null ? when.getTime() : Math.min(firstPaymentMs, when.getTime());
+
+    if (when >= from && when <= to) {
       invoiceCountInRange += 1;
       addCur(revenueInRange, cur, p.amountCents);
-      const mk = new Date(p.createdAt).toISOString().slice(0, 7);
+      const mk = when.toISOString().slice(0, 7);
       const bucket = byMonth.get(mk) ?? {};
       addCur(bucket, cur, p.amountCents);
       byMonth.set(mk, bucket);
       if (recent.length < 200) {
         recent.push({
-          date: DAY(createdSec),
+          date: DAY(when),
           email: ownerEmail.get(String(p.shop)) ?? "?",
-          plan: `Brewstamp ${getPlanBySlug(p.planSlug)?.label ?? "Pro"}`,
+          plan: `Brewstamp ${getPlanBySlug(p.planSlug ?? "")?.label ?? "Pro"}`,
           amountCents: p.amountCents,
           currency: cur,
         });
       }
     }
   }
-
   recent.sort((a, b) => b.date.localeCompare(a.date));
 
   const revenueByMonth: MonthRevenue[] = [...byMonth.entries()]
@@ -253,15 +175,15 @@ export async function getBrewstampFinance(opts?: {
     mrrMonthAgo,
     mrrMovement: { newSubscriptions, churnedSubscriptions },
     activeSubscriptions,
-    activeCustomers: activeCustomerIds.size,
+    activeCustomers: activeShops.size,
     mrrByPlan: [...planAgg.values()].sort((a, b) => b.monthlyCents - a.monthlyCents),
-    range: { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) },
+    range: { from: DAY(from), to: DAY(to) },
     revenueInRange,
     revenueByMonth,
     invoiceCountInRange,
     lifetimeRevenue,
     lifetimeInvoiceCount,
-    firstPaymentAt: firstPaymentSec ? DAY(firstPaymentSec) : null,
+    firstPaymentAt: firstPaymentMs ? DAY(new Date(firstPaymentMs)) : null,
     recentTransactions: recent.slice(0, 50),
   };
 }

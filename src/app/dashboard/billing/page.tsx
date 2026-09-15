@@ -88,6 +88,7 @@ interface BillingData {
     currency: string;
     status: string;
     description?: string | null;
+    pdf?: string | null;
   }[];
 }
 
@@ -712,7 +713,15 @@ export default function BillingPage() {
                         {invoice.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="space-x-2 text-right">
+                      {invoice.pdf && (
+                        <Button asChild variant="outline" size="sm" className="h-7 px-3 text-xs">
+                          <a href={invoice.pdf} target="_blank" rel="noreferrer">
+                            <ExternalLink className="mr-1.5 size-3" />
+                            Invoice
+                          </a>
+                        </Button>
+                      )}
                       {invoice.status === "paid" && (
                         <Button
                           variant="outline"

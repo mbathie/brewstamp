@@ -5,60 +5,48 @@ import { Shop, StampCard, StampRequest, User, Subscription, Account, Payment } f
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
 import { resolveSub } from "@/lib/plans";
-import { stripe } from "@/lib/stripe";
 
-// Pull this shop's Stripe payment history from its subscription's customer.
-// Admin-only, live Stripe — wrapped by the caller so a Stripe hiccup never
-// blocks the rest of the page. Returns null when the shop has never paid.
-async function getBilling(customerId: string, subStatus: string, cancelAtPeriodEnd: boolean, currentPeriodEnd: Date | null | undefined) {
-  const invoices: Array<{
-    id: string;
-    number: string | null;
-    created: number;
-    amountPaid: number;
-    currency: string;
-    status: string | null;
-    description: string | null;
-    hostedUrl: string | null;
-  }> = [];
+// This shop's payment history from our ledger (`payments`), whichever
+// provider took the money. Returns null when the shop has never been billed.
+async function getBilling(shopId: unknown, sub: any) {
+  const rows = (await Payment.find({ shop: shopId }).sort({ paidAt: -1, createdAt: -1 }).lean()) as any[];
+  if (rows.length === 0 && !sub) return null;
   const totalPaid: Record<string, number> = {};
   let paidCount = 0;
   let firstPaidAt: number | null = null;
-
-  for await (const inv of stripe.invoices.list({ customer: customerId, limit: 100 })) {
-    const paid = inv.amount_paid > 0;
-    if (paid) {
+  for (const p of rows) {
+    if (p.status === "paid" || p.status === "refunded" || p.status === "disputed") {
       paidCount += 1;
-      totalPaid[inv.currency] = (totalPaid[inv.currency] ?? 0) + inv.amount_paid;
-      const ms = inv.created * 1000;
+      totalPaid[p.currency] = (totalPaid[p.currency] ?? 0) + p.amountCents;
+      const ms = new Date(p.paidAt ?? p.createdAt).getTime();
       if (firstPaidAt === null || ms < firstPaidAt) firstPaidAt = ms;
     }
-    invoices.push({
-      id: inv.id ?? "",
-      number: inv.number ?? null,
-      created: inv.created * 1000,
-      amountPaid: inv.amount_paid,
-      currency: inv.currency,
-      status: inv.status ?? null,
-      description: inv.lines?.data?.[0]?.description ?? null,
-      hostedUrl: inv.hosted_invoice_url ?? null,
-    });
   }
-
-  invoices.sort((a, b) => b.created - a.created);
-
+  const method =
+    sub?.provider === "paypal"
+      ? `PayPal · ${sub.card?.brand ?? "card"} •••• ${sub.card?.last4 ?? "????"}`
+      : sub?.stripeCustomerId ?? "—";
   return {
-    stripeCustomerId: customerId,
-    status: subStatus,
-    cancelAtPeriodEnd,
-    currentPeriodEnd: currentPeriodEnd ?? null,
+    stripeCustomerId: method, // label shown as "payment method" in the UI
+    status: sub?.status ?? "none",
+    cancelAtPeriodEnd: !!sub?.cancelAtPeriodEnd,
+    currentPeriodEnd: sub?.currentPeriodEnd ?? null,
     totalPaid,
     memberSince: firstPaidAt,
-    // The first paid invoice is the initial signup; everything after it is a
+    // The first paid row is the initial signup; everything after it is a
     // renewal (a successfully billed recurring cycle).
     renewals: Math.max(0, paidCount - 1),
     paidCount,
-    invoices,
+    invoices: rows.map((p) => ({
+      id: String(p._id),
+      number: p.stripeInvoiceId ? p.stripeInvoiceId.slice(-8) : p.captureId ? p.captureId.slice(-8) : null,
+      created: new Date(p.paidAt ?? p.createdAt).getTime(),
+      amountPaid: p.status === "failed" ? 0 : p.amountCents,
+      currency: p.currency,
+      status: p.status,
+      description: p.description ?? null,
+      hostedUrl: p.hostedUrl ?? null,
+    })),
   };
 }
 
@@ -160,55 +148,14 @@ export async function GET(
   const plan = activeSub ? resolveSub(activeSub as any) : null;
 
   // Billing / payment history — any subscription for this shop (a canceled one
-  // still has a payment history worth showing). Fetched live from Stripe.
+  // still has a payment history worth showing), from our own ledger.
   const anySub = (activeSub ||
     (await Subscription.findOne({ shop: shop._id }).lean())) as any;
   let billing = null;
-  if (anySub?.provider === "paypal") {
-    // Card-billed via PayPal: history is our own Payment rows.
-    const rows = (await Payment.find({ shop: shop._id }).sort({ createdAt: -1 }).lean()) as any[];
-    const totalPaid: Record<string, number> = {};
-    let paidCount = 0;
-    let firstPaidAt: number | null = null;
-    for (const p of rows) {
-      if (p.status === "paid" || p.status === "refunded" || p.status === "disputed") {
-        paidCount += 1;
-        totalPaid[p.currency] = (totalPaid[p.currency] ?? 0) + p.amountCents;
-        const ms = new Date(p.createdAt).getTime();
-        if (firstPaidAt === null || ms < firstPaidAt) firstPaidAt = ms;
-      }
-    }
-    billing = {
-      stripeCustomerId: `paypal · ${anySub.card?.brand ?? "card"} •••• ${anySub.card?.last4 ?? "????"}`,
-      status: anySub.status,
-      cancelAtPeriodEnd: !!anySub.cancelAtPeriodEnd,
-      currentPeriodEnd: anySub.currentPeriodEnd ?? null,
-      totalPaid,
-      memberSince: firstPaidAt,
-      renewals: Math.max(0, paidCount - 1),
-      paidCount,
-      invoices: rows.map((p) => ({
-        id: String(p._id),
-        number: p.captureId ? p.captureId.slice(-8) : null,
-        created: new Date(p.createdAt).getTime(),
-        amountPaid: p.status === "failed" ? 0 : p.amountCents,
-        currency: p.currency,
-        status: p.status,
-        description: p.description ?? null,
-        hostedUrl: null,
-      })),
-    };
-  } else if (anySub?.stripeCustomerId) {
-    try {
-      billing = await getBilling(
-        anySub.stripeCustomerId,
-        anySub.status,
-        !!anySub.cancelAtPeriodEnd,
-        anySub.currentPeriodEnd,
-      );
-    } catch (err) {
-      console.error("[admin/shops] Stripe billing fetch failed:", err);
-    }
+  try {
+    billing = await getBilling(shop._id, anySub);
+  } catch (err) {
+    console.error("[admin/shops] billing fetch failed:", err);
   }
 
   // Determine auth methods for shop owner
