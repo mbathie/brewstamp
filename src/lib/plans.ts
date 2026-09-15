@@ -274,6 +274,7 @@ export function resolveSub(sub: {
   planLabel?: string;
   planSlug?: string;
   interval?: string;
+  priceCents?: number | null;
 }): {
   slug: PlanSlug;
   label: string;
@@ -283,11 +284,18 @@ export function resolveSub(sub: {
   const tier = subscriptionTier(sub);
   if (tier) {
     const plan = getPlanBySlug(tier.slug)!;
-    const monthlyCents =
+    const catalogueMonthly =
       tier.interval === "year"
         ? Math.round(annualPriceCents(plan) / 12)
         : plan.priceCents;
-    return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
+    // The stored price is what the customer actually pays — grandfathered
+    // amounts (US$5 Pro, AUD tiers) differ from today's catalogue.
+    const monthlyCents =
+      sub.priceCents != null
+        ? tier.interval === "year" ? Math.round(sub.priceCents / 12) : sub.priceCents
+        : catalogueMonthly;
+    const legacy = sub.priceCents != null && sub.priceCents !== (tier.interval === "year" ? annualPriceCents(plan) : plan.priceCents);
+    return { slug: plan.slug, label: plan.label, monthlyCents, legacy };
   }
   // Price id doesn't map to a current plan → grandfathered legacy Pro.
   return {
