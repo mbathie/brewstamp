@@ -122,9 +122,12 @@ export async function activateFromCapture(opts: {
   }
   const vault = order.payment_source?.card?.attributes?.vault;
   if (!vault?.id) {
-    // Money moved but the card didn't vault — refund path is manual; surface
-    // loudly rather than creating a subscription we can never renew.
-    throw new Error(`Order ${order.id} captured but no vault id returned`);
+    // Money moved but the card didn't vault (seen when an account lacks
+    // vault permissions). Never fail a paid signup: activate the period they
+    // paid for and leave paypalVaultId empty — the billing page prompts them
+    // to save a card, and the cron's NO_SAVED_CARD path emails a fix link
+    // before anything lapses.
+    console.error(`[PayPal billing] order ${order.id} captured but no vault id returned — activating without a saved card`);
   }
 
   const existing = await Payment.findOne({ orderId: order.id });
@@ -140,8 +143,8 @@ export async function activateFromCapture(opts: {
     {
       shop: opts.shopId,
       provider: "paypal",
-      paypalVaultId: vault.id,
-      paypalCustomerId: vault.customer?.id,
+      paypalVaultId: vault?.id ?? null,
+      paypalCustomerId: vault?.customer?.id ?? null,
       card,
       planSlug: slug,
       interval,

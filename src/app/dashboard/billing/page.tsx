@@ -289,6 +289,15 @@ export default function BillingPage() {
             ? "Pick a plan when you're ready — no card is charged until you subscribe."
             : "Your subscription, payment method and history. Change plan anytime — unused time is credited."}
         </p>
+        {isPaypalSub && !sub?.card && sub?.status !== "canceled" && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/15 p-3 text-sm text-amber-200">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              We couldn&apos;t save your card for renewals. Your plan is active —
+              please add a card below so it renews on {sub?.currentPeriodEnd ? fmtDate(sub.currentPeriodEnd) : "your renewal date"}.
+            </span>
+          </div>
+        )}
         {isPaypalSub && sub?.status === "past_due" && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -380,7 +389,9 @@ export default function BillingPage() {
               <CardTitle className="flex items-center gap-2 text-xl">
                 <CreditCard className="size-5 text-muted-foreground" />
                 {isPaypalSub
-                  ? `${sub.card?.brand ? sub.card.brand[0] + sub.card.brand.slice(1).toLowerCase() : "Card"} •••• ${sub.card?.last4 ?? "????"}`
+                  ? sub.card?.last4
+                    ? `${sub.card.brand ? sub.card.brand[0] + sub.card.brand.slice(1).toLowerCase() : "Card"} •••• ${sub.card.last4}`
+                    : "No card saved"
                   : "Card on file"}
               </CardTitle>
             </CardHeader>
@@ -393,8 +404,8 @@ export default function BillingPage() {
                   : "Managed securely by Stripe — update your card, view invoices or cancel in the portal."}
               </p>
               {isPaypalSub ? (
-                <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => setUpdatingCard(true)}>
-                  Update card
+                <Button size="sm" variant={sub.card?.last4 ? "outline" : "default"} className={`cursor-pointer ${sub.card?.last4 ? "" : "bg-amber-700 text-white hover:bg-amber-800"}`} onClick={() => setUpdatingCard(true)}>
+                  {sub.card?.last4 ? "Update card" : "Add a card"}
                 </Button>
               ) : (
                 <Button size="sm" variant="outline" className="cursor-pointer" onClick={handlePortal} disabled={portalLoading || isSeed}>
