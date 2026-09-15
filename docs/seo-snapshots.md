@@ -46,6 +46,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-09 | 08-10 → 09-06 | 9,520 (+45%) | 176 (+22%) | 1.8% | 10.6 |
 | 2026-09-12 | 08-13 → 09-09 | 9,982 (+51%) | 192 (+22%) | 1.9% | 10.4 |
 | 2026-09-14 | 08-15 → 09-11 | 10,166 (+54%) | 198 (+29%) | 1.9% | 10.2 |
+| 2026-09-16 | 08-17 → 09-13 | 10,445 (+58%) | 206 (+39%) | 2.0% | 10.2 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
@@ -63,6 +64,19 @@ Not a snippet win; the next lever on that page is rank into the top 5. Click
 growth is coming from the homepage (128 → 148 in a fortnight) and from the
 US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
 faster than clicks.
+
+---
+
+## 2026-09-16
+
+- **Impressions:** 10,445 (+58%) · **Clicks:** 206 (+39%) · **CTR:** 2.0% · **Avg pos:** 10.2
+- **Clicks 206** — first time over 200, and the click growth rate (+39%) is closing on impression growth (+58%) for the first time since July; CTR ticked up to 2.0%. Position held at 10.2.
+- `/blog/coffee-shop-loyalty-cards`: pos **9.0**, **5,600 impressions** (54% of all), 23 clicks, 0.4% CTR. Twelve days of the rewrite: rank up, impressions up, CTR still not moving.
+- "loyalty card coffee shop" 162 impr, pos 9.4, 1 click; "loyalty card cafe" 160 (+129%), pos 10.2. "coffee stamp card" **pos 7.3**, 1 click. "coffee shop loyalty card printing" pos 6.2 on 68 impr — the printing post is the second-best-ranked non-brand asset.
+- New arrivals: "coffee ticket app" (59 impr, pos 2.7, still 0 clicks), "login free coffee" (44, pos 6.0), "a cafe's punch-card promise" (41, pos 3.6) — the last looks like a Discover/news-style query.
+- Homepage `/`: **155 clicks** (new high), **4.0%** CTR, pos 11.6.
+- **By country:** **GBR 27 clicks on 1,606 impr (1.7%) — now ahead of the US on clicks** (USA 3,086 impr / 16 clicks / 0.5%). AUS 48 (3.6%), PHL 13, IND 8, NLD 8 at 6.6%, CAN 5. **Mobile 123 clicks at 3.3% vs desktop 81 at 1.2%.**
+- Context: Stripe → PayPal billing migration went live this week; no SEO impact expected.
 
 ---
 
