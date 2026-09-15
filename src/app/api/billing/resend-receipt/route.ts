@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
-import { Subscription } from "@/models";
+import { Payment, Subscription } from "@/models";
 import { stripe } from "@/lib/stripe";
 import { sendPaymentReceiptEmail } from "@/lib/email";
 
@@ -24,6 +24,24 @@ export async function POST(req: Request) {
   const subscription = await Subscription.findOne({ shop: merchant.shop._id });
   if (!subscription) {
     return NextResponse.json({ error: "No subscription found" }, { status: 404 });
+  }
+
+  // PayPal-billed: the "invoice" is one of our Payment rows.
+  if (subscription.provider === "paypal") {
+    const payment = await Payment.findOne({ _id: invoiceId, shop: merchant.shop._id, status: "paid" });
+    if (!payment) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+    await sendPaymentReceiptEmail({
+      to: merchant.user.email,
+      merchantName: merchant.user.name || "there",
+      shopName: merchant.shop.name,
+      amount: payment.amountCents,
+      currency: payment.currency,
+      invoiceDate: payment.createdAt,
+      periodEnd: payment.periodEnd || subscription.currentPeriodEnd || new Date(),
+    });
+    return NextResponse.json({ success: true });
   }
 
   // Verify the invoice belongs to this customer

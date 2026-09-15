@@ -8,6 +8,8 @@ import {
   type PlanSlug,
   type BillingInterval,
 } from "@/lib/plans";
+import { switchPaypalPlan } from "@/lib/paypal-billing";
+import { PayPalError } from "@/lib/paypal";
 
 // Switch the active subscription to a different paid plan, or schedule a
 // cancellation when the target is "free". Stripe handles the prorated
@@ -55,8 +57,35 @@ export async function POST(req: Request) {
     );
   }
 
+  // PayPal-billed shop: we own the schedule, so proration/deferral is ours.
+  if (sub.provider === "paypal") {
+    try {
+      const result = await switchPaypalPlan(
+        sub._id,
+        { slug: targetPlan.slug, interval },
+        merchant.shop.name
+      );
+      return NextResponse.json({
+        ok: true,
+        plan: targetPlan.slug,
+        planLabel: targetPlan.label,
+        ...result,
+        cancelAtPeriodEnd: result.kind === "cancel_scheduled",
+      });
+    } catch (err) {
+      console.error("[Billing] PayPal plan switch failed:", err);
+      const msg =
+        err instanceof PayPalError
+          ? err.issue === "INSTRUMENT_DECLINED"
+            ? "Your saved card was declined. Update your card and try again."
+            : err.message
+          : (err as Error).message;
+      return NextResponse.json({ error: msg }, { status: err instanceof PayPalError ? 402 : 500 });
+    }
+  }
+
   // Guard against attempting to call live Stripe with seed-fake IDs.
-  if (sub.stripeSubscriptionId.startsWith("sub_seed_")) {
+  if (!sub.stripeSubscriptionId || sub.stripeSubscriptionId.startsWith("sub_seed_")) {
     return NextResponse.json(
       {
         error:

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
+import { Subscription } from "@/models";
 
 export async function POST() {
   const merchant = await getMerchant();
@@ -11,6 +12,14 @@ export async function POST() {
     return NextResponse.json(
       { error: "Only the shop owner can manage billing." },
       { status: 403 }
+    );
+  }
+
+  const sub = await Subscription.findOne({ shop: merchant.shop._id });
+  if (sub?.provider === "paypal") {
+    return NextResponse.json(
+      { error: "Card-billed subscriptions are managed on the billing page." },
+      { status: 400 }
     );
   }
 

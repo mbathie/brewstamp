@@ -9,6 +9,7 @@ import Subscription from "./Subscription";
 import Account from "./Account";
 import VerificationToken from "./VerificationToken";
 import WalletPass from "./WalletPass";
+import Payment from "./Payment";
 
 export {
   Shop,
@@ -22,4 +23,5 @@ export {
   Account,
   VerificationToken,
   WalletPass,
+  Payment,
 };

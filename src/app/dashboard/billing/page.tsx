@@ -28,7 +28,16 @@ import {
   ExternalLink,
   AlertTriangle,
   HelpCircle,
+  CreditCard,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { PayPalCardFields } from "@/components/paypal-card-fields";
 import {
   Tooltip,
   TooltipContent,
@@ -51,7 +60,13 @@ function formatCents(cents: number): string {
 interface BillingData {
   totalStamps: number;
   limit: number;
+  // Provider a NEW subscription would bill through; existing subs carry
+  // their own provider below.
+  provider: "stripe" | "paypal";
+  paypalClientId: string | null;
+  paypalEnv: "sandbox" | "live";
   subscription: {
+    provider: "stripe" | "paypal";
     status: string;
     currentPeriodEnd: string;
     planSlug: string | null;
@@ -59,6 +74,12 @@ interface BillingData {
     planLabel: string | null;
     cancelAtPeriodEnd: boolean;
     isSeed: boolean;
+    card: { brand?: string; last4?: string; expiry?: string } | null;
+    pendingPlanSlug: string | null;
+    pendingInterval: BillingInterval | null;
+    failedAttempts: number;
+    nextAttemptAt: string | null;
+    creditCents: number;
   } | null;
   invoices: {
     id: string;
@@ -66,8 +87,12 @@ interface BillingData {
     amount: number;
     currency: string;
     status: string;
+    description?: string | null;
   }[];
 }
+
+const fmtDate = (d: string | number | Date, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }) =>
+  new Date(typeof d === "number" ? d * 1000 : d).toLocaleDateString("en-AU", opts);
 
 export default function BillingPage() {
   const searchParams = useSearchParams();
@@ -77,6 +102,15 @@ export default function BillingPage() {
   const [interval, setInterval] = useState<BillingInterval>("month");
   const [portalLoading, setPortalLoading] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  // PayPal inline card dialogs: a first subscription, or replacing the card.
+  const [checkout, setCheckout] = useState<{ plan: PlanSlug; interval: BillingInterval } | null>(null);
+  const [updatingCard, setUpdatingCard] = useState(false);
+
+  function reload() {
+    return fetch("/api/billing")
+      .then((r) => r.json())
+      .then(setData);
+  }
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
@@ -98,7 +132,9 @@ export default function BillingPage() {
   }, []);
 
   const currentSlug: PlanSlug = useMemo(() => {
-    const slug = data?.subscription?.planSlug;
+    const sub = data?.subscription;
+    if (!sub || sub.status === "canceled") return "free";
+    const slug = sub.planSlug;
     if (slug === "pro" || slug === "plus" || slug === "max") {
       return slug;
     }
@@ -106,8 +142,11 @@ export default function BillingPage() {
   }, [data]);
 
   const currentRank = useMemo(() => getPlanRank(currentSlug), [currentSlug]);
-  const currentInterval = data?.subscription?.interval ?? null;
+  const currentInterval = currentSlug === "free" ? null : (data?.subscription?.interval ?? null);
   const isSeed = data?.subscription?.isSeed ?? false;
+  const sub = data?.subscription ?? null;
+  const isPaypalSub = currentSlug !== "free" && sub?.provider === "paypal";
+  const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
 
   async function handleSwitch(target: PlanSlug) {
     setSwitchingTo(target);
@@ -117,6 +156,12 @@ export default function BillingPage() {
           "Downgrade to Free? Your current paid plan keeps working until the end of the period, then cancels.",
         );
         if (!ok) return;
+      }
+
+      // Free → Paid on PayPal: inline card form, no redirect.
+      if (currentSlug === "free" && canCardCheckout) {
+        setCheckout({ plan: target, interval });
+        return;
       }
 
       // Free → Paid uses checkout; everything else uses the switch endpoint.
@@ -141,18 +186,27 @@ export default function BillingPage() {
         return;
       }
 
+      const label = PLANS.find((p) => p.slug === target)?.label;
       if (target === "free") {
         toast.success("Plan will cancel at the end of your current period.");
+      } else if (result.kind === "immediate") {
+        toast.success(
+          result.chargedCents > 0
+            ? `Upgraded to ${label}. Charged ${formatCents(result.chargedCents)} today after crediting your unused time.`
+            : `Upgraded to ${label} — fully covered by your remaining credit.`,
+        );
+      } else if (result.kind === "scheduled") {
+        toast.success(`Switching to ${label} on ${fmtDate(result.effectiveAt)} — you keep your current plan until then.`);
+      } else if (result.kind === "resumed") {
+        toast.success("Subscription resumed.");
       } else {
         toast.success(
-          `Switched to ${PLANS.find((p) => p.slug === target)?.label}. Prorated credit applied to your next invoice.`,
+          `Switched to ${label}. Prorated credit applied to your next invoice.`,
         );
       }
 
       // Refresh local state.
-      fetch("/api/billing")
-        .then((r) => r.json())
-        .then(setData);
+      reload();
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -217,6 +271,26 @@ export default function BillingPage() {
           plan. Switch tiers anytime — unused time is prorated as a credit on
           your next invoice.
         </p>
+        {isPaypalSub && sub?.status === "past_due" && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              Your last renewal was declined
+              {sub.nextAttemptAt ? ` — we'll try again on ${fmtDate(sub.nextAttemptAt)}` : ""}.
+              Update your card below to keep your plan running.
+            </span>
+          </div>
+        )}
+        {isPaypalSub && sub?.pendingPlanSlug && !sub.cancelAtPeriodEnd && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              Switching to {PLANS.find((p) => p.slug === sub.pendingPlanSlug)?.label}
+              {sub.pendingInterval === "year" ? " (annual)" : " (monthly)"} on {fmtDate(sub.currentPeriodEnd)}.
+              You keep your current plan until then.
+            </span>
+          </div>
+        )}
         {hitShopLimit && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/15 p-3 text-sm text-amber-200">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -294,8 +368,12 @@ export default function BillingPage() {
           const isPaid = plan.slug !== "free";
           const annualCents = annualPriceCents(plan);
 
+          const canResume =
+            isCurrent && isPaypalSub && !!(sub?.cancelAtPeriodEnd || sub?.pendingPlanSlug);
+
           let ctaLabel: string;
-          if (isCurrent) ctaLabel = "Current plan";
+          if (canResume) ctaLabel = "Keep this plan";
+          else if (isCurrent) ctaLabel = "Current plan";
           else if (plan.slug === "free") ctaLabel = "Cancel paid plan";
           else if (isIntervalSwitch)
             ctaLabel =
@@ -384,7 +462,7 @@ export default function BillingPage() {
                       : ""
                   }`}
                   variant={isCurrent || isDowngrade ? "outline" : "default"}
-                  disabled={isCurrent || isSeed || !!switchingTo}
+                  disabled={(isCurrent && !canResume) || isSeed || !!switchingTo}
                   onClick={() => handleSwitch(plan.slug)}
                 >
                   {switchingTo === plan.slug ? (
@@ -489,8 +567,50 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* Manage subscription */}
-      {data.subscription && !isSeed && (
+      {/* Manage subscription — PayPal (card on file, managed here) */}
+      {isPaypalSub && sub && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage subscription</CardTitle>
+            <CardDescription>
+              Your saved card is charged automatically each billing period.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
+                <CreditCard className="size-5 text-muted-foreground" />
+                <div className="text-sm">
+                  <div className="font-medium capitalize text-foreground">
+                    {sub.card?.brand?.toLowerCase() || "Card"} •••• {sub.card?.last4 || "????"}
+                  </div>
+                  {sub.card?.expiry && (
+                    <div className="text-xs text-muted-foreground">Expires {sub.card.expiry.replace("-", "/")}</div>
+                  )}
+                </div>
+              </div>
+              <Button variant="outline" className="cursor-pointer" onClick={() => setUpdatingCard(true)}>
+                Update card
+              </Button>
+            </div>
+            {sub.currentPeriodEnd && (
+              <p className="text-sm text-muted-foreground">
+                {sub.cancelAtPeriodEnd ? "Cancels on: " : "Next billing date: "}
+                <span className={sub.cancelAtPeriodEnd ? "text-amber-400" : "text-foreground"}>
+                  {fmtDate(sub.currentPeriodEnd)}
+                </span>
+                {sub.cancelAtPeriodEnd && <span className="ml-1">— your plan reverts to Free then.</span>}
+                {!sub.cancelAtPeriodEnd && sub.creditCents > 0 && (
+                  <span className="ml-1">({formatCents(sub.creditCents)} credit will be applied.)</span>
+                )}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Manage subscription — Stripe portal */}
+      {data.subscription && !isSeed && !isPaypalSub && currentSlug !== "free" && (
         <Card>
           <CardHeader>
             <CardTitle>Manage subscription</CardTitle>
@@ -572,7 +692,12 @@ export default function BillingPage() {
                         { day: "numeric", month: "short", year: "numeric" },
                       )}
                     </TableCell>
-                    <TableCell>${(invoice.amount / 100).toFixed(2)}</TableCell>
+                    <TableCell>
+                      ${(invoice.amount / 100).toFixed(2)}
+                      {invoice.description && (
+                        <span className="ml-2 text-xs text-muted-foreground">{invoice.description}</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -612,6 +737,90 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       )}
+      {/* PayPal: first subscription — card entered inline, in a side sheet */}
+      <Sheet open={!!checkout} onOpenChange={(o) => !o && setCheckout(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-[440px]">
+          {checkout && data.paypalClientId && (() => {
+            const plan = PLANS.find((p) => p.slug === checkout.plan)!;
+            const cents = checkout.interval === "year" ? annualPriceCents(plan) : plan.priceCents;
+            const renews = new Date();
+            if (checkout.interval === "year") renews.setFullYear(renews.getFullYear() + 1);
+            else renews.setMonth(renews.getMonth() + 1);
+            return (
+              <>
+                <SheetHeader>
+                  <SheetTitle>Subscribe to {plan.label}</SheetTitle>
+                  <SheetDescription>{plan.tagline}. Cancel anytime from this page.</SheetDescription>
+                </SheetHeader>
+                <div className="space-y-6 px-4 pb-6">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm">
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-medium text-foreground">
+                        {plan.label} · {checkout.interval === "year" ? "annual" : "monthly"}
+                      </span>
+                      <span className="text-lg font-semibold text-foreground">
+                        {formatCents(cents)}
+                        <span className="text-xs font-normal text-muted-foreground"> USD</span>
+                      </span>
+                    </div>
+                    {checkout.interval === "year" && (
+                      <div className="mt-1 text-xs text-emerald-500">
+                        1 month free — {formatCents(Math.round(cents / 12))}/mo equivalent
+                      </div>
+                    )}
+                    <div className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
+                      <div className="flex justify-between"><span>Charged today</span><span className="text-foreground">{formatCents(cents)}</span></div>
+                      <div className="flex justify-between"><span>Renews</span><span className="text-foreground">{fmtDate(renews)}</span></div>
+                    </div>
+                  </div>
+                  <PayPalCardFields
+                    mode="checkout"
+                    clientId={data.paypalClientId}
+                    plan={checkout.plan}
+                    interval={checkout.interval}
+                    submitLabel={`Pay ${formatCents(cents)} and subscribe`}
+                    onSuccess={() => {
+                      setCheckout(null);
+                      toast.success("Subscription activated!");
+                      reload();
+                    }}
+                  />
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
+
+      {/* PayPal: replace the saved card (no charge) */}
+      <Sheet open={updatingCard} onOpenChange={setUpdatingCard}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-[440px]">
+          {data.paypalClientId && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Update card</SheetTitle>
+                <SheetDescription>
+                  The new card replaces {sub?.card?.last4 ? `•••• ${sub.card.last4}` : "your saved card"} and is used from the next renewal. Nothing is charged now.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="px-4 pb-6">
+                {updatingCard && (
+                  <PayPalCardFields
+                    mode="update"
+                    clientId={data.paypalClientId}
+                    submitLabel="Save card"
+                    onSuccess={() => {
+                      setUpdatingCard(false);
+                      toast.success("Card updated");
+                      reload();
+                    }}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

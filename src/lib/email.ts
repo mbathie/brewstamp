@@ -585,6 +585,90 @@ export async function sendSubscriptionDowngradedEmail({
   }
 }
 
+// Sent by the PayPal renewal cron when a charge on the saved card is
+// declined. We retry on a schedule; this tells the owner to fix the card
+// before the last attempt drops them to Free.
+export async function sendPaymentFailedEmail({
+  to,
+  merchantName,
+  shopName,
+  amountCents,
+  currency,
+  nextAttemptAt,
+  finalAttempt,
+}: {
+  to: string;
+  merchantName: string;
+  shopName: string;
+  amountCents: number;
+  currency: string;
+  nextAttemptAt: Date | null;
+  finalAttempt: boolean;
+}) {
+  const billingUrl = utm("/dashboard/billing", "payment-failed");
+  const amount = `$${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()}`;
+  const retryLine = finalAttempt
+    ? "This was our last automatic attempt — if the card isn&rsquo;t updated your shop will move to the <strong>Free plan</strong> at the next check."
+    : `We&rsquo;ll try again on <strong>${nextAttemptAt?.toLocaleDateString("en-AU", { day: "numeric", month: "long" }) ?? "the next run"}</strong>. Updating your card before then keeps everything running without a gap.`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>Payment didn't go through</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 24px 16px;">
+        <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">Your payment didn&rsquo;t go through</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Hi ${merchantName}, the ${amount} renewal for <strong>${shopName}</strong>
+          was declined by your card issuer. Your paid features are still on for now.
+        </p>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">${retryLine}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 24px 32px; text-align: center;">
+        <a href="${billingUrl}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Update my card</span></a>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: FROM,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Payment for ${shopName} didn't go through`,
+      html,
+      headers: { "X-Mailin-Tag": "payment-failed" },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send payment-failed email:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendCustomerConsentEmail({
   to,
   shopName,

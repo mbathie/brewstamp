@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
-import { Shop, StampCard, StampRequest, User, Subscription, Account } from "@/models";
+import { Shop, StampCard, StampRequest, User, Subscription, Account, Payment } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
 import { resolveSub } from "@/lib/plans";
@@ -164,7 +164,41 @@ export async function GET(
   const anySub = (activeSub ||
     (await Subscription.findOne({ shop: shop._id }).lean())) as any;
   let billing = null;
-  if (anySub?.stripeCustomerId) {
+  if (anySub?.provider === "paypal") {
+    // Card-billed via PayPal: history is our own Payment rows.
+    const rows = (await Payment.find({ shop: shop._id }).sort({ createdAt: -1 }).lean()) as any[];
+    const totalPaid: Record<string, number> = {};
+    let paidCount = 0;
+    let firstPaidAt: number | null = null;
+    for (const p of rows) {
+      if (p.status === "paid" || p.status === "refunded" || p.status === "disputed") {
+        paidCount += 1;
+        totalPaid[p.currency] = (totalPaid[p.currency] ?? 0) + p.amountCents;
+        const ms = new Date(p.createdAt).getTime();
+        if (firstPaidAt === null || ms < firstPaidAt) firstPaidAt = ms;
+      }
+    }
+    billing = {
+      stripeCustomerId: `paypal · ${anySub.card?.brand ?? "card"} •••• ${anySub.card?.last4 ?? "????"}`,
+      status: anySub.status,
+      cancelAtPeriodEnd: !!anySub.cancelAtPeriodEnd,
+      currentPeriodEnd: anySub.currentPeriodEnd ?? null,
+      totalPaid,
+      memberSince: firstPaidAt,
+      renewals: Math.max(0, paidCount - 1),
+      paidCount,
+      invoices: rows.map((p) => ({
+        id: String(p._id),
+        number: p.captureId ? p.captureId.slice(-8) : null,
+        created: new Date(p.createdAt).getTime(),
+        amountPaid: p.status === "failed" ? 0 : p.amountCents,
+        currency: p.currency,
+        status: p.status,
+        description: p.description ?? null,
+        hostedUrl: null,
+      })),
+    };
+  } else if (anySub?.stripeCustomerId) {
     try {
       billing = await getBilling(
         anySub.stripeCustomerId,

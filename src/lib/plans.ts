@@ -239,28 +239,55 @@ export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
 // to a current plan.
 export const LEGACY_PRO_CENTS = 500;
 
+// The paid tier + interval a Subscription doc is on, whichever provider it
+// bills through. PayPal subs store planSlug/interval explicitly; Stripe subs
+// derive them from stripePriceId. Null when neither resolves (legacy $5 Pro,
+// seed accounts) — callers fall back to planLabel or "legacy Pro".
+export function subscriptionTier(sub: {
+  stripePriceId?: string;
+  planSlug?: string;
+  interval?: string;
+}): { slug: PlanSlug; interval: BillingInterval } | null {
+  if (sub.planSlug && sub.planSlug !== "free" && getPlanBySlug(sub.planSlug)) {
+    return {
+      slug: sub.planSlug as PlanSlug,
+      interval: sub.interval === "year" ? "year" : "month",
+    };
+  }
+  if (sub.stripePriceId) {
+    const plan = getPlanByPriceId(sub.stripePriceId);
+    if (plan && plan.slug !== "free") {
+      return {
+        slug: plan.slug,
+        interval: getIntervalByPriceId(sub.stripePriceId) ?? "month",
+      };
+    }
+  }
+  return null;
+}
+
 // Resolve a subscription's tier + true monthly revenue. Annual plans are
 // converted to a monthly-equivalent so MRR is apples-to-apples. Shared by the
 // admin shops list and detail endpoints so they report the same tier.
 export function resolveSub(sub: {
   stripePriceId?: string;
   planLabel?: string;
+  planSlug?: string;
+  interval?: string;
 }): {
   slug: PlanSlug;
   label: string;
   monthlyCents: number;
   legacy: boolean;
 } {
-  if (sub.stripePriceId) {
-    const plan = getPlanByPriceId(sub.stripePriceId);
-    if (plan) {
-      const interval = getIntervalByPriceId(sub.stripePriceId) ?? "month";
-      const monthlyCents =
-        interval === "year"
-          ? Math.round(annualPriceCents(plan) / 12)
-          : plan.priceCents;
-      return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
-    }
+  const tier = subscriptionTier(sub);
+  if (tier) {
+    const plan = getPlanBySlug(tier.slug)!;
+    const monthlyCents =
+      tier.interval === "year"
+        ? Math.round(annualPriceCents(plan) / 12)
+        : plan.priceCents;
+    return { slug: plan.slug, label: plan.label, monthlyCents, legacy: false };
   }
   // Price id doesn't map to a current plan → grandfathered legacy Pro.
   return {

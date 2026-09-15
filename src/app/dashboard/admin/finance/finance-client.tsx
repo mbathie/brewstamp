@@ -162,7 +162,7 @@ export default function FinanceClient() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Finance</h1>
           <p className="text-sm text-muted-foreground">
-            Brewstamp · live from Stripe
+            Brewstamp · live from Stripe + PayPal
             {data && (
               <> · updated {new Date(data.generatedAt).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}</>
             )}

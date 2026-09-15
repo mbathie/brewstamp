@@ -9,7 +9,7 @@ import ImpersonationBanner from "@/components/impersonation-banner";
 import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
-import { getPlanByPriceId } from "@/lib/plans";
+import { getPlanBySlug, subscriptionTier } from "@/lib/plans";
 import {
   SidebarInset,
   SidebarProvider,
@@ -180,8 +180,9 @@ export default async function DashboardLayout({
                   // upgrades/downgrades instantly. Old subs without the
                   // planLabel field (or where it lags the price) used to
                   // fall back to "Pro" regardless of tier.
-                  (activeSub?.stripePriceId &&
-                    getPlanByPriceId(activeSub.stripePriceId)?.label) ||
+                  (activeSub &&
+                    getPlanBySlug(subscriptionTier(activeSub)?.slug ?? "")
+                      ?.label) ||
                   activeSub?.planLabel
                 }
               />

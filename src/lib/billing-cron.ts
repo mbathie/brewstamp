@@ -5,6 +5,7 @@ import Shop from "../models/Shop";
 import User from "../models/User";
 import { stripe } from "./stripe";
 import { sendSubscriptionDowngradedEmail } from "./email";
+import { runPaypalRenewals } from "./paypal-billing";
 
 // How long a subscription may stay unpaid (past_due / unpaid) before we cancel
 // it in Stripe and drop the shop back to the Free plan.
@@ -12,13 +13,30 @@ const GRACE_DAYS = 7;
 
 export function startBillingCron() {
   // Daily at 9am AEDT — an hour after the drip run so they don't overlap.
-  cron.schedule("0 9 * * *", () => runOverdueDowngrades(), {
+  cron.schedule("0 9 * * *", () => runBilling(), {
     timezone: "Australia/Sydney",
   });
   console.log("[Billing] Cron scheduled: daily 9am AEDT");
 }
 
-// Cancel and downgrade any subscription that has been unpaid for >= GRACE_DAYS.
+// The daily billing pass: charge PayPal renewals that are due (we own that
+// schedule), then age out Stripe subscriptions Stripe has reported unpaid.
+// Each half is isolated so one provider failing can't block the other.
+export async function runBilling() {
+  try {
+    await runPaypalRenewals();
+  } catch (err) {
+    console.error("[Billing] PayPal renewal run failed:", err);
+  }
+  try {
+    await runOverdueDowngrades();
+  } catch (err) {
+    console.error("[Billing] Stripe overdue run failed:", err);
+  }
+}
+
+// Cancel and downgrade any STRIPE subscription that has been unpaid for
+// >= GRACE_DAYS. (PayPal subs run their own dunning in paypal-billing.)
 // Exported so it can be invoked manually (e.g. a one-off script) as well as
 // from the daily schedule.
 export async function runOverdueDowngrades() {
@@ -28,6 +46,7 @@ export async function runOverdueDowngrades() {
   // The webhook flips local status to past_due / unpaid when Stripe reports a
   // failed renewal, so these are our candidates. (active subs are never here.)
   const candidates = await Subscription.find({
+    provider: { $ne: "paypal" },
     status: { $in: ["past_due", "unpaid"] },
   });
 

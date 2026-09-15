@@ -7,8 +7,8 @@ import { Shop, ShopMembership, Subscription } from "@/models";
 import {
   PLANS,
   getPlanBySlug,
-  getPlanByPriceId,
   getPlanRank,
+  subscriptionTier,
   type PlanConfig,
   type PlanSlug,
 } from "./plans";
@@ -46,11 +46,7 @@ export async function getUserPlanLimits(
 
   let highest: PlanSlug = "free";
   for (const sub of subs) {
-    let slug: PlanSlug = "free";
-    if (sub.stripePriceId) {
-      const p = getPlanByPriceId(sub.stripePriceId);
-      if (p) slug = p.slug;
-    }
+    let slug: PlanSlug = subscriptionTier(sub)?.slug ?? "free";
     if (slug === "free" && sub.planLabel) {
       const fallback = String(sub.planLabel).toLowerCase();
       if (PLANS.some((p) => p.slug === fallback)) {

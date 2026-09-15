@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+// One subscription per shop. Two billing providers coexist:
+//   - "stripe": the original integration. Stripe owns the schedule, dunning
+//     and invoices; webhooks mirror state into this doc.
+//   - "paypal": cards are vaulted with PayPal (Advanced Card Payments) and
+//     WE own the schedule — billing-cron charges the vault when
+//     currentPeriodEnd passes, records a Payment, and rolls the period.
 const subscriptionSchema = new mongoose.Schema(
   {
     shop: {
@@ -8,9 +14,42 @@ const subscriptionSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    stripeCustomerId: { type: String, required: true },
-    stripeSubscriptionId: { type: String, required: true },
+    provider: { type: String, enum: ["stripe", "paypal"], default: "stripe" },
+
+    // ── Stripe ────────────────────────────────────────────────────────────
+    stripeCustomerId: { type: String },
+    stripeSubscriptionId: { type: String },
     stripePriceId: { type: String },
+
+    // ── PayPal ────────────────────────────────────────────────────────────
+    // Vault payment-token id (the saved card) and PayPal's customer id for
+    // it, so a replacement card can be attached to the same customer.
+    paypalVaultId: { type: String },
+    paypalCustomerId: { type: String },
+    // Display-only card summary from the last vaulting.
+    card: {
+      brand: { type: String },
+      last4: { type: String },
+      expiry: { type: String }, // "2028-05"
+    },
+    // Plan the shop is on. Stripe subs derive this from stripePriceId (see
+    // @/lib/plans); PayPal subs store it explicitly.
+    planSlug: { type: String, enum: ["pro", "plus", "max"] },
+    interval: { type: String, enum: ["month", "year"] },
+    currency: { type: String, default: "usd" },
+    // A downgrade (lower tier, or annual → monthly) takes effect at the next
+    // renewal. Stored here until the cron applies it.
+    pendingPlanSlug: { type: String, enum: ["pro", "plus", "max"] },
+    pendingInterval: { type: String, enum: ["month", "year"] },
+    // Unused time credited on an upgrade that exceeded the new charge; applied
+    // to the next renewal.
+    creditCents: { type: Number, default: 0 },
+    // Dunning: consecutive failed renewal attempts and when to try again.
+    failedAttempts: { type: Number, default: 0 },
+    nextAttemptAt: { type: Date },
+    lastPaymentAt: { type: Date },
+
+    // ── Shared ────────────────────────────────────────────────────────────
     // Display label for the plan ("Pro", "Plus", "Max"). Resolved from
     // stripePriceId via the env-var lookup in @/lib/plans, with this field
     // as the fallback for seed accounts that have no real Stripe price.
@@ -29,6 +68,8 @@ const subscriptionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+subscriptionSchema.index({ provider: 1, status: 1, currentPeriodEnd: 1 });
 
 const Subscription =
   mongoose.models.Subscription ||
