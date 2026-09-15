@@ -17,6 +17,14 @@ const referralEarningSchema = new mongoose.Schema(
     // Set when the admin pays the partner (PayPal); null = owed.
     paidOutAt: { type: Date },
     payoutNote: { type: String },
+    // The underlying payment was refunded / charged back. The earning no
+    // longer counts; if it had already been paid out, it's clawed back from
+    // the partner's next payout as a negative balance.
+    reversedAt: { type: Date },
+    reversalReason: { type: String },
+    // For a reversed earning that had been paid out: set once the clawback
+    // has been netted against a later payout.
+    clawbackSettledAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -18,6 +18,7 @@ partner is owed ≥ US$25 (manual, from the admin page).
 2. `proxy.ts` sees `?ref=` on any public URL → sets `bs_ref` cookie (90 days, last click wins) → redirects to the same URL without the param.
 3. Register (password) and OAuth/magic-link `createUser` both read the cookie and stamp `User.referredBy`.
 4. Every paid `Payment` write (PayPal initial/renewal/upgrade, Stripe `invoice.paid` webhook) calls `recordReferralEarning(paymentId)`: if the shop owner was referred by an active partner and the payment is within 12 months of the owner's first paid payment, insert a `ReferralEarning` for 20% in the payment's currency. Idempotent on payment id.
-5. Admin pays via PayPal → "Mark paid" sets `paidOutAt` on all owed rows for that partner.
+5. An earning becomes **payable 60 days after its payment** (`MATURITY_DAYS`, the card chargeback window); before that it shows as pending. Admin pays via PayPal → "Mark paid" sets `paidOutAt` on the matured rows only, and settles any clawbacks.
+6. **Reversals**: the PayPal webhook (`PAYMENT.CAPTURE.REFUNDED`, `CUSTOMER.DISPUTE.CREATED`) and Stripe webhook (`charge.refunded`, `charge.dispute.created`) call `reverseReferralEarning` → `reversedAt` set. Unpaid → simply not paid. Already paid → a clawback netted against the partner's next payout (`clawbackSettledAt` once recovered). Net balance can go negative; nothing is paid until it clears US$25.
 
 Self-referral isn't enforced in code beyond the cookie; the public page states it's excluded — deny at payout if it shows up.

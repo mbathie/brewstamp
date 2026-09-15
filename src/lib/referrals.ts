@@ -14,6 +14,14 @@ import { Payment, ReferralEarning, Shop, User } from "../models";
 export const REFERRAL_RATE_PERCENT = 20;
 export const REFERRAL_MONTHS = 12;
 export const REF_COOKIE = "bs_ref";
+// An earning is only payable once its payment is old enough that a chargeback
+// is unlikely (card networks allow ~120 days; nearly all disputes on small
+// subscriptions land inside 60). Newer earnings show as "pending".
+export const MATURITY_DAYS = 60;
+export const PAYOUT_MIN_CENTS = 2500;
+
+export const matured = (earnedAt: Date | string, now = new Date()) =>
+  now.getTime() - new Date(earnedAt).getTime() >= MATURITY_DAYS * 86_400_000;
 
 // Short, unambiguous, upper-case: BRW-7K3M9Q.
 export function newReferralCode(): string {
@@ -113,6 +121,37 @@ export async function recordReferralEarning(paymentId: unknown) {
   }
 }
 
+// A payment was refunded or disputed: void its earning. Called by the
+// billing webhooks. If it had already been paid out, the amount becomes a
+// clawback netted against the partner's next payout.
+export async function reverseReferralEarning(paymentId: unknown, reason: string) {
+  await connectDB();
+  const e = await ReferralEarning.findOne({ payment: paymentId });
+  if (!e || e.reversedAt) return null;
+  e.reversedAt = new Date();
+  e.reversalReason = reason;
+  await e.save();
+  return e;
+}
+
+// Buckets for a set of earnings: payable (matured, not reversed, not paid),
+// pending (too new), paid (already paid, not reversed), clawback (paid, then
+// reversed — owed back to us).
+export function bucketEarnings(earnings: any[], now = new Date()) {
+  const add = (m: Record<string, number>, cur: string, cents: number) => { m[cur] = (m[cur] ?? 0) + cents; };
+  const payable: Record<string, number> = {}, pending: Record<string, number> = {}, paid: Record<string, number> = {}, clawback: Record<string, number> = {};
+  for (const e of earnings) {
+    if (e.reversedAt) { if (e.paidOutAt && !e.clawbackSettledAt) add(clawback, e.currency, e.amountCents); continue; }
+    if (e.paidOutAt) add(paid, e.currency, e.amountCents);
+    else if (matured(e.earnedAt, now)) add(payable, e.currency, e.amountCents);
+    else add(pending, e.currency, e.amountCents);
+  }
+  // Net = payable − clawback, per currency (what a payout would actually be).
+  const net: Record<string, number> = { ...payable };
+  for (const [c, v] of Object.entries(clawback)) net[c] = (net[c] ?? 0) - v;
+  return { payable, pending, paid, clawback, net };
+}
+
 // Partner-facing summary: referred shops and earnings, owed vs paid.
 export async function partnerSummary(partnerId: string) {
   await connectDB();
@@ -120,14 +159,10 @@ export async function partnerSummary(partnerId: string) {
   const referredIds = referred.map((u: any) => u._id);
   const shops = await Shop.find({ owner: { $in: referredIds } }).select("name owner createdAt").lean<any>();
   const earnings = await ReferralEarning.find({ partner: partnerId }).sort({ earnedAt: -1 }).lean<any>();
-  const owed: Record<string, number> = {};
-  const paid: Record<string, number> = {};
-  for (const e of earnings) {
-    const m = e.paidOutAt ? paid : owed;
-    m[e.currency] = (m[e.currency] ?? 0) + e.amountCents;
-  }
+  const { payable, pending, paid, clawback, net } = bucketEarnings(earnings);
   const byShop = new Map<string, { earnedCents: number; currency: string; payments: number }>();
   for (const e of earnings) {
+    if (e.reversedAt) continue;
     const k = String(e.shop);
     const cur = byShop.get(k) ?? { earnedCents: 0, currency: e.currency, payments: 0 };
     cur.earnedCents += e.amountCents; cur.payments += 1; byShop.set(k, cur);
@@ -148,8 +183,12 @@ export async function partnerSummary(partnerId: string) {
         currency: stats?.currency ?? "usd",
       };
     }),
-    owed,
+    // "owed" = payable now (matured, net of any clawbacks); "pending" is
+    // earned but inside the chargeback window.
+    owed: net,
+    pending,
     paid,
+    clawback,
     earnings: earnings.map((e: any) => ({
       id: String(e._id),
       shop: String(e.shop),
@@ -158,6 +197,8 @@ export async function partnerSummary(partnerId: string) {
       amountCents: e.amountCents,
       currency: e.currency,
       paidOutAt: e.paidOutAt ?? null,
+      reversedAt: e.reversedAt ?? null,
+      matured: matured(e.earnedAt),
     })),
   };
 }

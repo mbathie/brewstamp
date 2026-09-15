@@ -46,7 +46,7 @@ const FAQ = [
   },
   {
     q: "When and how am I paid?",
-    a: "Quarterly, by PayPal, once your balance is US$25 or more. Your dashboard shows what's accrued, what's been paid, and per-shop detail. Refunds and chargebacks are deducted.",
+    a: "Quarterly, by PayPal, once your payable balance is US$25 or more. Earnings become payable 60 days after the payment they came from (that's the card chargeback window). Your dashboard shows what's pending, what's payable, what's been paid, and per-shop detail. Refunded or disputed payments are deducted.",
   },
   {
     q: "Can I use it for my own shop?",

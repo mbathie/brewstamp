@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Payment, Subscription } from "@/models";
 import { verifyWebhook } from "@/lib/paypal";
+import { reverseReferralEarning } from "@/lib/referrals";
 
 // PayPal → us. We don't depend on webhooks for the billing schedule (the
 // cron owns that); these keep Payment records honest for money that moves
@@ -26,10 +27,12 @@ export async function POST(req: Request) {
       const captureId = captureLink?.href.split("/").pop();
       const cents = Math.round(parseFloat(event.resource.amount?.value ?? "0") * 100);
       if (captureId) {
-        await Payment.findOneAndUpdate(
+        const p = await Payment.findOneAndUpdate(
           { captureId },
-          { $set: { status: "refunded" }, $inc: { refundedCents: cents } }
+          { $set: { status: "refunded" }, $inc: { refundedCents: cents } },
+          { new: true }
         );
+        if (p) await reverseReferralEarning(p._id, "refunded");
       }
       break;
     }
@@ -40,6 +43,9 @@ export async function POST(req: Request) {
           .filter(Boolean) as string[] ?? [];
       if (captureIds.length) {
         await Payment.updateMany({ captureId: { $in: captureIds } }, { $set: { status: "disputed" } });
+        for (const p of await Payment.find({ captureId: { $in: captureIds } }).select("_id").lean<any>()) {
+          await reverseReferralEarning(p._id, "disputed");
+        }
       }
       console.warn(`[PayPal webhook] dispute opened on ${captureIds.join(", ") || "unknown capture"}`);
       break;

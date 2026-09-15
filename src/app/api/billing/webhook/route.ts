@@ -4,7 +4,7 @@ import { Subscription, Shop, User, Payment } from "@/models";
 import { stripe } from "@/lib/stripe";
 import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
 import { sendPaymentReceiptEmail } from "@/lib/email";
-import { recordReferralEarning } from "@/lib/referrals";
+import { recordReferralEarning, reverseReferralEarning } from "@/lib/referrals";
 import type Stripe from "stripe";
 
 function getPeriodDates(sub: Stripe.Subscription) {
@@ -180,6 +180,20 @@ export async function POST(req: Request) {
           ...period,
         }
       );
+      break;
+    }
+
+    // Refunds and disputes void any referral commission on the payment.
+    case "charge.refunded":
+    case "charge.dispute.created": {
+      const obj = event.data.object as Stripe.Charge | Stripe.Dispute;
+      const chargeId = event.type === "charge.refunded" ? (obj as Stripe.Charge).id : ((obj as Stripe.Dispute).charge as string);
+      const p = await Payment.findOneAndUpdate(
+        { stripeChargeId: chargeId },
+        { $set: { status: event.type === "charge.refunded" ? "refunded" : "disputed" } },
+        { new: true }
+      );
+      if (p) await reverseReferralEarning(p._id, event.type === "charge.refunded" ? "refunded" : "disputed");
       break;
     }
 

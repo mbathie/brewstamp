@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { ReferralEarning, Shop, User } from "@/models";
+import { bucketEarnings, matured, PAYOUT_MIN_CENTS } from "@/lib/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +21,9 @@ export async function GET() {
     const mine = referred.filter((u: any) => String(u.referredBy) === String(p._id));
     const mineIds = new Set(mine.map((u: any) => String(u._id)));
     const myShops = shops.filter((s: any) => mineIds.has(String(s.owner)));
-    const owed: Record<string, number> = {}, paid: Record<string, number> = {};
-    const payingShops = new Set<string>();
-    for (const e of earnings.filter((e: any) => String(e.partner) === String(p._id))) {
-      (e.paidOutAt ? paid : owed)[e.currency] = ((e.paidOutAt ? paid : owed)[e.currency] ?? 0) + e.amountCents;
-      payingShops.add(String(e.shop));
-    }
+    const mineEarnings = earnings.filter((e: any) => String(e.partner) === String(p._id));
+    const { net: owed, pending, paid, clawback } = bucketEarnings(mineEarnings);
+    const payingShops = new Set<string>(mineEarnings.filter((e: any) => !e.reversedAt).map((e: any) => String(e.shop)));
     return {
       id: String(p._id),
       email: p.email,
@@ -37,7 +35,11 @@ export async function GET() {
       referredShops: myShops.length,
       payingShops: payingShops.size,
       owed,
+      pending,
       paid,
+      clawback,
+      // Ready to pay when any currency's net balance clears the minimum.
+      payable: Object.values(owed).some((v) => v >= PAYOUT_MIN_CENTS),
     };
   });
   const owedTotal = (r: { owed: Record<string, number> }) => Object.values(r.owed).reduce((x, y) => x + y, 0);
@@ -45,16 +47,26 @@ export async function GET() {
   return NextResponse.json({ partners: rows });
 }
 
-// Mark everything currently owed to a partner as paid out.
+// Mark a partner's MATURED earnings as paid out, and settle any clawbacks
+// (reversed earnings that were already paid) against them at the same time.
 // Body: { partnerId, note? }
 export async function POST(req: Request) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   await connectDB();
   const { partnerId, note } = (await req.json().catch(() => ({}))) as { partnerId?: string; note?: string };
   if (!partnerId) return NextResponse.json({ error: "Missing partnerId" }, { status: 400 });
+  const now = new Date();
+  const owedRows = await ReferralEarning.find({ partner: partnerId, paidOutAt: null, reversedAt: null }).lean<any>();
+  const ids = owedRows.filter((e: any) => matured(e.earnedAt, now)).map((e: any) => e._id);
   const r = await ReferralEarning.updateMany(
-    { partner: partnerId, paidOutAt: null },
-    { $set: { paidOutAt: new Date(), payoutNote: note ?? "" } }
+    { _id: { $in: ids } },
+    { $set: { paidOutAt: now, payoutNote: note ?? "" } }
   );
-  return NextResponse.json({ ok: true, marked: r.modifiedCount });
+  // Clawbacks are netted in this payout: record that they've been recovered
+  // so they don't keep reducing future balances.
+  const c = await ReferralEarning.updateMany(
+    { partner: partnerId, reversedAt: { $ne: null }, paidOutAt: { $ne: null }, clawbackSettledAt: null },
+    { $set: { clawbackSettledAt: now } }
+  );
+  return NextResponse.json({ ok: true, marked: r.modifiedCount, clawbacksSettled: c.modifiedCount });
 }

@@ -20,7 +20,9 @@ interface Data {
   referredUsers?: number;
   shops?: Array<{ id: string; name: string; ownerEmailMasked: string; signedUpAt: string; paying: boolean; payments: number; earnedCents: number; currency: string }>;
   owed?: Record<string, number>;
+  pending?: Record<string, number>;
   paid?: Record<string, number>;
+  clawback?: Record<string, number>;
   earnings?: Array<{ id: string; shop: string; earnedAt: string; paymentAmountCents: number; amountCents: number; currency: string; paidOutAt: string | null }>;
 }
 
@@ -120,9 +122,12 @@ export default function PartnersClient() {
                 <CardTitle className="text-2xl">{total(data.owed)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm text-muted-foreground">
-                <div>owed · paid out {total(data.paid)}</div>
+                <div>ready to pay out · {total(data.pending)} pending · {total(data.paid)} paid</div>
+                {Object.keys(data.clawback ?? {}).length > 0 && (
+                  <div className="text-amber-400">−{total(data.clawback)} refunded/disputed, deducted from your next payout</div>
+                )}
                 <div>{data.referredUsers} referred signup{data.referredUsers === 1 ? "" : "s"} · {data.shops?.filter((s) => s.paying).length ?? 0} paying</div>
-                <div className="pt-1 text-xs">Paid quarterly by PayPal once you reach US$25.</div>
+                <div className="pt-1 text-xs">Earnings become payable 60 days after the payment (chargeback window). Paid quarterly by PayPal once you reach US$25.</div>
               </CardContent>
             </Card>
           </div>

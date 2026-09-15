@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface Row {
   id: string; email: string; name: string; code: string; payoutEmail: string | null; since: string | null;
   referredSignups: number; referredShops: number; payingShops: number;
-  owed: Record<string, number>; paid: Record<string, number>;
+  owed: Record<string, number>; pending: Record<string, number>; paid: Record<string, number>; clawback: Record<string, number>; payable: boolean;
 }
 const sym = (c: string) => (c === "aud" ? "A$" : c === "usd" ? "US$" : c.toUpperCase() + " ");
 const total = (m: Record<string, number>) => { const p = Object.entries(m).map(([c, v]) => `${sym(c)}${(v / 100).toFixed(2)}`); return p.length ? p.join(" + ") : "—"; };
@@ -39,7 +39,7 @@ export default function AdminPartnersClient() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Partners</h1>
-        <p className="text-sm text-muted-foreground">Referral partners, what they&apos;ve brought in, and what they&apos;re owed. Pay via PayPal, then mark paid.</p>
+        <p className="text-sm text-muted-foreground">Referral partners, what they&apos;ve brought in, and what they&apos;re owed. &quot;Payable now&quot; is earnings older than 60 days (past the chargeback window), net of refunds. Pay via PayPal, then mark paid.</p>
       </div>
       <Card>
         <CardContent className="overflow-x-auto p-0">
@@ -52,13 +52,14 @@ export default function AdminPartnersClient() {
                 <TableHead className="text-right">Signups</TableHead>
                 <TableHead className="text-right">Shops</TableHead>
                 <TableHead className="text-right">Paying</TableHead>
-                <TableHead className="text-right">Owed</TableHead>
+                <TableHead className="text-right">Payable now</TableHead>
+                <TableHead className="text-right">Pending</TableHead>
                 <TableHead className="text-right">Paid out</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 && <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">No partners yet.</TableCell></TableRow>}
+              {rows.length === 0 && <TableRow><TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">No partners yet.</TableCell></TableRow>}
               {rows.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell><div className="font-medium text-foreground">{r.name}</div><div className="text-xs text-muted-foreground">{r.email}</div></TableCell>
@@ -67,10 +68,14 @@ export default function AdminPartnersClient() {
                   <TableCell className="text-right">{r.referredSignups}</TableCell>
                   <TableCell className="text-right">{r.referredShops}</TableCell>
                   <TableCell className="text-right">{r.payingShops}</TableCell>
-                  <TableCell className="text-right text-foreground">{total(r.owed)}</TableCell>
+                  <TableCell className="text-right text-foreground">
+                    {total(r.owed)}
+                    {Object.keys(r.clawback ?? {}).length > 0 && <div className="text-xs text-amber-400">incl. −{total(r.clawback)} clawback</div>}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">{total(r.pending)}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{total(r.paid)}</TableCell>
                   <TableCell className="text-right">
-                    {Object.keys(r.owed).length > 0 && (
+                    {r.payable && (
                       <Button size="sm" variant="outline" className="cursor-pointer" disabled={busy === r.id} onClick={() => markPaid(r)}>
                         {busy === r.id ? <Loader2 className="mr-1.5 size-3 animate-spin" /> : null} Mark paid
                       </Button>
