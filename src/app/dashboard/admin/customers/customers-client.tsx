@@ -55,6 +55,8 @@ const PLAN_BADGE: Record<string, string> = {
 
 const sym = (cur: string) => (cur === "aud" ? "A$" : cur === "usd" ? "US$" : cur.toUpperCase() + " ");
 const money = (cents: number, cur: string) => `${sym(cur)}${(cents / 100).toFixed(2)}`;
+// Headline tiles: whole dollars read faster; the table keeps cents.
+const moneyWhole = (cents: number, cur: string) => `${sym(cur)}${Math.round(cents / 100).toLocaleString()}`;
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" }) : "—";
 const daysUntil = (d: string | null) => (d ? Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) : null);
@@ -62,8 +64,8 @@ const daysUntil = (d: string | null) => (d ? Math.ceil((new Date(d).getTime() - 
 // Sum a per-currency map at par for sorting/headline only (the cell shows
 // the real split).
 const atPar = (m: Record<string, number>) => Object.values(m).reduce((a, b) => a + b, 0);
-function totalLabel(m: Record<string, number>) {
-  const parts = Object.entries(m).sort().map(([c, v]) => money(v, c));
+function totalLabel(m: Record<string, number>, whole = false) {
+  const parts = Object.entries(m).sort().map(([c, v]) => (whole ? moneyWhole : money)(v, c));
   return parts.length ? parts.join(" + ") : "—";
 }
 
@@ -167,8 +169,8 @@ export default function CustomersClient() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onPaypal} on PayPal · ${summary.live - summary.onPaypal} on Stripe`} />
-        <Tile label="MRR" value={totalLabel(summary.mrr)} sub="at current prices" />
-        <Tile label="Collected all-time" value={totalLabel(summary.collected)} sub="gross of refunds" />
+        <Tile label="MRR" value={totalLabel(summary.mrr, true)} sub="at current prices" />
+        <Tile label="Collected all-time" value={totalLabel(summary.collected, true)} sub="gross of refunds" />
         <Tile label="Renewing in 7 days" value={String(summary.dueSoon)} sub="next charge within a week" />
       </div>
 
