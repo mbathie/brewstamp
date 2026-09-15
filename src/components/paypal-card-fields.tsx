@@ -54,6 +54,9 @@ type Props = {
   currency?: string;
   submitLabel: string;
   onSuccess: (result: any) => void;
+  // "dark" matches the Brewstamp dashboard; "stampy" is the legacy
+  // StampyStamp look (light, mint + periwinkle).
+  theme?: "dark" | "stampy";
 } & (
   | { mode: "checkout"; plan: string; interval: "month" | "year" }
   | {
@@ -65,7 +68,7 @@ type Props = {
 );
 
 export function PayPalCardFields(props: Props) {
-  const { clientId, currency = "USD", submitLabel, onSuccess } = props;
+  const { clientId, currency = "USD", submitLabel, onSuccess, theme = "dark" } = props;
   const [ready, setReady] = useState(false);
   const [eligible, setEligible] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -91,21 +94,22 @@ export function PayPalCardFields(props: Props) {
         // PayPal renders each field in its own iframe; the style allow-list
         // covers background/border/height, so the inputs are themed to match
         // our dark inputs (stone palette) and our wrapper adds the focus ring.
+        const stampy = propsRef.current.theme === "stampy";
         const style = {
           input: {
             "font-size": "15px",
-            "font-family": "system-ui, -apple-system, 'Segoe UI', sans-serif",
-            color: "#f5f5f4",
-            background: "#1b1b1b",
+            "font-family": stampy ? "'DM Sans', system-ui, sans-serif" : "system-ui, -apple-system, 'Segoe UI', sans-serif",
+            color: stampy ? "#1f2937" : "#f5f5f4",
+            background: stampy ? "#ffffff" : "#1b1b1b",
             border: "none",
             "box-shadow": "none",
             padding: "11px 12px",
           },
-          ":focus": { color: "#fafaf9", border: "none", "box-shadow": "none", outline: "none" },
-          "::placeholder": { color: "#57534e" },
+          ":focus": { color: stampy ? "#111827" : "#fafaf9", border: "none", "box-shadow": "none", outline: "none" },
+          "::placeholder": { color: stampy ? "#9ca3af" : "#57534e" },
           // The frame must not draw its own borders in any state — ours is
           // the only outline.
-          ".invalid": { color: "#f87171", border: "none", "box-shadow": "none" },
+          ".invalid": { color: stampy ? "#dc2626" : "#f87171", border: "none", "box-shadow": "none" },
           ".valid": { border: "none", "box-shadow": "none" },
         };
 
@@ -217,7 +221,7 @@ export function PayPalCardFields(props: Props) {
       renderedRef.current = [];
     };
     // Re-mount only when the SDK identity changes; plan/interval flow via propsRef.
-  }, [clientId, currency, props.mode]);
+  }, [clientId, currency, props.mode, theme]);
 
   async function submit() {
     if (!fieldsRef.current) return;
@@ -245,17 +249,25 @@ export function PayPalCardFields(props: Props) {
 
   // Each iframe fills a fixed-height box drawn like our Input: we own the
   // border + focus ring, the iframe paints a borderless dark input inside.
+  // PayPal sizes each iframe to its input plus ~9px of its own margin top
+  // and bottom; a fixed 44px box with the frame nudged up centres the text.
+  const frame = "h-11 overflow-hidden rounded-md shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px] [&>div]:-mt-[9px] [&_iframe]:block";
   const field =
-    // PayPal sizes each iframe to its input plus ~9px of its own margin top
-    // and bottom; a fixed 44px box with the frame nudged up centres the text.
-    "h-11 overflow-hidden rounded-md border border-input bg-[#1b1b1b] shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 [&>div]:-mt-[9px] [&_iframe]:block";
-  const label = "mb-1.5 block text-xs font-medium text-muted-foreground";
+    theme === "stampy"
+      ? `${frame} border border-gray-300 bg-white focus-within:border-[#7c92e7] focus-within:ring-[#7c92e7]/30`
+      : `${frame} border border-input bg-[#1b1b1b] focus-within:border-ring focus-within:ring-ring/50`;
+  const label = theme === "stampy" ? "mb-1.5 block text-xs font-medium text-gray-600" : "mb-1.5 block text-xs font-medium text-muted-foreground";
+  const submitCls =
+    theme === "stampy"
+      ? "h-11 w-full cursor-pointer bg-[#7c92e7] text-base text-white hover:bg-[#6a80d9]"
+      : "h-11 w-full cursor-pointer bg-amber-700 text-base text-white hover:bg-amber-800";
+  const noteCls = theme === "stampy" ? "text-gray-500" : "text-muted-foreground";
 
   return (
     <div ref={containerRef} className="space-y-4">
       <div>
         {!ready && !error && (
-          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+          <div className={`flex items-center gap-2 py-8 text-sm ${noteCls}`}>
             <Loader2 className="size-4 animate-spin" /> Loading secure card form…
           </div>
         )}
@@ -281,17 +293,17 @@ export function PayPalCardFields(props: Props) {
         </div>
       </div>
       {error && (
-        <p className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>
+        <p className={theme === "stampy" ? "rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" : "rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300"}>{error}</p>
       )}
       <Button
-        className="h-11 w-full cursor-pointer bg-amber-700 text-base text-white hover:bg-amber-800"
+        className={submitCls}
         disabled={!ready || submitting}
         onClick={submit}
       >
         {submitting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Lock className="mr-2 size-4" />}
         {submitLabel}
       </Button>
-      <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+      <p className={`flex items-center justify-center gap-1.5 text-center text-xs ${noteCls}`}>
         <Lock className="size-3" /> Encrypted and processed by PayPal — card details never touch our servers.
       </p>
     </div>

@@ -23,17 +23,39 @@ const LIST_UNSUBSCRIBE = `<mailto:${REPLY_TO}?subject=unsubscribe>`;
 // StampyStamp product whose billing Brewstamp now runs. Everything else in
 // a template is shared; only the header, footer, sender and link host differ.
 export type EmailBrand = "brewstamp" | "stampystamp";
-const BRANDS: Record<EmailBrand, { from: string; header: string; footer: string; siteUrl: string }> = {
+interface BrandTheme {
+  from: string;
+  header: string; // logo markup
+  headerBg: string;
+  footer: string;
+  footerBg: string;
+  footerText: string;
+  footerMuted: string;
+  button: string; // CTA background
+  siteUrl: string;
+}
+const BRANDS: Record<EmailBrand, BrandTheme> = {
   brewstamp: {
     from: FROM,
     header: `<img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />`,
+    headerBg: "#1c1917",
     footer: "Brewstamp &mdash; Digital loyalty cards for coffee shops",
+    footerBg: "#1c1917",
+    footerText: "#a8a29e",
+    footerMuted: "#78716c",
+    button: "#d97706",
     siteUrl: APP_URL,
   },
+  // StampyStamp: mint + periwinkle, dark logo — the legacy product's own look.
   stampystamp: {
     from: `"StampyStamp" <${FROM_ADDR}>`,
-    header: `<table cellpadding="0" cellspacing="0" style="margin: 0 auto;"><tr><td style="background-color: #ffffff; border-radius: 8px; padding: 8px 14px;"><img src="https://stampystamp.com.au/logoL_stampyStamp.png" alt="StampyStamp" width="160" style="display: block; max-height: 40px;" /></td></tr></table>`,
+    header: `<img src="https://stampystamp.com.au/logoL_stampyStamp.png" alt="StampyStamp" width="170" style="display: block; margin: 0 auto; max-height: 70px;" />`,
+    headerBg: "#cef0df",
     footer: "StampyStamp &mdash; Digital loyalty cards, now part of Brewstamp",
+    footerBg: "#cef0df",
+    footerText: "#1f2937",
+    footerMuted: "#4b5563",
+    button: "#7c92e7",
     siteUrl: "https://stampystamp.com.au",
   },
 };
@@ -429,7 +451,7 @@ export async function sendPaymentReceiptEmail({
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <!-- Header -->
     <tr>
-      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+      <td style="background-color: ${brandOf(brand).headerBg}; padding: 24px; text-align: center;">
         ${brandOf(brand).header}
       </td>
     </tr>
@@ -496,16 +518,18 @@ export async function sendPaymentReceiptEmail({
     <tr>
       <td style="padding: 0 24px 24px;">
         <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5; text-align: center;">
-          Manage your subscription anytime from your <a href="${utm("/dashboard/billing", "payment-receipt")}" style="color: #d97706; text-decoration: none; font-weight: 500;">billing dashboard</a>.
+          ${brand === "stampystamp"
+            ? `Questions about your subscription? Just reply to this email.`
+            : `Manage your subscription anytime from your <a href="${utm("/dashboard/billing", "payment-receipt")}" style="color: #d97706; text-decoration: none; font-weight: 500;">billing dashboard</a>.`}
         </p>
       </td>
     </tr>
 
     <!-- Footer -->
     <tr>
-      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
+      <td style="background-color: ${brandOf(brand).footerBg}; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: ${brandOf(brand).footerText}; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: ${brandOf(brand).footerMuted}; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -558,7 +582,7 @@ export async function sendSubscriptionDowngradedEmail({
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
-      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+      <td style="background-color: ${brandOf(brand).headerBg}; padding: 24px; text-align: center;">
         ${brandOf(brand).header}
       </td>
     </tr>
@@ -580,13 +604,13 @@ export async function sendSubscriptionDowngradedEmail({
     </tr>
     <tr>
       <td style="padding: 0 24px 32px; text-align: center;">
-        <a href="${billingUrl}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Restore my plan</span></a>
+        <a href="${billingUrl}" style="display: inline-block; background-color: ${brandOf(brand).button}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Restore my plan</span></a>
       </td>
     </tr>
     <tr>
-      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
+      <td style="background-color: ${brandOf(brand).footerBg}; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: ${brandOf(brand).footerText}; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: ${brandOf(brand).footerMuted}; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -654,7 +678,7 @@ export async function sendPaymentFailedEmail({
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
-      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+      <td style="background-color: ${brandOf(brand).headerBg}; padding: 24px; text-align: center;">
         ${brandOf(brand).header}
       </td>
     </tr>
@@ -670,13 +694,13 @@ export async function sendPaymentFailedEmail({
     </tr>
     <tr>
       <td style="padding: 0 24px 32px; text-align: center;">
-        <a href="${billingUrl}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Update my card</span></a>
+        <a href="${billingUrl}" style="display: inline-block; background-color: ${brandOf(brand).button}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Update my card</span></a>
       </td>
     </tr>
     <tr>
-      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
+      <td style="background-color: ${brandOf(brand).footerBg}; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: ${brandOf(brand).footerText}; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: ${brandOf(brand).footerMuted}; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -747,7 +771,7 @@ export async function sendBillingMigrationEmail({
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
-      <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
+      <td style="background-color: ${brandOf(brand).headerBg}; padding: 24px; text-align: center;">
         ${brandOf(brand).header}
       </td>
     </tr>
@@ -775,7 +799,7 @@ export async function sendBillingMigrationEmail({
     </tr>
     <tr>
       <td style="padding: 16px 24px 8px; text-align: center;">
-        <a href="${link}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Save my card</span></a>
+        <a href="${link}" style="display: inline-block; background-color: ${brandOf(brand).button}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Save my card</span></a>
       </td>
     </tr>
     <tr>
@@ -792,9 +816,9 @@ export async function sendBillingMigrationEmail({
       </td>
     </tr>
     <tr>
-      <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
+      <td style="background-color: ${brandOf(brand).footerBg}; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: ${brandOf(brand).footerText}; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: ${brandOf(brand).footerMuted}; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
