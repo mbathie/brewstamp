@@ -87,7 +87,9 @@ export async function GET() {
       totalPaid,
       refundedCents: b?.refundedCents ?? 0,
       card: s.card?.last4 ? s.card : null,
-      migration: s.migratedAt ? "migrated" : s.migrationEmailedAt ? "emailed" : s.provider === "paypal" ? "n/a" : "pending",
+      migration: s.migratedAt ? "migrated" : s.migrationEmailedAt ? "awaiting_card" : s.provider === "paypal" ? "n/a" : "not_sent",
+      migrationEmailedAt: s.migrationEmailedAt ?? null,
+      migratedAt: s.migratedAt ?? null,
       failedAttempts: s.failedAttempts ?? 0,
       nextAttemptAt: s.nextAttemptAt ?? null,
     };

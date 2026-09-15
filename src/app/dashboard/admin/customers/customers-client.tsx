@@ -38,7 +38,9 @@ interface CustomerRow {
   totalPaid: Record<string, number>;
   refundedCents: number;
   card: { brand?: string; last4?: string; expiry?: string } | null;
-  migration: "migrated" | "emailed" | "pending" | "n/a";
+  migration: "migrated" | "awaiting_card" | "not_sent" | "n/a";
+  migrationEmailedAt: string | null;
+  migratedAt: string | null;
   failedAttempts: number;
   nextAttemptAt: string | null;
 }
@@ -252,6 +254,12 @@ export default function CustomersClient() {
                     </TableCell>
                     <TableCell>
                       <MigrationBadge state={r.migration} />
+                      {r.migration === "awaiting_card" && r.migrationEmailedAt && (
+                        <div className="mt-0.5 text-xs text-muted-foreground">emailed {fmtDate(r.migrationEmailedAt)}</div>
+                      )}
+                      {r.migration === "migrated" && r.migratedAt && (
+                        <div className="mt-0.5 text-xs text-muted-foreground">card saved {fmtDate(r.migratedAt)}</div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/dashboard/admin/shops/${r.shopId}`} className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
@@ -305,11 +313,13 @@ function StatusBadge({ status, cancelAtPeriodEnd }: { status: string; cancelAtPe
   return <Badge variant="outline" className={cls}>{label}</Badge>;
 }
 
+// Stripe → PayPal migration state: email not sent → sent, waiting for the
+// customer to save a card → done. PayPal-native subs have nothing to migrate.
 function MigrationBadge({ state }: { state: CustomerRow["migration"] }) {
-  if (state === "n/a") return <span className="text-xs text-muted-foreground">—</span>;
-  const cls =
-    state === "migrated" ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
-    : state === "emailed" ? "border-sky-500/30 bg-sky-500/15 text-sky-300"
-    : "border-border text-muted-foreground";
-  return <Badge variant="outline" className={cls}>{state}</Badge>;
+  if (state === "n/a") return <span className="text-xs text-muted-foreground">on PayPal</span>;
+  const [cls, label] =
+    state === "migrated" ? ["border-emerald-500/30 bg-emerald-500/15 text-emerald-300", "migrated"]
+    : state === "awaiting_card" ? ["border-amber-500/30 bg-amber-500/15 text-amber-300", "awaiting card"]
+    : ["border-border text-muted-foreground", "email not sent"];
+  return <Badge variant="outline" className={cls}>{label}</Badge>;
 }
