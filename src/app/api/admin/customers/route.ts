@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Payment, Shop, Subscription, User } from "@/models";
 import { resolveSub, subscriptionTier } from "@/lib/plans";
 import { stripeAmount } from "@/lib/paypal-billing";
+import { stampyCollections } from "@/lib/stampy-db";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ export async function GET() {
     const currency = (s.currency ?? amt.currency).toLowerCase();
     return {
       shopId: String(s.shop),
+      legacy: null,
       shopName: shop?.name ?? "(deleted shop)",
       ownerEmail: owner?.email ?? "?",
       ownerName: owner?.name ?? "",
@@ -95,6 +97,65 @@ export async function GET() {
     };
   });
 
-  rows.sort((a, b) => (b.nextBillAt ? new Date(b.nextBillAt).getTime() : 0) - (a.nextBillAt ? new Date(a.nextBillAt).getTime() : 0));
-  return NextResponse.json({ customers: rows, generatedAt: new Date().toISOString() });
+  // Legacy StampyStamp merchants, billed by us from the stampy db. Never let
+  // a stampy hiccup blank the Brewstamp list.
+  const stampyRows: any[] = [];
+  try {
+    const { subscriptions, payments } = await stampyCollections();
+    const subs = await subscriptions.find({}).toArray();
+    const pAgg = await payments.aggregate([
+      { $group: {
+        _id: "$merchantId",
+        paidCount: { $sum: { $cond: [{ $in: ["$status", ["paid", "refunded", "disputed"]] }, 1, 0] } },
+        failedCount: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } },
+        refundedCents: { $sum: "$refundedCents" },
+        totals: { $push: { $cond: [{ $in: ["$status", ["paid", "refunded", "disputed"]] }, { currency: "$currency", cents: "$amountCents" }, "$$REMOVE"] } },
+        firstPaidAt: { $min: { $cond: [{ $in: ["$status", ["paid", "refunded", "disputed"]] }, "$paidAt", null] } },
+        lastPaidAt: { $max: { $cond: [{ $in: ["$status", ["paid", "refunded", "disputed"]] }, "$paidAt", null] } },
+      } },
+    ]).toArray();
+    const pBy = new Map(pAgg.map((a: any) => [a._id, a]));
+    for (const s of subs) {
+      const b = pBy.get(s.merchantId);
+      const totalPaid: Record<string, number> = {};
+      for (const t of b?.totals ?? []) totalPaid[t.currency] = (totalPaid[t.currency] ?? 0) + t.cents;
+      const live = ["active", "past_due"].includes(s.status);
+      stampyRows.push({
+        shopId: null,
+        legacy: "stampystamp",
+        shopName: s.merchantName,
+        ownerEmail: s.merchantEmail,
+        ownerName: "",
+        provider: s.provider,
+        status: s.status,
+        cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
+        planSlug: "stampy",
+        planLabel: `StampyStamp ${s.planLabel}`,
+        interval: s.interval,
+        priceCents: s.priceCents,
+        currency: s.currency,
+        monthlyCents: s.interval === "year" ? Math.round(s.priceCents / 12) : s.priceCents,
+        startedAt: b?.firstPaidAt ?? s.createdAt,
+        lastPaidAt: b?.lastPaidAt ?? null,
+        nextBillAt: live && !s.cancelAtPeriodEnd ? s.currentPeriodEnd ?? null : null,
+        endsAt: live && s.cancelAtPeriodEnd ? s.currentPeriodEnd ?? null : null,
+        timesBilled: b?.paidCount ?? 0,
+        failedCharges: b?.failedCount ?? 0,
+        totalPaid,
+        refundedCents: b?.refundedCents ?? 0,
+        card: s.card?.last4 ? s.card : null,
+        migration: s.migratedAt ? "migrated" : s.migrationEmailedAt ? "awaiting_card" : s.provider === "paypal" ? "n/a" : "not_sent",
+        migrationEmailedAt: s.migrationEmailedAt ?? null,
+        migratedAt: s.migratedAt ?? null,
+        failedAttempts: s.failedAttempts ?? 0,
+        nextAttemptAt: s.nextAttemptAt ?? null,
+      });
+    }
+  } catch (err) {
+    console.error("[admin/customers] stampy rows failed:", err);
+  }
+
+  const all = [...rows, ...stampyRows];
+  all.sort((a, b) => (b.nextBillAt ? new Date(b.nextBillAt).getTime() : 0) - (a.nextBillAt ? new Date(a.nextBillAt).getTime() : 0));
+  return NextResponse.json({ customers: all, generatedAt: new Date().toISOString() });
 }

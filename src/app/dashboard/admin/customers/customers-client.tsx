@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/table";
 
 interface CustomerRow {
-  shopId: string;
+  shopId: string | null;
+  // "stampystamp" for a legacy StampyStamp merchant billed from the stampy db.
+  legacy: "stampystamp" | null;
   shopName: string;
   ownerEmail: string;
   ownerName: string;
@@ -53,6 +55,7 @@ const PLAN_BADGE: Record<string, string> = {
   pro: "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
   plus: "border-sky-500/30 bg-sky-500/15 text-sky-300",
   max: "border-violet-500/30 bg-violet-500/15 text-violet-300",
+  stampy: "border-orange-500/30 bg-orange-500/15 text-orange-300",
 };
 
 const sym = (cur: string) => (cur === "aud" ? "A$" : cur === "usd" ? "US$" : cur.toUpperCase() + " ");
@@ -130,7 +133,8 @@ export default function CustomersClient() {
     for (const r of rows ?? []) for (const [c, v] of Object.entries(r.totalPaid)) collected[c] = (collected[c] ?? 0) + v;
     const dueSoon = live.filter((r) => { const d = daysUntil(r.nextBillAt); return d != null && d <= 7; }).length;
     const onPaypal = live.filter((r) => r.provider === "paypal").length;
-    return { live: live.length, mrr, collected, dueSoon, onPaypal };
+    const stampy = live.filter((r) => r.legacy === "stampystamp").length;
+    return { live: live.length, mrr, collected, dueSoon, onPaypal, stampy };
   }, [rows]);
 
   if (loading && !rows) {
@@ -170,7 +174,7 @@ export default function CustomersClient() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onPaypal} on PayPal · ${summary.live - summary.onPaypal} on Stripe`} />
+        <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onPaypal} on PayPal · ${summary.live - summary.onPaypal} on Stripe${summary.stampy ? ` · ${summary.stampy} legacy StampyStamp` : ""}`} />
         <Tile label="MRR" value={totalLabel(summary.mrr, true)} sub="at current prices" />
         <Tile label="Collected all-time" value={totalLabel(summary.collected, true)} sub="gross of refunds" />
         <Tile label="Renewing in 7 days" value={String(summary.dueSoon)} sub="next charge within a week" />
@@ -205,9 +209,14 @@ export default function CustomersClient() {
               {visible.map((r) => {
                 const days = daysUntil(r.nextBillAt);
                 return (
-                  <TableRow key={r.shopId}>
+                  <TableRow key={r.shopId ?? `stampy:${r.ownerEmail}`}>
                     <TableCell>
-                      <div className="font-medium text-foreground">{r.shopName}</div>
+                      <div className="flex items-center gap-2 font-medium text-foreground">
+                        {r.shopName}
+                        {r.legacy === "stampystamp" && (
+                          <Badge variant="outline" className="border-orange-500/30 bg-orange-500/10 text-[10px] font-normal text-orange-300">legacy StampyStamp</Badge>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">{r.ownerEmail}</div>
                     </TableCell>
                     <TableCell>
@@ -262,9 +271,11 @@ export default function CustomersClient() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/dashboard/admin/shops/${r.shopId}`} className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
-                        Shop <ChevronRight className="size-3.5" />
-                      </Link>
+                      {r.shopId && (
+                        <Link href={`/dashboard/admin/shops/${r.shopId}`} className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
+                          Shop <ChevronRight className="size-3.5" />
+                        </Link>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

@@ -6,6 +6,7 @@ import User from "../models/User";
 import { stripe } from "./stripe";
 import { sendSubscriptionDowngradedEmail } from "./email";
 import { runPaypalRenewals } from "./paypal-billing";
+import { runStampyRenewals } from "./stampy-billing";
 
 // How long a subscription may stay unpaid (past_due / unpaid) before we cancel
 // it in Stripe and drop the shop back to the Free plan.
@@ -32,6 +33,12 @@ export async function runBilling() {
     await runOverdueDowngrades();
   } catch (err) {
     console.error("[Billing] Stripe overdue run failed:", err);
+  }
+  // Legacy StampyStamp merchants — billed by us since the move off Stripe.
+  try {
+    await runStampyRenewals();
+  } catch (err) {
+    console.error("[Billing] Stampy renewal run failed:", err);
   }
 }
 

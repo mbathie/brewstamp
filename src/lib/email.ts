@@ -19,6 +19,26 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
 
 const LIST_UNSUBSCRIBE = `<mailto:${REPLY_TO}?subject=unsubscribe>`;
 
+// Billing emails go out under two brands: Brewstamp, and the legacy
+// StampyStamp product whose billing Brewstamp now runs. Everything else in
+// a template is shared; only the header, footer, sender and link host differ.
+export type EmailBrand = "brewstamp" | "stampystamp";
+const BRANDS: Record<EmailBrand, { from: string; header: string; footer: string; siteUrl: string }> = {
+  brewstamp: {
+    from: FROM,
+    header: `<img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />`,
+    footer: "Brewstamp &mdash; Digital loyalty cards for coffee shops",
+    siteUrl: APP_URL,
+  },
+  stampystamp: {
+    from: `"StampyStamp" <${FROM_ADDR}>`,
+    header: `<table cellpadding="0" cellspacing="0" style="margin: 0 auto;"><tr><td style="background-color: #ffffff; border-radius: 8px; padding: 8px 14px;"><img src="https://stampystamp.com.au/logoL_stampyStamp.png" alt="StampyStamp" width="160" style="display: block; max-height: 40px;" /></td></tr></table>`,
+    footer: "StampyStamp &mdash; Digital loyalty cards, now part of Brewstamp",
+    siteUrl: "https://stampystamp.com.au",
+  },
+};
+const brandOf = (b?: EmailBrand) => BRANDS[b ?? "brewstamp"];
+
 function utm(path: string, campaign: string) {
   const sep = path.includes("?") ? "&" : "?";
   return `${APP_URL}${path}${sep}utm_source=brewstamp&utm_medium=email&utm_campaign=${campaign}`;
@@ -372,7 +392,9 @@ export async function sendPaymentReceiptEmail({
   currency,
   invoiceDate,
   periodEnd,
+  brand,
 }: {
+  brand?: EmailBrand;
   to: string;
   merchantName: string;
   shopName: string;
@@ -408,7 +430,7 @@ export async function sendPaymentReceiptEmail({
     <!-- Header -->
     <tr>
       <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
-        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+        ${brandOf(brand).header}
       </td>
     </tr>
 
@@ -482,8 +504,8 @@ export async function sendPaymentReceiptEmail({
     <!-- Footer -->
     <tr>
       <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -492,7 +514,7 @@ export async function sendPaymentReceiptEmail({
 
   try {
     const info = await transporter.sendMail({
-      from: FROM,
+      from: brandOf(brand).from,
       replyTo: REPLY_TO,
       to,
       subject: `Brewstamp Pro receipt \u2014 ${formattedAmount} on ${formattedDate}`,
@@ -513,13 +535,15 @@ export async function sendSubscriptionDowngradedEmail({
   merchantName,
   shopName,
   daysOverdue,
+  brand,
 }: {
+  brand?: EmailBrand;
   to: string;
   merchantName: string;
   shopName: string;
   daysOverdue: number;
 }) {
-  const billingUrl = utm("/dashboard/billing", "subscription-downgraded");
+  const billingUrl = brand === "stampystamp" ? "mailto:hello@brewstamp.app?subject=StampyStamp%20subscription" : utm("/dashboard/billing", "subscription-downgraded");
 
   const html = `
 <!DOCTYPE html>
@@ -535,7 +559,7 @@ export async function sendSubscriptionDowngradedEmail({
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
-        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+        ${brandOf(brand).header}
       </td>
     </tr>
     <tr>
@@ -561,8 +585,8 @@ export async function sendSubscriptionDowngradedEmail({
     </tr>
     <tr>
       <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -571,7 +595,7 @@ export async function sendSubscriptionDowngradedEmail({
 
   try {
     const info = await transporter.sendMail({
-      from: FROM,
+      from: brandOf(brand).from,
       replyTo: REPLY_TO,
       to,
       subject: `Your Brewstamp plan for ${shopName} has been paused`,
@@ -596,7 +620,10 @@ export async function sendPaymentFailedEmail({
   currency,
   nextAttemptAt,
   finalAttempt,
+  updateUrl,
+  brand,
 }: {
+  brand?: EmailBrand;
   to: string;
   merchantName: string;
   shopName: string;
@@ -604,8 +631,11 @@ export async function sendPaymentFailedEmail({
   currency: string;
   nextAttemptAt: Date | null;
   finalAttempt: boolean;
+  // Where "Update my card" goes. Defaults to the Brewstamp billing page;
+  // StampyStamp merchants get a one-time token link instead.
+  updateUrl?: string;
 }) {
-  const billingUrl = utm("/dashboard/billing", "payment-failed");
+  const billingUrl = updateUrl ?? utm("/dashboard/billing", "payment-failed");
   const amount = `$${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()}`;
   const retryLine = finalAttempt
     ? "This was our last automatic attempt — if the card isn&rsquo;t updated your shop will move to the <strong>Free plan</strong> at the next check."
@@ -625,7 +655,7 @@ export async function sendPaymentFailedEmail({
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
-        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+        ${brandOf(brand).header}
       </td>
     </tr>
     <tr>
@@ -645,8 +675,8 @@ export async function sendPaymentFailedEmail({
     </tr>
     <tr>
       <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -655,7 +685,7 @@ export async function sendPaymentFailedEmail({
 
   try {
     const info = await transporter.sendMail({
-      from: FROM,
+      from: brandOf(brand).from,
       replyTo: REPLY_TO,
       to,
       subject: `Payment for ${shopName} didn't go through`,
@@ -683,7 +713,9 @@ export async function sendBillingMigrationEmail({
   nextChargeAt,
   link,
   deadline,
+  brand,
 }: {
+  brand?: EmailBrand;
   to: string;
   merchantName: string;
   shopName: string;
@@ -716,14 +748,14 @@ export async function sendBillingMigrationEmail({
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="background-color: #1c1917; padding: 32px 24px; text-align: center;">
-        <img src="https://brewstamp.app/email-logo.png" alt="Brewstamp" width="180" height="40" style="display: block; margin: 0 auto;" />
+        ${brandOf(brand).header}
       </td>
     </tr>
     <tr>
       <td style="padding: 32px 24px 8px;">
         <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1c1917;">One quick thing about your subscription</h1>
         <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
-          Hi ${merchantName}, we're moving Brewstamp's card payments from Stripe to
+          Hi ${merchantName}, we're moving ${brand === "stampystamp" ? "StampyStamp's" : "Brewstamp's"} card payments from Stripe to
           PayPal to cut processing fees &mdash; which helps us keep prices where
           they are. <strong>Your plan, price and billing date don&rsquo;t change.</strong>
           We just need you to re-enter your card once, using the secure link below.
@@ -761,8 +793,8 @@ export async function sendBillingMigrationEmail({
     </tr>
     <tr>
       <td style="background-color: #1c1917; padding: 24px; text-align: center;">
-        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">Brewstamp &mdash; Digital loyalty cards for coffee shops</p>
-        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} Brewstamp. All rights reserved.</p>
+        <p style="margin: 0 0 4px; color: #a8a29e; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: #78716c; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
       </td>
     </tr>
   </table>
@@ -771,7 +803,7 @@ export async function sendBillingMigrationEmail({
 
   try {
     const info = await transporter.sendMail({
-      from: FROM_PERSONAL,
+      from: brand === "stampystamp" ? brandOf(brand).from : FROM_PERSONAL,
       replyTo: REPLY_TO,
       to,
       subject: `Action needed: re-enter your card for ${shopName} (price unchanged)`,

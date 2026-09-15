@@ -159,3 +159,30 @@ the link needs the live client id and ACDC.
 Follow-up: `--list` shows who hasn't saved a card; `--send --resend --only`
 nudges them. Anyone still on Stripe at the deadline keeps renewing on Stripe
 until you disable it, so there is no hard cutover risk.
+
+## Legacy StampyStamp merchants
+
+Brewstamp runs StampyStamp's billing too — no code in the stampy repo. Stampy
+lives in the same Mongo cluster (db `stampy`), reached over Brewstamp's own
+connection via `useDb("stampy")` (`src/lib/stampy-db.ts`; set
+`STAMPY_MONGODB_URI` to point elsewhere). We own two collections there:
+
+- `billing_subscriptions` — one per merchant (`merchantId` = stampy cuid),
+  same shape as a Brewstamp Subscription: provider, plan (`Bean`), interval,
+  priceCents/currency (AUD), vault id, card, dunning, migration token.
+- `billing_payments` — one row per charge, same shape as Payment.
+
+`scripts/stampy-backfill-stripe.ts` seeds both from the shared Stripe
+account (non-Brewstamp products; merchants matched by the customer id stored
+on the merchant, then by email). Run once on prod: 4 live + 6 cancelled subs,
+142 invoices (A$5,375).
+
+Daily cron: `runStampyRenewals()` (`src/lib/stampy-billing.ts`) runs after
+the Brewstamp pass with the same charge + [0,3,7]-day dunning rules and
+StampyStamp-branded emails (`brand: "stampystamp"` in `email.ts`). A declined
+renewal mints a fresh token so the "update card" link in the email works.
+
+Migration: `scripts/stripe-to-paypal-migration.ts --stampy --list | --send |
+--sample`. Same one-time link page (`/billing/migrate/<token>`) — it resolves
+Brewstamp tokens first, then stampy, and renders StampyStamp branding.
+Admin customers page lists stampy merchants with a "legacy StampyStamp" badge.
