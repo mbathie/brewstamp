@@ -841,6 +841,107 @@ export async function sendBillingMigrationEmail({
   }
 }
 
+// Short follow-up to the migration email: same link, urgency from the
+// renewal date.
+export async function sendBillingMigrationNudgeEmail({
+  to,
+  merchantName,
+  shopName,
+  amountCents,
+  currency,
+  nextChargeAt,
+  link,
+  brand,
+}: {
+  brand?: EmailBrand;
+  to: string;
+  merchantName: string;
+  shopName: string;
+  amountCents: number;
+  currency: string;
+  nextChargeAt: Date | null;
+  link: string;
+}) {
+  const amount = `${currency.toUpperCase() === "AUD" ? "A$" : "US$"}${(amountCents / 100).toFixed(2)}`;
+  const days = nextChargeAt ? Math.max(0, Math.ceil((nextChargeAt.getTime() - Date.now()) / 86_400_000)) : null;
+  const fmt = (d: Date) => d.toLocaleDateString("en-AU", { day: "numeric", month: "long" });
+  const when =
+    days === null ? "before your next renewal"
+    : days === 0 ? "<strong>today</strong>"
+    : days === 1 ? "<strong>tomorrow</strong>"
+    : `in <strong>${days} days</strong> (${fmt(nextChargeAt!)})`;
+  const product = brand === "stampystamp" ? "StampyStamp" : "Brewstamp";
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>Quick reminder: save your card</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafaf9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: ${brandOf(brand).headerBg}; padding: 24px; text-align: center;">
+        ${brandOf(brand).header}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 24px 8px;">
+        <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">Quick reminder: your ${shopName} renewal is ${when}</h1>
+        <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
+          Hi ${merchantName}, a short follow-up to yesterday&rsquo;s email about moving
+          ${product}&rsquo;s card payments from Stripe to PayPal. Your next ${amount}
+          renewal is ${when} &mdash; if you can save your card before then, it&rsquo;ll
+          go through on the new system without any interruption.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 24px 8px; text-align: center;">
+        <a href="${link}" style="display: inline-block; background-color: ${brandOf(brand).button}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;"><span style="color: #ffffff;">Save my card</span></a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 24px 32px;">
+        <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
+          Takes about a minute. Nothing is charged when you save the card &mdash; you may
+          see a ${currency.toUpperCase() === "AUD" ? "A$" : "US$"}1.00 verification hold that is released
+          straight away. Your plan and price don&rsquo;t change. If you&rsquo;d rather not
+          continue, no action is needed and your subscription will simply end at the
+          renewal date.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: ${brandOf(brand).footerBg}; padding: 24px; text-align: center;">
+        <p style="margin: 0 0 4px; color: ${brandOf(brand).footerText}; font-size: 13px;">${brandOf(brand).footer}</p>
+        <p style="margin: 0; color: ${brandOf(brand).footerMuted}; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brand === "stampystamp" ? "StampyStamp" : "Brewstamp"}. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: brand === "stampystamp" ? brandOf(brand).from : FROM_PERSONAL,
+      replyTo: REPLY_TO,
+      to,
+      subject: days === 0 ? `Reminder: ${shopName} renews today — please save your card` : days === 1 ? `Reminder: ${shopName} renews tomorrow — please save your card` : `Reminder: ${shopName} renews in ${days} days — please save your card`,
+      html,
+      headers: { "X-Mailin-Tag": "billing-migration-nudge" },
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[Email] Failed to send billing migration nudge:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendCustomerConsentEmail({
   to,
   shopName,

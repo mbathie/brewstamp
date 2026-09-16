@@ -16,6 +16,10 @@
  *       first Stripe sub, or --for's). The link works, so it migrates that
  *       sub if used — point --for at a test shop.
  *
+ *   npx tsx scripts/stripe-to-paypal-migration.ts --nudge [--only a@b.com] [--dry-run]
+ *       Short follow-up to everyone already emailed who hasn't saved a card:
+ *       same link, "renews in N days". Only people emailed 12h+ ago.
+ *
  *   Add --stampy to any mode to work on legacy StampyStamp merchants instead
  *   (stampy db `billing_subscriptions`, StampyStamp-branded email).
  *
@@ -29,7 +33,7 @@ import mongoose from "mongoose";
 import { Shop, Subscription, User } from "../src/models";
 import { resolveSub } from "../src/lib/plans";
 import { stripeAmount } from "../src/lib/paypal-billing";
-import { sendBillingMigrationEmail } from "../src/lib/email";
+import { sendBillingMigrationEmail, sendBillingMigrationNudgeEmail } from "../src/lib/email";
 import { stampyCollections } from "../src/lib/stampy-db";
 
 const argv = process.argv.slice(2);
@@ -169,6 +173,43 @@ async function main() {
       n++;
     }
     console.log(`\n${dry ? "would send" : "sent"} ${n} email(s)`);
+    await mongoose.disconnect();
+    return;
+  }
+  if (flag("--nudge")) {
+    const only = opt("--only")?.toLowerCase();
+    const dry = flag("--dry-run");
+    let n = 0;
+    for (const c of list) {
+      if (c.sub.migratedAt || !c.sub.migrationEmailedAt || !c.sub.migrationToken) continue;
+      // Leave anyone emailed in the last 12 hours alone.
+      if (Date.now() - new Date(c.sub.migrationEmailedAt).getTime() < 12 * 3600_000) continue;
+      if (only && c.owner.email.toLowerCase() !== only) continue;
+      const { amountCents, currency } = amountOf(c);
+      const link = `${APP_URL}/billing/migrate/${c.sub.migrationToken}`;
+      const next = c.sub.currentPeriodEnd ? new Date(c.sub.currentPeriodEnd) : null;
+      const days = next ? Math.max(0, Math.ceil((next.getTime() - Date.now()) / 86_400_000)) : null;
+      console.log(`${summarise(c)}  → renews in ${days ?? "?"}d`);
+      if (dry) { n++; continue; }
+      const r = await sendBillingMigrationNudgeEmail({
+        brand: c.stampy ? "stampystamp" : "brewstamp",
+        to: c.owner.email,
+        merchantName: c.owner.name || "there",
+        shopName: c.shop.name,
+        amountCents,
+        currency,
+        nextChargeAt: next,
+        link,
+      });
+      console.log(r.success ? `  sent → ${c.owner.email}` : `  FAILED → ${c.owner.email}: ${(r as any).error}`);
+      if (r.success) {
+        const set = { migrationNudgedAt: new Date() };
+        if (c.stampy) { const { subscriptions } = await stampyCollections(); await subscriptions.updateOne({ _id: c.sub._id }, { $set: { ...set, updatedAt: new Date() } }); }
+        else await Subscription.updateOne({ _id: c.sub._id }, { $set: set });
+        n++;
+      }
+    }
+    console.log(`\n${dry ? "would nudge" : "nudged"} ${n}`);
     await mongoose.disconnect();
     return;
   }
