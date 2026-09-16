@@ -211,13 +211,13 @@ export default function CustomersClient() {
                 return (
                   <TableRow key={r.shopId ?? `stampy:${r.ownerEmail}`}>
                     <TableCell>
-                      <div className="flex items-center gap-2 font-medium text-foreground">
-                        {r.shopName}
+                      <div className="font-medium text-foreground">{r.shopName}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         {r.legacy === "stampystamp" && (
-                          <Badge variant="outline" className="border-orange-500/30 bg-orange-500/10 text-[10px] font-normal text-orange-300">legacy StampyStamp</Badge>
+                          <span className="rounded bg-orange-500/15 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-orange-300">legacy</span>
                         )}
+                        {r.ownerEmail}
                       </div>
-                      <div className="text-xs text-muted-foreground">{r.ownerEmail}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={PLAN_BADGE[r.planSlug] ?? ""}>{r.planLabel}</Badge>
