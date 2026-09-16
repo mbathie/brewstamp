@@ -910,9 +910,7 @@ export async function sendBillingMigrationNudgeEmail({
         <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
           Takes about a minute. Nothing is charged when you save the card &mdash; you may
           see a ${currency.toUpperCase() === "AUD" ? "A$" : "US$"}1.00 verification hold that is released
-          straight away. Your plan and price don&rsquo;t change. If you&rsquo;d rather not
-          continue, no action is needed and your subscription will simply end at the
-          renewal date.
+          straight away. Your plan and price don&rsquo;t change.
         </p>
       </td>
     </tr>
