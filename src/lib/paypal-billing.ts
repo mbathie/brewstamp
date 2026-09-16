@@ -532,6 +532,7 @@ export async function completeMigration(opts: {
   const { amountCents, currency } = stripeAmount(sub);
 
   sub.provider = "paypal";
+  sub.cancelAtPeriodEnd = false; // the Stripe-side cancel is Stripe's business, not ours
   sub.paypalVaultId = opts.vaultId;
   if (opts.customerId) sub.paypalCustomerId = opts.customerId;
   sub.card = opts.card;
@@ -556,6 +557,12 @@ export async function completeMigration(opts: {
     } catch (err) {
       console.error(`[PayPal migration] could not set Stripe sub ${sub.stripeSubscriptionId} to cancel at period end:`, err);
     }
+    // Keep the old id for the record, but off the lookup key so Stripe's
+    // subsequent webhooks (updated → cancel flag, deleted → canceled) can't
+    // overwrite this now-PayPal-billed doc.
+    sub.migratedFromStripeSubscriptionId = sub.stripeSubscriptionId;
+    sub.stripeSubscriptionId = undefined;
+    await sub.save();
   }
   return sub;
 }

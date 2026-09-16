@@ -56,6 +56,7 @@ const subscriptionSchema = new mongoose.Schema(
     migrationToken: { type: String, unique: true, sparse: true },
     migrationEmailedAt: { type: Date },
     migratedAt: { type: Date },
+    migratedFromStripeSubscriptionId: { type: String },
     // Dunning: consecutive failed renewal attempts and when to try again.
     failedAttempts: { type: Number, default: 0 },
     nextAttemptAt: { type: Date },

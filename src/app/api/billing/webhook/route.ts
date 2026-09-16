@@ -90,14 +90,14 @@ export async function POST(req: Request) {
       const period = getPeriodDates(sub);
 
       await Subscription.findOneAndUpdate(
-        { stripeSubscriptionId: sub.id },
+        { stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } },
         { status: "active", ...period }
       );
 
       // Record the payment in our own ledger (transaction history + finance
       // read from here, not from Stripe). Upsert on invoice id: Stripe may
       // redeliver, and the backfill script may have written it already.
-      const localSub = await Subscription.findOne({ stripeSubscriptionId: sub.id });
+      const localSub = await Subscription.findOne({ stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } });
       if (localSub && invoice.amount_paid > 0) {
         const line = invoice.lines.data[0];
         const priceId = sub.items.data[0]?.price.id;
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
       const planLabel = priceId ? getPlanByPriceId(priceId)?.label : undefined;
 
       await Subscription.findOneAndUpdate(
-        { stripeSubscriptionId: sub.id },
+        { stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } },
         {
           status: mappedStatus,
           ...(priceId ? { stripePriceId: priceId } : {}),
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       await Subscription.findOneAndUpdate(
-        { stripeSubscriptionId: sub.id },
+        { stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } },
         { status: "canceled" }
       );
       break;
