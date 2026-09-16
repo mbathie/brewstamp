@@ -67,6 +67,21 @@ export default function PerkCustomerClient({
     initialEmailAllowed && initialEmailVerified ? "done" : "email",
   );
   const [email, setEmail] = useState(customerEmail || "");
+
+  // Landing from the one-tap verify link in the email.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("verified") === "1") {
+      toast.success("Email verified — you're all set.");
+    } else if (q.get("verify") === "expired") {
+      toast.error("That link has expired. Enter your email again for a fresh one.");
+    } else {
+      return;
+    }
+    q.delete("verified"); q.delete("verify");
+    const qs = q.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, []);
   const [emailError, setEmailError] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
 
@@ -455,7 +470,7 @@ export default function PerkCustomerClient({
                     className="text-xs"
                     style={{ color: fgHex, opacity: 0.7 }}
                   >
-                    Enter the 6-digit code we emailed to{" "}
+                    Tap the button in the email we sent, or enter the 6-digit code we emailed to{" "}
                     <span style={{ opacity: 1, fontWeight: 600 }}>
                       {email.trim().toLowerCase()}
                     </span>

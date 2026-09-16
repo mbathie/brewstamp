@@ -4,7 +4,9 @@ import { Customer, Shop } from "@/models";
 import { emailDomainAllowed } from "@/lib/perk";
 import {
   generatePerkCode,
+  generatePerkLinkToken,
   hashPerkCode,
+  hashPerkLinkToken,
   PERK_CODE_TTL_MS,
 } from "@/lib/perk-verify";
 import { sendPerkVerifyCodeEmail } from "@/lib/email";
@@ -52,17 +54,22 @@ export async function POST(req: Request) {
   }
 
   const code = generatePerkCode();
+  const linkToken = generatePerkLinkToken();
   customer.email = value;
   customer.emailVerified = false;
   customer.emailVerifiedAt = undefined;
   customer.emailVerifyCodeHash = hashPerkCode(code);
+  customer.emailVerifyLinkHash = hashPerkLinkToken(linkToken);
   customer.emailVerifyExpires = new Date(Date.now() + PERK_CODE_TTL_MS);
   customer.emailVerifyAttempts = 0;
   await customer.save();
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://brewstamp.app";
+  const link = `${appUrl}/s/verify/${linkToken}`;
+
   // Fire-and-forget — a slow SMTP hop shouldn't block the counter UI. The
   // customer can hit "Resend" if it never arrives.
-  sendPerkVerifyCodeEmail({ to: value, code, shopName: shop.name }).catch((err) =>
+  sendPerkVerifyCodeEmail({ to: value, code, link, shopName: shop.name }).catch((err) =>
     console.error("[PerkVerify] send failed:", err),
   );
 

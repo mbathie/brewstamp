@@ -49,8 +49,10 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // /s/ customer-scan pages — anonymous-id cookie for stamp continuity
-  if (pathname.startsWith("/s/")) {
+  // /s/ customer-scan pages — anonymous-id cookie for stamp continuity.
+  // /s/verify/<token> sets the cookie itself (to a specific identity), so
+  // don't mint a throwaway one first.
+  if (pathname.startsWith("/s/") && !pathname.startsWith("/s/verify/")) {
     if (request.cookies.get(ID_COOKIE)?.value) return NextResponse.next();
     const response = NextResponse.next();
     response.cookies.set(ID_COOKIE, crypto.randomUUID(), {

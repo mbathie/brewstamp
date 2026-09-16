@@ -143,10 +143,12 @@ export async function sendResetEmail({
 export async function sendPerkVerifyCodeEmail({
   to,
   code,
+  link,
   shopName,
 }: {
   to: string;
   code: string;
+  link?: string;
   shopName: string;
 }) {
   const html = `
@@ -178,6 +180,15 @@ export async function sendPerkVerifyCodeEmail({
       </td>
     </tr>
 
+    ${link ? `
+    <!-- One-tap link: verifies and lands on the card in whichever browser opens it -->
+    <tr>
+      <td style="padding: 8px 24px 12px; text-align: center;">
+        <a href="${link}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 16px 36px; border-radius: 10px; font-size: 17px; font-weight: 700;"><span style="color: #ffffff;">Tap to verify &amp; get your coffee</span></a>
+        <p style="margin: 12px 0 0; font-size: 13px; color: #78716c;">Or, if you still have the page open, enter this code:</p>
+      </td>
+    </tr>` : ""}
+
     <!-- Code -->
     <tr>
       <td style="padding: 8px 24px 24px; text-align: center;">
@@ -188,7 +199,7 @@ export async function sendPerkVerifyCodeEmail({
     <tr>
       <td style="padding: 0 24px 32px;">
         <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.5;">
-          This code expires in 10 minutes. If you didn&rsquo;t request it, you can safely ignore this email.
+          This expires in 30 minutes. If you didn&rsquo;t request it, you can safely ignore this email.
         </p>
       </td>
     </tr>

@@ -17,6 +17,8 @@ const customerSchema = new mongoose.Schema(
     // route opts in via .select("+emailVerifyCodeHash").
     emailVerifyCodeHash: { type: String, select: false },
     emailVerifyExpires: { type: Date },
+    // Magic-link alternative to the code (same expiry). Hashed at rest.
+    emailVerifyLinkHash: { type: String, select: false, index: true, sparse: true },
     emailVerifyAttempts: { type: Number, default: 0 },
     // How many times this email has been verified at a perk shop, including
     // verifications from throwaway sessions that were merged into this record.
