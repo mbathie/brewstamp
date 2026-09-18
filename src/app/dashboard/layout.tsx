@@ -10,6 +10,9 @@ import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
 import { getPlanBySlug, subscriptionTier } from "@/lib/plans";
+
+// Free plan stamp allowance (the approve route enforces the same number).
+const FREE_STAMP_LIMIT = getPlanBySlug("free")!.stampLimit as number;
 import {
   SidebarInset,
   SidebarProvider,
@@ -169,6 +172,8 @@ export default async function DashboardLayout({
                 fgColor={ctx.shop.fgColor || "amber-600"}
                 bgPattern={ctx.shop.bgPattern || "none"}
                 language={ctx.shop.language || "en"}
+                freeStampsLeft={activeSub ? null : Math.max(0, FREE_STAMP_LIMIT - totalStamps)}
+                freeStampLimit={FREE_STAMP_LIMIT}
               />
             )}
             <div className="ml-auto flex items-center gap-3">

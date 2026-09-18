@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Gift, StickyNote, Crown, Coffee } from "lucide-react";
+import { Minus, Plus, Gift, StickyNote, Crown, Coffee, Lock, ArrowRight } from "lucide-react";
 
 interface StampRequestData {
   requestId: string;
@@ -30,17 +31,31 @@ interface Props {
   request: StampRequestData | null;
   onApprove: (requestId: string, stampsAwarded: number, redeem: boolean) => void;
   onReject: (requestId: string) => void;
+  // Free-plan stamp allowance still available, or null when the shop has a
+  // paid plan (unlimited). At 0 the modal swaps the award controls for an
+  // upgrade prompt — the server would refuse the stamps anyway.
+  freeStampsLeft?: number | null;
+  freeStampLimit?: number;
 }
 
 export default function StampRequestModal({
   request,
   onApprove,
   onReject,
+  freeStampsLeft = null,
+  freeStampLimit = 100,
 }: Props) {
   const [stampsToAward, setStampsToAward] = useState(1);
   const [redeemStamps, setRedeemStamps] = useState(0);
 
   if (!request) return null;
+
+  // Perk requests award no stamps, so the free limit never applies to them.
+  const atLimit = !request.perk && freeStampsLeft != null && freeStampsLeft <= 0;
+  // Cap the counter at what's left, so a near-limit shop can't queue up a
+  // +5 that the server will reject.
+  const maxAward = freeStampsLeft == null ? 10 : Math.max(1, Math.min(10, freeStampsLeft));
+  const maxRedeemAward = freeStampsLeft == null ? 10 : Math.max(0, Math.min(10, freeStampsLeft));
 
   return (
     <Dialog open={!!request}>
@@ -92,7 +107,56 @@ export default function StampRequestModal({
           )}
         </DialogHeader>
 
-        {request.perk ? (
+        {atLimit ? (
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-center">
+              <Lock className="h-6 w-6 text-red-400" />
+              <p className="text-sm font-semibold text-red-300">
+                Free plan limit reached
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You&apos;ve used all {freeStampLimit}{" "}stamps on the Free plan, so this
+                stamp can&apos;t be awarded. Pick a plan to keep stamping — your
+                customers, cards and history all carry over.
+              </p>
+            </div>
+            <Button
+              asChild
+              className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
+              size="lg"
+            >
+              <Link href="/dashboard/billing">
+                Choose a plan <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => onReject(request.requestId)}
+                className="flex-1 cursor-pointer"
+                size="lg"
+              >
+                Decline request
+              </Button>
+              {request.redeem && (
+                <Button
+                  variant="outline"
+                  onClick={() => onApprove(request.requestId, 0, true)}
+                  className="flex-1 cursor-pointer border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+                  size="lg"
+                >
+                  <Gift className="mr-1.5 h-4 w-4" />
+                  Redeem only
+                </Button>
+              )}
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              {request.redeem
+                ? "Redeeming a reward doesn't use a stamp, so you can still honour it."
+                : "The customer will be told to try again once you've upgraded."}
+            </p>
+          </div>
+        ) : request.perk ? (
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4">
               <Coffee className="h-6 w-6 text-amber-700" />
@@ -151,8 +215,8 @@ export default function StampRequestModal({
                 <Button
                   size="icon"
                   className="h-12 w-12 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
-                  onClick={() => setRedeemStamps(Math.min(10, redeemStamps + 1))}
-                  disabled={redeemStamps >= 10}
+                  onClick={() => setRedeemStamps(Math.min(maxRedeemAward, redeemStamps + 1))}
+                  disabled={redeemStamps >= maxRedeemAward}
                 >
                   <Plus className="h-5 w-5" />
                 </Button>
@@ -186,6 +250,12 @@ export default function StampRequestModal({
               <p className="text-sm font-medium text-muted-foreground">
                 Stamps to award
               </p>
+              {freeStampsLeft != null && freeStampsLeft <= 10 && (
+                <p className="text-xs text-amber-400">
+                  {freeStampsLeft} free stamp{freeStampsLeft === 1 ? "" : "s"} left —{" "}
+                  <Link href="/dashboard/billing" className="underline underline-offset-2">upgrade</Link>
+                </p>
+              )}
               <div className="flex items-center gap-6">
                 <Button
                   size="icon"
@@ -204,9 +274,9 @@ export default function StampRequestModal({
                   size="icon"
                   className="h-14 w-14 cursor-pointer rounded-full bg-amber-700 text-white hover:bg-amber-800"
                   onClick={() =>
-                    setStampsToAward(Math.min(10, stampsToAward + 1))
+                    setStampsToAward(Math.min(maxAward, stampsToAward + 1))
                   }
-                  disabled={stampsToAward >= 10}
+                  disabled={stampsToAward >= maxAward}
                 >
                   <Plus className="h-6 w-6" />
                 </Button>

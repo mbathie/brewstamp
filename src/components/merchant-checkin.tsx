@@ -23,6 +23,7 @@ export default function MerchantCheckin({
   threshold,
 }: Props) {
   const router = useRouter();
+  const [limitHit, setLimitHit] = useState(false);
   const [requestData, setRequestData] = useState<{
     requestId: string;
     customerId: string;
@@ -91,9 +92,17 @@ export default function MerchantCheckin({
         toast.success(`${customerName} — ${parts.join(", ")}`);
         router.refresh();
         window.dispatchEvent(new Event("stamp-approved"));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        if (err.code === "LIMIT_REACHED") {
+          setLimitHit(true);
+          return;
+        }
+        toast.error(err.error || "Could not approve");
       }
 
       setRequestData(null);
+      setLimitHit(false);
     },
     [customerName, threshold, router]
   );
@@ -132,7 +141,8 @@ export default function MerchantCheckin({
       <StampRequestModal
         request={requestData}
         onApprove={handleApprove}
-        onReject={handleReject}
+        onReject={(id) => { setLimitHit(false); handleReject(id); }}
+        freeStampsLeft={limitHit ? 0 : null}
       />
     </>
   );

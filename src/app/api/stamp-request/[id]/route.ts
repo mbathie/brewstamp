@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getPlanBySlug } from "@/lib/plans";
 import { connectDB } from "@/lib/mongoose";
 import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
@@ -147,9 +148,10 @@ export async function PATCH(
             { $group: { _id: null, total: { $sum: "$totalEarned" } } },
           ]);
           const totalStamps = agg?.total || 0;
-          if (totalStamps + awarded > 100) {
+          const freeLimit = getPlanBySlug("free")!.stampLimit as number;
+          if (totalStamps + awarded > freeLimit) {
             return NextResponse.json(
-              { error: "Stamp limit reached. Upgrade to Pro for unlimited stamps.", code: "LIMIT_REACHED" },
+              { error: `Free plan limit of ${freeLimit} stamps reached. Pick a plan to keep stamping.`, code: "LIMIT_REACHED" },
               { status: 403 }
             );
           }

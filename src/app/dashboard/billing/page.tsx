@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Card,
@@ -128,7 +128,12 @@ export default function BillingPage() {
   const [updatingCard, setUpdatingCard] = useState(false);
   const [tab, setTab] = useState<"plans" | "history">("plans");
 
+  const router = useRouter();
   function reload() {
+    // The dashboard layout (plan badge, free-stamp gate on the approval
+    // modal) is a server component — refresh it too so an upgrade takes
+    // effect everywhere without a hard reload.
+    router.refresh();
     return fetch("/api/billing")
       .then((r) => r.json())
       .then(setData);

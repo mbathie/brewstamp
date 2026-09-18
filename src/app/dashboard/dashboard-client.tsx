@@ -36,6 +36,9 @@ interface Props {
   fgColor: string;
   bgPattern: string;
   language: string;
+  // Free-plan usage from the layout; null once the shop has a paid plan.
+  freeStampsLeft: number | null;
+  freeStampLimit: number;
 }
 
 export default function DashboardClient({
@@ -50,9 +53,14 @@ export default function DashboardClient({
   fgColor,
   bgPattern,
   language,
+  freeStampsLeft,
+  freeStampLimit,
 }: Props) {
   const router = useRouter();
   const [currentRequest, setCurrentRequest] = useState<StampRequestData | null>(null);
+  // Set when the server refuses an approval with LIMIT_REACHED — the layout's
+  // count can lag by a request or two, so this forces the upgrade prompt.
+  const [limitHit, setLimitHit] = useState(false);
   const currentRequestRef = useRef<StampRequestData | null>(null);
   const { connected, send, on } = useWebSocket(shopCode, "merchant", "merchant");
 
@@ -176,6 +184,9 @@ export default function DashboardClient({
       }
 
       setCurrentRequest(request);
+      // Re-run the layout so the free-stamp count the modal gates on is
+      // current as of this request, not the last page load.
+      router.refresh();
 
       // Fetch merchant-side tags/notes for this customer (not exposed to the
       // customer's browser, so we hydrate after the modal opens).
@@ -220,7 +231,7 @@ export default function DashboardClient({
       unsub();
       unsubCancel();
     };
-  }, [on, threshold, send]);
+  }, [on, threshold, send, router]);
 
   // Durable fallback for the live WebSocket: pull any fresh pending request
   // straight from the DB. The WS frame can be missed if the merchant tab was
@@ -324,9 +335,19 @@ export default function DashboardClient({
           });
           flashTimer.current = setTimeout(() => setFlash(null), 1500);
         }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        if (err.code === "LIMIT_REACHED") {
+          // Keep the request open and swap to the upgrade prompt.
+          setLimitHit(true);
+          router.refresh();
+          return;
+        }
+        toast.error(err.error || "Could not approve the request");
       }
 
       setCurrentRequest(null);
+      setLimitHit(false);
     },
     [currentRequest, send, router, threshold]
   );
@@ -395,7 +416,9 @@ export default function DashboardClient({
       <StampRequestModal
         request={currentRequest}
         onApprove={handleApprove}
-        onReject={handleReject}
+        onReject={(id) => { setLimitHit(false); handleReject(id); }}
+        freeStampsLeft={limitHit ? 0 : freeStampsLeft}
+        freeStampLimit={freeStampLimit}
       />
     </>
   );
