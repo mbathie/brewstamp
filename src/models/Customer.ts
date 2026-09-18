@@ -3,6 +3,12 @@ import mongoose from "mongoose";
 const customerSchema = new mongoose.Schema(
   {
     cookieId: { type: String, required: true, unique: true },
+    // Set when this row was folded into an earlier identity for the same
+    // verified email (perk-mode reconcile). The row is kept — not deleted —
+    // so a browser that never applied the swapped id cookie still resolves
+    // to the right person via this pointer instead of minting a fresh
+    // identity and looping back to "enter your email".
+    mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
     name: { type: String },
     email: { type: String },
     // select:false so the bcrypt hash is never returned by default — routes that

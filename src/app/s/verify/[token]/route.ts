@@ -53,8 +53,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       await StampRequest.updateMany({ shop: shop._id, customer: customer._id }, { customer: canonical._id });
       await Customer.updateOne({ _id: canonical._id }, { $inc: { perkVerifications: 1 } });
       await StampCard.deleteOne({ shop: shop._id, customer: customer._id });
+      // Keep the throwaway as a pointer (see confirm/route.ts) so a cookie
+      // that never got swapped still resolves to the canonical identity.
       const otherCards = await StampCard.countDocuments({ customer: customer._id });
-      if (otherCards === 0) await Customer.deleteOne({ _id: customer._id });
+      if (otherCards === 0) await Customer.updateOne({ _id: customer._id }, { $set: { mergedInto: canonical._id } });
       identity = canonical as typeof customer;
     }
   }

@@ -131,9 +131,16 @@ async function reconcileDuplicate(
   );
   // Drop the duplicate's (empty) perk card at this shop — canonical has one.
   await StampCard.deleteOne({ shop: shopId, customer: current._id });
-  // Remove the throwaway customer entirely if it isn't used anywhere else.
+  // If the throwaway isn't used anywhere else, keep it as a pointer to the
+  // canonical row rather than deleting it: if this browser doesn't apply the
+  // cookie swap below (older Android WebViews and in-app viewers drop
+  // Set-Cookie on fetch responses), its unchanged cookie would otherwise hit
+  // a deleted row on reload, mint a brand-new identity, and loop the person
+  // straight back to "enter your email".
   const otherCards = await StampCard.countDocuments({ customer: current._id });
-  if (otherCards === 0) await Customer.deleteOne({ _id: current._id });
+  if (otherCards === 0) {
+    await Customer.updateOne({ _id: current._id }, { $set: { mergedInto: canonical._id } });
+  }
 
   // Re-point this browser at the canonical identity (same attributes proxy.ts
   // uses to mint it).

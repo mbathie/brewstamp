@@ -13,6 +13,15 @@ export async function getOrCreateCustomer() {
   await connectDB();
   let customer = await Customer.findOne({ cookieId });
 
+  // Follow merge pointers to the surviving identity (bounded, in case of a
+  // cycle from some future bad write). The cookie itself is left alone —
+  // the pointer makes it resolve correctly for as long as it lives.
+  for (let hops = 0; customer?.mergedInto && hops < 5; hops++) {
+    const next = await Customer.findById(customer.mergedInto);
+    if (!next) break;
+    customer = next;
+  }
+
   if (!customer) {
     customer = await Customer.create({ cookieId });
   }
