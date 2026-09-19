@@ -3,7 +3,9 @@ import { auth, getMerchant } from "@/lib/auth";
 import { getCurrentShopContext } from "@/lib/shop-context";
 import { getUserPlanLimits } from "@/lib/plan-limits";
 import { connectDB } from "@/lib/mongoose";
-import { StampRequest, StampCard } from "@/models";
+import { StampRequest, StampCard, Subscription } from "@/models";
+import { resolveSub } from "@/lib/plans";
+import { stripeAmount } from "@/lib/paypal-billing";
 import DashboardContent from "@/components/dashboard-content";
 import DashboardAggregate from "@/components/dashboard-aggregate";
 
@@ -147,8 +149,32 @@ export default async function DashboardPage({
     !!merchant.shop.bgPattern && merchant.shop.bgPattern !== "none";
   const setupComplete = !!merchant.shop.logo || customColors || customPattern;
 
+  // Paid shop that hasn't saved a card on PayPal yet (still on Stripe, has
+  // been emailed a migration link, not cancelling) — surface the same link.
+  const stripeSub = await Subscription.findOne({
+    shop: merchant.shop._id,
+    provider: { $ne: "paypal" },
+    status: { $in: ["active", "past_due"] },
+    migrationToken: { $exists: true, $ne: null },
+    migratedAt: null,
+    cancelAtPeriodEnd: { $ne: true },
+  }).lean();
+  const cardMigration = stripeSub
+    ? (() => {
+        const { amountCents, currency } = stripeAmount(stripeSub);
+        return {
+          link: `/billing/migrate/${stripeSub.migrationToken}`,
+          planLabel: resolveSub(stripeSub).label,
+          renewsAt: stripeSub.currentPeriodEnd ? new Date(stripeSub.currentPeriodEnd).toISOString() : null,
+          amountCents,
+          currency,
+        };
+      })()
+    : null;
+
   return (
     <DashboardContent
+      cardMigration={cardMigration}
       shopName={merchant.shop.name}
       shopCode={merchant.shop.code}
       shopLogo={merchant.shop.logo || null}

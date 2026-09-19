@@ -38,6 +38,7 @@ import {
   Settings as SettingsIcon,
   Smartphone,
   UserPen,
+  CreditCard,
 } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -113,6 +114,15 @@ interface Props {
   hasActivity?: boolean;
   needsProfileUpdate?: boolean;
   setupComplete?: boolean;
+  // Paid shop still billed through Stripe: nudge them to save a card on
+  // PayPal via their one-time migration link (same link as the email).
+  cardMigration?: {
+    link: string;
+    planLabel: string;
+    renewsAt: string | null; // ISO date
+    amountCents: number;
+    currency: string;
+  } | null;
 }
 
 const chartConfig = {
@@ -137,6 +147,7 @@ export default function DashboardContent({
   hasActivity = false,
   needsProfileUpdate,
   setupComplete = false,
+  cardMigration = null,
 }: Props) {
   const program = getProgram(perkMode);
   const [range, setRange] = useState<Range>("today");
@@ -602,6 +613,38 @@ export default function DashboardContent({
         </div>
       ) : (
         <>
+          {cardMigration && (
+            <Card className="border-red-500/30 bg-red-500/5">
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-5 w-5 shrink-0 text-red-400" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Action needed: update your payment card
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      We&apos;ve moved billing to PayPal. Save your card before
+                      your {cardMigration.planLabel} plan renews
+                      {cardMigration.renewsAt
+                        ? ` on ${new Date(cardMigration.renewsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                        : ""}{" "}
+                      ({new Intl.NumberFormat("en", { style: "currency", currency: cardMigration.currency.toUpperCase() }).format(cardMigration.amountCents / 100)})
+                      so it continues without interruption. Takes about a minute.
+                    </p>
+                  </div>
+                </div>
+                <Link href={cardMigration.link}>
+                  <Button
+                    size="sm"
+                    className="cursor-pointer bg-amber-700 hover:bg-amber-800"
+                  >
+                    Update card
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
           {!setupComplete && (
             <Card className="border-amber-600/30 bg-amber-700/5">
               <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
