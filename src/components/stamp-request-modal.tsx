@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,7 @@ export default function StampRequestModal({
 }: Props) {
   const [stampsToAward, setStampsToAward] = useState(1);
   const [redeemStamps, setRedeemStamps] = useState(0);
+  const router = useRouter();
 
   if (!request) return null;
 
@@ -121,13 +123,17 @@ export default function StampRequestModal({
               </p>
             </div>
             <Button
-              asChild
               className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
               size="lg"
+              onClick={() => {
+                // The request can't be fulfilled until the shop upgrades, so
+                // decline it (closes the dialog, tells the customer) and go
+                // straight to the plans.
+                onReject(request.requestId);
+                router.push("/dashboard/billing");
+              }}
             >
-              <Link href="/dashboard/billing">
-                Choose a plan <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
+              Choose a plan <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
             <div className="flex gap-3">
               <Button
