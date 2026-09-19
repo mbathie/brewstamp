@@ -6,18 +6,18 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Coffee Loyalty Card: Complete Guide for Cafes",
+  title: "Digital Loyalty Cards for Cafes: How They Work & What They Cost",
   description:
-    "Everything cafe owners need to know about digital coffee loyalty cards — how they work, what they cost, and why digital outperforms paper.",
+    "A cafe owner's guide to digital loyalty cards: how QR-code stamp cards work, what they cost, what to look for, and why cafes are switching from paper.",
   alternates: {
     canonical: "/blog/digital-loyalty-cards-for-cafes",
   },
   openGraph: {
     type: "article",
     url: "/blog/digital-loyalty-cards-for-cafes",
-    title: "Coffee Loyalty Card: The Complete Guide for Cafes (2026)",
+    title: "Digital Loyalty Cards for Cafes: How They Work & What They Cost (2026)",
     description:
-      "How a digital coffee loyalty card works, how much it costs, and why cafes are switching from paper stamp cards.",
+      "How a digital loyalty card works in a cafe, what it costs, what to look for, and why cafes are switching from paper stamp cards.",
     images: [
       {
         url: "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Coffee Loyalty Card: The Complete Guide for Cafes",
+    title: "Digital Loyalty Cards for Cafes: How They Work & What They Cost",
     description:
-      "How a digital coffee loyalty card works, how much it costs, and why cafes are switching from paper stamp cards.",
+      "How a digital loyalty card works in a cafe, what it costs, what to look for, and why cafes are switching from paper stamp cards.",
     images: [
       "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Coffee Loyalty Card: The Complete Guide for Cafes (2026)",
+  headline: "Digital Loyalty Cards for Cafes: How They Work & What They Cost (2026)",
   description:
-    "How a digital coffee loyalty card works, what it costs, and why cafes are switching from paper stamp cards to a digital coffee loyalty card.",
+    "How digital loyalty cards work in a cafe, what they cost, what to look for, and why cafes are switching from paper stamp cards.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -52,7 +52,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/digital-loyalty-cards-for-cafes",
   datePublished: "2026-02-27",
-  dateModified: "2026-05-05",
+  dateModified: "2026-09-20",
   image:
     "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -72,17 +72,24 @@ export default function BlogPost() {
               Guide
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              Coffee Loyalty Card: The Complete Guide for Cafes
+              Digital Loyalty Cards for Cafes: The Complete Guide
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
-              The paper coffee loyalty card gets lost, forgotten, fed to a
-              washing machine, or filed permanently inside a copy of <em>The
-              Sopranos</em> box set. A digital coffee loyalty card fixes all of
-              this — and it&apos;s easier to set up than you think.
+              The paper{" "}
+              <Link
+                href="/blog/coffee-shop-loyalty-cards"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee loyalty card
+              </Link>{" "}
+              gets lost, forgotten, fed to a washing machine, or filed
+              permanently inside a copy of <em>The Sopranos</em> box set. A
+              digital loyalty card fixes all of this — and it&apos;s easier to
+              set up than you think.
             </p>
             <p className="mt-3 text-sm text-stone-400">
               Published <time dateTime="2026-02-27">27 February 2026</time>
-              {" · "}Updated <time dateTime="2026-05-05">5 May 2026</time>
+              {" · "}Updated <time dateTime="2026-09-20">20 September 2026</time>
             </p>
           </header>
 
@@ -92,11 +99,10 @@ export default function BlogPost() {
               In short
             </p>
             <p className="mt-2 text-base leading-relaxed text-stone-700">
-              A coffee loyalty card is a stamp-collection program that rewards
-              customers with a free drink after a set number of purchases
-              (commonly 8). A digital coffee loyalty card runs on the
-              customer&apos;s phone — they scan a QR code at the counter to
-              collect stamps, with no app to download. Digital coffee loyalty
+              A digital loyalty card for a cafe is a stamp card that lives on
+              the customer&apos;s phone. They scan a QR code at the counter to
+              collect a stamp, and after a set number of purchases (commonly 8)
+              they earn a free drink — with no app to download. Digital loyalty
               cards outperform paper because they can&apos;t be lost, can&apos;t
               be faked, and give the cafe usable customer data.
             </p>
@@ -118,17 +124,17 @@ export default function BlogPost() {
           {/* Section 1 */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              What is a digital coffee loyalty card?
+              What is a digital loyalty card for a cafe?
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              A digital coffee loyalty card replaces the traditional paper stamp
-              card with a phone-based version. Instead of carrying a physical
-              coffee loyalty card and getting it stamped, your customers scan a
-              QR code at the counter and collect stamps on their phone.
+              A digital loyalty card replaces the traditional paper stamp card
+              with a phone-based version. Instead of carrying a physical card
+              and getting it stamped, your customers scan a QR code at the
+              counter and collect stamps on their phone.
             </p>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              The key difference from a coffee loyalty card app like the ones
-              big chains run: your customers don&apos;t need to download
+              The key difference from a loyalty app like the ones big chains
+              run: your customers don&apos;t need to download
               anything. The entire experience runs in their phone&apos;s
               browser. They scan, they see their card, they collect stamps.
             </p>
@@ -287,34 +293,41 @@ export default function BlogPost() {
           {/* Section 5 */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              How much does a coffee loyalty card cost?
+              How much do digital loyalty cards cost?
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              Pricing for a digital coffee loyalty card varies widely.
-              Enterprise solutions like Stamp Me or Loyverse can run
-              $30–100+/month. Simpler coffee loyalty card solutions built
-              specifically for independent cafes are more affordable.
+              Pricing for digital loyalty cards varies widely. Enterprise
+              solutions like Stamp Me or Loyverse can run $30–100+/month.
+              Simpler digital loyalty card platforms built specifically for
+              independent cafes are more affordable.
             </p>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              Brewstamp, for example, is a free coffee loyalty card for your
-              first 100 stamps — enough to test if a loyalty program works for
-              your shop. After that, it&apos;s $7/month for unlimited stamps.
+              Brewstamp, for example, is free for your first 100 stamps —
+              enough to test if a loyalty program works for your shop. After
+              that, it&apos;s $7/month for unlimited stamps. If you&apos;re
+              deciding how many stamps to ask for and what reward to offer, the{" "}
+              <Link
+                href="/blog/coffee-shop-loyalty-cards"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee shop loyalty cards guide
+              </Link>{" "}
+              covers that side.
             </p>
           </section>
 
           {/* Section 6 */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              How does a coffee loyalty card work in practice?
+              How to trial a digital loyalty card in your cafe
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              The best way to test a digital coffee loyalty card is to just try
-              it. Most cafe owners are surprised how quickly their regulars
+              The best way to test a digital loyalty card is to just try it. Most cafe owners are surprised how quickly their regulars
               adopt it — especially when there&apos;s nothing to download.
             </p>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Print the QR code, stick it at the counter, and mention it when
-              regulars order. You&apos;ll know within a week whether the coffee
+              regulars order. You&apos;ll know within a week whether a digital
               loyalty card is a fit for your cafe.
             </p>
           </section>
@@ -322,29 +335,29 @@ export default function BlogPost() {
           {/* FAQ */}
           <section className="mb-14">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
-              Coffee loyalty card FAQ
+              Digital loyalty cards for cafes: FAQ
             </h2>
             <div className="mt-6 space-y-6">
               {[
                 {
-                  q: "How does a coffee loyalty card work?",
-                  a: "A customer collects a stamp each time they buy a coffee. After hitting a set threshold — most commonly 8 stamps — they earn a free drink. With a digital coffee loyalty card, the stamps are stored on the customer's phone after they scan a QR code at the counter.",
+                  q: "How does a digital loyalty card work in a cafe?",
+                  a: "A customer collects a stamp each time they buy a coffee. After hitting a set threshold — most commonly 8 stamps — they earn a free drink. With a digital loyalty card, the stamps are stored on the customer's phone after they scan a QR code at the counter.",
                 },
                 {
-                  q: "What's the best coffee loyalty card for a small cafe?",
-                  a: "For most independent cafes, a digital coffee loyalty card with no required app download is the strongest fit. It eliminates lost cards and stamp fraud, costs less than a paid POS-integrated loyalty platform, and customers don't need to install anything to use it.",
+                  q: "What's the best digital loyalty card for a small cafe?",
+                  a: "For most independent cafes, a digital loyalty card with no required app download is the strongest fit. It eliminates lost cards and stamp fraud, costs less than a paid POS-integrated loyalty platform, and customers don't need to install anything to use it.",
                 },
                 {
-                  q: "Are coffee loyalty cards worth it?",
-                  a: "Yes — when implemented well. Loyalty programs lift visit frequency 20–30% on average, and 75% of customers say they're more likely to return after receiving an incentive. The format matters: paper cards have a 50–70% loss rate, while digital coffee loyalty cards retain virtually all of their members.",
+                  q: "Are digital loyalty cards worth it for a cafe?",
+                  a: "Yes — when implemented well. Loyalty programs lift visit frequency 20–30% on average, and 75% of customers say they're more likely to return after receiving an incentive. The format matters: paper cards have a 50–70% loss rate, while digital loyalty cards retain virtually all of their members.",
                 },
                 {
-                  q: "How much does a digital coffee loyalty card cost?",
-                  a: "Free or near-free for small cafes. Most browser-based digital coffee loyalty cards offer a free tier (typically up to ~100 stamps) and charge $5–10/month for unlimited stamps. Enterprise platforms like Stamp Me or Loyverse run $30–100+/month.",
+                  q: "How much do digital loyalty cards cost?",
+                  a: "Free or near-free for small cafes. Most browser-based digital loyalty cards offer a free tier (typically up to ~100 stamps) and charge $5–10/month for unlimited stamps. Enterprise platforms like Stamp Me or Loyverse run $30–100+/month.",
                 },
                 {
-                  q: "Do customers need an app for a coffee loyalty card?",
-                  a: "Not with the right platform. Browser-based digital coffee loyalty cards open in the customer's phone browser when they scan the QR code — no App Store install, no account creation, no password. The card lives on a web page they can bookmark or save to their home screen.",
+                  q: "Do customers need an app for a digital loyalty card?",
+                  a: "Not with the right platform. Browser-based digital loyalty cards open in the customer's phone browser when they scan the QR code — no App Store install, no account creation, no password. The card lives on a web page they can bookmark or save to their home screen.",
                 },
               ].map(({ q, a }) => (
                 <details
@@ -368,11 +381,10 @@ export default function BlogPost() {
           {/* CTA */}
           <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center">
             <h3 className="text-xl font-bold text-stone-900">
-              Try a free coffee loyalty card — takes 2 minutes
+              Try a free digital loyalty card for your cafe — takes 2 minutes
             </h3>
             <p className="mt-2 text-stone-500">
-              Set up your digital coffee loyalty card and print your QR code
-              today.
+              Set up your digital loyalty card and print your QR code today.
             </p>
             <div className="mt-6">
               <Link href="/register">

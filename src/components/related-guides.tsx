@@ -35,8 +35,8 @@ const GUIDES: Array<{ href: string; anchor: string; blurb: string }> = [
   },
   {
     href: "/blog/digital-loyalty-cards-for-cafes",
-    anchor: "Coffee loyalty card: the complete guide",
-    blurb: "What a coffee loyalty card is, the 8-stamp rule, and how to launch one in under two minutes.",
+    anchor: "Digital loyalty cards for cafes: the complete guide",
+    blurb: "How a digital loyalty card works at the counter, what it costs, and what to look for in a platform.",
   },
 ];
 

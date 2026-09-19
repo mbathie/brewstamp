@@ -342,7 +342,7 @@ export default function CafeLoyaltyAppPage() {
                 href="/blog/digital-loyalty-cards-for-cafes"
                 className="text-amber-700 underline-offset-2 hover:underline"
               >
-                Coffee loyalty card: the complete guide →
+                Digital loyalty cards for cafes: the complete guide →
               </Link>
             </li>
           </ul>

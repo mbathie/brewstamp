@@ -178,9 +178,9 @@ const posts = [
   },
   {
     slug: "digital-loyalty-cards-for-cafes",
-    title: "Coffee Loyalty Card: The Complete Guide for Cafes",
+    title: "Digital Loyalty Cards for Cafes: The Complete Guide",
     description:
-      "Everything cafe owners need to know about the digital coffee loyalty card. How it works, what it costs, and why it outperforms paper stamp cards.",
+      "How digital loyalty cards work in a cafe, what they cost, what to look for, and why cafes are switching from paper stamp cards.",
     tag: "Guide",
     image:
       "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",

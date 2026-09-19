@@ -77,6 +77,18 @@ faster than clicks.
 - "loyalty card coffee shop" 164 impr at 9.3; "loyalty card cafe" 163 at 10.3 — still the page-1 zero-click pair. "coffee loyalty app" 3 clicks at 2.2%.
 - **By country:** AUS 49 (3.7%), GBR 25 (1.5%), USA 15 on 3,111 impr (0.5%). Mobile 118 clicks at 3.2% vs desktop 75 at 1.1%.
 
+**Action 2026-09-20 — de-cannibalised "coffee loyalty card".** The #1 query
+(258 impr) was split across three URLs (`/`, the money page, and
+`/blog/digital-loyalty-cards-for-cafes`, whose title was "Coffee Loyalty Card:
+Complete Guide"), none inside the top 10. Retargeted that guide to its own slug
+term — title/meta/OG/H1/H2s/FAQ/CTA now "digital loyalty cards for cafes" —
+and pointed it at the money page with the exact anchor "coffee loyalty card".
+Inbound anchors (money page, /cafe-loyalty-app, /coffee-rewards-app,
+related-guides, blog index) updated to match. Expect: "coffee loyalty card"
+consolidates on `/blog/coffee-shop-loyalty-cards`; the guide should start
+showing for "digital loyalty card(s) for cafes" instead. Judge ~2026-10-10.
+Money-page title/meta rewrite (09-02) still too fresh to judge — check ~09-30.
+
 ---
 
 ## 2026-09-17

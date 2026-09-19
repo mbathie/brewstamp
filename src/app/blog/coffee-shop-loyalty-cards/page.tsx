@@ -827,7 +827,7 @@ export default function BlogPost() {
                   Guide
                 </p>
                 <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
-                  Digital loyalty cards for cafes
+                  Digital loyalty cards for cafes: the complete guide
                 </h3>
                 <p className="mt-2 text-sm text-stone-500">
                   How browser-based loyalty cards actually work in a busy cafe.

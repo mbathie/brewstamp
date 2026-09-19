@@ -314,7 +314,7 @@ export default function CoffeeRewardsAppPage() {
                 href="/blog/digital-loyalty-cards-for-cafes"
                 className="text-amber-700 underline-offset-2 hover:underline"
               >
-                Coffee Loyalty Card: The Complete Guide for Cafes →
+                Digital Loyalty Cards for Cafes: The Complete Guide →
               </Link>
             </li>
             <li>
