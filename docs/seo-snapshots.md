@@ -48,6 +48,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-14 | 08-15 → 09-11 | 10,166 (+54%) | 198 (+29%) | 1.9% | 10.2 |
 | 2026-09-16 | 08-17 → 09-13 | 10,445 (+58%) | 206 (+39%) | 2.0% | 10.2 |
 | 2026-09-17 | 08-18 → 09-14 | 10,430 (+56%) | 199 (+32%) | 1.9% | 10.1 |
+| 2026-09-20 | 08-20 → 09-16 | 10,432 (+49%) | 195 (+27%) | 1.9% | 10.1 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
@@ -65,6 +66,16 @@ Not a snippet win; the next lever on that page is rank into the top 5. Click
 growth is coming from the homepage (128 → 148 in a fortnight) and from the
 US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
 faster than clicks.
+
+---
+
+## 2026-09-20
+
+- **Impressions:** 10,432 (+49%) · **Clicks:** 195 (+27%) · **CTR:** 1.9% · **Avg pos:** 10.1
+- Plateau week: impressions flat at ~10.4k for three snapshots, clicks drifting 206 → 199 → 195 as strong mid-August days roll out of the window. Position holds at **10.1**. The +49% growth figure is shrinking because the comparison window is now catching the post-July ramp, not because anything fell.
+- `/blog/coffee-shop-loyalty-cards`: pos 8.9, 5,586 impr, 21 clicks, 0.4% — unchanged. Homepage 151 clicks, 3.9%, pos 11.4.
+- "loyalty card coffee shop" 164 impr at 9.3; "loyalty card cafe" 163 at 10.3 — still the page-1 zero-click pair. "coffee loyalty app" 3 clicks at 2.2%.
+- **By country:** AUS 49 (3.7%), GBR 25 (1.5%), USA 15 on 3,111 impr (0.5%). Mobile 118 clicks at 3.2% vs desktop 75 at 1.1%.
 
 ---
 
