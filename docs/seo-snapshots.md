@@ -49,6 +49,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-16 | 08-17 → 09-13 | 10,445 (+58%) | 206 (+39%) | 2.0% | 10.2 |
 | 2026-09-17 | 08-18 → 09-14 | 10,430 (+56%) | 199 (+32%) | 1.9% | 10.1 |
 | 2026-09-20 | 08-20 → 09-16 | 10,432 (+49%) | 195 (+27%) | 1.9% | 10.1 |
+| 2026-09-21 | 08-22 → 09-18 | 10,321 (+44%) | 184 (+18%) | 1.8% | 10.0 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
@@ -66,6 +67,19 @@ Not a snippet win; the next lever on that page is rank into the top 5. Click
 growth is coming from the homepage (128 → 148 in a fortnight) and from the
 US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
 faster than clicks.
+
+---
+
+## 2026-09-21
+
+- **Impressions:** 10,321 (+44%) · **Clicks:** 184 (+18%) · **CTR:** 1.8% · **Avg pos:** 10.0 (new best)
+- Window moved two days (ends 09-18). Clicks eased 195 → 184 as the strong early-August days rolled out; impressions flat around 10.3k. Avg position keeps grinding down — first time at 10.0.
+- Money page `/blog/coffee-shop-loyalty-cards`: 5,543 impr (54%), pos 8.9, 0.3% CTR (17 clicks). Held inside the top 10; snippet rewrite (09-02) still not judged — wait for ~09-30.
+- Homepage `/`: 3,822 impr, pos 11.2, 3.8% CTR, 147 clicks (80% of all clicks).
+- "coffee loyalty card" (258 impr, #1 query) pos 12.5 — this is the query yesterday's de-cannibalisation (7d3f371) targets; guide `/blog/digital-loyalty-cards-for-cafes` still indexed under its old title (418 impr, pos 23.6). Nothing to read yet.
+- Rising: "loyalty card cafe" +103% (pos 10.4), "loyalty card coffee shop" +109% (pos 9.1), "coffee card" +93% (11.4), "coffeeshop loyalty program" +525% (11.8). Falling: "coffee shop loyalty app" −42% (pos 31.2).
+- USA still 3,057 impr at 0.5% CTR; desktop 6,613 impr at 1.1% vs mobile 3.0%.
+- Pipeline (same day): 11 paying, MRR $83 (+12% vs 30d), 2 HIGH (Kudos Café, SEN), 3 MED (HASAN'S at 100/100, Munay, BUHO).
 
 ---
 
