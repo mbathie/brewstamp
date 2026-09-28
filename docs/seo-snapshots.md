@@ -50,6 +50,8 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-17 | 08-18 → 09-14 | 10,430 (+56%) | 199 (+32%) | 1.9% | 10.1 |
 | 2026-09-20 | 08-20 → 09-16 | 10,432 (+49%) | 195 (+27%) | 1.9% | 10.1 |
 | 2026-09-21 | 08-22 → 09-18 | 10,321 (+44%) | 184 (+18%) | 1.8% | 10.0 |
+| 2026-09-27 | 08-28 → 09-24 | 10,024 (+26%) | 190 (+14%) | 1.9% | 9.7 |
+| 2026-09-28 | 08-29 → 09-25 | 9,941 (+24%) | 188 (+11%) | 1.9% | 9.6 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
@@ -67,6 +69,31 @@ Not a snippet win; the next lever on that page is rank into the top 5. Click
 growth is coming from the homepage (128 → 148 in a fortnight) and from the
 US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
 faster than clicks.
+
+---
+
+## 2026-09-28
+
+- **Impressions:** 9,941 (+24%) · **Clicks:** 188 (+11%) · **CTR:** 1.9% · **Avg pos:** 9.6 (new best)
+- Window moved one day (ends 09-25). Essentially flat vs yesterday; position keeps edging down.
+- Money page `/blog/coffee-shop-loyalty-cards`: 5,318 impr, pos 9.0, 0.2% CTR (12 clicks). Unchanged; snippet verdict still due ~09-30.
+- Homepage `/`: 3,630 impr, pos 10.4, 4.2% CTR, 153 clicks.
+- `/blog/digital-loyalty-cards-for-cafes` pos 19.9 (was 20.6, 23.6) — de-cannibalisation still moving it up.
+- "coffee shop loyalty programs" now 99 impr (+560%) at pos **6.8**, 0 clicks. "coffee ticket app" pos 2.2, 56 impr, 0 clicks.
+- Pipeline (same day): **11 paying, MRR $83** (was $76) — HASAN'S Café converted 09-27 on PayPal (US$7 Pro), the shop that sat at 100/90 stamps. Coffee & Crust went past_due 09-26 (renewal failed). 3 HIGH (Kudos Café, Munay cafetería, EZPZ Lemon Squeezy LV), 6 MED.
+
+---
+
+## 2026-09-27
+
+- **Impressions:** 10,024 (+26%) · **Clicks:** 190 (+14%) · **CTR:** 1.9% · **Avg pos:** 9.7 (new best — first window under 10)
+- Window moved six days (ends 09-24). Impressions eased 10.3k → 10.0k as the peak late-August days rolled out; clicks recovered 184 → 190. The comparison base is now the strong August window, so the +% figures are compressing — expect that to continue.
+- Money page `/blog/coffee-shop-loyalty-cards`: 5,349 impr (53%), pos **9.0**, 0.2% CTR (13 clicks, was 17). Position holds inside the top 10 but CTR hasn't moved since the 09-02 snippet rewrite; judgment call due ~09-30 — on current data the rewrite did not lift CTR.
+- Homepage `/`: 3,691 impr, pos 10.5 (was 11.2), 4.1% CTR, 153 clicks (81% of all clicks). Brand query "brewstamp" 54 clicks (+74%).
+- De-cannibalisation (7d3f371): `/blog/digital-loyalty-cards-for-cafes` 452 impr, pos 20.6 (was 23.6) — moving the right way; "coffee loyalty card" (245 impr, #1 query) still pos 12.5, unchanged.
+- Rising: "coffee shop loyalty programs" +380% (pos 8.8), "coffee ticket app" +383% (pos 2.3, 0 clicks — worth a look), "coffee one loyalty card" +118% (8.5), "loyalty card cafe" +88% (10.1), "loyalty card coffee shop" +83% (9.1). Falling: "loyalty card cafe" clicks 1 → 0.
+- USA 2,942 impr at 0.7% CTR; desktop 6,449 impr at 1.1% vs mobile 3.4%. Unchanged pattern.
+- Pipeline (same day): **10 paying (was 11), MRR $76 (was $83)** — 2 new, 2 churned in 30d. 3 HIGH (Kudos Café, Munay cafetería, EZPZ Lemon Squeezy LV), 6 MED (HASAN'S Café at 100/90 stamps but idle 11d, SEN idle 7d, The Cheesecake Bar ×2, Haus Social, Shop). Signups this week 8 (partial) vs 14.8/wk avg.
 
 ---
 
