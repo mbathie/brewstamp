@@ -40,14 +40,22 @@ function subCurrency(s: any): string {
   return "usd";
 }
 
-export async function getBrewstampFinance(opts?: {
-  from?: Date;
-  to?: Date;
-}): Promise<FinanceSummary> {
-  await connectDB();
-  const to = opts?.to ?? new Date();
-  const from = opts?.from ?? new Date("2026-01-01T00:00:00Z");
+export interface MrrSnapshot {
+  mrr: CurrencyMap;
+  mrrMonthAgo: CurrencyMap;
+  mrrMovement: { newSubscriptions: number; churnedSubscriptions: number };
+  activeSubscriptions: number;
+  activeCustomers: number;
+  mrrByPlan: PlanMrr[];
+}
 
+/**
+ * MRR now and 30 days ago, from subscriptions alone (plus each shop's first
+ * payment date). Two queries, no payment rows loaded — cheap enough for the
+ * admin shops page, which only needs these headline figures.
+ */
+export async function getMrrSnapshot(): Promise<MrrSnapshot> {
+  await connectDB();
   // ---- Subscriptions → MRR (and MRR as it stood a month ago) ----
   const mrr: CurrencyMap = {};
   const mrrMonthAgo: CurrencyMap = {};
@@ -60,19 +68,21 @@ export async function getBrewstampFinance(opts?: {
   let activeSubscriptions = 0;
   const activeShops = new Set<string>();
 
-  const subs = (await Subscription.find({}).lean()) as any[];
+  // Both queries are independent: run them together.
+  const [subs, firstPayments] = (await Promise.all([
+    Subscription.find({}).lean(),
+    Payment.aggregate([
+      { $match: { status: { $ne: "failed" } } },
+      { $group: { _id: "$shop", first: { $min: { $ifNull: ["$paidAt", "$createdAt"] } } } },
+    ]),
+  ])) as [any[], any[]];
   // Seed subs never billed anyone.
   const real = subs.filter((s) => !String(s.stripeSubscriptionId ?? "").startsWith("sub_seed_"));
   // First payment per shop tells us when a sub really started (the doc's
   // createdAt is when the webhook first saw it, which is the same day).
-  const firstPaid = new Map<string, number>();
-  const lastPaid = new Map<string, number>();
-  for (const p of (await Payment.find({ status: { $ne: "failed" } }).select("shop paidAt createdAt").lean()) as any[]) {
-    const k = String(p.shop);
-    const ms = new Date(p.paidAt ?? p.createdAt).getTime();
-    firstPaid.set(k, Math.min(firstPaid.get(k) ?? ms, ms));
-    lastPaid.set(k, Math.max(lastPaid.get(k) ?? ms, ms));
-  }
+  const firstPaid = new Map<string, number>(
+    firstPayments.map((p: any) => [String(p._id), new Date(p.first).getTime()]),
+  );
 
   for (const s of real) {
     const tier = resolveSub(s);
@@ -111,6 +121,26 @@ export async function getBrewstampFinance(opts?: {
       planAgg.set(key, { plan: planName, currency: cur, monthlyCents: m, subscriptions: 1 });
     }
   }
+  return {
+    mrr,
+    mrrMonthAgo,
+    mrrMovement: { newSubscriptions, churnedSubscriptions },
+    activeSubscriptions,
+    activeCustomers: activeShops.size,
+    mrrByPlan: [...planAgg.values()].sort((a, b) => b.monthlyCents - a.monthlyCents),
+  };
+}
+
+export async function getBrewstampFinance(opts?: {
+  from?: Date;
+  to?: Date;
+}): Promise<FinanceSummary> {
+  await connectDB();
+  const to = opts?.to ?? new Date();
+  const from = opts?.from ?? new Date("2026-01-01T00:00:00Z");
+
+  const snap = await getMrrSnapshot();
+  const { mrr } = snap;
   const arr: CurrencyMap = {};
   for (const [cur, cents] of Object.entries(mrr)) arr[cur] = cents * 12;
 
@@ -172,11 +202,11 @@ export async function getBrewstampFinance(opts?: {
     generatedAt: new Date().toISOString(),
     mrr,
     arr,
-    mrrMonthAgo,
-    mrrMovement: { newSubscriptions, churnedSubscriptions },
-    activeSubscriptions,
-    activeCustomers: activeShops.size,
-    mrrByPlan: [...planAgg.values()].sort((a, b) => b.monthlyCents - a.monthlyCents),
+    mrrMonthAgo: snap.mrrMonthAgo,
+    mrrMovement: snap.mrrMovement,
+    activeSubscriptions: snap.activeSubscriptions,
+    activeCustomers: snap.activeCustomers,
+    mrrByPlan: snap.mrrByPlan,
     range: { from: DAY(from), to: DAY(to) },
     revenueInRange,
     revenueByMonth,

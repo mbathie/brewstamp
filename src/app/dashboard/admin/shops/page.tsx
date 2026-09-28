@@ -160,16 +160,29 @@ export default function AdminShopsPage() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  // Start the data request immediately rather than after the session loads:
+  // the API enforces admin itself, so waiting only added a round-trip.
   useEffect(() => {
-    if (status === "loading") return;
-    if (session?.user?.email !== ADMIN_EMAIL) redirect("/dashboard");
-    fetch("/api/admin/shops")
+    const ctrl = new AbortController();
+    fetch("/api/admin/shops", { signal: ctrl.signal })
       .then((res) => {
+        if (res.status === 403) {
+          window.location.replace("/dashboard");
+          return null;
+        }
         if (!res.ok) throw new Error(String(res.status));
         return res.json();
       })
-      .then((d: ShopsResponse) => setData(d))
-      .catch(() => setError(true));
+      .then((d: ShopsResponse | null) => d && setData(d))
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(true);
+      });
+    return () => ctrl.abort();
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (session?.user?.email !== ADMIN_EMAIL) redirect("/dashboard");
   }, [session, status]);
 
   // Honour the URL hash once the (async) content exists — the browser's own
@@ -244,7 +257,7 @@ export default function AdminShopsPage() {
       </div>
     );
   }
-  if (status === "loading" || !data || !kpis) return <PageSkeleton />;
+  if (!data || !kpis) return <PageSkeleton />;
 
   const mrrDelta = data.mrrUsd - data.mrrMonthAgoUsd;
   const paidPct = shops.length ? (data.paidCount / shops.length) * 100 : 0;

@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, WalletPass } from "@/models";
 import { getPlanBySlug, resolveSub, type PlanSlug } from "@/lib/plans";
-import { getBrewstampFinance } from "@/lib/finance";
+import { getMrrSnapshot } from "@/lib/finance";
 import { combineAtRate } from "@/lib/finance-math";
 import { scoreFreeShop, DEFAULT_BG_COLOR, type Likelihood } from "@/lib/conversion-score";
 
@@ -15,6 +15,13 @@ const DAY_MS = 86_400_000;
 // a lifetime tally inflated by one-time scanners.
 const ACTIVE_DAYS = 90;
 
+// Performance notes (2026-09-28): this endpoint used to load full Shop docs,
+// and Shop.logo is a base64 data URI (up to ~160 KB each, ~5.4 MB across all
+// shops) — that transfer dominated the response time. Shops are now read with
+// a projection that reduces the logo to a boolean inside Mongo, owners to their
+// email, and every query below runs in parallel. None of the aggregations
+// filter by shop id: every shop is included, so a whole-collection group is
+// the same result without shipping 200+ ids to the server in an $in.
 export async function GET() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -22,127 +29,156 @@ export async function GET() {
 
   await connectDB();
 
-  const shops = await Shop.find().sort({ createdAt: -1 }).lean();
-  const shopIds = shops.map((s) => s._id);
+  const now = Date.now();
+  const activeWindow = new Date(now - ACTIVE_DAYS * DAY_MS);
+  const since14 = new Date(now - 14 * DAY_MS);
+  const since30 = new Date(now - 30 * DAY_MS);
+  const since90 = new Date(now - 90 * DAY_MS);
+  const engaged = { $or: [{ $gt: ["$totalEarned", 0] }, { $gt: ["$freeRedeemed", 0] }] };
+  const dayOf = (field: string) => ({ $dateToString: { format: "%Y-%m-%d", date: field } });
 
-  const activeWindow = new Date();
-  activeWindow.setDate(activeWindow.getDate() - ACTIVE_DAYS);
-
-  // Per-shop totals. "active" customers are engaged (earned a stamp OR redeemed
-  // a free coffee) AND seen within the active window. freeCoffees is the perk
-  // redemption count (StampCard.freeRedeemed doubles as rewards for stamp
-  // shops, so it's only surfaced as "free coffees" for perk shops in the UI).
-  const stampAgg = await StampCard.aggregate([
-    { $match: { shop: { $in: shopIds } } },
-    {
-      $group: {
-        _id: "$shop",
-        totalStamps: { $sum: "$totalEarned" },
-        freeRedeemed: { $sum: "$freeRedeemed" },
-        customers: {
-          $sum: {
-            $cond: [
-              {
-                $or: [
-                  { $gt: ["$totalEarned", 0] },
-                  { $gt: ["$freeRedeemed", 0] },
-                ],
-              },
-              1,
-              0,
-            ],
-          },
+  const [
+    shops,
+    cardStats,
+    activity,
+    passAgg,
+    liveSubs,
+    dailyStamps,
+    dailyCustomers,
+    mrrSnap,
+  ] = await Promise.all([
+    Shop.aggregate<{
+      _id: unknown;
+      name: string;
+      owner: unknown;
+      perkMode?: boolean;
+      bgColor?: string;
+      upgradeNudgeSent?: boolean;
+      createdAt: Date;
+      hasLogo: boolean;
+    }>([
+      { $sort: { createdAt: -1 } },
+      {
+        $project: {
+          name: 1,
+          owner: 1,
+          perkMode: 1,
+          bgColor: 1,
+          upgradeNudgeSent: 1,
+          createdAt: 1,
+          // Never ship the data URI itself — only whether one is set.
+          hasLogo: { $gt: [{ $strLenBytes: { $ifNull: ["$logo", ""] } }, 0] },
         },
-        activeCustomers: {
-          $sum: {
-            $cond: [
-              {
-                $and: [
-                  {
-                    $or: [
-                      { $gt: ["$totalEarned", 0] },
-                      { $gt: ["$freeRedeemed", 0] },
-                    ],
-                  },
-                  { $gte: ["$updatedAt", activeWindow] },
-                ],
-              },
-              1,
-              0,
-            ],
+      },
+    ]),
+
+    // Per-shop totals. "active" customers are engaged (earned a stamp OR
+    // redeemed a reward) AND seen within the active window.
+    StampCard.aggregate([
+      {
+        $group: {
+          _id: "$shop",
+          totalStamps: { $sum: "$totalEarned" },
+          freeRedeemed: { $sum: "$freeRedeemed" },
+          customers: { $sum: { $cond: [engaged, 1, 0] } },
+          activeCustomers: {
+            $sum: { $cond: [{ $and: [engaged, { $gte: ["$updatedAt", activeWindow] }] }, 1, 0] },
           },
         },
       },
-    },
-  ]);
-  const statMap = new Map(stampAgg.map((s: any) => [s._id.toString(), s]));
+    ]),
 
-  // Per-shop stamping activity: last approved request, distinct active days,
-  // stamps awarded, and requests in the last 14 days. These feed the upgrade
-  // likelihood score (same inputs as scripts/pipeline-report.ts).
-  const since14 = new Date(Date.now() - 14 * DAY_MS);
-  const since30 = new Date(Date.now() - 30 * DAY_MS);
-  const activity = await StampRequest.aggregate([
-    { $match: { status: "approved", shop: { $in: shopIds } } },
-    {
-      $group: {
-        _id: "$shop",
-        lastActive: { $max: "$createdAt" },
-        stampsAwarded: { $sum: { $ifNull: ["$stampsAwarded", 0] } },
-        days: { $addToSet: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } },
-        last14: { $sum: { $cond: [{ $gte: ["$createdAt", since14] }, 1, 0] } },
-        stamps30: {
-          $sum: { $cond: [{ $gte: ["$createdAt", since30] }, { $ifNull: ["$stampsAwarded", 0] }, 0] },
+    // Per-shop stamping activity; feeds the upgrade likelihood score (same
+    // inputs as scripts/pipeline-report.ts).
+    StampRequest.aggregate([
+      { $match: { status: "approved" } },
+      {
+        $group: {
+          _id: "$shop",
+          lastActive: { $max: "$createdAt" },
+          stampsAwarded: { $sum: { $ifNull: ["$stampsAwarded", 0] } },
+          days: { $addToSet: dayOf("$createdAt") },
+          last14: { $sum: { $cond: [{ $gte: ["$createdAt", since14] }, 1, 0] } },
+          stamps30: {
+            $sum: { $cond: [{ $gte: ["$createdAt", since30] }, { $ifNull: ["$stampsAwarded", 0] }, 0] },
+          },
         },
       },
-    },
-    {
-      $project: { lastActive: 1, stampsAwarded: 1, last14: 1, stamps30: 1, activeDays: { $size: "$days" } },
-    },
+      { $project: { lastActive: 1, stampsAwarded: 1, last14: 1, stamps30: 1, activeDays: { $size: "$days" } } },
+    ]),
+
+    WalletPass.aggregate([{ $group: { _id: "$shop", n: { $sum: 1 } } }]),
+
+    // Live subscriptions. past_due is still live (the card is being retried),
+    // matching the finance lib; the row is flagged so it shows as at risk.
+    Subscription.find({ status: { $in: ["active", "past_due"] } })
+      .select("shop status cancelAtPeriodEnd createdAt stripePriceId planLabel planSlug priceCents interval")
+      .lean(),
+
+    // Growth charts — 90 days of daily series, aggregated client-side.
+    StampRequest.aggregate([
+      { $match: { status: "approved", createdAt: { $gte: since90 } } },
+      { $group: { _id: dayOf("$createdAt"), stamps: { $sum: { $ifNull: ["$stampsAwarded", 1] } } } },
+      { $sort: { _id: 1 } },
+    ]),
+    StampCard.aggregate([
+      {
+        $match: {
+          $or: [{ totalEarned: { $gt: 0 } }, { freeRedeemed: { $gt: 0 } }],
+          createdAt: { $gte: since90 },
+        },
+      },
+      { $group: { _id: dayOf("$createdAt"), customers: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+
+    // MRR from the finance lib so this page, /dashboard/admin/finance and the
+    // pipeline report agree (stored per-sub prices, past_due counted, AUD and
+    // USD combined at par). The snapshot skips the revenue history.
+    getMrrSnapshot(),
   ]);
-  const activityMap = new Map(activity.map((a: any) => [a._id.toString(), a]));
 
-  const passAgg = await WalletPass.aggregate([
-    { $match: { shop: { $in: shopIds } } },
-    { $group: { _id: "$shop", n: { $sum: 1 } } },
-  ]);
-  const passMap = new Map(passAgg.map((p: any) => [p._id.toString(), p.n as number]));
+  // Owners depend on the shops query; email is the only field used.
+  const owners = await User.find({ _id: { $in: shops.map((s) => s.owner) } })
+    .select("email")
+    .lean();
 
-  const owners = await User.find({
-    _id: { $in: shops.map((s) => s.owner) },
-  }).lean();
-  const ownerMap = new Map(owners.map((u: any) => [u._id.toString(), u.email]));
+  const key = (id: unknown) => String(id);
+  const ownerMap = new Map(owners.map((u: any) => [key(u._id), u.email as string]));
+  const statMap = new Map(cardStats.map((s: any) => [key(s._id), s]));
+  const activityMap = new Map(activity.map((a: any) => [key(a._id), a]));
+  const passMap = new Map(passAgg.map((p: any) => [key(p._id), p.n as number]));
 
-  // Live subscriptions → tier + monthly revenue, keyed by shop. past_due is
-  // still live (the card is being retried), matching getBrewstampFinance; the
-  // row is flagged so it shows as at risk.
-  const liveSubs = await Subscription.find({
-    shop: { $in: shopIds },
-    status: { $in: ["active", "past_due"] },
-  }).lean();
+  const shopOwner = new Map(shops.map((s) => [key(s._id), key(s.owner)]));
+  // Ignore subs whose shop has since been deleted (the query isn't scoped).
+  const subs = (liveSubs as any[]).filter((s) => shopOwner.has(key(s.shop)));
   const subMap = new Map(
-    liveSubs.map((s: any) => [
-      s.shop.toString(),
-      { ...resolveSub(s), status: s.status as string, cancelAtPeriodEnd: !!s.cancelAtPeriodEnd },
+    subs.map((s: any) => [
+      key(s.shop),
+      { ...resolveSub(s), status: s.status as "active" | "past_due", cancelAtPeriodEnd: !!s.cancelAtPeriodEnd },
     ]),
   );
-
   // A paid plan covers every shop the owner has (see getShopPlanLimits), so
   // a sub-less shop whose owner pays elsewhere is not an upgrade lead.
-  const shopOwner = new Map(shops.map((s: any) => [s._id.toString(), s.owner?.toString()]));
   const payingOwners = new Map<string, string>();
-  for (const s of liveSubs) {
-    const owner = shopOwner.get(s.shop.toString());
+  for (const s of subs) {
+    const owner = shopOwner.get(key(s.shop));
     if (owner) payingOwners.set(owner, resolveSub(s).label);
   }
 
-  const now = Date.now();
-  const result = shops.map((shop: any) => {
-    const id = shop._id.toString();
+  const planCounts: Record<PlanSlug, number> = { free: 0, pro: 0, plus: 0, max: 0 };
+  let totalFreeCoffees = 0;
+
+  const result = shops.map((shop) => {
+    const id = key(shop._id);
     const stat = statMap.get(id);
     const sub = subMap.get(id);
     const act = activityMap.get(id);
-    const coveredBy = !sub ? payingOwners.get(shop.owner?.toString()) ?? null : null;
+    const coveredBy = !sub ? payingOwners.get(key(shop.owner)) ?? null : null;
+    const planSlug = (sub?.slug ?? "free") as PlanSlug;
+    planCounts[planSlug]++;
+    totalFreeCoffees += stat?.freeRedeemed || 0;
+
     // Only a free, uncovered stamp shop is an upgrade lead. Perk shops run on
     // a different commercial model and are excluded.
     const conversion =
@@ -153,23 +189,23 @@ export async function GET() {
               engaged: stat?.customers ?? 0,
               activeDays: act?.activeDays ?? 0,
               lastStampAt: act?.lastActive ?? null,
-              hasLogo: !!shop.logo,
+              hasLogo: shop.hasLogo,
               hasCustomColor: !!shop.bgColor && shop.bgColor !== DEFAULT_BG_COLOR,
               walletPasses: passMap.get(id) ?? 0,
             },
             now,
           )
         : null;
+
     return {
-      _id: shop._id,
+      _id: id,
       name: shop.name,
-      ownerEmail: ownerMap.get(shop.owner.toString()) || "Unknown",
+      ownerEmail: ownerMap.get(key(shop.owner)) || "Unknown",
       perkMode: !!shop.perkMode,
-      planSlug: (sub?.slug ?? "free") as PlanSlug,
+      planSlug,
       planLabel: sub?.label ?? "Free",
       monthlyCents: sub?.monthlyCents ?? 0,
-      legacy: sub?.legacy ?? false,
-      subStatus: (sub?.status ?? null) as "active" | "past_due" | null,
+      subStatus: sub?.status ?? null,
       cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
       coveredBy,
       totalStamps: stat?.totalStamps || 0,
@@ -191,97 +227,42 @@ export async function GET() {
     };
   });
 
-  // Headline aggregates.
-  const planCounts: Record<PlanSlug, number> = {
-    free: 0,
-    pro: 0,
-    plus: 0,
-    max: 0,
-  };
-  for (const r of result) planCounts[r.planSlug]++;
-  // MRR from the finance lib, so this page, /dashboard/admin/finance and the
-  // pipeline report agree (stored per-sub prices, past_due counted, AUD and
-  // USD combined at par), plus the figure 30 days ago and the movement.
-  const fin = await getBrewstampFinance({});
-  const mrrUsd = Math.round(combineAtRate(fin.mrr)) / 100;
-  const mrrMonthAgoUsd = Math.round(combineAtRate(fin.mrrMonthAgo)) / 100;
-  const paidCount = subMap.size;
-  const pastDueCount = liveSubs.filter((s: any) => s.status === "past_due").length;
-  const perkShopCount = result.filter((r) => r.perkMode).length;
-  // Total free rewards redeemed across ALL shops (stamp reward redemptions +
-  // perk redemptions) — a platform-wide figure, not just perk shops.
-  const totalFreeCoffees = result.reduce((sum, r) => sum + r.freeCoffees, 0);
-
-  // Growth charts — 90 days of daily series for client-side aggregation.
-  const ninetyDaysAgo = new Date();
-  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
-  const [dailyStamps, dailyCustomers] = await Promise.all([
-    StampRequest.aggregate([
-      { $match: { status: "approved", createdAt: { $gte: ninetyDaysAgo } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          stamps: { $sum: { $ifNull: ["$stampsAwarded", 1] } },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]),
-    StampCard.aggregate([
-      {
-        $match: {
-          $or: [{ totalEarned: { $gt: 0 } }, { freeRedeemed: { $gt: 0 } }],
-          createdAt: { $gte: ninetyDaysAgo },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          customers: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]),
-  ]);
-
-  const shopsByDate: Record<string, number> = {};
   // Some legacy rows have a null/invalid createdAt — Date.toISOString() throws
-  // "Invalid time value" on those, which 500s the whole stats endpoint. Skip
-  // any row we can't bucket to a valid day rather than blowing up the report.
+  // "Invalid time value" on those. Skip any row we can't bucket to a valid day.
   const isoDay = (v: unknown): string | null => {
     const d = new Date(v as string | number | Date);
     return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
   };
-  for (const shop of shops) {
-    const d = isoDay((shop as { createdAt?: Date }).createdAt);
-    if (!d) continue;
-    shopsByDate[d] = (shopsByDate[d] || 0) + 1;
-  }
-  const dailyShops = Object.entries(shopsByDate)
-    .map(([date, count]) => ({ _id: date, shops: count }))
-    .sort((a, b) => a._id.localeCompare(b._id));
+  const countByDay = (dates: unknown[], field: string) => {
+    const by: Record<string, number> = {};
+    for (const v of dates) {
+      const d = isoDay(v);
+      if (d) by[d] = (by[d] || 0) + 1;
+    }
+    return Object.entries(by)
+      .map(([date, n]) => ({ _id: date, [field]: n }))
+      .sort((a, b) => a._id.localeCompare(b._id));
+  };
 
-  const upgradesByDate: Record<string, number> = {};
-  for (const sub of liveSubs) {
-    const d = isoDay((sub as { createdAt?: Date }).createdAt);
-    if (!d) continue;
-    upgradesByDate[d] = (upgradesByDate[d] || 0) + 1;
-  }
-  const dailyUpgrades = Object.entries(upgradesByDate)
-    .map(([date, count]) => ({ _id: date, upgrades: count }))
-    .sort((a, b) => a._id.localeCompare(b._id));
-
-  return NextResponse.json({
-    shops: result,
-    mrrUsd,
-    paidCount,
-    pastDueCount,
-    mrrMonthAgoUsd,
-    mrrMovement: fin.mrrMovement,
-    freeStampLimit: FREE_STAMP_LIMIT,
-    planCounts,
-    perkShopCount,
-    totalFreeCoffees,
-    charts: { dailyStamps, dailyCustomers, dailyShops, dailyUpgrades },
-  });
+  return NextResponse.json(
+    {
+      shops: result,
+      mrrUsd: Math.round(combineAtRate(mrrSnap.mrr)) / 100,
+      mrrMonthAgoUsd: Math.round(combineAtRate(mrrSnap.mrrMonthAgo)) / 100,
+      mrrMovement: mrrSnap.mrrMovement,
+      paidCount: subMap.size,
+      pastDueCount: subs.filter((s) => s.status === "past_due").length,
+      freeStampLimit: FREE_STAMP_LIMIT,
+      planCounts,
+      totalFreeCoffees,
+      charts: {
+        dailyStamps,
+        dailyCustomers,
+        dailyShops: countByDay(shops.map((s) => s.createdAt), "shops"),
+        dailyUpgrades: countByDay(subs.map((s) => s.createdAt), "upgrades"),
+      },
+    },
+    // Admin-only and personalised: never cache in a shared cache.
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }
