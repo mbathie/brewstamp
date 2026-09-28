@@ -11,6 +11,7 @@ import {
   subscriptionTier,
   type PlanConfig,
   type PlanSlug,
+  LIVE_SUB_STATUSES,
 } from "./plans";
 
 export interface UserPlanLimits {
@@ -41,7 +42,7 @@ export async function getUserPlanLimits(
 
   const subs = await Subscription.find({
     shop: { $in: ownedShopIds },
-    status: "active",
+    status: { $in: LIVE_SUB_STATUSES },
   });
 
   let highest: PlanSlug = "free";

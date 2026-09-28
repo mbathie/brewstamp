@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { getShopPlanLimits } from "@/lib/plan-limits";
 import { getPlanBySlug } from "@/lib/plans";
 import { connectDB } from "@/lib/mongoose";
-import { StampRequest, StampCard, Shop, Subscription, User } from "@/models";
+import { StampRequest, StampCard, Shop, User } from "@/models";
 import { sendFirstCustomerEmail } from "@/lib/email";
 import { countPerkDrinksToday } from "@/lib/perk";
 import { syncWalletPasses } from "@/lib/wallet";
@@ -135,14 +136,13 @@ export async function PATCH(
         });
       }
 
-      // Check stamp limit for non-subscribers
+      // Check stamp limit for shops on Free. The plan is the owner's (a paid
+      // plan covers every shop they own) and a past_due sub still counts as
+      // paid while the renewal is retried — see LIVE_SUB_STATUSES.
       const awarded = stampsAwarded || 0;
       if (awarded > 0) {
-        const activeSub = await Subscription.findOne({
-          shop: request.shop,
-          status: "active",
-        });
-        if (!activeSub) {
+        const { planSlug } = await getShopPlanLimits(String(request.shop));
+        if (planSlug === "free") {
           const [agg] = await StampCard.aggregate([
             { $match: { shop: request.shop } },
             { $group: { _id: null, total: { $sum: "$totalEarned" } } },

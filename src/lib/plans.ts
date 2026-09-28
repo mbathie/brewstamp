@@ -239,6 +239,15 @@ export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
 // to a current plan.
 export const LEGACY_PRO_CENTS = 500;
 
+/**
+ * Subscription statuses that keep a paid plan's entitlements. past_due means
+ * a renewal failed and is being retried (Stripe smart retries, or our PayPal
+ * dunning): the shop keeps its plan until the provider gives up and the
+ * status becomes canceled/unpaid. Treating past_due as Free would block a
+ * paying shop's stamping the moment one charge fails.
+ */
+export const LIVE_SUB_STATUSES = ["active", "past_due"] as const;
+
 // The paid tier + interval a Subscription doc is on, whichever provider it
 // bills through. PayPal subs store planSlug/interval explicitly; Stripe subs
 // derive them from stripePriceId. Null when neither resolves (legacy $5 Pro,

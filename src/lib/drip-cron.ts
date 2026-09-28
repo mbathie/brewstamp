@@ -6,6 +6,7 @@ import StampCard from "../models/StampCard";
 import StampRequest from "../models/StampRequest";
 import Subscription from "../models/Subscription";
 import { sendGoLiveNudgeEmail, sendUpgradeNudgeEmail } from "./email";
+import { LIVE_SUB_STATUSES } from "./plans";
 
 // `User` is imported so its model is registered for the `populate("owner")`
 // calls below.
@@ -58,7 +59,7 @@ export async function runDripEmails() {
       { $match: { shop: { $in: goLiveIds }, status: "approved" } },
       { $group: { _id: "$shop", last: { $max: "$createdAt" } } },
     ]),
-    Subscription.find({ shop: { $in: goLiveIds }, status: "active" }).select(
+    Subscription.find({ shop: { $in: goLiveIds }, status: { $in: LIVE_SUB_STATUSES } }).select(
       "shop",
     ),
   ]);
@@ -125,7 +126,7 @@ export async function runDripEmails() {
     (
       await Subscription.find({
         shop: { $in: upgradeShopIds },
-        status: "active",
+        status: { $in: LIVE_SUB_STATUSES },
       }).select("shop")
     ).map((s: any) => s.shop.toString()),
   );
