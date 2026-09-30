@@ -185,10 +185,6 @@ export default function MergeCustomerDialog({
                   </ul>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Only customers with stamps at this shop are listed.
-                {rows && rows.length > shown.length && !q ? ` Showing the ${shown.length} most recent — search to find others.` : ""}
-              </p>
             </div>
           ) : (
             <div className="flex-1 space-y-3 overflow-y-auto px-4 text-sm">
