@@ -10,6 +10,8 @@ const it = {
     "{earned} timbri raccolti · {redeemed} premi riscossi",
 
   requestStamp: "Richiedi timbro",
+  stampsPaused: "I nuovi timbri sono in pausa da {shop} al momento. La tua tessera e i tuoi timbri sono al sicuro, e puoi comunque riscattare i premi già guadagnati.",
+  stampsPausedDeclined: "{shop} non sta aggiungendo nuovi timbri al momento. La tua tessera e i tuoi timbri sono al sicuro.",
   connecting: "Connessione...",
   rewardAvailable: "Hai un premio disponibile!",
   redeemReward: "Riscatta premio",

@@ -59,6 +59,8 @@ interface Props {
   otherShops: OtherShop[];
   walletGoogle: boolean;
   walletApple: boolean;
+  /** The shop has reached its free stamp allowance; new stamps are paused. */
+  stampingPaused?: boolean;
 }
 
 type Status =
@@ -90,6 +92,7 @@ export default function CustomerClient({
   otherShops,
   walletGoogle,
   walletApple,
+  stampingPaused = false,
 }: Props) {
   const bgHex = getColorHex(bgColor);
   const fgHex = getColorHex(fgColor);
@@ -190,12 +193,19 @@ export default function CustomerClient({
     [freeRedeemed, detailsSaved, customerName, customerEmail],
   );
 
-  const applyRejection = useCallback((reqId: string | null) => {
-    if (reqId && handledRef.current === reqId) return;
-    if (reqId) handledRef.current = reqId;
-    toast.error("Request declined");
-    setStatus("idle");
-  }, []);
+  const applyRejection = useCallback(
+    (reqId: string | null) => {
+      if (reqId && handledRef.current === reqId) return;
+      if (reqId) handledRef.current = reqId;
+      // While the shop has paused stamping, a decline is almost always that —
+      // say so plainly rather than a bare "declined" the customer takes
+      // personally.
+      if (stampingPaused) toast(t(lang, "stampsPausedDeclined", { shop: shopName }));
+      else toast.error("Request declined");
+      setStatus("idle");
+    },
+    [stampingPaused, lang, shopName],
+  );
 
   useEffect(() => {
     const unsub1 = on("stamp-request:approved", (msg: any) => {
@@ -663,6 +673,15 @@ export default function CustomerClient({
     >
       {/* Actions */}
       <div>
+        {stampingPaused && (status === "idle" || status === "choosing" || status === "waiting" || status === "requesting") && (
+          <p
+            role="status"
+            className="mb-3 rounded-lg px-3 py-2 text-center text-sm"
+            style={{ backgroundColor: fgHex + "15", color: fgHex, border: `1px solid ${fgHex}30` }}
+          >
+            {t(lang, "stampsPaused", { shop: shopName })}
+          </p>
+        )}
         {status === "idle" && (
           <Button
             onClick={() => {

@@ -8,6 +8,8 @@ const hi = {
   stampsEarnedRedeemed: "{earned} स्टैम्प · {redeemed} इनाम भुनाए",
 
   requestStamp: "स्टैम्प मांगें",
+  stampsPaused: "{shop} पर अभी नए स्टैम्प रुके हुए हैं। आपका कार्ड और स्टैम्प सुरक्षित हैं, और कमाए हुए रिवॉर्ड आप अब भी ले सकते हैं।",
+  stampsPausedDeclined: "{shop} अभी नए स्टैम्प नहीं जोड़ रहा है। आपका कार्ड और स्टैम्प सुरक्षित हैं।",
   connecting: "कनेक्ट हो रहा है…",
   rewardAvailable: "आपका इनाम तैयार है!",
   redeemReward: "इनाम भुनाएँ",

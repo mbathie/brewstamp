@@ -8,6 +8,8 @@ const fil = {
   stampsEarnedRedeemed: "{earned} stamp · {redeemed} reward na-claim",
 
   requestStamp: "Humingi ng Stamp",
+  stampsPaused: "Naka-pause muna ang mga bagong stamp sa {shop}. Ligtas ang card at mga stamp mo, at puwede mo pa ring i-redeem ang mga reward na nakuha mo.",
+  stampsPausedDeclined: "Hindi muna nagdadagdag ng bagong stamp ang {shop}. Ligtas ang card at mga stamp mo.",
   connecting: "Kumukonekta…",
   rewardAvailable: "May reward ka!",
   redeemReward: "I-claim ang Reward",

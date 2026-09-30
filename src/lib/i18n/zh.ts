@@ -8,6 +8,8 @@ const zh = {
   stampsEarnedRedeemed: "累计 {earned} 个章 · 已兑换 {redeemed} 次",
 
   requestStamp: "申请盖章",
+  stampsPaused: "{shop} 目前暂停发放新印章。你的会员卡和印章都会保留，已获得的奖励仍可兑换。",
+  stampsPausedDeclined: "{shop} 目前暂不添加新印章。你的会员卡和印章都会保留。",
   connecting: "连接中…",
   rewardAvailable: "您有可用奖励!",
   redeemReward: "兑换奖励",

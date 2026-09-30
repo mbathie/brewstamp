@@ -14,6 +14,8 @@ const en = {
 
   // Action buttons
   requestStamp: "Request Stamp",
+  stampsPaused: "New stamps are paused at {shop} right now. Your card and stamps are safe, and you can still redeem rewards you've earned.",
+  stampsPausedDeclined: "{shop} isn't adding new stamps right now. Your card and stamps are safe.",
   connecting: "Connecting...",
   rewardAvailable: "You have a reward available!",
   redeemReward: "Redeem Reward",

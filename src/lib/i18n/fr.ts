@@ -10,6 +10,8 @@ const fr = {
     "{earned} tampons gagnés · {redeemed} récompenses utilisées",
 
   requestStamp: "Demander un tampon",
+  stampsPaused: "Les nouveaux tampons sont en pause chez {shop} pour le moment. Ta carte et tes tampons sont conservés, et tu peux toujours utiliser les récompenses déjà gagnées.",
+  stampsPausedDeclined: "{shop} n'ajoute pas de nouveaux tampons pour le moment. Ta carte et tes tampons sont conservés.",
   connecting: "Connexion...",
   rewardAvailable: "Vous avez une récompense disponible !",
   redeemReward: "Utiliser la récompense",

@@ -12,6 +12,8 @@ const tr = {
 
   // Action buttons
   requestStamp: "Damga İste",
+  stampsPaused: "{shop} şu anda yeni damga vermeye ara verdi. Kartın ve damgaların güvende; kazandığın ödülleri yine de kullanabilirsin.",
+  stampsPausedDeclined: "{shop} şu anda yeni damga eklemiyor. Kartın ve damgaların güvende.",
   connecting: "Bağlanıyor...",
   rewardAvailable: "Kullanabileceğiniz bir ödülünüz var!",
   redeemReward: "Ödülü Kullan",

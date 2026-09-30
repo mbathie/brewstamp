@@ -10,6 +10,8 @@ const ar = {
     "{earned} ختم · {redeemed} مكافأة مُستلمة",
 
   requestStamp: "طلب ختم",
+  stampsPaused: "الأختام الجديدة متوقفة مؤقتًا في {shop} حاليًا. بطاقتك وأختامك محفوظة، ويمكنك استبدال المكافآت التي حصلت عليها.",
+  stampsPausedDeclined: "{shop} لا يضيف أختامًا جديدة حاليًا. بطاقتك وأختامك محفوظة.",
   connecting: "جارٍ الاتصال...",
   rewardAvailable: "لديك مكافأة متاحة!",
   redeemReward: "استلام المكافأة",

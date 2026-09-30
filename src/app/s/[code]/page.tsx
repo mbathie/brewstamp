@@ -11,6 +11,8 @@ import {
 import CustomerClient from "./client";
 import PerkCustomerClient from "./perk-client";
 import { walletAvailable } from "@/lib/wallet/config";
+import { getShopPlanLimits } from "@/lib/plan-limits";
+import { freeStampLimit } from "@/lib/plans";
 
 export async function generateMetadata({
   params,
@@ -144,6 +146,20 @@ export default async function CustomerScanPage({
     );
   }
 
+  // A shop with no paid plan stops awarding stamps once it reaches its free
+  // trial allowance (50, or 100 if grandfathered). Customers are told stamping
+  // is paused — never why — and a request still reaches the owner, whose
+  // approval dialog offers the upgrade. Redeeming an earned reward still works.
+  let stampingPaused = false;
+  const { planSlug } = await getShopPlanLimits(shop._id.toString());
+  if (planSlug === "free") {
+    const [agg] = await StampCard.aggregate([
+      { $match: { shop: shop._id } },
+      { $group: { _id: null, total: { $sum: "$totalEarned" } } },
+    ]);
+    stampingPaused = (agg?.total || 0) >= freeStampLimit(shop);
+  }
+
   // Find other shops this customer has visited
   const otherCards = await StampCard.find({
     customer: customer._id,
@@ -182,6 +198,7 @@ export default async function CustomerScanPage({
       otherShops={otherShops}
       walletGoogle={wallet.enabled && wallet.google}
       walletApple={wallet.enabled && wallet.apple}
+      stampingPaused={stampingPaused}
     />
   );
 }

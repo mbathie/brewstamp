@@ -10,6 +10,8 @@ const de = {
     "{earned} Stempel gesammelt · {redeemed} Belohnungen eingelöst",
 
   requestStamp: "Stempel anfordern",
+  stampsPaused: "Neue Stempel sind bei {shop} gerade pausiert. Deine Karte und Stempel bleiben erhalten, und bereits verdiente Prämien kannst du weiterhin einlösen.",
+  stampsPausedDeclined: "{shop} vergibt gerade keine neuen Stempel. Deine Karte und Stempel bleiben erhalten.",
   connecting: "Verbinde...",
   rewardAvailable: "Du hast eine Belohnung verfügbar!",
   redeemReward: "Belohnung einlösen",

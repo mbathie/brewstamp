@@ -10,6 +10,8 @@ const pt = {
     "{earned} carimbos ganhos · {redeemed} recompensas trocadas",
 
   requestStamp: "Pedir carimbo",
+  stampsPaused: "Os novos selos estão pausados em {shop} no momento. Seu cartão e seus selos estão seguros, e você ainda pode resgatar as recompensas que já ganhou.",
+  stampsPausedDeclined: "{shop} não está adicionando novos selos no momento. Seu cartão e seus selos estão seguros.",
   connecting: "A ligar...",
   rewardAvailable: "Tem uma recompensa disponível!",
   redeemReward: "Trocar recompensa",

@@ -9,6 +9,8 @@ const ja = {
     "獲得 {earned}個 · 引換 {redeemed}回",
 
   requestStamp: "スタンプをもらう",
+  stampsPaused: "{shop} では現在、新しいスタンプの付与を一時停止しています。カードとスタンプはそのまま残り、獲得済みの特典は引き続き利用できます。",
+  stampsPausedDeclined: "{shop} は現在、新しいスタンプを付与していません。カードとスタンプはそのまま残ります。",
   connecting: "接続中…",
   rewardAvailable: "リワードが使えます!",
   redeemReward: "リワードを使う",

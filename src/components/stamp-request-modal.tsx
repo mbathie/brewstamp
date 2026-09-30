@@ -257,11 +257,27 @@ export default function StampRequestModal({
               <p className="text-sm font-medium text-muted-foreground">
                 Stamps to award
               </p>
-              {freeStampsLeft != null && freeStampsLeft <= 10 && (
-                <p className="text-xs text-amber-400">
-                  {freeStampsLeft} free stamp{freeStampsLeft === 1 ? "" : "s"} left —{" "}
-                  <Link href="/dashboard/billing" className="underline underline-offset-2">upgrade</Link>
-                </p>
+              {freeStampsLeft != null && (
+                // Always visible on the free trial so every approval shows
+                // where the shop stands against its allowance (50, or 100 if
+                // grandfathered); turns amber in the last 20%.
+                <div className="w-full max-w-[16rem] space-y-1">
+                  <div className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">Free trial</span>
+                    <span className={freeStampsLeft <= freeStampLimit * 0.2 ? "text-amber-400" : "text-muted-foreground"}>
+                      {freeStampsLeft} of {freeStampLimit} stamps left ·{" "}
+                      <Link href="/dashboard/billing" className="underline underline-offset-2">
+                        upgrade
+                      </Link>
+                    </span>
+                  </div>
+                  <div className="h-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full ${freeStampsLeft <= freeStampLimit * 0.2 ? "bg-amber-500" : "bg-emerald-500/70"}`}
+                      style={{ width: `${Math.max(2, Math.min(100, ((freeStampLimit - freeStampsLeft) / freeStampLimit) * 100))}%` }}
+                    />
+                  </div>
+                </div>
               )}
               <div className="flex items-center gap-6">
                 <Button

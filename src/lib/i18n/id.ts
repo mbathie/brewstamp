@@ -8,6 +8,8 @@ const id = {
   stampsEarnedRedeemed: "{earned} stempel · {redeemed} hadiah ditukar",
 
   requestStamp: "Minta Stempel",
+  stampsPaused: "Stempel baru di {shop} sedang dijeda untuk saat ini. Kartu dan stempelmu aman, dan kamu tetap bisa menukar hadiah yang sudah kamu dapat.",
+  stampsPausedDeclined: "{shop} sedang tidak menambahkan stempel baru. Kartu dan stempelmu aman.",
   connecting: "Menghubungkan…",
   rewardAvailable: "Anda punya hadiah!",
   redeemReward: "Tukar Hadiah",

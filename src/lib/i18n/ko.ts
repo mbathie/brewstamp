@@ -9,6 +9,8 @@ const ko = {
     "총 {earned}개 적립 · 리워드 {redeemed}회 사용",
 
   requestStamp: "스탬프 받기",
+  stampsPaused: "{shop}에서 지금은 새 스탬프 적립이 일시 중지되었습니다. 카드와 스탬프는 그대로 유지되며, 이미 받은 리워드는 계속 사용할 수 있어요.",
+  stampsPausedDeclined: "{shop}에서 지금은 새 스탬프를 적립하지 않습니다. 카드와 스탬프는 그대로 유지돼요.",
   connecting: "연결 중…",
   rewardAvailable: "사용 가능한 리워드가 있어요!",
   redeemReward: "리워드 사용",

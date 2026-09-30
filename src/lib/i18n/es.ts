@@ -10,6 +10,8 @@ const es = {
     "{earned} sellos ganados · {redeemed} recompensas canjeadas",
 
   requestStamp: "Pedir sello",
+  stampsPaused: "Los sellos nuevos están en pausa en {shop} por ahora. Tu tarjeta y tus sellos están a salvo, y aún puedes canjear las recompensas que ya ganaste.",
+  stampsPausedDeclined: "{shop} no está añadiendo sellos nuevos por ahora. Tu tarjeta y tus sellos están a salvo.",
   connecting: "Conectando...",
   rewardAvailable: "¡Tienes una recompensa disponible!",
   redeemReward: "Canjear recompensa",
