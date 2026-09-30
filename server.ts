@@ -227,6 +227,15 @@ app.prepare().then(() => {
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
     startDripCron();
-    startBillingCron();
+    // The billing run charges renewals and emails owners (receipts, failed
+    // payments, downgrades) with no local redirect. Locally the database is
+    // often a copy of prod, so a run here would email real customers about
+    // sandbox failures. Opt in with ENABLE_LOCAL_BILLING_CRON=1 when testing.
+    const isLocal = process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? dev;
+    if (!isLocal || process.env.ENABLE_LOCAL_BILLING_CRON === "1") {
+      startBillingCron();
+    } else {
+      console.log("[Billing] Cron not started locally (set ENABLE_LOCAL_BILLING_CRON=1 to enable)");
+    }
   });
 });
