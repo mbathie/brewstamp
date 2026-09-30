@@ -604,7 +604,7 @@ export async function sendSubscriptionDowngradedEmail({
           Hi ${merchantName}, we tried to renew the Brewstamp subscription for
           <strong>${shopName}</strong> but the payment didn&rsquo;t go through, and
           it&rsquo;s now been outstanding for ${daysOverdue} days. We&rsquo;ve moved
-          the shop back to the <strong>Free plan</strong> for now.
+          the shop back to the ${brand === "stampystamp" ? "<strong>Free plan</strong> for now." : "<strong>free trial</strong> for now, where new stamps pause once the shop reaches its free allowance."}
         </p>
         <p style="margin: 0 0 16px; font-size: 16px; color: #57534e; line-height: 1.6;">
           Your shop, customers, and stamps are all safe &mdash; nothing has been
@@ -673,7 +673,7 @@ export async function sendPaymentFailedEmail({
   const billingUrl = updateUrl ?? utm("/dashboard/billing", "payment-failed");
   const amount = `$${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()}`;
   const retryLine = finalAttempt
-    ? "This was our last automatic attempt — if the card isn&rsquo;t updated your shop will move to the <strong>Free plan</strong> at the next check."
+    ? `This was our last automatic attempt — if the card isn&rsquo;t updated your shop will move to the ${brand === "stampystamp" ? "<strong>Free plan</strong>" : "<strong>free trial</strong>, where new stamps pause once it reaches its free allowance,"} at the next check.`
     : `We&rsquo;ll try again on <strong>${nextAttemptAt?.toLocaleDateString("en-AU", { day: "numeric", month: "long" }) ?? "the next run"}</strong>. Updating your card before then keeps everything running without a gap.`;
 
   const html = `
