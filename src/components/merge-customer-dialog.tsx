@@ -7,13 +7,13 @@ import { Combine, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { generateAnimalName } from "@/lib/animal-names";
 import { timeAgo } from "@/lib/date";
 
@@ -84,7 +84,7 @@ export default function MergeCustomerDialog({
     const list = needle
       ? rows.filter((r) => r.name.toLowerCase().includes(needle) || (r.email || "").toLowerCase().includes(needle))
       : rows;
-    return list.slice(0, 50);
+    return list.slice(0, 100);
   }, [rows, q]);
 
   function reset(next: boolean) {
@@ -126,19 +126,20 @@ export default function MergeCustomerDialog({
         <Combine className="mr-1.5 size-4" />
         Merge duplicate
       </Button>
-      <Dialog open={open} onOpenChange={reset}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Merge a duplicate card into {displayName}</DialogTitle>
-            <DialogDescription>
+      <Sheet open={open} onOpenChange={reset}>
+        {/* Full-height side panel so the customer list gets the whole viewport. */}
+        <SheetContent className="flex w-full flex-col gap-0 sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Merge a duplicate card into {displayName}</SheetTitle>
+            <SheetDescription>
               For when the same customer ended up with a second card, for example after scanning with a different
               browser. The duplicate&apos;s stamps, rewards and history move onto this card, and their phone shows this
               card from then on.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
           {!picked ? (
-            <div className="space-y-3">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 px-4">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -150,7 +151,7 @@ export default function MergeCustomerDialog({
                   className="pl-8"
                 />
               </div>
-              <div className="max-h-80 overflow-y-auto rounded-md border">
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-md border">
                 {!rows ? (
                   <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                     <Loader2 className="mr-2 size-4 animate-spin" /> Loading customers…
@@ -184,10 +185,13 @@ export default function MergeCustomerDialog({
                   </ul>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Only customers with stamps at this shop are listed.</p>
+              <p className="text-xs text-muted-foreground">
+                Only customers with stamps at this shop are listed.
+                {rows && rows.length > shown.length && !q ? ` Showing the ${shown.length} most recent — search to find others.` : ""}
+              </p>
             </div>
           ) : (
-            <div className="space-y-3 text-sm">
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 text-sm">
               <div className="rounded-lg border p-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Duplicate (removed)</span>
@@ -223,7 +227,7 @@ export default function MergeCustomerDialog({
             </div>
           )}
 
-          <DialogFooter>
+          <SheetFooter className="flex-row justify-end gap-2 border-t">
             {picked ? (
               <>
                 <Button variant="ghost" className="cursor-pointer" onClick={() => setPicked(null)} disabled={merging}>
@@ -239,9 +243,9 @@ export default function MergeCustomerDialog({
                 Cancel
               </Button>
             )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
