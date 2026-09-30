@@ -28,6 +28,7 @@ import {
 import { Label } from "@/components/ui/label";
 import StampDisplay from "@/components/stamp-display";
 import MerchantCheckin from "@/components/merchant-checkin";
+import MergeCustomerDialog from "@/components/merge-customer-dialog";
 import { getProgram } from "@/lib/program";
 import { ActivityValue } from "@/components/activity-value";
 import { avatarTint, initialsOf } from "@/lib/avatar";
@@ -333,6 +334,14 @@ export default function CustomerDetailContent({
                 <Ban className="mr-1.5 size-4" />
                 {togglingDisabled ? "…" : "Disable"}
               </Button>
+              <MergeCustomerDialog
+                customerId={customerId}
+                displayName={displayName}
+                stamps={stamps}
+                totalEarned={totalEarned}
+                freeRedeemed={freeRedeemed}
+                threshold={threshold}
+              />
               <MerchantCheckin
                 shopId={shopId}
                 customerId={customerId}
