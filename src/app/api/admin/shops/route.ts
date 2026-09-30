@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, WalletPass } from "@/models";
-import { getPlanBySlug, resolveSub, type PlanSlug } from "@/lib/plans";
+import { resolveSub, freeTierOf, FREE_STAMPS, type PlanSlug } from "@/lib/plans";
 import { getMrrSnapshot } from "@/lib/finance";
 import { combineAtRate } from "@/lib/finance-math";
 import { scoreFreeShop, DEFAULT_BG_COLOR, type Likelihood } from "@/lib/conversion-score";
 
-const FREE_STAMP_LIMIT = getPlanBySlug("free")!.stampLimit as number;
 const DAY_MS = 86_400_000;
 
 // A customer counts as "active" if they've engaged within this window. The
@@ -56,6 +55,7 @@ export async function GET() {
       upgradeNudgeSent?: boolean;
       createdAt: Date;
       hasLogo: boolean;
+      freeTier?: string;
     }>([
       { $sort: { createdAt: -1 } },
       {
@@ -65,6 +65,7 @@ export async function GET() {
           perkMode: 1,
           bgColor: 1,
           upgradeNudgeSent: 1,
+          freeTier: 1,
           createdAt: 1,
           // Never ship the data URI itself — only whether one is set.
           hasLogo: { $gt: [{ $strLenBytes: { $ifNull: ["$logo", ""] } }, 0] },
@@ -176,6 +177,8 @@ export async function GET() {
     const act = activityMap.get(id);
     const coveredBy = !sub ? payingOwners.get(key(shop.owner)) ?? null : null;
     const planSlug = (sub?.slug ?? "free") as PlanSlug;
+    // Free trial allowance: 50 for new shops, 100 if grandfathered.
+    const freeTier = freeTierOf(shop);
     planCounts[planSlug]++;
     totalFreeCoffees += stat?.freeRedeemed || 0;
 
@@ -192,6 +195,7 @@ export async function GET() {
               hasLogo: shop.hasLogo,
               hasCustomColor: !!shop.bgColor && shop.bgColor !== DEFAULT_BG_COLOR,
               walletPasses: passMap.get(id) ?? 0,
+              freeLimit: freeTier.stampLimit,
             },
             now,
           )
@@ -203,7 +207,9 @@ export async function GET() {
       ownerEmail: ownerMap.get(key(shop.owner)) || "Unknown",
       perkMode: !!shop.perkMode,
       planSlug,
-      planLabel: sub?.label ?? "Free",
+      planLabel: sub?.label ?? `Free ${freeTier.stampLimit}`,
+      freeTier: freeTier.tier,
+      freeLimit: freeTier.stampLimit,
       monthlyCents: sub?.monthlyCents ?? 0,
       subStatus: sub?.status ?? null,
       cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
@@ -217,7 +223,7 @@ export async function GET() {
       stamps30d: act?.stamps30 ?? 0,
       walletPasses: passMap.get(id) ?? 0,
       // Free shops stop stamping at the cap; null when the cap doesn't apply.
-      freeCapUsed: !sub && !coveredBy ? Math.min(1, (stat?.totalStamps || 0) / FREE_STAMP_LIMIT) : null,
+      freeCapUsed: !sub && !coveredBy ? Math.min(1, (stat?.totalStamps || 0) / freeTier.stampLimit) : null,
       upgradeNudgeSent: !!shop.upgradeNudgeSent,
       likelihood: (conversion?.likelihood ?? null) as Likelihood | null,
       conversionScore: conversion?.score ?? null,
@@ -252,7 +258,8 @@ export async function GET() {
       mrrMovement: mrrSnap.mrrMovement,
       paidCount: subMap.size,
       pastDueCount: subs.filter((s) => s.status === "past_due").length,
-      freeStampLimit: FREE_STAMP_LIMIT,
+      // New shops' allowance; each row carries its own freeLimit.
+      freeStampLimit: FREE_STAMPS,
       planCounts,
       totalFreeCoffees,
       charts: {

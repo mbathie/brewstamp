@@ -21,6 +21,8 @@ export interface ConversionSignals {
   /** True when the card colour was changed from the default. */
   hasCustomColor: boolean;
   walletPasses: number;
+  /** The shop's Free allowance (50, or 100 if grandfathered). Default 100. */
+  freeLimit?: number;
 }
 
 export interface ConversionScore {
@@ -43,7 +45,8 @@ export function scoreFreeShop(s: ConversionSignals, now = Date.now()): Conversio
   const setup = (s.hasLogo ? 1 : 0) + (s.hasCustomColor ? 1 : 0);
   const score =
     recency *
-    (40 * Math.min(1, s.stamps / 100) +
+    // Cap proximity: how much of its own free allowance the shop has used.
+    (40 * Math.min(1, s.stamps / (s.freeLimit ?? 100)) +
       Math.min(30, s.engaged * 2) +
       Math.min(15, s.activeDays * 2) +
       setup * 4 +

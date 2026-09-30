@@ -12,7 +12,7 @@
 // right card form for the subscription's provider.
 
 import { Subscription } from "@/models";
-import { getPlanBySlug, resolveSub } from "@/lib/plans";
+import { resolveSub } from "@/lib/plans";
 import { billingProvider } from "@/lib/paypal";
 
 export type BillingNoticeKind =
@@ -31,7 +31,6 @@ export interface BillingNotice {
   action: { label: string; href: string } | null;
 }
 
-const FREE_LIMIT = getPlanBySlug("free")!.stampLimit as number;
 const DAY_MS = 86_400_000;
 
 const fmt = (d: Date | string | null | undefined) =>
@@ -45,7 +44,10 @@ export async function getBillingNotice(opts: {
   hasPaidPlan: boolean;
   /** Only owners can fix billing; staff get the message without the button. */
   canManageBilling: boolean;
+  /** This shop's Free allowance (50, or 100 if grandfathered). */
+  freeLimit: number;
 }): Promise<BillingNotice | null> {
+  const FREE_LIMIT = opts.freeLimit;
   const sub: any = await Subscription.findOne({ shop: opts.shopId })
     .select(
       "status provider cancelAtPeriodEnd currentPeriodEnd nextAttemptAt updatedAt migratedAt migrationToken stripePriceId planLabel planSlug interval priceCents card",
@@ -88,7 +90,7 @@ export async function getBillingNotice(opts: {
         kind: "ended_capped",
         tone: "danger",
         title: `Your ${label} plan has ended — stamping is paused`,
-        body: `You're back on Free, and this shop has used ${opts.totalStamps.toLocaleString()} stamps against the ${FREE_LIMIT}-stamp Free limit. Choose a plan to keep approving stamps.`,
+        body: `You're back on the free trial, and this shop has used ${opts.totalStamps.toLocaleString()} stamps against its ${FREE_LIMIT}-stamp free allowance. Choose a plan to keep approving stamps.`,
         action: billing("Choose a plan"),
       });
     }
@@ -106,7 +108,7 @@ export async function getBillingNotice(opts: {
         kind: "ended",
         tone: "warning",
         title: `Your ${label} plan ended on ${fmt(endedAt)}`,
-        body: `You're on Free now: ${opts.totalStamps} of ${FREE_LIMIT} stamps used. Stamping pauses at ${FREE_LIMIT}.`,
+        body: `You're on the free trial now: ${opts.totalStamps} of ${FREE_LIMIT} stamps used. Stamping pauses at ${FREE_LIMIT}.`,
         action: billing("Choose a plan"),
       });
     }
@@ -115,8 +117,8 @@ export async function getBillingNotice(opts: {
 
   if (sub?.cancelAtPeriodEnd && sub.status === "active") {
     const after = overCap
-      ? ` After that this shop moves to Free, which is capped at ${FREE_LIMIT} stamps, so stamping will pause.`
-      : ` After that this shop moves to Free (${opts.totalStamps} of ${FREE_LIMIT} stamps used).`;
+      ? ` After that this shop moves to the free trial, which is capped at ${FREE_LIMIT} stamps, so stamping will pause.`
+      : ` After that this shop moves to the free trial (${opts.totalStamps} of ${FREE_LIMIT} stamps used).`;
     return make({
       kind: "ending",
       tone: "warning",

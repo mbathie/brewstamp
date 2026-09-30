@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, Account, Payment } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
-import { resolveSub } from "@/lib/plans";
+import { resolveSub, freeTierOf, LIVE_SUB_STATUSES } from "@/lib/plans";
 
 // This shop's payment history from our ledger (`payments`), whichever
 // provider took the money. Returns null when the shop has never been billed.
@@ -144,7 +144,10 @@ export async function GET(
     { $sort: { _id: -1 } },
   ]);
 
-  const activeSub = await Subscription.findOne({ shop: shop._id, status: "active" }).lean();
+  // past_due still holds the plan while the renewal is retried.
+  const activeSub = await Subscription.findOne({ shop: shop._id, status: { $in: LIVE_SUB_STATUSES } }).lean();
+  // Free trial allowance: 50 for new shops, 100 if grandfathered.
+  const freeTier = freeTierOf(shop as any);
   const plan = activeSub ? resolveSub(activeSub as any) : null;
 
   // Billing / payment history — any subscription for this shop (a canceled one
@@ -194,7 +197,9 @@ export async function GET(
       perkMode: !!(shop as any).perkMode,
       walletPasses: !!(shop as any).walletPasses,
       planSlug: plan?.slug ?? "free",
-      planLabel: plan?.label ?? "Free",
+      planLabel: plan?.label ?? `Free trial · ${freeTier.stampLimit}`,
+      freeTier: freeTier.tier,
+      freeLimit: freeTier.stampLimit,
     },
     billing,
     customers: stampCards.map((sc: any) => ({

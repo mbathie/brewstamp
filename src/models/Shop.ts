@@ -43,6 +43,11 @@ const shopSchema = new mongoose.Schema(
     stripeCustomerId: { type: String },
     firstCustomerEmailSent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },
+    // Free trial allowance: "free_50" for shops created from 2026-09-30,
+    // "free_100" for grandfathered shops. Deliberately no default — Mongoose
+    // would apply it to existing docs on read; a missing value is resolved as
+    // grandfathered by freeTierOf() in @/lib/plans.
+    freeTier: { type: String, enum: ["free_50", "free_100"] },
     goLiveNudgeSent: { type: Boolean, default: false },
   },
   { timestamps: true }

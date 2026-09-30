@@ -29,12 +29,13 @@ import Footer from "@/components/footer";
 import { WalletBadges } from "@/components/wallet-badges";
 import FeaturesCardCarousel from "@/components/features-card-carousel";
 import { patterns } from "@/lib/patterns";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title:
     "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    "Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to 100 stamps, $7/mo unlimited — no premium tier gating.",
+    `Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to ${FREE_STAMPS} stamps, $7/mo unlimited — no premium tier gating.`,
   alternates: { canonical: "/features" },
   keywords: [
     "loyalty card features",
@@ -80,7 +81,7 @@ const jsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
-    description: "Free up to 100 stamps. $7/month for unlimited stamps.",
+    description: `Free up to ${FREE_STAMPS} stamps. $7/month for unlimited stamps.`,
   },
   featureList: [
     "No app download for customers — opens in any phone browser",
@@ -271,7 +272,7 @@ const FEATURE_TABLE: Array<{
     category: "Pricing",
     icon: Tag,
     rows: [
-      { label: "Stamps included", free: "100 lifetime", pro: "Unlimited" },
+      { label: "Stamps included", free: `${FREE_STAMPS} lifetime`, pro: "Unlimited" },
       { label: "Monthly price", free: "$0", pro: "From $7" },
     ],
   },
@@ -659,7 +660,7 @@ export default function FeaturesPage() {
                   Set up your shop&apos;s loyalty card.
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-stone-300 md:text-lg">
-                  Free up to 100 stamps. No credit card required. Live in any
+                  Free up to {FREE_STAMPS}{" "}stamps. No credit card required. Live in any
                   phone browser, in any of 14 languages.
                 </p>
                 <div className="mt-10 flex flex-wrap justify-center gap-3">

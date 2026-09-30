@@ -5,11 +5,12 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import PlanCards from "./plan-cards";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Pricing — Free, Pro, Plus, Max plans",
   description:
-    "Brewstamp pricing for cafes and small businesses. Free for your first 100 stamps. Paid plans from $7/month with unlimited stamps, multi-shop, staff logins, CSV exports, and corporate perk mode for subsidised staff coffee.",
+    `Brewstamp pricing for cafes and small businesses. Free for your first ${FREE_STAMPS} stamps. Paid plans from $7/month with unlimited stamps, multi-shop, staff logins, CSV exports, and corporate perk mode for subsidised staff coffee.`,
   alternates: { canonical: "/pricing" },
 };
 
@@ -27,7 +28,7 @@ const PLANS: Plan[] = [
     tagline: "Try it out",
     price: "$0",
     features: [
-      "Up to 100 stamps total",
+      `Up to ${FREE_STAMPS} stamps total`,
       "1 shop",
       "QR codes & real-time approvals",
       "Apple & Google Wallet passes",
@@ -83,7 +84,7 @@ interface FeatureRow {
 
 const FEATURES: FeatureRow[] = [
   { label: "Shops", free: "1", starter: "1", roast: "Up to 3", reserve: "Up to 10" },
-  { label: "Stamps issued per month", free: "100 total", starter: "Unlimited", roast: "Unlimited", reserve: "Unlimited" },
+  { label: "Stamps issued per month", free: `${FREE_STAMPS} total`, starter: "Unlimited", roast: "Unlimited", reserve: "Unlimited" },
   { label: "Real-time stamp approvals", free: true, starter: true, roast: true, reserve: true },
   { label: "Custom logo, colours, patterns", free: true, starter: true, roast: true, reserve: true },
   { label: "Customer dashboard", free: true, starter: true, roast: true, reserve: true },
@@ -127,7 +128,7 @@ export default function PricingPage() {
               Pick the plan that fits your shop
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-stone-500">
-              Start free — your first 100 stamps are on us. Upgrade as your
+              Start free — your first {FREE_STAMPS}{" "}stamps are on us. Upgrade as your
               shop, your team, or your number of locations grows. No
               setup fees, cancel anytime.
             </p>

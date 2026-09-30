@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Store, Download, LayoutGrid, ShieldCheck } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Multi-Shop, Team Logins, and a New Pricing Lineup",
@@ -71,7 +72,7 @@ const PLANS: Array<{
     price: "$0/mo",
     tagline: "Try it out",
     shops: "1 shop",
-    highlights: ["Up to 100 stamps total", "Real-time approvals", "Customer dashboard"],
+    highlights: [`Up to ${FREE_STAMPS} stamps total`, "Real-time approvals", "Customer dashboard"],
   },
   {
     name: "Pro",

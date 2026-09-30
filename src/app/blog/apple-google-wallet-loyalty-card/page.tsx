@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Add Your Coffee Loyalty Card to Apple Wallet & Google Wallet",
@@ -212,7 +213,7 @@ export default function BlogPost() {
                 },
                 {
                   q: "Which plans include wallet passes?",
-                  a: "Every plan, including Free. The Free plan is capped at 100 customers, so growing shops will upgrade as they scale — but wallet passes aren't locked behind a paywall.",
+                  a: `Every plan, including Free. The Free plan is capped at ${FREE_STAMPS} stamps, so growing shops will upgrade as they scale — but wallet passes aren't locked behind a paywall.`,
                 },
                 {
                   q: "Does the pass update when a customer earns a stamp?",

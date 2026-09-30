@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Shop, ShopMembership } from "@/models";
 import { CURRENT_SHOP_COOKIE } from "@/lib/shop-context";
 import { getUserPlanLimits } from "@/lib/plan-limits";
+import { DEFAULT_FREE_TIER } from "@/lib/plans";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -66,6 +67,8 @@ export async function POST(req: Request) {
     code,
     language: language || "en",
     stampThreshold: stampThreshold || 8,
+    // New shops get the current Free allowance (existing ones keep theirs).
+    freeTier: DEFAULT_FREE_TIER,
   });
 
   await ShopMembership.create({

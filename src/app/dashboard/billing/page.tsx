@@ -48,6 +48,7 @@ import {
   getPlanRank,
   annualPriceCents,
   planPriceCents,
+  FREE_STAMPS,
   type PlanSlug,
   type BillingInterval,
 } from "@/lib/plans";
@@ -76,7 +77,15 @@ function StatusPill({ status, cancelAtPeriodEnd }: { status: string; cancelAtPer
 
 interface BillingData {
   totalStamps: number;
+  // This shop's Free allowance: 50, or 100 if grandfathered.
   limit: number;
+  freeTier: {
+    tier: "free_50" | "free_100";
+    label: string;
+    stampLimit: number;
+    grandfathered: boolean;
+    changedAt: string; // ISO date the 50-stamp allowance started
+  };
   ownedShops: number;
   // Provider a NEW subscription would bill through; existing subs carry
   // their own provider below.
@@ -482,10 +491,24 @@ export default function BillingPage() {
           <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
             <div>
               <div className="text-sm text-muted-foreground">Current plan</div>
-              <div className="text-lg font-semibold text-foreground">Free · {data.totalStamps} of {data.limit} stamps used</div>
+              <div className="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">
+                {data.freeTier.label} · {data.totalStamps} of {data.limit} free stamps used
+                {data.freeTier.grandfathered && (
+                  <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-[11px] font-medium text-emerald-300">
+                    {data.limit} stamps · early shop
+                  </Badge>
+                )}
+              </div>
               <div className="mt-2 h-1.5 w-56 max-w-full overflow-hidden rounded-full bg-muted">
                 <div className={`h-full rounded-full ${data.totalStamps >= data.limit ? "bg-red-500" : "bg-amber-600"}`} style={{ width: `${Math.min(100, Math.round((data.totalStamps / data.limit) * 100))}%` }} />
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {data.totalStamps >= data.limit
+                  ? "You've used your free stamps, so new stamps are paused until you pick a plan."
+                  : `${data.limit - data.totalStamps} free stamps left. Stamping pauses at ${data.limit} until you pick a plan.`}
+                {data.freeTier.grandfathered &&
+                  ` Your shop joined before ${fmtDate(data.freeTier.changedAt)}, so it keeps ${data.limit} free stamps (new shops get ${FREE_STAMPS}).`}
+              </p>
             </div>
             <Button className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => { setTab("plans"); document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
               Choose a plan
@@ -598,7 +621,7 @@ export default function BillingPage() {
                 </div>
               )}
               <CardHeader className="pb-0">
-                <CardTitle className="text-lg">{plan.label}</CardTitle>
+                <CardTitle className="text-lg">{plan.slug === "free" ? data.freeTier.label : plan.label}</CardTitle>
                 <CardDescription>{plan.tagline}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-5 pt-5">
@@ -642,7 +665,11 @@ export default function BillingPage() {
                 </div>
 
                 <ul className="flex-1 space-y-2.5 text-sm">
-                  {plan.features.map((f) => (
+                  {(plan.slug === "free"
+                    ? // The shop's own allowance, not the new-shop default.
+                      plan.features.map((f) => (/stamps total/.test(f) ? `Up to ${data.limit} stamps total` : f))
+                    : plan.features
+                  ).map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
                       <span className="text-muted-foreground">{f}</span>
@@ -706,11 +733,11 @@ export default function BillingPage() {
                 />
                 <FeatureRow
                   label="Stamps per month"
-                  hint="On Free you can award 100 stamps in total, ever. Paid plans award unlimited stamps with no monthly cap."
+                  hint={`On the free trial your shop can award ${data.limit} stamps in total, ever. Paid plans award unlimited stamps with no monthly cap.`}
                   values={PLANS.map((p) =>
                     p.stampLimit === "unlimited"
                       ? "Unlimited"
-                      : `${p.stampLimit} total`,
+                      : `${p.slug === "free" ? data.limit : p.stampLimit} total`,
                   )}
                 />
                 <FeatureRow

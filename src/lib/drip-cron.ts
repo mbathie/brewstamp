@@ -6,7 +6,7 @@ import StampCard from "../models/StampCard";
 import StampRequest from "../models/StampRequest";
 import Subscription from "../models/Subscription";
 import { sendGoLiveNudgeEmail, sendUpgradeNudgeEmail } from "./email";
-import { LIVE_SUB_STATUSES } from "./plans";
+import { LIVE_SUB_STATUSES, freeStampLimit } from "./plans";
 
 // `User` is imported so its model is registered for the `populate("owner")`
 // calls below.
@@ -116,9 +116,12 @@ export async function runDripEmails() {
   // ── Upgrade nudge ─────────────────────────────────────────────────────────
   // Shops with 60+ stamps, no subscription, not yet notified. (The one
   // lifecycle email with a real hit rate, so it stays.)
+  // logo is a base64 data URI — never needed here, and large across shops.
   const upgradeShops = await Shop.find({
     upgradeNudgeSent: { $ne: true },
-  }).populate("owner");
+  })
+    .select("-logo")
+    .populate("owner");
 
   const upgradeShopIds = upgradeShops.map((s: any) => s._id);
 
@@ -144,9 +147,10 @@ export async function runDripEmails() {
     const shopIdStr = shop._id.toString();
     const stamps = upgradeStampMap.get(shopIdStr) || 0;
 
-    // Skip if under 60 stamps or already on Pro. 60 (rather than 80) gives shop
-    // owners breathing room before they hit the 100-stamp free-tier ceiling.
-    if (stamps < 60 || activeSubShopIds.has(shopIdStr)) continue;
+    // Nudge at 60% of this shop's Free allowance (30 of 50, or 60 of a
+    // grandfathered 100) — breathing room before stamping pauses at the cap.
+    const limit = freeStampLimit(shop);
+    if (stamps < Math.ceil(limit * 0.6) || activeSubShopIds.has(shopIdStr)) continue;
 
     const owner = shop.owner as any;
     await Shop.updateOne({ _id: shop._id }, { upgradeNudgeSent: true });
@@ -159,6 +163,7 @@ export async function runDripEmails() {
       merchantName: owner.name,
       shopName: shop.name,
       stampsUsed: stamps,
+      freeStampLimit: limit,
     });
     console.log(
       `[Drip] Upgrade nudge sent to ${to} for shop "${shop.name}" (${stamps} stamps)`,

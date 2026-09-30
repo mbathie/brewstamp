@@ -9,13 +9,11 @@ import ImpersonationBanner from "@/components/impersonation-banner";
 import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
-import { getPlanBySlug, subscriptionTier, LIVE_SUB_STATUSES } from "@/lib/plans";
+import { getPlanBySlug, subscriptionTier, LIVE_SUB_STATUSES, freeTierOf } from "@/lib/plans";
 import { getShopPlanLimits } from "@/lib/plan-limits";
 import { getBillingNotice } from "@/lib/billing-notice";
 import BillingBanner from "@/components/billing-banner";
 
-// Free plan stamp allowance (the approve route enforces the same number).
-const FREE_STAMP_LIMIT = getPlanBySlug("free")!.stampLimit as number;
 import {
   SidebarInset,
   SidebarProvider,
@@ -114,6 +112,10 @@ export default async function DashboardLayout({
   // their shops covers all of them (same rule as the approve route's cap).
   const shopPlan = aggregate ? null : await getShopPlanLimits(ctx.shop._id.toString());
   const hasPaidPlan = aggregate ? !!activeSub : shopPlan!.planSlug !== "free";
+  // This shop's Free allowance (50, or 100 if grandfathered) — the approve
+  // route enforces the same number. "All shops" has no single shop; it uses
+  // the grandfathered default, and stamping is per-shop anyway.
+  const freeTier = freeTierOf(aggregate ? null : ctx.shop);
 
   const cookieStore = await cookies();
   const sidebarState = cookieStore.get("sidebar_state")?.value;
@@ -147,6 +149,7 @@ export default async function DashboardLayout({
         totalStamps,
         hasPaidPlan,
         canManageBilling,
+        freeLimit: freeTier.stampLimit,
       });
 
   const viewingAs = ctx.impersonatedUserId
@@ -194,14 +197,15 @@ export default async function DashboardLayout({
                 fgColor={ctx.shop.fgColor || "amber-600"}
                 bgPattern={ctx.shop.bgPattern || "none"}
                 language={ctx.shop.language || "en"}
-                freeStampsLeft={hasPaidPlan ? null : Math.max(0, FREE_STAMP_LIMIT - totalStamps)}
-                freeStampLimit={FREE_STAMP_LIMIT}
+                freeStampsLeft={hasPaidPlan ? null : Math.max(0, freeTier.stampLimit - totalStamps)}
+                freeStampLimit={freeTier.stampLimit}
               />
             )}
             <div className="ml-auto flex items-center gap-3">
               <StampUsageIndicator
                 totalStamps={totalStamps}
                 hasSubscription={hasPaidPlan}
+                freeLimit={freeTier.stampLimit}
                 planLabel={
                   // Derive from the live stripePriceId so the badge follows
                   // upgrades/downgrades instantly. Old subs without the

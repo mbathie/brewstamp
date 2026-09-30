@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Coffee Shop Loyalty Card Printing: Free Printable QR Template (PDF)",
@@ -376,7 +377,7 @@ export default function BlogPost() {
               Print your QR loyalty card in 2 minutes
             </h3>
             <p className="mt-2 text-stone-500">
-              Free up to 100 stamps. No customer app. Pick your colors,
+              Free up to {FREE_STAMPS}{" "}stamps. No customer app. Pick your colors,
               download the PDF, print, tape it up.
             </p>
             <div className="mt-6">

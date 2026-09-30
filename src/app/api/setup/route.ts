@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import { User, Shop, ShopMembership } from "@/models";
 import { sendWelcomeEmail } from "@/lib/email";
+import { DEFAULT_FREE_TIER } from "@/lib/plans";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -38,6 +39,8 @@ export async function POST(req: Request) {
     name: shopName,
     owner: user._id,
     code,
+    // New shops get the current Free allowance (existing ones keep theirs).
+    freeTier: DEFAULT_FREE_TIER,
   });
 
   // Mint the owner membership so the new shop is visible to the multi-shop

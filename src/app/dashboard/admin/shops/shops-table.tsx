@@ -47,6 +47,9 @@ export interface ShopRow {
   cancelAtPeriodEnd: boolean;
   /** Plan label of the owner's paid sub on another shop, when that covers this one. */
   coveredBy: string | null;
+  /** Free trial tier: 50 stamps for new shops, 100 if grandfathered. */
+  freeTier: "free_50" | "free_100";
+  freeLimit: number;
   totalStamps: number;
   freeCoffees: number;
   customers: number;
@@ -496,7 +499,7 @@ export function ShopsTable({
             <button
               aria-pressed={filters.nearCap}
               onClick={() => update({ nearCap: !filters.nearCap })}
-              title={`Free shops that have used ${Math.round(NEAR_CAP * 100)}%+ of the ${freeStampLimit}-stamp allowance`}
+              title={`Free shops that have used ${Math.round(NEAR_CAP * 100)}%+ of their free stamps (${freeStampLimit} for new shops, 100 if grandfathered)`}
               className={`h-8 cursor-pointer rounded-md border px-2.5 text-xs font-medium transition-colors ${
                 filters.nearCap
                   ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
@@ -596,7 +599,6 @@ export function ShopsTable({
                   <ShopTableRow
                     key={shop._id}
                     shop={shop}
-                    freeStampLimit={freeStampLimit}
                     now={now}
                     onOpen={() => router.push(`/dashboard/admin/shops/${shop._id}`)}
                   />
@@ -649,12 +651,10 @@ export function ShopsTable({
 
 function ShopTableRow({
   shop,
-  freeStampLimit,
   now,
   onOpen,
 }: {
   shop: ShopRow;
-  freeStampLimit: number;
   now: number;
   onOpen: () => void;
 }) {
@@ -746,7 +746,7 @@ function ShopTableRow({
           <div className="inline-flex flex-col items-end gap-1">
             <span>{shop.totalStamps.toLocaleString()}</span>
             {shop.freeCapUsed !== null && (
-              <CapBar used={shop.freeCapUsed} stamps={shop.totalStamps} limit={freeStampLimit} />
+              <CapBar used={shop.freeCapUsed} stamps={shop.totalStamps} limit={shop.freeLimit} />
             )}
           </div>
         )}
@@ -882,7 +882,7 @@ export function PlanBadge({
   const cls = PLAN_BADGE[slug] ?? PLAN_BADGE.free;
   return (
     <Badge variant="outline" className={`px-1.5 py-0 text-[10px] hover:bg-transparent ${cls}`}>
-      {slug === "free" ? "Free" : label}
+      {slug === "free" ? label || "Free" : label}
       {slug !== "free" && monthlyCents > 0 && <span className="ml-1 opacity-70">{fmtPrice(monthlyCents)}</span>}
     </Badge>
   );

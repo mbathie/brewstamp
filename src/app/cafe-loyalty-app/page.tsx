@@ -14,13 +14,14 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: {
     absolute: "Cafe Loyalty App — No Download for Customers | Brewstamp",
   },
   description:
-    "Brewstamp is a cafe loyalty app your customers never install. They scan a QR code, collect stamps in the browser, and earn a free coffee. Free for your first 100 customers.",
+    `Brewstamp is a cafe loyalty app your customers never install. They scan a QR code, collect stamps in the browser, and earn a free coffee. Free for your first ${FREE_STAMPS} stamps.`,
   alternates: { canonical: "/cafe-loyalty-app" },
   // Owns the "loyalty app" framing (cafe/coffee loyalty app, coffee shop
   // loyalty app). Distinct from /coffee-rewards-app ("rewards") and the
@@ -68,7 +69,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "How much does the cafe loyalty app cost?",
-    a: "Free for your first 100 customers — enough to prove a loyalty program works for your shop before you pay anything. After that, unlimited plans start at $7/month, with multi-shop and team options above that.",
+    a: `Free for your first ${FREE_STAMPS} stamps — enough to prove a loyalty program works for your shop before you pay anything. After that, unlimited plans start at $7/month, with multi-shop and team options above that.`,
   },
 ];
 
@@ -86,7 +87,7 @@ const jsonLd = {
         "@type": "Offer",
         price: "0",
         priceCurrency: "USD",
-        description: "Free for your first 100 customers; paid plans from $7/month.",
+        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $7/month.`,
       },
       url: "https://brewstamp.app/cafe-loyalty-app",
     },
@@ -164,7 +165,7 @@ export default function CafeLoyaltyAppPage() {
             Brewstamp gives you everything a coffee loyalty app should — stamping,
             rewards, branding, and customer insights — without making your
             customers download anything. They scan your QR code and the card
-            opens in their browser. Free for your first 100 customers.
+            opens in their browser. Free for your first {FREE_STAMPS}{" "}stamps.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/register">
@@ -273,7 +274,7 @@ export default function CafeLoyaltyAppPage() {
               Free to start, $7/month when you grow
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-stone-600">
-              Run your cafe loyalty program free for your first 100 customers.
+              Run your cafe loyalty program free for your first {FREE_STAMPS}{" "}stamps.
               Pro unlocks unlimited stamps and customer analytics for a single
               shop; Plus and Max add team logins and multiple locations.
             </p>
@@ -356,7 +357,7 @@ export default function CafeLoyaltyAppPage() {
             </h2>
             <p className="mt-2 text-stone-500">
               Set it up in five minutes, print one QR code, and start stamping.
-              Free for your first 100 customers — no app for anyone to download.
+              Free for your first {FREE_STAMPS}{" "}stamps — no app for anyone to download.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link href="/register">

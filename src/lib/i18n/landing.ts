@@ -1,3 +1,4 @@
+import { FREE_STAMPS } from "@/lib/plans";
 // Landing-page copy for the localized /[lang] routes. Kept separate from the
 // in-app i18n dictionaries because marketing copy and product UI strings have
 // very different translation contexts.
@@ -32,7 +33,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   es: {
     metaTitle: "Tarjeta de fidelidad digital con QR para cafeterías",
     metaDescription:
-      "Tarjeta de fidelidad QR para cafeterías. Sin app para tus clientes. Gratis hasta 100 sellos. Listo en 2 minutos.",
+      `Tarjeta de fidelidad QR para cafeterías. Sin app para tus clientes. Gratis hasta ${FREE_STAMPS} sellos. Listo en 2 minutos.`,
     heroTitle: "Tarjeta de fidelidad digital para cafeterías",
     heroSubtitle:
       "Sellos sin app. Tus clientes escanean un QR en tu mostrador — listo.",
@@ -43,7 +44,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Sin app que descargar",
     benefit1Body:
       "Tus clientes escanean el QR con la cámara del móvil y la tarjeta se abre en su navegador.",
-    benefit2Title: "Gratis hasta 100 sellos",
+    benefit2Title: `Gratis hasta ${FREE_STAMPS} sellos`,
     benefit2Body:
       "Sin tarjeta de crédito para empezar. Pruébalo unas semanas antes de pagar nada.",
     benefit3Title: "Configurado en 2 minutos",
@@ -66,7 +67,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   tr: {
     metaTitle: "Kafeler için QR'lı dijital sadakat kartı",
     metaDescription:
-      "Kafeler için QR sadakat kartı. Müşterileriniz için uygulama yok. 100 damgaya kadar ücretsiz. 2 dakikada hazır.",
+      `Kafeler için QR sadakat kartı. Müşterileriniz için uygulama yok. ${FREE_STAMPS} damgaya kadar ücretsiz. 2 dakikada hazır.`,
     heroTitle: "Kafeler için dijital sadakat kartı",
     heroSubtitle:
       "Uygulamasız damgalar. Müşterileriniz tezgâhınızdaki bir QR'ı tarar — bu kadar.",
@@ -77,7 +78,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "İndirilecek uygulama yok",
     benefit1Body:
       "Müşterileriniz QR'ı telefon kamerasıyla tarar ve kart tarayıcılarında açılır.",
-    benefit2Title: "100 damgaya kadar ücretsiz",
+    benefit2Title: `${FREE_STAMPS} damgaya kadar ücretsiz`,
     benefit2Body:
       "Başlamak için kredi kartı gerekmez. Hiçbir şey ödemeden birkaç hafta deneyin.",
     benefit3Title: "2 dakikada kurulum",
@@ -100,7 +101,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   fr: {
     metaTitle: "Carte de fidélité QR numérique pour cafés",
     metaDescription:
-      "Carte de fidélité QR pour cafés et coffee shops. Sans appli pour vos clients. Gratuit jusqu'à 100 tampons. Prêt en 2 minutes.",
+      `Carte de fidélité QR pour cafés et coffee shops. Sans appli pour vos clients. Gratuit jusqu'à ${FREE_STAMPS} tampons. Prêt en 2 minutes.`,
     heroTitle: "Carte de fidélité numérique pour cafés",
     heroSubtitle:
       "Des tampons sans appli. Vos clients scannent un QR au comptoir — c'est tout.",
@@ -111,7 +112,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Aucune appli à télécharger",
     benefit1Body:
       "Vos clients scannent le QR avec l'appareil photo de leur téléphone et la carte s'ouvre dans leur navigateur.",
-    benefit2Title: "Gratuit jusqu'à 100 tampons",
+    benefit2Title: `Gratuit jusqu'à ${FREE_STAMPS} tampons`,
     benefit2Body:
       "Pas de carte bancaire pour commencer. Essayez quelques semaines avant de payer.",
     benefit3Title: "Installation en 2 minutes",
@@ -134,7 +135,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   de: {
     metaTitle: "Digitale QR-Stempelkarte für Cafés",
     metaDescription:
-      "QR-Treuekarte für Cafés und Kaffeeshops. Keine App für deine Gäste. Bis 100 Stempel kostenlos. In 2 Minuten startklar.",
+      `QR-Treuekarte für Cafés und Kaffeeshops. Keine App für deine Gäste. Bis ${FREE_STAMPS} Stempel kostenlos. In 2 Minuten startklar.`,
     heroTitle: "Digitale Treuekarte für Cafés",
     heroSubtitle:
       "Stempel ohne App. Deine Gäste scannen einen QR-Code an der Theke — fertig.",
@@ -145,7 +146,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Keine App nötig",
     benefit1Body:
       "Deine Gäste scannen den QR-Code mit der Handykamera und die Treuekarte öffnet sich im Browser.",
-    benefit2Title: "Bis 100 Stempel kostenlos",
+    benefit2Title: `Bis ${FREE_STAMPS} Stempel kostenlos`,
     benefit2Body:
       "Keine Kreditkarte zum Start. Teste es ein paar Wochen, bevor du etwas bezahlst.",
     benefit3Title: "In 2 Minuten eingerichtet",
@@ -168,7 +169,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   pt: {
     metaTitle: "Cartão de fidelidade digital com QR para cafés",
     metaDescription:
-      "Cartão de fidelidade QR para cafés. Sem app para seus clientes. Grátis até 100 selos. Pronto em 2 minutos.",
+      `Cartão de fidelidade QR para cafés. Sem app para seus clientes. Grátis até ${FREE_STAMPS} selos. Pronto em 2 minutos.`,
     heroTitle: "Cartão de fidelidade digital para cafés",
     heroSubtitle:
       "Selos sem app. Seus clientes escaneiam um QR no balcão — pronto.",
@@ -179,7 +180,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Sem app para baixar",
     benefit1Body:
       "Seus clientes escaneiam o QR com a câmera do celular e o cartão abre no navegador.",
-    benefit2Title: "Grátis até 100 selos",
+    benefit2Title: `Grátis até ${FREE_STAMPS} selos`,
     benefit2Body:
       "Sem cartão de crédito para começar. Teste algumas semanas antes de pagar.",
     benefit3Title: "Configurado em 2 minutos",
@@ -201,7 +202,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   it: {
     metaTitle: "Tessera fedeltà QR digitale per caffetterie",
     metaDescription:
-      "Tessera fedeltà QR per bar e caffetterie. Niente app per i tuoi clienti. Gratis fino a 100 timbri. Pronta in 2 minuti.",
+      `Tessera fedeltà QR per bar e caffetterie. Niente app per i tuoi clienti. Gratis fino a ${FREE_STAMPS} timbri. Pronta in 2 minuti.`,
     heroTitle: "Tessera fedeltà digitale per caffetterie",
     heroSubtitle:
       "Timbri senza app. I tuoi clienti scansionano un QR al bancone — fatto.",
@@ -212,7 +213,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Nessuna app da scaricare",
     benefit1Body:
       "I tuoi clienti scansionano il QR con la fotocamera del telefono e la tessera si apre nel browser.",
-    benefit2Title: "Gratis fino a 100 timbri",
+    benefit2Title: `Gratis fino a ${FREE_STAMPS} timbri`,
     benefit2Body:
       "Niente carta di credito per iniziare. Provala qualche settimana prima di pagare.",
     benefit3Title: "Pronta in 2 minuti",
@@ -235,7 +236,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   zh: {
     metaTitle: "咖啡馆数字会员卡 — 二维码积分换免费咖啡",
     metaDescription:
-      "为咖啡馆打造的二维码会员卡。顾客无需下载应用。前 100 次盖章免费。2 分钟即可上线。",
+      `为咖啡馆打造的二维码会员卡。顾客无需下载应用。前 ${FREE_STAMPS} 次盖章免费。2 分钟即可上线。`,
     heroTitle: "咖啡馆数字会员卡",
     heroSubtitle:
       "无需应用即可盖章。顾客在柜台扫一扫二维码——就这么简单。",
@@ -246,7 +247,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "无需下载应用",
     benefit1Body:
       "顾客用手机相机扫描二维码,会员卡直接在浏览器中打开。",
-    benefit2Title: "前 100 次盖章免费",
+    benefit2Title: `前 ${FREE_STAMPS} 次盖章免费`,
     benefit2Body:
       "无需信用卡即可开始。试用几周再决定是否付费。",
     benefit3Title: "2 分钟完成设置",
@@ -268,7 +269,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   ja: {
     metaTitle: "カフェ向け QR デジタルスタンプカード",
     metaDescription:
-      "カフェのための QR ロイヤリティカード。お客様にアプリ不要。100 個のスタンプまで無料。2 分でセットアップ。",
+      `カフェのための QR ロイヤリティカード。お客様にアプリ不要。${FREE_STAMPS} 個のスタンプまで無料。2 分でセットアップ。`,
     heroTitle: "カフェのためのデジタルスタンプカード",
     heroSubtitle:
       "アプリなしでスタンプ。お客様はカウンターの QR をスキャンするだけ。",
@@ -279,7 +280,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "アプリ不要",
     benefit1Body:
       "お客様はスマホのカメラで QR を読み取るだけ。スタンプカードはブラウザで開きます。",
-    benefit2Title: "100 個のスタンプまで無料",
+    benefit2Title: `${FREE_STAMPS} 個のスタンプまで無料`,
     benefit2Body:
       "クレジットカード登録なしで開始。数週間試してから決められます。",
     benefit3Title: "2 分でセットアップ",
@@ -302,7 +303,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   ko: {
     metaTitle: "카페용 QR 디지털 스탬프 카드",
     metaDescription:
-      "카페를 위한 QR 멤버십 카드. 고객에게 앱 필요 없음. 100개 스탬프까지 무료. 2분이면 시작.",
+      `카페를 위한 QR 멤버십 카드. 고객에게 앱 필요 없음. ${FREE_STAMPS}개 스탬프까지 무료. 2분이면 시작.`,
     heroTitle: "카페용 디지털 스탬프 카드",
     heroSubtitle:
       "앱 없이 스탬프. 손님이 카운터에서 QR을 스캔하기만 하면 끝.",
@@ -313,7 +314,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "앱 다운로드 불필요",
     benefit1Body:
       "손님이 폰 카메라로 QR을 스캔하면 카드가 브라우저에서 바로 열립니다.",
-    benefit2Title: "100개 스탬프까지 무료",
+    benefit2Title: `${FREE_STAMPS}개 스탬프까지 무료`,
     benefit2Body:
       "신용카드 없이 시작. 몇 주 사용해본 뒤 결제를 결정하세요.",
     benefit3Title: "2분이면 시작",
@@ -336,7 +337,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   ar: {
     metaTitle: "بطاقة ولاء رقمية بـ QR للمقاهي",
     metaDescription:
-      "بطاقة ولاء برمز QR للمقاهي. بدون تطبيق للعملاء. مجاناً حتى 100 ختم. جاهزة في دقيقتين.",
+      `بطاقة ولاء برمز QR للمقاهي. بدون تطبيق للعملاء. مجاناً حتى ${FREE_STAMPS} ختم. جاهزة في دقيقتين.`,
     heroTitle: "بطاقة ولاء رقمية للمقاهي",
     heroSubtitle:
       "أختام بدون تطبيق. زبائنك يمسحون رمز QR عند المنضدة — وانتهى الأمر.",
@@ -347,7 +348,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "بدون تطبيق",
     benefit1Body:
       "يمسح زبائنك رمز QR بكاميرا الهاتف وتفتح البطاقة في المتصفح مباشرة.",
-    benefit2Title: "مجاناً حتى 100 ختم",
+    benefit2Title: `مجاناً حتى ${FREE_STAMPS} ختم`,
     benefit2Body:
       "بدون بطاقة ائتمان للبدء. جربها بضعة أسابيع قبل الدفع.",
     benefit3Title: "جاهزة في دقيقتين",
@@ -370,7 +371,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   hi: {
     metaTitle: "कैफ़े के लिए QR डिजिटल लॉयल्टी कार्ड",
     metaDescription:
-      "कैफ़े और कॉफ़ी शॉप के लिए QR लॉयल्टी कार्ड। ग्राहकों को कोई ऐप नहीं चाहिए। 100 स्टैम्प तक मुफ़्त। 2 मिनट में तैयार।",
+      `कैफ़े और कॉफ़ी शॉप के लिए QR लॉयल्टी कार्ड। ग्राहकों को कोई ऐप नहीं चाहिए। ${FREE_STAMPS} स्टैम्प तक मुफ़्त। 2 मिनट में तैयार।`,
     heroTitle: "कैफ़े के लिए डिजिटल लॉयल्टी कार्ड",
     heroSubtitle:
       "बिना ऐप के स्टैम्प। आपके ग्राहक काउंटर पर QR स्कैन करते हैं — बस।",
@@ -381,7 +382,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "कोई ऐप ज़रूरी नहीं",
     benefit1Body:
       "ग्राहक फ़ोन कैमरे से QR स्कैन करते हैं और कार्ड सीधे ब्राउज़र में खुल जाता है।",
-    benefit2Title: "100 स्टैम्प तक मुफ़्त",
+    benefit2Title: `${FREE_STAMPS} स्टैम्प तक मुफ़्त`,
     benefit2Body:
       "शुरू करने के लिए क्रेडिट कार्ड नहीं चाहिए। कुछ हफ़्तों आज़माएँ, फिर तय करें।",
     benefit3Title: "2 मिनट में तैयार",
@@ -404,7 +405,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   id: {
     metaTitle: "Kartu loyalitas QR digital untuk kafe",
     metaDescription:
-      "Kartu loyalitas QR untuk kafe dan kedai kopi. Tanpa aplikasi untuk pelanggan. Gratis hingga 100 stempel. Siap dalam 2 menit.",
+      `Kartu loyalitas QR untuk kafe dan kedai kopi. Tanpa aplikasi untuk pelanggan. Gratis hingga ${FREE_STAMPS} stempel. Siap dalam 2 menit.`,
     heroTitle: "Kartu loyalitas digital untuk kafe",
     heroSubtitle:
       "Stempel tanpa aplikasi. Pelanggan pindai QR di kasir — selesai.",
@@ -415,7 +416,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Tanpa aplikasi",
     benefit1Body:
       "Pelanggan pindai QR dengan kamera HP dan kartu langsung terbuka di browser.",
-    benefit2Title: "Gratis hingga 100 stempel",
+    benefit2Title: `Gratis hingga ${FREE_STAMPS} stempel`,
     benefit2Body:
       "Tanpa kartu kredit untuk mulai. Coba beberapa minggu sebelum bayar.",
     benefit3Title: "Siap dalam 2 menit",
@@ -437,7 +438,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
   fil: {
     metaTitle: "Digital na QR loyalty card para sa cafes",
     metaDescription:
-      "QR loyalty card para sa mga cafe at coffee shop. Walang app na ida-download ng customer. Libre hanggang 100 stamp. Set up sa 2 minuto.",
+      `QR loyalty card para sa mga cafe at coffee shop. Walang app na ida-download ng customer. Libre hanggang ${FREE_STAMPS} stamp. Set up sa 2 minuto.`,
     heroTitle: "Digital na loyalty card para sa mga cafe",
     heroSubtitle:
       "Walang app — i-scan lang ng customer mo ang QR sa counter, tapos na.",
@@ -448,7 +449,7 @@ export const LANDING_COPY: Record<string, LandingCopy> = {
     benefit1Title: "Walang app na ida-download",
     benefit1Body:
       "I-scan lang ng customer mo ang QR gamit ang camera ng phone, at bubukas agad ang stamp card sa browser.",
-    benefit2Title: "Libre hanggang 100 stamp",
+    benefit2Title: `Libre hanggang ${FREE_STAMPS} stamp`,
     benefit2Body:
       "Walang credit card kailangan. Subukan mo muna ng ilang linggo bago magbayad.",
     benefit3Title: "Set up sa 2 minuto",

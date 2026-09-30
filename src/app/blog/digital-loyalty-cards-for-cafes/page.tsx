@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Digital Loyalty Cards for Cafes: How They Work & What They Cost",
@@ -302,7 +303,7 @@ export default function BlogPost() {
               independent cafes are more affordable.
             </p>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              Brewstamp, for example, is free for your first 100 stamps —
+              Brewstamp, for example, is free for your first {FREE_STAMPS}{" "}stamps —
               enough to test if a loyalty program works for your shop. After
               that, it&apos;s $7/month for unlimited stamps. If you&apos;re
               deciding how many stamps to ask for and what reward to offer, the{" "}

@@ -14,6 +14,7 @@ import {
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import FeaturesCardCarousel from "@/components/features-card-carousel";
+import { FREE_STAMPS } from "@/lib/plans";
 
 const HERO_IMG = "https://brewstamp.app/cafe-loyalty-counter.jpg";
 
@@ -257,7 +258,7 @@ export default function HowItWorksPage() {
                 {
                   icon: Coffee,
                   title: "Free to start",
-                  body: "Run a real loyalty card free for your first 100 stamps. No card details.",
+                  body: `Run a real loyalty card free for your first ${FREE_STAMPS} stamps. No card details.`,
                 },
               ].map((c) => (
                 <div key={c.title} className="text-center sm:text-left">

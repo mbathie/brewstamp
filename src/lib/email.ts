@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { getPlanBySlug } from "./plans";
+import { getPlanBySlug, FREE_STAMPS } from "./plans";
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_SERVER_HOST,
@@ -372,7 +372,7 @@ export async function sendWelcomeEmail({
             <td style="padding: 20px;">
               <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #1c1917;">Pricing</h3>
               <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
-                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first 100 stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$7/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
+                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first ${FREE_STAMPS} stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$7/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
               </p>
             </td>
           </tr>
@@ -1104,15 +1104,16 @@ export async function sendUpgradeNudgeEmail({
   merchantName,
   shopName,
   stampsUsed,
+  freeStampLimit,
 }: {
   to: string;
   merchantName: string;
   shopName: string;
   stampsUsed: number;
+  /** The shop's own Free allowance (50, or 100 if grandfathered). */
+  freeStampLimit: number;
 }) {
-  const freePlan = getPlanBySlug("free")!;
   const proPlan = getPlanBySlug("pro")!;
-  const freeStampLimit = freePlan.stampLimit as number;
   const proPriceLabel = proPlan.priceLabel;
   const stampsRemaining = freeStampLimit - stampsUsed;
   const billingLink = utm("/dashboard/billing", "drip-upgrade");

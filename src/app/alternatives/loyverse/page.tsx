@@ -16,18 +16,19 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Loyverse Loyalty Alternative — No Customer App",
   description:
-    "Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to 100 stamps, $7/mo flat after.",
+    `Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to ${FREE_STAMPS} stamps, $7/mo flat after.`,
   alternates: { canonical: "/alternatives/loyverse" },
   openGraph: {
     type: "website",
     url: "/alternatives/loyverse",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      "A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to 100 stamps, $7/mo flat.",
+      `A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to ${FREE_STAMPS} stamps, $7/mo flat.`,
     images: [
       {
         url: "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      "A Loyverse Loyalty alternative your customers don't have to download. Free to 100 stamps, $7/mo flat.",
+      `A Loyverse Loyalty alternative your customers don't have to download. Free to ${FREE_STAMPS} stamps, $7/mo flat.`,
     images: [
       "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -106,7 +107,7 @@ export default function LoyverseAlternative() {
                   size="lg"
                   className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
                 >
-                  Try free up to 100 stamps
+                  Try free up to {FREE_STAMPS}{" "}stamps
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -202,7 +203,7 @@ export default function LoyverseAlternative() {
                   },
                   {
                     feature: "Free tier",
-                    brewstamp: { good: true, text: "Yes — 100 stamps total" },
+                    brewstamp: { good: true, text: `Yes — ${FREE_STAMPS} stamps total` },
                     loyverse: { good: true, text: "Free with Loyverse POS basics" },
                   },
                   {
@@ -351,7 +352,7 @@ export default function LoyverseAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to 100 stamps. $7/mo flat after. No customer app, no
+              Free up to {FREE_STAMPS}{" "}stamps. $7/mo flat after. No customer app, no
               POS lock-in.
             </p>
           </div>
@@ -366,7 +367,7 @@ export default function LoyverseAlternative() {
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 100 stamps total
+                  Up to {FREE_STAMPS}{" "}stamps total
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
@@ -441,7 +442,7 @@ export default function LoyverseAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Loyverse Loyalty alternative?",
-                a: "Yes. Brewstamp is free up to 100 stamps total, then $7/mo for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.",
+                a: `Yes. Brewstamp is free up to ${FREE_STAMPS} stamps total, then $7/mo for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.`,
               },
               {
                 q: "Do my customers need to download an app to use Brewstamp?",
@@ -493,7 +494,7 @@ export default function LoyverseAlternative() {
             to install
           </h2>
           <p className="mx-auto mt-4 max-w-md text-stone-300">
-            Set up takes less than 2 minutes. No customer app. Free up to 100
+            Set up takes less than 2 minutes. No customer app. Free up to {FREE_STAMPS}{" "}
             stamps. No credit card.
           </p>
           <div className="mt-8">

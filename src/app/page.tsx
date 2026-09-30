@@ -22,6 +22,7 @@ import RelatedGuides from "@/components/related-guides";
 import { WalletBadges } from "@/components/wallet-badges";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: {
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
   // following 4 weeks (see docs/seo-snapshots.md, 2026-07-13). Restore the
   // stamp-card keywords Google bolds against high-impression queries
   // ("coffee stamp card", "coffee shop loyalty cards"), while keeping the
-  // accurate "Free to start" (the old "first 100 stamps" claim is now stale).
+  // accurate "Free to start" (the old fixed-number stamp claim went stale; copy now reads FREE_STAMPS).
   description:
     "A digital coffee loyalty card and stamp card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free to start.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
@@ -173,7 +174,7 @@ const jsonLd = {
           name: "How much does a digital loyalty card for cafes cost?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.",
+            text: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.`,
           },
         },
         {
@@ -263,7 +264,7 @@ export default function Home() {
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-200 [text-shadow:0_1px_3px_rgb(0_0_0/0.5)]">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
-                Free up to 100 stamps total
+                Free up to {FREE_STAMPS}{" "}stamps total
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
@@ -505,7 +506,7 @@ export default function Home() {
             {[
               { value: "< 5s", label: "Customer setup time" },
               { value: "0", label: "Apps to download" },
-              { value: "$7", label: "Per month after 100 total stamps" },
+              { value: "$7", label: `Per month after ${FREE_STAMPS} total stamps` },
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="text-3xl font-bold text-amber-700 md:text-4xl">
@@ -583,7 +584,7 @@ export default function Home() {
               Simple, honest pricing
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Start free — your first 100 stamps are on us. Upgrade as your
+              Start free — your first {FREE_STAMPS}{" "}stamps are on us. Upgrade as your
               shop, your team, or your number of locations grows.
             </p>
           </div>
@@ -599,7 +600,7 @@ export default function Home() {
               <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 100 stamps total
+                  Up to {FREE_STAMPS}{" "}stamps total
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
@@ -796,7 +797,7 @@ export default function Home() {
               },
               {
                 q: "How much does a digital loyalty card for cafes cost?",
-                a: "Brewstamp is free for your first 100 stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.",
+                a: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.`,
               },
               {
                 q: "How long does it take to set up a coffee shop loyalty program?",

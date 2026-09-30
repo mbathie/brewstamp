@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "How to Set Up Your Brewstamp Shop in 5 Minutes",
@@ -320,7 +321,7 @@ export default function BlogPost() {
               Ready to set up your shop?
             </h3>
             <p className="mt-2 text-stone-500">
-              Free up to 100 stamps. No credit card. Live in 2 minutes.
+              Free up to {FREE_STAMPS}{" "}stamps. No credit card. Live in 2 minutes.
             </p>
             <div className="mt-6">
               <Link href="/register">

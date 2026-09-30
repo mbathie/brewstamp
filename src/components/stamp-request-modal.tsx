@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Gift, StickyNote, Crown, Coffee, Lock, ArrowRight } from "lucide-react";
+import { FREE_STAMPS } from "@/lib/plans";
 
 interface StampRequestData {
   requestId: string;
@@ -44,7 +45,7 @@ export default function StampRequestModal({
   onApprove,
   onReject,
   freeStampsLeft = null,
-  freeStampLimit = 100,
+  freeStampLimit = FREE_STAMPS,
 }: Props) {
   const [stampsToAward, setStampsToAward] = useState(1);
   const [redeemStamps, setRedeemStamps] = useState(0);
@@ -114,10 +115,10 @@ export default function StampRequestModal({
             <div className="flex flex-col items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-center">
               <Lock className="h-6 w-6 text-red-400" />
               <p className="text-sm font-semibold text-red-300">
-                Free plan limit reached
+                Free trial limit reached
               </p>
               <p className="text-sm text-muted-foreground">
-                You&apos;ve used all {freeStampLimit}{" "}stamps on the Free plan, so this
+                You&apos;ve used all {freeStampLimit}{" "}free trial stamps, so this
                 stamp can&apos;t be awarded. Pick a plan to keep stamping — your
                 customers, cards and history all carry over.
               </p>

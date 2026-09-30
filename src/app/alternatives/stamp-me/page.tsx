@@ -17,18 +17,19 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Stamp Me Alternative — Free Loyalty Card",
   description:
-    "Brewstamp is a free Stamp Me alternative — no customer app, no per-stamp fees, $7/mo flat after your first 100 stamps.",
+    `Brewstamp is a free Stamp Me alternative — no customer app, no per-stamp fees, $7/mo flat after your first ${FREE_STAMPS} stamps.`,
   alternates: { canonical: "/alternatives/stamp-me" },
   openGraph: {
     type: "website",
     url: "/alternatives/stamp-me",
     title: "Stamp Me Alternative — Brewstamp",
     description:
-      "A simpler, cheaper Stamp Me alternative. Free up to 100 stamps, $7/mo after that, and no app for your customers to download.",
+      `A simpler, cheaper Stamp Me alternative. Free up to ${FREE_STAMPS} stamps, $7/mo after that, and no app for your customers to download.`,
     images: [
       {
         url: "https://images.pexels.com/photos/30294330/pexels-photo-30294330.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Stamp Me Alternative — Brewstamp",
     description:
-      "A simpler, cheaper Stamp Me alternative. No customer app, free up to 100 stamps, $7/mo flat after.",
+      `A simpler, cheaper Stamp Me alternative. No customer app, free up to ${FREE_STAMPS} stamps, $7/mo flat after.`,
     images: [
       "https://images.pexels.com/photos/30294330/pexels-photo-30294330.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -54,7 +55,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Stamp Me Alternative — Brewstamp",
   description:
-    "Brewstamp is a Stamp Me alternative for independent cafes — a digital coffee loyalty card with no customer app, free up to 100 stamps, and flat $7/mo pricing.",
+    `Brewstamp is a Stamp Me alternative for independent cafes — a digital coffee loyalty card with no customer app, free up to ${FREE_STAMPS} stamps, and flat $7/mo pricing.`,
   url: "https://brewstamp.app/alternatives/stamp-me",
   about: {
     "@type": "SoftwareApplication",
@@ -99,7 +100,7 @@ export default function StampMeAlternative() {
               Brewstamp is a digital coffee loyalty card built for small cafes
               that don&apos;t want to ask their customers to download an app —
               or pay $29–79 a month before serving a single coffee. Free up to
-              100 stamps, $7/mo flat after that.
+              {" "}{FREE_STAMPS}{" "}stamps, $7/mo flat after that.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
@@ -128,7 +129,7 @@ export default function StampMeAlternative() {
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
-                Free up to 100 stamps
+                Free up to {FREE_STAMPS}{" "}stamps
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
@@ -197,7 +198,7 @@ export default function StampMeAlternative() {
                     feature: "Starting price",
                     brewstamp: {
                       good: true,
-                      text: "Free up to 100 stamps total",
+                      text: `Free up to ${FREE_STAMPS} stamps total`,
                     },
                     stampMe: { good: false, text: "From $29/month (Lite plan)" },
                   },
@@ -273,7 +274,7 @@ export default function StampMeAlternative() {
               {
                 icon: Coffee,
                 title: "Pricing that fits a small cafe",
-                desc: "Brewstamp's free tier covers your first 100 stamps — a real test, not a 30-day countdown. After that, $7/mo flat. Stamp Me's Lite plan is $29/month before you've decided whether the program works.",
+                desc: `Brewstamp's free tier covers your first ${FREE_STAMPS} stamps — a real test, not a 30-day countdown. After that, $7/mo flat. Stamp Me's Lite plan is $29/month before you've decided whether the program works.`,
               },
               {
                 icon: Zap,
@@ -373,7 +374,7 @@ export default function StampMeAlternative() {
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 100 stamps total
+                  Up to {FREE_STAMPS}{" "}stamps total
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
@@ -450,7 +451,7 @@ export default function StampMeAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Stamp Me alternative?",
-                a: "Yes — Brewstamp is free for your first 100 stamps total (not a 30-day window). After that it's $7/mo for unlimited stamps, which is roughly one-sixth the cost of Stamp Me's Lite plan.",
+                a: `Yes — Brewstamp is free for your first ${FREE_STAMPS} stamps total (not a 30-day window). After that it's $7/mo for unlimited stamps, which is roughly one-sixth the cost of Stamp Me's Lite plan.`,
               },
               {
                 q: "Do my customers need to download a Brewstamp app?",
@@ -501,7 +502,7 @@ export default function StampMeAlternative() {
             Try the free Stamp Me alternative
           </h2>
           <p className="mx-auto mt-4 max-w-md text-stone-300">
-            Set up takes less than 2 minutes. Free up to 100 stamps. No
+            Set up takes less than 2 minutes. Free up to {FREE_STAMPS}{" "}stamps. No
             customer app, no credit card.
           </p>
           <div className="mt-8">

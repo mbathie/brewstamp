@@ -18,6 +18,46 @@ export type BillingInterval = "month" | "year";
 // monthly × (12 − FREE_MONTHS).
 const FREE_MONTHS = 1;
 
+// ── Free trial tiers ──────────────────────────────────────────────────────
+// The Free plan comes in two allowances. Shops created from 2026-09-30 get
+// free_50; every shop that existed before then is grandfathered on free_100
+// (Shop.freeTier, set by scripts/migrate-free-tier.ts). A shop with no
+// freeTier is treated as grandfathered, so the limit never drops for an
+// existing shop even before that migration has run.
+export type FreeTier = "free_50" | "free_100";
+
+export interface FreeTierConfig {
+  tier: FreeTier;
+  stampLimit: number;
+  /** Shown in the dashboard and billing page. */
+  label: string;
+  grandfathered: boolean;
+}
+
+export const FREE_TIERS: Record<FreeTier, FreeTierConfig> = {
+  free_50: { tier: "free_50", stampLimit: 50, label: "Free trial", grandfathered: false },
+  free_100: { tier: "free_100", stampLimit: 100, label: "Free trial", grandfathered: true },
+};
+
+/** The tier every new shop starts on. */
+export const DEFAULT_FREE_TIER: FreeTier = "free_50";
+
+/** The Free allowance new shops get — the number marketing copy advertises. */
+export const FREE_STAMPS = FREE_TIERS[DEFAULT_FREE_TIER].stampLimit;
+
+/** When the 50-stamp allowance started; shops created before keep 100. */
+export const FREE_TIER_CHANGED_AT = "2026-09-30";
+
+export function freeTierOf(shop: { freeTier?: string | null } | null | undefined): FreeTierConfig {
+  const t = shop?.freeTier;
+  return t === "free_50" || t === "free_100" ? FREE_TIERS[t] : FREE_TIERS.free_100;
+}
+
+/** Stamps a shop may award while it has no paid plan. */
+export function freeStampLimit(shop: { freeTier?: string | null } | null | undefined): number {
+  return freeTierOf(shop).stampLimit;
+}
+
 export interface PlanConfig {
   slug: PlanSlug;
   label: string;
@@ -54,7 +94,9 @@ export const PLANS: PlanConfig[] = [
     stripePriceEnvVar: null,
     stripePriceEnvVarAnnual: null,
     shopLimit: 1,
-    stampLimit: 100,
+    // New shops' allowance; grandfathered shops get 100 — resolve a specific
+    // shop's limit with freeStampLimit(shop), never from here.
+    stampLimit: FREE_STAMPS,
     hasCsvExport: false,
     hasStaffLogins: false,
     hasAnalytics: false,
@@ -64,7 +106,7 @@ export const PLANS: PlanConfig[] = [
     prioritySupport: false,
     dedicatedSupport: false,
     features: [
-      "Up to 100 stamps total",
+      `Up to ${FREE_STAMPS} stamps total`,
       "1 shop",
       "QR codes & real-time approvals",
       "Apple & Google Wallet passes",

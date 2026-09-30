@@ -13,13 +13,14 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: {
     absolute: "Coffee Rewards App for Cafes — No App to Download | Brewstamp",
   },
   description:
-    "Brewstamp is a coffee rewards app and digital rewards card for cafes. Customers scan a QR code — no app, no signup — and earn stamps toward a free coffee. Free for your first 100 stamps.",
+    `Brewstamp is a coffee rewards app and digital rewards card for cafes. Customers scan a QR code — no app, no signup — and earn stamps toward a free coffee. Free for your first ${FREE_STAMPS} stamps.`,
   alternates: { canonical: "/coffee-rewards-app" },
   keywords: [
     "coffee rewards app",
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
 const FAQ: Array<{ q: string; a: string }> = [
   {
     q: "Is there a free coffee rewards app?",
-    a: "Yes. Brewstamp is free to use for your first 100 stamps — no card details, no trial clock. That is enough to run a real rewards card at a quiet cafe for weeks. When your program takes off, paid plans start at $7/month for unlimited stamps.",
+    a: `Yes. Brewstamp is free to use for your first ${FREE_STAMPS} stamps — no card details, no trial clock. That is enough to run a real rewards card at a quiet cafe for weeks. When your program takes off, paid plans start at $7/month for unlimited stamps.`,
   },
   {
     q: "Do my customers need to download an app?",
@@ -83,7 +84,7 @@ const jsonLd = {
         "@type": "Offer",
         price: "0",
         priceCurrency: "USD",
-        description: "Free for your first 100 stamps; paid plans from $7/month.",
+        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $7/month.`,
       },
       url: "https://brewstamp.app/coffee-rewards-app",
     },
@@ -161,7 +162,7 @@ export default function CoffeeRewardsAppPage() {
             Brewstamp turns the QR code on your counter into a digital coffee
             rewards card. Customers scan, collect stamps, and earn a free
             coffee — no app store, no signup, no plastic punch card. Free for
-            your first 100 stamps.
+            your first {FREE_STAMPS}{" "}stamps.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/register">
@@ -263,7 +264,7 @@ export default function CoffeeRewardsAppPage() {
               Free to start, $7/month when you grow
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-stone-600">
-              Run your coffee rewards program free for your first 100 stamps.
+              Run your coffee rewards program free for your first {FREE_STAMPS}{" "}stamps.
               Pro unlocks unlimited stamps and customer analytics for a single
               shop; Plus and Max add team logins and multiple locations.
             </p>
@@ -344,7 +345,7 @@ export default function CoffeeRewardsAppPage() {
             </h2>
             <p className="mt-2 text-stone-500">
               Set it up in five minutes, print one QR code, and start stamping.
-              Free for your first 100 stamps.
+              Free for your first {FREE_STAMPS}{" "}stamps.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link href="/register">

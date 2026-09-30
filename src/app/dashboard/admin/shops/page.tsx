@@ -370,7 +370,7 @@ export default function AdminShopsPage() {
               tone={attention.nearCap ? "warn" : "neutral"}
               label="Near the free cap"
               value={attention.nearCap}
-              detail={`${Math.round(NEAR_CAP * 100)}%+ of ${data.freeStampLimit} stamps${
+              detail={`${Math.round(NEAR_CAP * 100)}%+ of their free stamps${
                 attention.atCap ? ` · ${attention.atCap} at the cap` : ""
               }`}
               onClick={() => setShopsTableView("free", { nearCap: true })}

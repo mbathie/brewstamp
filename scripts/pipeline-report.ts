@@ -16,7 +16,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, User, StampCard, StampRequest, Subscription, WalletPass, Payment } from "@/models";
-import { resolveSub } from "@/lib/plans";
+import { resolveSub, freeStampLimit } from "@/lib/plans";
 import { scoreFreeShop, DEFAULT_BG_COLOR } from "@/lib/conversion-score";
 import { getBrewstampFinance } from "@/lib/finance";
 import { combineAtRate } from "@/lib/finance-math";
@@ -95,6 +95,7 @@ async function main() {
           hasLogo: !!s.logo,
           hasCustomColor: !!s.bgColor && s.bgColor !== DEFAULT_BG_COLOR,
           walletPasses: passes.get(id) || 0,
+          freeLimit: freeStampLimit(s),
         },
         now,
       );
@@ -102,6 +103,10 @@ async function main() {
         name: (s.name || "").trim(),
         email: owners.get(String(s.owner)) || "",
         threshold: s.stampThreshold,
+        // Free allowance (50 new / 100 grandfathered) and whether the upgrade
+        // email has gone out (it fires at 60% of the allowance).
+        freeLimit: freeStampLimit(s),
+        nudged: !!s.upgradeNudgeSent,
         likelihood,
         why,
         ageD,
@@ -261,7 +266,7 @@ footer{color:var(--muted);font-size:12px;margin-top:48px;border-top:1px solid va
  <div class="card tile"><div class="label">Signups this week</div><div class="value">${d.weeks[11].n}</div><div class="delta">partial · prior 4 weeks avg ${prior4.toFixed(1)}</div></div>
 </div>
 <h2>Candidates</h2>
-<p class="note"><b>High</b> = matches the profile paying shops had when they converted (40+ stamps, or 15+ engaged customers, or 10+ active days — the historical median was 73 stamps / 14 customers) <i>and</i> stamped in the last 3 days. <b>Medium</b> = that profile but idle up to a fortnight, or moderate usage (15+ stamps / 6+ engaged / 4+ days) active this week. <b>Low</b> = everything else. Score = recency × (cap proximity + engaged customers + active days + setup + passes). "Nudged" marks shops past 60 stamps, where the automated upgrade email fires.</p>
+<p class="note"><b>High</b> = matches the profile paying shops had when they converted (40+ stamps, or 15+ engaged customers, or 10+ active days — the historical median was 73 stamps / 14 customers) <i>and</i> stamped in the last 3 days. <b>Medium</b> = that profile but idle up to a fortnight, or moderate usage (15+ stamps / 6+ engaged / 4+ days) active this week. <b>Low</b> = everything else. Score = recency × (cap proximity + engaged customers + active days + setup + passes). "Nudged" marks shops that have been sent the automated upgrade email, which fires at 60% of their free allowance (50 stamps for shops created from 30 Sept 2026, 100 for earlier, grandfathered shops).</p>
 <div class="card"><div class="scroll"><table id="cands"></table></div></div>
 <h2>Churn</h2>
 <p class="note">Every subscription that has ended, newest first — ${d.churn.filter((c: any) => c.recent).length} in the last 30 days (≈$${d.churnLostMonthly.toFixed(0)}/mo lost, mixed currencies added at face value), ${d.churn.length} ever. Ended = when the subscription's status last changed, which for a Stripe sub that stopped paying can be well after the last successful charge — check "last paid". <b>Still stamping</b> = the shop kept using Free after cancelling, a winback candidate.</p>
@@ -282,7 +287,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const rec=r=>r.lastD==null?'<span class="pill cold">never</span>':r.lastD<1?'<span class="pill hot">today</span>':r.lastD<=3?'<span class="pill hot">'+Math.round(r.lastD)+'d</span>':r.lastD<=14?'<span class="pill warn">'+Math.round(r.lastD)+'d</span>':'<span class="pill cold">'+Math.round(r.lastD)+'d</span>';
 const maxStamps=Math.max(1,...D.candidates.map(c=>c.stamps));
 document.getElementById('cands').innerHTML='<thead><tr><th>#</th><th>Shop</th><th style="text-align:center">Likelihood</th><th>Age</th><th>Last stamp</th><th>Stamps</th><th>Customers (engaged)</th><th>Active days</th><th>14d</th><th>Passes</th><th>Score</th></tr></thead><tbody>'+
-D.candidates.map((c,i)=>'<tr><td>'+(i+1)+'</td><td class="l"><b>'+esc(c.name)+'</b>'+(c.threshold>12?' <span class="pill">'+c.threshold+' stamps</span>':'')+'<span class="owner">'+esc(c.email)+'</span></td><td style="text-align:center"><span class="pill lk '+c.likelihood+'" title="'+esc(c.why)+'">'+c.likelihood.toUpperCase()+'</span></td><td>'+Math.round(c.ageD)+'d</td><td>'+rec(c)+'</td><td class="bar-cell"><div class="fill" style="width:'+(c.stamps/maxStamps*100).toFixed(0)+'%"></div><span>'+c.stamps+(c.stamps>=60?' <span class="pill warn">nudged</span>':'')+'</span></td><td>'+c.customers+' ('+c.engaged+')</td><td>'+c.days+'</td><td>'+c.last14+'</td><td>'+(c.passes||'—')+'</td><td><b>'+c.score.toFixed(0)+'</b></td></tr>').join('')+'</tbody>';
+D.candidates.map((c,i)=>'<tr><td>'+(i+1)+'</td><td class="l"><b>'+esc(c.name)+'</b>'+(c.threshold>12?' <span class="pill">'+c.threshold+' stamps</span>':'')+'<span class="owner">'+esc(c.email)+'</span></td><td style="text-align:center"><span class="pill lk '+c.likelihood+'" title="'+esc(c.why)+'">'+c.likelihood.toUpperCase()+'</span></td><td>'+Math.round(c.ageD)+'d</td><td>'+rec(c)+'</td><td class="bar-cell"><div class="fill" style="width:'+(c.stamps/maxStamps*100).toFixed(0)+'%"></div><span>'+c.stamps+'<span class="owner">of '+c.freeLimit+' free</span>'+(c.nudged?' <span class="pill warn">nudged</span>':'')+'</span></td><td>'+c.customers+' ('+c.engaged+')</td><td>'+c.days+'</td><td>'+c.last14+'</td><td>'+(c.passes||'—')+'</td><td><b>'+c.score.toFixed(0)+'</b></td></tr>').join('')+'</tbody>';
 const day=ms=>ms==null?'—':new Date(ms).toISOString().slice(0,10);
 const money=(cents,cur)=>cur+' '+(cents/100).toFixed(cents%100?2:0);
 document.getElementById('churn').innerHTML=D.churn.length?'<thead><tr><th>Shop</th><th>Plan</th><th>Exit</th><th>Started</th><th>Last paid</th><th>Ended</th><th>Tenure</th><th>Paid</th><th>Still stamping</th></tr></thead><tbody>'+

@@ -16,18 +16,19 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "PunchPass Alternative — Free Stamp Card",
   description:
-    "Brewstamp is a free PunchPass alternative — transparent free tier (100 stamps), $7/mo flat after, and a public roadmap.",
+    `Brewstamp is a free PunchPass alternative — transparent free tier (${FREE_STAMPS} stamps), $7/mo flat after, and a public roadmap.`,
   alternates: { canonical: "/alternatives/punchpass" },
   openGraph: {
     type: "website",
     url: "/alternatives/punchpass",
     title: "PunchPass Alternative — Brewstamp",
     description:
-      "A PunchPass alternative with a free tier and transparent pricing. Free up to 100 stamps, $7/mo flat after.",
+      `A PunchPass alternative with a free tier and transparent pricing. Free up to ${FREE_STAMPS} stamps, $7/mo flat after.`,
     images: [
       {
         url: "https://images.pexels.com/photos/4787613/pexels-photo-4787613.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PunchPass Alternative — Brewstamp",
     description:
-      "A PunchPass alternative with a free tier. Free up to 100 stamps, $7/mo flat.",
+      `A PunchPass alternative with a free tier. Free up to ${FREE_STAMPS} stamps, $7/mo flat.`,
     images: [
       "https://images.pexels.com/photos/4787613/pexels-photo-4787613.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -106,7 +107,7 @@ export default function PunchPassAlternative() {
                   size="lg"
                   className="cursor-pointer bg-amber-700 px-8 text-base hover:bg-amber-800"
                 >
-                  Try free up to 100 stamps
+                  Try free up to {FREE_STAMPS}{" "}stamps
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -194,7 +195,7 @@ export default function PunchPassAlternative() {
                   },
                   {
                     feature: "Free tier",
-                    brewstamp: { good: true, text: "Yes — 100 stamps total" },
+                    brewstamp: { good: true, text: `Yes — ${FREE_STAMPS} stamps total` },
                     punchpass: { good: null, text: "Not publicly stated" },
                   },
                   {
@@ -258,7 +259,7 @@ export default function PunchPassAlternative() {
               {
                 icon: DollarSign,
                 title: "A free tier you can actually run on",
-                desc: "Brewstamp covers your first 100 stamps for free — enough volume to genuinely test whether a loyalty program works for your shop. Not a 7-day trial, not a credit-card-required free tier.",
+                desc: `Brewstamp covers your first ${FREE_STAMPS} stamps for free — enough volume to genuinely test whether a loyalty program works for your shop. Not a 7-day trial, not a credit-card-required free tier.`,
               },
               {
                 icon: Eye,
@@ -345,7 +346,7 @@ export default function PunchPassAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to 100 stamps. $7/mo flat after. No demos, no calls.
+              Free up to {FREE_STAMPS}{" "}stamps. $7/mo flat after. No demos, no calls.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -359,7 +360,7 @@ export default function PunchPassAlternative() {
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 100 stamps total
+                  Up to {FREE_STAMPS}{" "}stamps total
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
@@ -434,11 +435,11 @@ export default function PunchPassAlternative() {
             {[
               {
                 q: "Is Brewstamp a free PunchPass alternative?",
-                a: "Yes — Brewstamp has a public free tier covering your first 100 stamps total. After that it's $7/mo for unlimited stamps. PunchPass doesn't publicly list a free tier on its site at the time of writing.",
+                a: `Yes — Brewstamp has a public free tier covering your first ${FREE_STAMPS} stamps total. After that it's $7/mo for unlimited stamps. PunchPass doesn't publicly list a free tier on its site at the time of writing.`,
               },
               {
                 q: "How is Brewstamp different from PunchPass?",
-                a: "Both are simple, app-less digital loyalty tools for cafes — that's the same lane. The visible differences are: Brewstamp lists pricing publicly, has a 100-stamp free tier, and requires per-stamp merchant approval (so customers can't self-stamp).",
+                a: `Both are simple, app-less digital loyalty tools for cafes — that's the same lane. The visible differences are: Brewstamp lists pricing publicly, has a ${FREE_STAMPS}-stamp free tier, and requires per-stamp merchant approval (so customers can't self-stamp).`,
               },
               {
                 q: "Can I switch from PunchPass to Brewstamp?",
@@ -446,7 +447,7 @@ export default function PunchPassAlternative() {
               },
               {
                 q: "Which is cheaper, Brewstamp or PunchPass?",
-                a: "Brewstamp publishes its pricing — free up to 100 stamps, then $7/mo. PunchPass doesn't list a public price; you'd need to contact them for a quote.",
+                a: `Brewstamp publishes its pricing — free up to ${FREE_STAMPS} stamps, then $7/mo. PunchPass doesn't list a public price; you'd need to contact them for a quote.`,
               },
               {
                 q: "Is PunchPass a good loyalty app?",
@@ -485,7 +486,7 @@ export default function PunchPassAlternative() {
             Try the free PunchPass alternative
           </h2>
           <p className="mx-auto mt-4 max-w-md text-stone-300">
-            Set up takes less than 2 minutes. Free up to 100 stamps total. No
+            Set up takes less than 2 minutes. Free up to {FREE_STAMPS}{" "}stamps total. No
             credit card.
           </p>
           <div className="mt-8">

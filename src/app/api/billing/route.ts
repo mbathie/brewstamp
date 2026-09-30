@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Payment, ShopMembership, StampCard, Subscription } from "@/models";
-import { subscriptionTier, type BillingInterval } from "@/lib/plans";
+import { subscriptionTier, freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
 import { billingProvider } from "@/lib/paypal";
 
 export async function GET() {
@@ -17,6 +17,7 @@ export async function GET() {
   }
 
   const shopId = merchant.shop._id;
+  const freeTier = freeTierOf(merchant.shop);
 
   // Aggregate total stamps for this shop
   const [stampAgg] = await StampCard.aggregate([
@@ -69,7 +70,16 @@ export async function GET() {
 
   return NextResponse.json({
     totalStamps,
-    limit: 100,
+    // This shop's Free trial tier: 50 stamps, or 100 if it was created before
+    // the 2026-09-30 change (grandfathered).
+    limit: freeTier.stampLimit,
+    freeTier: {
+      tier: freeTier.tier,
+      label: freeTier.label,
+      stampLimit: freeTier.stampLimit,
+      grandfathered: freeTier.grandfathered,
+      changedAt: FREE_TIER_CHANGED_AT,
+    },
     ownedShops,
     provider,
     paypalClientId,

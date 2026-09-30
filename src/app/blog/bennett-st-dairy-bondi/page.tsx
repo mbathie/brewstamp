@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { FREE_STAMPS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title:
@@ -323,7 +324,7 @@ export default function BlogPost() {
               Run a cafe? Set up the same thing in 2 minutes.
             </h3>
             <p className="mt-2 text-stone-500">
-              Free up to 100 stamps. No app for your customers. Print one QR
+              Free up to {FREE_STAMPS}{" "}stamps. No app for your customers. Print one QR
               code and you&rsquo;re live.
             </p>
             <div className="mt-6">
