@@ -62,10 +62,16 @@ export default function MergeCustomerDialog({
       .then((d) =>
         setRows(
           (d.customers || [])
-            .filter((c: any) => c.customer && String(c.customer._id) !== customerId)
+            .filter(
+              (c: any) => c.customer && String(c.customer._id) !== customerId,
+            )
             .map((c: any) => ({
               customerId: String(c.customer._id),
-              name: c.customer.name?.trim() || generateAnimalName(c.customer.cookieId || String(c.customer._id)),
+              name:
+                c.customer.name?.trim() ||
+                generateAnimalName(
+                  c.customer.cookieId || String(c.customer._id),
+                ),
               email: c.customer.email || null,
               stamps: c.stamps || 0,
               totalEarned: c.totalEarned || 0,
@@ -82,7 +88,11 @@ export default function MergeCustomerDialog({
     if (!rows) return [];
     const needle = q.trim().toLowerCase();
     const list = needle
-      ? rows.filter((r) => r.name.toLowerCase().includes(needle) || (r.email || "").toLowerCase().includes(needle))
+      ? rows.filter(
+          (r) =>
+            r.name.toLowerCase().includes(needle) ||
+            (r.email || "").toLowerCase().includes(needle),
+        )
       : rows;
     return list.slice(0, 100);
   }, [rows, q]);
@@ -122,7 +132,11 @@ export default function MergeCustomerDialog({
 
   return (
     <>
-      <Button variant="outline" className="cursor-pointer" onClick={() => reset(true)}>
+      <Button
+        variant="outline"
+        className="cursor-pointer"
+        onClick={() => reset(true)}
+      >
         <Combine className="mr-1.5 size-4" />
         Merge duplicate
       </Button>
@@ -132,14 +146,15 @@ export default function MergeCustomerDialog({
           <SheetHeader>
             <SheetTitle>Merge a duplicate card into {displayName}</SheetTitle>
             <SheetDescription>
-              For when the same customer ended up with a second card, for example after scanning with a different
-              browser. The duplicate&apos;s stamps, rewards and history move onto this card, and their phone shows this
-              card from then on.
+              For when the same customer ended up with a second card, for
+              example after scanning with a different browser. The
+              duplicate&apos;s stamps, rewards and history move onto this card,
+              and their phone shows this card from then on.
             </SheetDescription>
           </SheetHeader>
 
           {!picked ? (
-            <div className="flex min-h-0 flex-1 flex-col gap-3 px-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -151,13 +166,16 @@ export default function MergeCustomerDialog({
                   className="pl-8"
                 />
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-md border">
+              <div className="min-h-0 overflow-y-auto rounded-md border">
                 {!rows ? (
                   <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 size-4 animate-spin" /> Loading customers…
+                    <Loader2 className="mr-2 size-4 animate-spin" /> Loading
+                    customers…
                   </div>
                 ) : shown.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">No other customers match.</p>
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No other customers match.
+                  </p>
                 ) : (
                   <ul className="divide-y">
                     {shown.map((r) => (
@@ -168,9 +186,13 @@ export default function MergeCustomerDialog({
                           className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-muted/50"
                         >
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium">{r.name}</span>
+                            <span className="block truncate text-sm font-medium">
+                              {r.name}
+                            </span>
                             <span className="block truncate text-xs text-muted-foreground">
-                              {r.email ? `${r.email} · ` : ""}first seen {timeAgo(r.createdAt)} · last {timeAgo(r.updatedAt)}
+                              {r.email ? `${r.email} · ` : ""}first seen{" "}
+                              {timeAgo(r.createdAt)} · last{" "}
+                              {timeAgo(r.updatedAt)}
                             </span>
                           </span>
                           <span className="shrink-0 text-right text-xs tabular-nums text-muted-foreground">
@@ -190,7 +212,9 @@ export default function MergeCustomerDialog({
             <div className="flex-1 space-y-3 overflow-y-auto px-4 text-sm">
               <div className="rounded-lg border p-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Duplicate (removed)</span>
+                  <span className="text-muted-foreground">
+                    Duplicate (removed)
+                  </span>
                   <span className="font-medium">{picked.name}</span>
                 </div>
                 <div className="flex justify-between">
@@ -206,40 +230,57 @@ export default function MergeCustomerDialog({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Stamps earned, all time</span>
+                  <span className="text-muted-foreground">
+                    Stamps earned, all time
+                  </span>
                   <span>{totalEarned + picked.totalEarned}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Rewards redeemed</span>
+                  <span className="text-muted-foreground">
+                    Rewards redeemed
+                  </span>
                   <span>{freeRedeemed + picked.freeRedeemed}</span>
                 </div>
                 {combined >= threshold && (
                   <p className="pt-1 text-xs text-emerald-400">
-                    A reward will be ready{combined - threshold > 0 ? `, with ${combined - threshold} stamps carried over` : ""}.
+                    A reward will be ready
+                    {combined - threshold > 0
+                      ? `, with ${combined - threshold} stamps carried over`
+                      : ""}
+                    .
                   </p>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">This can&apos;t be undone.</p>
+              <p className="text-xs text-muted-foreground">
+                This can&apos;t be undone.
+              </p>
             </div>
           )}
 
-          <SheetFooter className="flex-row justify-end gap-2 border-t">
-            {picked ? (
+          {picked && (
+            <SheetFooter className="flex-row justify-end gap-2 border-t">
               <>
-                <Button variant="ghost" className="cursor-pointer" onClick={() => setPicked(null)} disabled={merging}>
+                <Button
+                  variant="ghost"
+                  className="cursor-pointer"
+                  onClick={() => setPicked(null)}
+                  disabled={merging}
+                >
                   Back
                 </Button>
-                <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800" onClick={merge} disabled={merging}>
-                  {merging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+                <Button
+                  className="cursor-pointer bg-amber-700 hover:bg-amber-800"
+                  onClick={merge}
+                  disabled={merging}
+                >
+                  {merging ? (
+                    <Loader2 className="mr-1.5 size-4 animate-spin" />
+                  ) : null}
                   Merge into {displayName}
                 </Button>
               </>
-            ) : (
-              <Button variant="ghost" className="cursor-pointer" onClick={() => reset(false)}>
-                Cancel
-              </Button>
-            )}
-          </SheetFooter>
+            </SheetFooter>
+          )}
         </SheetContent>
       </Sheet>
     </>
