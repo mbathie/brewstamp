@@ -53,6 +53,14 @@ import {
   type BillingInterval,
 } from "@/lib/plans";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // "$7" for whole dollars, "$6.42" otherwise.
 function formatCents(cents: number): string {
@@ -139,6 +147,9 @@ export default function BillingPage() {
   const [movingCard, setMovingCard] = useState(false);
   // "Keep plan" on a PayPal sub with no saved card: add the card, then resume.
   const [resumeAfterCard, setResumeAfterCard] = useState(false);
+  // In-app confirmation before downgrading to Free (replaces window.confirm,
+  // which owners clicked through without seeing what they'd lose).
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [tab, setTab] = useState<"plans" | "history">("plans");
 
   const router = useRouter();
@@ -220,15 +231,15 @@ export default function BillingPage() {
   const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
   const currentPlan = PLANS.find((p) => p.slug === currentSlug)!;
 
-  async function handleSwitch(target: PlanSlug) {
+  async function handleSwitch(target: PlanSlug, confirmed = false) {
+    // Leaving a paid plan always goes through the confirmation dialog first.
+    if (target === "free" && currentSlug !== "free" && !confirmed) {
+      setConfirmCancel(true);
+      return;
+    }
+    setConfirmCancel(false);
     setSwitchingTo(target);
     try {
-      if (target === "free") {
-        const ok = window.confirm(
-          "Downgrade to Free? Your current paid plan keeps working until the end of the period, then cancels.",
-        );
-        if (!ok) return;
-      }
 
       // Free → Paid on PayPal: inline card form, no redirect.
       if (currentSlug === "free" && canCardCheckout) {
@@ -992,6 +1003,99 @@ export default function BillingPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Confirm leaving a paid plan: spell out what changes, default to keeping it. */}
+      <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel your {currentPlan.label} plan?</DialogTitle>
+            <DialogDescription>Here&apos;s what changes for this shop.</DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2.5 text-sm">
+            <li className="flex gap-2">
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              <span>
+                {currentPlan.label} keeps working until{" "}
+                <b>{sub?.currentPeriodEnd ? fmtDate(sub.currentPeriodEnd) : "the end of this billing period"}</b>, and
+                you won&apos;t be charged again.
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <span>
+                {data.totalStamps >= data.limit ? (
+                  <>
+                    After that the shop moves to the free trial. It has already used{" "}
+                    <b>{data.totalStamps.toLocaleString()}</b> of its {data.limit} free stamps, so{" "}
+                    <b>new stamps pause straight away</b>. Customers can&apos;t collect stamps until you pick a plan again.
+                  </>
+                ) : (
+                  <>
+                    After that the shop moves to the free trial: {data.limit - data.totalStamps} of {data.limit} free
+                    stamps left, then stamping pauses.
+                  </>
+                )}
+              </span>
+            </li>
+            {(currentPlan.hasStaffLogins || currentPlan.hasCsvExport) && (
+              <li className="flex gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <span>
+                  {[
+                    currentPlan.hasStaffLogins && "staff logins",
+                    currentPlan.hasCsvExport && "CSV exports",
+                    currentPlan.hasAnalytics && "customer analytics",
+                  ]
+                    .filter(Boolean)
+                    .join(", ")
+                    .replace(/^./, (c) => c.toUpperCase())}{" "}
+                  stop working.
+                </span>
+              </li>
+            )}
+            <li className="flex gap-2">
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              <span>Your customers, cards and stamps are kept.</span>
+            </li>
+          </ul>
+          {canMoveToPaypal && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+              <p className="text-amber-200">
+                Here because of the card update? You don&apos;t need to cancel — save your card and{" "}
+                {currentPlan.label} carries on with no interruption.
+              </p>
+              <Button
+                size="sm"
+                variant="link"
+                className="mt-1 h-auto cursor-pointer p-0 text-amber-300"
+                onClick={() => {
+                  setConfirmCancel(false);
+                  setMovingCard(true);
+                }}
+              >
+                Update card instead →
+              </Button>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+              disabled={!!switchingTo}
+              onClick={() => handleSwitch("free", true)}
+            >
+              {switchingTo === "free" ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+              Cancel anyway
+            </Button>
+            <Button
+              className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
+              onClick={() => setConfirmCancel(false)}
+            >
+              Keep {currentPlan.label}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stripe → PayPal: save a card once; the plan carries over unchanged */}
       <Sheet open={movingCard} onOpenChange={setMovingCard}>
