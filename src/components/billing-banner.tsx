@@ -18,6 +18,21 @@ const TONE = {
   },
 } as const;
 
+function BodyWithLink({ notice }: { notice: BillingNotice }) {
+  const { body, bodyLink, action } = notice;
+  const i = bodyLink && action ? body.indexOf(bodyLink) : -1;
+  if (i < 0 || !action || !bodyLink) return <>{body}</>;
+  return (
+    <>
+      {body.slice(0, i)}
+      <Link href={action.href} className="font-medium text-foreground underline underline-offset-2 hover:opacity-80">
+        {bodyLink}
+      </Link>
+      {body.slice(i + bodyLink.length)}
+    </>
+  );
+}
+
 export default function BillingBanner({ notice }: { notice: BillingNotice }) {
   const t = TONE[notice.tone];
   const Icon = notice.kind === "save_card" ? CreditCard : AlertTriangle;
@@ -29,7 +44,9 @@ export default function BillingBanner({ notice }: { notice: BillingNotice }) {
       <Icon className={`size-4 shrink-0 ${t.icon}`} aria-hidden />
       <p className="min-w-0 flex-1 text-sm">
         <span className="font-medium text-foreground">{notice.title}.</span>{" "}
-        <span className="text-muted-foreground">{notice.body}</span>
+        <span className="text-muted-foreground">
+          <BodyWithLink notice={notice} />
+        </span>
       </p>
       {notice.action && (
         <Link

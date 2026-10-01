@@ -29,6 +29,8 @@ export interface BillingNotice {
   title: string;
   body: string;
   action: { label: string; href: string } | null;
+  /** A phrase in `body` to render as a link to `action.href` ("click here"). */
+  bodyLink?: string;
 }
 
 const DAY_MS = 86_400_000;
@@ -72,7 +74,8 @@ export async function getBillingNotice(opts: {
 
   const make = (n: Omit<BillingNotice, "body"> & { body: string }): BillingNotice => ({
     ...n,
-    body: n.body + staffHint,
+    // Staff can't act on billing: drop the "click here" sentence for them.
+    body: (n.action || !n.bodyLink ? n.body : n.body.replace(/\s*Please click here[^.]*\./, "")) + staffHint,
   });
 
   if (sub?.status === "past_due") {
@@ -128,9 +131,10 @@ export async function getBillingNotice(opts: {
     return make({
       kind: "save_card",
       tone: "warning",
-      title: "Action needed: update your card",
-      body: `We're moving card payments to a new provider. Save your card before ${fmt(sub.currentPeriodEnd)} and ${label} carries on as normal, with no interruption. Nothing is charged today.`,
+      title: "Action needed: update your card on file",
+      body: "We're moving to a different payment provider to save on credit card fees, so we can continue to offer our service to you at current prices. Please click here to update your card details.",
       action: billing("Update card", true),
+      bodyLink: "click here",
     });
   }
 
