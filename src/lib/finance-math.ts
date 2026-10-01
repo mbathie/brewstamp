@@ -44,6 +44,8 @@ export interface FinanceSummary {
     plan: string;
     amountCents: number;
     currency: string;
+    /** Which processor took the money. */
+    provider: "stripe" | "paypal";
   }>;
 }
 

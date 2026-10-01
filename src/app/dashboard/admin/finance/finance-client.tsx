@@ -362,6 +362,7 @@ export default function FinanceClient() {
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Plan</TableHead>
+                  <TableHead>Provider</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
@@ -371,6 +372,17 @@ export default function FinanceClient() {
                     <TableCell className="whitespace-nowrap">{t.date}</TableCell>
                     <TableCell className="max-w-[240px] truncate">{t.email}</TableCell>
                     <TableCell>{t.plan}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                          t.provider === "paypal"
+                            ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
+                            : "border-violet-500/30 bg-violet-500/10 text-violet-300"
+                        }`}
+                      >
+                        {t.provider === "paypal" ? "PayPal" : "Stripe"}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(t.amountCents, t.currency)}</TableCell>
                   </TableRow>
                 ))}

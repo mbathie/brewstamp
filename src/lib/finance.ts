@@ -188,6 +188,9 @@ export async function getBrewstampFinance(opts?: {
           plan: `Brewstamp ${getPlanBySlug(p.planSlug ?? "")?.label ?? "Pro"}`,
           amountCents: p.amountCents,
           currency: cur,
+          // The provider field is set on every row; the processor ids are the
+          // fallback for any row written before it existed.
+          provider: p.provider ?? (p.stripeInvoiceId ? "stripe" : "paypal"),
         });
       }
     }
