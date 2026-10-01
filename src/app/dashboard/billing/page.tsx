@@ -385,7 +385,9 @@ export default function BillingPage() {
               <CardDescription>Current plan</CardDescription>
               <CardTitle className="flex items-center gap-2 text-xl">
                 {currentPlan.label}
-                <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd} />
+                {/* A Stripe plan awaiting its PayPal card isn't really ending —
+                    saving the card lifts the cancel — so don't call it that. */}
+                <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd && !canMoveToPaypal} />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -397,8 +399,8 @@ export default function BillingPage() {
               </div>
               {sub.currentPeriodEnd && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">{sub.cancelAtPeriodEnd ? "Ends on " : "Next bill "}</span>
-                  <span className={sub.cancelAtPeriodEnd ? "text-amber-400" : "text-foreground"}>{fmtDate(sub.currentPeriodEnd)}</span>
+                  <span className="text-muted-foreground">{sub.cancelAtPeriodEnd && !canMoveToPaypal ? "Ends on " : "Next bill "}</span>
+                  <span className={sub.cancelAtPeriodEnd && !canMoveToPaypal ? "text-amber-400" : "text-foreground"}>{fmtDate(sub.currentPeriodEnd)}</span>
                   {!sub.cancelAtPeriodEnd && sub.creditCents > 0 && (
                     <span className="text-muted-foreground"> · {formatCents(sub.creditCents)} credit applied</span>
                   )}

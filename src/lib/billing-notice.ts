@@ -115,6 +115,20 @@ export async function getBillingNotice(opts: {
     return null;
   }
 
+  // A Stripe-billed plan that still needs its card saved with PayPal. Saving
+  // the card also lifts any cancel-at-period-end (completeMigration), so this
+  // reads as a routine card update with no interruption — not "plan ending",
+  // which alarmed owners whose last payment had gone through fine.
+  if (needsPaypalCard && sub.status === "active") {
+    return make({
+      kind: "save_card",
+      tone: "warning",
+      title: "Action needed: update your card",
+      body: `We're moving card payments to a new provider. Save your card before ${fmt(sub.currentPeriodEnd)} and ${label} carries on as normal, with no interruption. Nothing is charged today.`,
+      action: billing("Update card"),
+    });
+  }
+
   if (sub?.cancelAtPeriodEnd && sub.status === "active") {
     const after = overCap
       ? ` After that this shop moves to the free trial, which is capped at ${FREE_LIMIT} stamps, so stamping will pause.`
@@ -123,18 +137,8 @@ export async function getBillingNotice(opts: {
       kind: "ending",
       tone: "warning",
       title: `Your ${label} plan ends on ${fmt(sub.currentPeriodEnd)}`,
-      body: `${after.trim()}${needsPaypalCard ? " Save a card to keep your plan — nothing is charged today." : ""}`,
-      action: billing(needsPaypalCard ? "Save card" : `Keep ${label}`),
-    });
-  }
-
-  if (needsPaypalCard) {
-    return make({
-      kind: "save_card",
-      tone: "warning",
-      title: "Action needed: save your card",
-      body: `We've moved card payments to PayPal. Save your card before ${label} renews on ${fmt(sub.currentPeriodEnd)} so it continues without interruption. Nothing is charged today.`,
-      action: billing("Save card"),
+      body: after.trim(),
+      action: billing(`Keep ${label}`),
     });
   }
 
