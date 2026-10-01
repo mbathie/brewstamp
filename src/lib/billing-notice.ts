@@ -61,8 +61,13 @@ export async function getBillingNotice(opts: {
   const paypalOn = billingProvider() === "paypal" && !!process.env.PAYPAL_CLIENT_ID;
   const needsPaypalCard =
     paypalOn && !!sub && sub.provider !== "paypal" && !sub.migratedAt && ["active", "past_due"].includes(sub.status);
-  const billing = (actionLabel: string) =>
-    opts.canManageBilling ? { label: actionLabel, href: "/dashboard/billing" } : null;
+  // Card actions deep-link with ?card=1 so the billing page opens the card
+  // panel straight away (PayPal save-card for Stripe plans, add/replace card
+  // for PayPal plans) instead of leaving the owner to find the button.
+  const billing = (actionLabel: string, opensCard = false) =>
+    opts.canManageBilling
+      ? { label: actionLabel, href: opensCard ? "/dashboard/billing?card=1" : "/dashboard/billing" }
+      : null;
   const staffHint = opts.canManageBilling ? "" : " Ask the shop owner to sort out billing.";
 
   const make = (n: Omit<BillingNotice, "body"> & { body: string }): BillingNotice => ({
@@ -78,7 +83,7 @@ export async function getBillingNotice(opts: {
       tone: "danger",
       title: `Your ${label} payment didn't go through`,
       body: `Update your card to keep ${label}. Stamping keeps working while we retry.${retry}${ending}`,
-      action: billing("Update card"),
+      action: billing("Update card", true),
     });
   }
 
@@ -125,7 +130,7 @@ export async function getBillingNotice(opts: {
       tone: "warning",
       title: "Action needed: update your card",
       body: `We're moving card payments to a new provider. Save your card before ${fmt(sub.currentPeriodEnd)} and ${label} carries on as normal, with no interruption. Nothing is charged today.`,
-      action: billing("Update card"),
+      action: billing("Update card", true),
     });
   }
 

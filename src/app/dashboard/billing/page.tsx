@@ -198,6 +198,17 @@ export default function BillingPage() {
     !isSeed;
   const paypalWithoutCard = isPaypalSub && !sub?.card?.last4;
 
+  // Deep link from the dashboard banner ("Update card"): open the card panel
+  // once the subscription has loaded, then drop the param so a refresh
+  // doesn't reopen it.
+  const openCard = searchParams.get("card") === "1";
+  useEffect(() => {
+    if (!openCard || !data) return;
+    if (canMoveToPaypal) setMovingCard(true);
+    else if (isPaypalSub) setUpdatingCard(true);
+    router.replace("/dashboard/billing", { scroll: false });
+  }, [openCard, data, canMoveToPaypal, isPaypalSub, router]);
+
   function keepPlan() {
     if (canMoveToPaypal) return setMovingCard(true);
     if (paypalWithoutCard) {
