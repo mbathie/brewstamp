@@ -199,6 +199,7 @@ export default async function DashboardLayout({
                 language={ctx.shop.language || "en"}
                 freeStampsLeft={hasPaidPlan ? null : Math.max(0, freeTier.stampLimit - totalStamps)}
                 freeStampLimit={freeTier.stampLimit}
+                viewOnly={!!viewingAs}
               />
             )}
             <div className="ml-auto flex items-center gap-3">

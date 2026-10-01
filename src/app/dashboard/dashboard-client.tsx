@@ -39,6 +39,9 @@ interface Props {
   // Free-plan usage from the layout; null once the shop has a paid plan.
   freeStampsLeft: number | null;
   freeStampLimit: number;
+  // Admin "view as": read-only. No live connection (it would replace the
+  // shop's own device on the channel), no request polling, no approval modal.
+  viewOnly?: boolean;
 }
 
 export default function DashboardClient({
@@ -55,14 +58,22 @@ export default function DashboardClient({
   language,
   freeStampsLeft,
   freeStampLimit,
+  viewOnly = false,
 }: Props) {
   const router = useRouter();
-  const [currentRequest, setCurrentRequest] = useState<StampRequestData | null>(null);
+  const [currentRequest, setCurrentRequest] = useState<StampRequestData | null>(
+    null,
+  );
   // Set when the server refuses an approval with LIMIT_REACHED — the layout's
   // count can lag by a request or two, so this forces the upgrade prompt.
   const [limitHit, setLimitHit] = useState(false);
   const currentRequestRef = useRef<StampRequestData | null>(null);
-  const { connected, send, on } = useWebSocket(shopCode, "merchant", "merchant");
+  const { connected, send, on } = useWebSocket(
+    shopCode,
+    "merchant",
+    "merchant",
+    !viewOnly,
+  );
 
   // Present ("counter display") mode. A per-device localStorage flag lets a
   // dedicated counter tablet boot straight into it while the owner's laptop
@@ -120,7 +131,13 @@ export default function DashboardClient({
       clearTimeout(timer);
       timer = setTimeout(() => setPresenting(true), IDLE_RETURN_MS);
     };
-    const events = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"];
+    const events = [
+      "pointerdown",
+      "pointermove",
+      "keydown",
+      "wheel",
+      "touchstart",
+    ];
     events.forEach((e) => window.addEventListener(e, arm, { passive: true }));
     arm();
     return () => {
@@ -175,12 +192,18 @@ export default function DashboardClient({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "rejected" }),
-        });
-        send({
-          type: "stamp-request:rejected",
-          requestId: prev.requestId,
-          customerId: prev.customerId,
-        });
+        })
+          .then((res) => {
+            // Only tell the customer once the decline is actually saved.
+            if (res.ok) {
+              send({
+                type: "stamp-request:rejected",
+                requestId: prev.requestId,
+                customerId: prev.customerId,
+              });
+            }
+          })
+          .catch(() => {});
       }
 
       setCurrentRequest(request);
@@ -203,7 +226,7 @@ export default function DashboardClient({
                     notes: data.notes || "",
                     isTopCustomer: !!data.isTopCustomer,
                   }
-                : curr
+                : curr,
             );
           })
           .catch(() => {});
@@ -212,20 +235,23 @@ export default function DashboardClient({
 
     // Customer closed their tab / navigated away before we acted — drop the
     // modal so the attendant isn't left staring at a stale request.
-    const unsubCancel = on("stamp-request:cancelled-by-customer", (msg: any) => {
-      const curr = currentRequestRef.current;
-      if (!curr || curr.requestId !== msg.requestId) return;
-      // Persist as rejected so the DB doesn't carry the stale pending row.
-      fetch(`/api/stamp-request/${curr.requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected" }),
-      }).catch(() => {});
-      toast.message("Customer left before approval", {
-        description: curr.customerName,
-      });
-      setCurrentRequest(null);
-    });
+    const unsubCancel = on(
+      "stamp-request:cancelled-by-customer",
+      (msg: any) => {
+        const curr = currentRequestRef.current;
+        if (!curr || curr.requestId !== msg.requestId) return;
+        // Persist as rejected so the DB doesn't carry the stale pending row.
+        fetch(`/api/stamp-request/${curr.requestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "rejected" }),
+        }).catch(() => {});
+        toast.message("Customer left before approval", {
+          description: curr.customerName,
+        });
+        setCurrentRequest(null);
+      },
+    );
 
     return () => {
       unsub();
@@ -262,7 +288,7 @@ export default function DashboardClient({
                     notes: d.notes || "",
                     isTopCustomer: !!d.isTopCustomer,
                   }
-                : curr
+                : curr,
             );
           })
           .catch(() => {});
@@ -279,9 +305,10 @@ export default function DashboardClient({
 
   // Slow poll as a safety net even while nominally connected.
   useEffect(() => {
+    if (viewOnly) return;
     const id = setInterval(reconcile, 8000);
     return () => clearInterval(id);
-  }, [reconcile]);
+  }, [reconcile, viewOnly]);
 
   const handleApprove = useCallback(
     async (requestId: string, stampsAwarded: number, redeem: boolean) => {
@@ -313,7 +340,9 @@ export default function DashboardClient({
         } else {
           const parts: string[] = [];
           if (stampsAwarded > 0) {
-            parts.push(`+${stampsAwarded} stamp${stampsAwarded > 1 ? "s" : ""} awarded`);
+            parts.push(
+              `+${stampsAwarded} stamp${stampsAwarded > 1 ? "s" : ""} awarded`,
+            );
           }
           if (redeem) {
             parts.push("reward redeemed");
@@ -349,16 +378,24 @@ export default function DashboardClient({
       setCurrentRequest(null);
       setLimitHit(false);
     },
-    [currentRequest, send, router, threshold]
+    [currentRequest, send, router, threshold],
   );
 
   const handleReject = useCallback(
     async (requestId: string) => {
-      await fetch(`/api/stamp-request/${requestId}`, {
+      const res = await fetch(`/api/stamp-request/${requestId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" }),
-      });
+      }).catch(() => null);
+
+      // If the decline wasn't saved, say so and keep the request open —
+      // telling the customer "declined" while it's still pending (and will
+      // pop up again on the next poll) is the worst of both.
+      if (!res?.ok) {
+        toast.error("Couldn't decline that request. Try again.");
+        return;
+      }
 
       send({
         type: "stamp-request:rejected",
@@ -368,17 +405,17 @@ export default function DashboardClient({
 
       setCurrentRequest(null);
     },
-    [currentRequest, send]
+    [currentRequest, send],
   );
 
   return (
     <>
       <div className="flex items-center gap-2">
         <span
-          className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
+          className={`h-2 w-2 rounded-full ${viewOnly ? "bg-muted-foreground/50" : connected ? "bg-green-500" : "bg-red-500"}`}
         />
         <span className="text-sm text-muted-foreground">
-          {connected ? "Live" : "Disconnected"}
+          {viewOnly ? "View only" : connected ? "Live" : "Disconnected"}
         </span>
       </div>
 
@@ -413,13 +450,18 @@ export default function DashboardClient({
         />
       )}
 
-      <StampRequestModal
-        request={currentRequest}
-        onApprove={handleApprove}
-        onReject={(id) => { setLimitHit(false); handleReject(id); }}
-        freeStampsLeft={limitHit ? 0 : freeStampsLeft}
-        freeStampLimit={freeStampLimit}
-      />
+      {!viewOnly && (
+        <StampRequestModal
+          request={currentRequest}
+          onApprove={handleApprove}
+          onReject={(id) => {
+            setLimitHit(false);
+            handleReject(id);
+          }}
+          freeStampsLeft={limitHit ? 0 : freeStampsLeft}
+          freeStampLimit={freeStampLimit}
+        />
+      )}
     </>
   );
 }

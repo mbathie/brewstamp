@@ -7,7 +7,11 @@ type MessageHandler = (msg: any) => void;
 export function useWebSocket(
   shopCode: string,
   role: "merchant" | "customer",
-  clientId: string
+  clientId: string,
+  // false = never connect. Admin "view as" uses this: the server keeps one
+  // merchant socket per shop, so connecting would take the live channel away
+  // from the shop's own device and let the viewer's actions reach customers.
+  enabled = true
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -64,6 +68,7 @@ export function useWebSocket(
   }, [shopCode, role, clientId]);
 
   useEffect(() => {
+    if (!enabled) return;
     mountedRef.current = true;
     connect();
 
@@ -100,7 +105,7 @@ export function useWebSocket(
         wsRef.current = null;
       }
     };
-  }, [connect]);
+  }, [connect, enabled]);
 
   const send = useCallback((msg: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
