@@ -402,7 +402,9 @@ export default function BillingPage() {
           first; Free users get a compact usage strip with the CTA. */}
       {currentSlug !== "free" && sub ? (
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          {/* Each card: header, details, then an action footer pinned to the
+              bottom so the buttons line up across the row. */}
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardDescription>Current plan</CardDescription>
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -412,7 +414,7 @@ export default function BillingPage() {
                 <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd && !canMoveToPaypal} />
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex flex-1 flex-col gap-1.5">
               <div className="text-sm text-muted-foreground">
                 <span className="text-2xl font-semibold text-foreground">
                   {sub.priceCents != null ? moneyWithCode(sub.priceCents, sub.currency) : formatCents(planPriceCents(currentPlan, currentInterval ?? "month"))}
@@ -428,7 +430,7 @@ export default function BillingPage() {
                   )}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2 pt-1">
+              <CardActions>
                 <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setTab("plans")} disabled={isSeed}>
                   Change plan
                 </Button>
@@ -437,15 +439,15 @@ export default function BillingPage() {
                     Keep {currentPlan.label}
                   </Button>
                 ) : (
-                  <Button size="sm" variant="ghost" className="cursor-pointer text-muted-foreground" disabled={isSeed || !!switchingTo} onClick={() => handleSwitch("free")}>
+                  <Button size="sm" variant="ghost" className="ml-auto cursor-pointer text-muted-foreground hover:text-red-400" disabled={isSeed || !!switchingTo} onClick={() => handleSwitch("free")}>
                     Cancel plan
                   </Button>
                 )}
-              </div>
+              </CardActions>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardDescription>Payment method</CardDescription>
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -459,7 +461,7 @@ export default function BillingPage() {
                     : "Card on file"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex flex-1 flex-col gap-1.5">
               <p className="text-sm text-muted-foreground">
                 {isPaypalSub
                   ? sub.card?.expiry
@@ -469,44 +471,56 @@ export default function BillingPage() {
                     ? `We've moved card payments to PayPal. Save your card once to keep ${currentPlan.label} renewing at the same price on ${fmtDate(sub.currentPeriodEnd)}. Nothing is charged today.`
                     : "Managed securely by Stripe — update your card, view invoices or cancel in the portal."}
               </p>
-              {canMoveToPaypal ? (
-                <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setMovingCard(true)}>
-                  Save card
-                </Button>
-              ) : isPaypalSub ? (
-                <Button size="sm" variant={sub.card?.last4 ? "outline" : "default"} className={`cursor-pointer ${sub.card?.last4 ? "" : "bg-amber-700 text-white hover:bg-amber-800"}`} onClick={() => setUpdatingCard(true)}>
-                  {sub.card?.last4 ? "Update card" : "Add a card"}
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="cursor-pointer" onClick={handlePortal} disabled={portalLoading || isSeed}>
-                  {portalLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <ExternalLink className="mr-2 size-4" />}
-                  Open billing portal
-                </Button>
-              )}
+              <CardActions>
+                {canMoveToPaypal ? (
+                  <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setMovingCard(true)}>
+                    Save card
+                  </Button>
+                ) : isPaypalSub ? (
+                  <Button size="sm" variant={sub.card?.last4 ? "outline" : "default"} className={`cursor-pointer ${sub.card?.last4 ? "" : "bg-amber-700 text-white hover:bg-amber-800"}`} onClick={() => setUpdatingCard(true)}>
+                    {sub.card?.last4 ? "Update card" : "Add a card"}
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" className="cursor-pointer" onClick={handlePortal} disabled={portalLoading || isSeed}>
+                    {portalLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <ExternalLink className="mr-2 size-4" />}
+                    Open billing portal
+                  </Button>
+                )}
+              </CardActions>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardDescription>Usage</CardDescription>
               <CardTitle className="text-xl">{data.totalStamps.toLocaleString()} stamps</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex flex-1 flex-col gap-1.5">
               <p className="text-sm text-muted-foreground">
                 {currentPlan.stampLimit === "unlimited" ? "Unlimited stamps on your plan." : `${data.totalStamps} of ${currentPlan.stampLimit} stamps used.`}
               </p>
-              <div className="text-sm">
-                <span className="text-foreground">{data.ownedShops}</span>
-                <span className="text-muted-foreground"> of {currentPlan.shopLimit} shop{currentPlan.shopLimit === 1 ? "" : "s"} used</span>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="shrink-0">
+                  <span className="text-foreground">{data.ownedShops}</span>
+                  <span className="text-muted-foreground"> of {currentPlan.shopLimit} shop{currentPlan.shopLimit === 1 ? "" : "s"}</span>
+                </span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-amber-600" style={{ width: `${Math.min(100, Math.round((data.ownedShops / currentPlan.shopLimit) * 100))}%` }} />
+                </div>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-amber-600" style={{ width: `${Math.min(100, Math.round((data.ownedShops / currentPlan.shopLimit) * 100))}%` }} />
-              </div>
-              {data.ownedShops >= currentPlan.shopLimit && currentSlug !== "max" && (
-                <button type="button" onClick={() => setTab("plans")} className="cursor-pointer text-xs text-amber-400 hover:underline">
-                  Need another shop? Upgrade →
-                </button>
-              )}
+              <CardActions>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setTab("plans");
+                    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  {data.ownedShops >= currentPlan.shopLimit && currentSlug !== "max" ? "Need another shop? Upgrade" : "Compare plans"}
+                </Button>
+              </CardActions>
             </CardContent>
           </Card>
         </div>
@@ -1200,4 +1214,10 @@ function FeatureRow({
       ))}
     </TableRow>
   );
+}
+
+// Footer row for the billing summary cards: pinned to the bottom of the card
+// (mt-auto) behind a divider, so actions line up across cards of any height.
+function CardActions({ children }: { children: React.ReactNode }) {
+  return <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">{children}</div>;
 }
