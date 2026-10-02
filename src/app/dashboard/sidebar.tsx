@@ -17,6 +17,7 @@ import {
   Ticket,
   DollarSign,
   Handshake,
+  ScrollText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -60,6 +61,7 @@ const adminItems = [
   { title: "Paying customers", href: "/dashboard/admin/customers", icon: CreditCard },
   { title: "Discounts", href: "/dashboard/admin/discounts", icon: Ticket },
   { title: "Partners", href: "/dashboard/admin/partners", icon: Handshake },
+  { title: "Server logs", href: "/dashboard/admin/logs", icon: ScrollText },
 ];
 
 export function DashboardSidebar({

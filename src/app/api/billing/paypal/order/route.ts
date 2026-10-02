@@ -39,9 +39,10 @@ export async function POST(req: Request) {
       customId: `${merchant.shop._id}:${slug}:${interval}:initial`,
       vault: true,
     });
+    console.log(`[PayPal] order created shop=${merchant.shop._id} order=${order.id} plan=${slug}/${interval} amount=${amountCents} ${CURRENCY}`);
     return NextResponse.json({ orderId: order.id, amountCents, currency: CURRENCY });
   } catch (err) {
-    console.error("[PayPal] create order failed:", err);
+    console.error(`[PayPal] create order failed shop=${merchant.shop._id} plan=${slug}/${interval}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);
     const msg = err instanceof PayPalError ? err.message : "Could not start checkout";
     return NextResponse.json({ error: msg }, { status: 502 });
   }

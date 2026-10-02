@@ -49,6 +49,65 @@ function loadSdk(clientId: string, currency: string): Promise<any> {
   });
 }
 
+// Report a step of the card form to the server log (7-day retention) so a
+// failure that never reaches our API, like a refusal inside PayPal's iframes,
+// still leaves a trace. Fire-and-forget; never throws. No card data: PayPal
+// only exposes field validity and the detected brand.
+function report(event: string, data: Record<string, unknown> = {}) {
+  try {
+    void fetch("/api/billing/paypal/client-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event, page: window.location.pathname, ...data }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* logging must never break checkout */
+  }
+}
+
+// Everything useful on an SDK or PayPal error, without the noise.
+function errDetail(err: any) {
+  if (!err) return null;
+  if (typeof err !== "object") return String(err);
+  return {
+    name: err.name,
+    message: err.message,
+    debug_id: err.debug_id ?? err.debugId,
+    details: err.details,
+    stack: typeof err.stack === "string" ? err.stack.split("\n").slice(0, 3).join(" | ") : undefined,
+  };
+}
+
+// Field validity from CardFields.getState(), reduced to booleans + brand.
+async function fieldState(cardFields: any) {
+  try {
+    const st = await cardFields?.getState?.();
+    if (!st) return null;
+    const f: Record<string, string> = {};
+    for (const [k, v] of Object.entries<any>(st.fields || {})) {
+      f[k.replace(/Field$/, "")] = v?.isEmpty ? "empty" : v?.isValid ? "valid" : v?.isPotentiallyValid ? "partial" : "invalid";
+    }
+    return { formValid: !!st.isFormValid, brand: st.cards?.[0]?.type ?? null, ...f };
+  } catch {
+    return null;
+  }
+}
+
+// PayPal's issue codes, as the SDK surfaces them in an error message, in words
+// a shop owner can act on. PAYER_CANNOT_PAY is PayPal's risk check refusing the
+// card outright, typically after the bank declined it once.
+function friendlyPayPalError(msg: string): string | null {
+  if (/PAYER_CANNOT_PAY/i.test(msg)) {
+    return "This card can't be used for this payment. Please try a different card, or ask your bank to allow online payments in US dollars.";
+  }
+  if (/INSTRUMENT_DECLINED|CARD_DECLINED|DECLINED/i.test(msg)) {
+    return "Your card was declined. Please try a different card, or ask your bank to allow online payments in US dollars.";
+  }
+  if (/CARD_EXPIRED/i.test(msg)) return "That card has expired. Please use a different card.";
+  return null;
+}
+
 type Props = {
   clientId: string;
   currency?: string;
@@ -79,6 +138,17 @@ export function PayPalCardFields(props: Props) {
   // Latest props for the SDK callbacks, which are bound once.
   const propsRef = useRef(props);
   propsRef.current = props;
+  // Order id of the attempt in flight, so every report can be tied to PayPal's record.
+  const orderIdRef = useRef<string | null>(null);
+  const ctx = () => {
+    const p = propsRef.current;
+    return {
+      mode: p.mode,
+      plan: p.mode === "checkout" ? p.plan : undefined,
+      interval: p.mode === "checkout" ? p.interval : undefined,
+      orderId: orderIdRef.current,
+    };
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +157,7 @@ export function PayPalCardFields(props: Props) {
       .then((paypal) => {
         if (cancelled || !containerRef.current) return;
         if (!paypal?.CardFields) {
+          report("not_eligible", { ...ctx(), message: "SDK loaded without CardFields" });
           setEligible(false);
           return;
         }
@@ -117,7 +188,9 @@ export function PayPalCardFields(props: Props) {
           style,
           onError: (err: any) => {
             console.error("[PayPal card fields]", err);
-            setError(err?.message || "Card fields error");
+            const shown = friendlyPayPalError(String(err?.message || "")) || err?.message || "Card fields error";
+            report("card_fields_error", { ...ctx(), message: err?.message, detail: errDetail(err), shown });
+            setError(shown);
             setSubmitting(false);
           },
         };
@@ -135,8 +208,12 @@ export function PayPalCardFields(props: Props) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ plan: cur.plan, interval: cur.interval }),
                   });
-                  const json = await res.json();
-                  if (!res.ok) throw new Error(json.error || "Could not start checkout");
+                  const json = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    report("create_order_failed", { ...ctx(), status: res.status, message: json.error, detail: json });
+                    throw new Error(json.error || "Could not start checkout");
+                  }
+                  orderIdRef.current = json.orderId;
                   return json.orderId as string;
                 },
                 onApprove: async (data: any) => {
@@ -147,12 +224,14 @@ export function PayPalCardFields(props: Props) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ orderId: data.orderID, plan: cur.plan, interval: cur.interval }),
                   });
-                  const json = await res.json();
+                  const json = await res.json().catch(() => ({}));
                   setSubmitting(false);
                   if (!res.ok) {
+                    report("approve_failed", { ...ctx(), orderId: data.orderID, status: res.status, message: json.error, detail: json, shown: json.error || "Payment failed" });
                     setError(json.error || "Payment failed");
                     return;
                   }
+                  report("success", { ...ctx(), orderId: data.orderID });
                   cur.onSuccess(json);
                 },
               }
@@ -164,8 +243,12 @@ export function PayPalCardFields(props: Props) {
                   const cur = propsRef.current;
                   const url = cur.mode === "update" && cur.endpoints ? cur.endpoints.setupToken : "/api/billing/paypal/setup-token";
                   const res = await fetch(url, { method: "POST" });
-                  const json = await res.json();
-                  if (!res.ok) throw new Error(json.error || "Could not start card update");
+                  const json = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    report("create_order_failed", { ...ctx(), status: res.status, message: json.error, detail: json });
+                    throw new Error(json.error || "Could not start card update");
+                  }
+                  orderIdRef.current = json.orderId;
                   return json.orderId as string;
                 },
                 onApprove: async (data: any) => {
@@ -176,18 +259,21 @@ export function PayPalCardFields(props: Props) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ orderId: data.orderID }),
                   });
-                  const json = await res.json();
+                  const json = await res.json().catch(() => ({}));
                   setSubmitting(false);
                   if (!res.ok) {
+                    report("approve_failed", { ...ctx(), orderId: data.orderID, status: res.status, message: json.error, detail: json, shown: json.error || "Could not save card" });
                     setError(json.error || "Could not save card");
                     return;
                   }
+                  report("success", { ...ctx(), orderId: data.orderID });
                   propsRef.current.onSuccess(json);
                 },
               }
         );
 
         if (!cardFields.isEligible()) {
+          report("not_eligible", { ...ctx(), message: "CardFields.isEligible() is false" });
           setEligible(false);
           return;
         }
@@ -203,9 +289,13 @@ export function PayPalCardFields(props: Props) {
           ["#pp-card-name", "#pp-card-number", "#pp-card-expiry", "#pp-card-cvv"].map((sel, i) => rendered[i].render(sel))
         ).then(() => {
           if (!cancelled) setReady(true);
+        }).catch((err: any) => {
+          report("card_fields_error", { ...ctx(), message: `render failed: ${err?.message}`, detail: errDetail(err) });
+          if (!cancelled) setError("Could not load the card form. Please refresh and try again.");
         });
       })
       .catch((err) => {
+        report("sdk_load_failed", { ...ctx(), message: err?.message, detail: errDetail(err) });
         if (!cancelled) setError(err.message || "Could not load card form");
       });
 
@@ -226,6 +316,9 @@ export function PayPalCardFields(props: Props) {
     if (!fieldsRef.current) return;
     setError(null);
     setSubmitting(true);
+    orderIdRef.current = null;
+    const fields = await fieldState(fieldsRef.current);
+    report("submit", { ...ctx(), fields });
     try {
       // Resolves after onApprove/onError have run; rejects with PayPal's
       // own validation message if a field is invalid.
@@ -234,7 +327,11 @@ export function PayPalCardFields(props: Props) {
       const msg: string = err?.message || "";
       // Field-validation errors from the SDK read "…invalid…"; anything else
       // came from our server or PayPal and should be shown as-is.
-      setError(/^(invalid|incomplete)|is invalid|not valid/i.test(msg) ? "Please check the card details." : msg || "Something went wrong — please try again.");
+      const shown =
+        friendlyPayPalError(msg) ||
+        (/^(invalid|incomplete)|is invalid|not valid/i.test(msg) ? "Please check the card details." : msg || "Something went wrong — please try again.");
+      report("submit_rejected", { ...ctx(), message: msg, detail: errDetail(err), shown, fields });
+      setError(shown);
       setSubmitting(false);
     }
   }

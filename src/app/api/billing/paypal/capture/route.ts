@@ -34,11 +34,20 @@ export async function POST(req: Request) {
     const order = pre.status === "COMPLETED" ? pre : await captureOrder(body.orderId);
     const cap = captureOf(order);
     if (!cap || cap.status !== "COMPLETED") {
+      console.warn(
+        `[PayPal] capture not completed shop=${shopId} order=${body.orderId} plan=${slug}/${interval} order_status=${order.status} capture_status=${cap?.status ?? "-"} processor=${JSON.stringify((cap as any)?.processor_response ?? null)} reason=${JSON.stringify((cap as any)?.status_details ?? null)}`,
+      );
       return NextResponse.json(
-        { error: cap?.status === "DECLINED" ? "Your card was declined." : `Payment not completed (${cap?.status ?? order.status})` },
+        {
+          error:
+            cap?.status === "DECLINED"
+              ? "Your card was declined. Please try a different card, or ask your bank to allow online payments in US dollars."
+              : `Payment not completed (${cap?.status ?? order.status})`,
+        },
         { status: 402 }
       );
     }
+    console.log(`[PayPal] capture ok shop=${shopId} order=${body.orderId} plan=${slug}/${interval} capture=${cap.id}`);
     const sub = await activateFromCapture({
       shopId,
       order,
@@ -48,7 +57,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, plan: slug, interval, currentPeriodEnd: sub?.currentPeriodEnd });
   } catch (err) {
-    console.error("[PayPal] capture failed:", err);
+    console.error(`[PayPal] capture failed shop=${shopId} order=${body.orderId} plan=${slug}/${interval}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);
     if (err instanceof PayPalError) {
       const issue = err.issue;
       const friendly =

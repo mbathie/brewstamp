@@ -75,17 +75,32 @@ async function api<T>(
   };
   // Idempotency key — a retried renewal must never double-charge.
   if (opts?.requestId) headers["PayPal-Request-Id"] = opts.requestId;
+  const started = Date.now();
   const res = await fetch(`${API_BASE()}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
+  let json: any = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = { raw: text.slice(0, 500) };
+  }
+  // One line per PayPal call, kept 7 days in the server log (server-log.ts).
+  // PayPal-Debug-Id is what PayPal support and the developer dashboard's
+  // event log search on, so a failed checkout can be traced from here.
+  const debugId = res.headers.get("paypal-debug-id") || json?.debug_id || "-";
+  const ms = Date.now() - started;
   if (!res.ok) {
     const msg = json?.details?.[0]?.description || json?.message || `PayPal ${method} ${path} → ${res.status}`;
+    console.error(
+      `[PayPal API] ${method} ${path} ${res.status} ${ms}ms debug_id=${debugId} issue=${json?.details?.[0]?.issue ?? json?.name ?? "-"} body=${JSON.stringify(json)?.slice(0, 1500)}`,
+    );
     throw new PayPalError(msg, res.status, json);
   }
+  console.log(`[PayPal API] ${method} ${path} ${res.status} ${ms}ms debug_id=${debugId}${json?.status ? ` status=${json.status}` : ""}`);
   return json as T;
 }
 

@@ -32,9 +32,10 @@ export async function POST(req: Request) {
     if (old && old !== vaultId) {
       deletePaymentToken(old).catch((e) => console.error("[PayPal] old token delete failed:", e));
     }
+    console.log(`[PayPal] card saved shop=${auth.merchant.shop._id} order=${orderId} brand=${card?.brand ?? "-"}`);
     return NextResponse.json({ ok: true, card: sub.card });
   } catch (err) {
-    console.error("[PayPal] save card failed:", err);
+    console.error(`[PayPal] save card failed shop=${auth.merchant.shop._id} order=${orderId}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);
     if (err instanceof PayPalError) {
       const friendly = err.issue === "INSTRUMENT_DECLINED" ? "Your card was declined by the issuer. Please try another card." : err.message;
       return NextResponse.json({ error: friendly }, { status: err.status === 402 ? 402 : 502 });

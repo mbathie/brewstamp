@@ -1,6 +1,9 @@
 // MUST be first: loads .env.local into process.env before any import below
 // reads it at module-load time (e.g. lib/stripe.ts via the billing cron).
 import "./src/lib/load-env";
+// Second: start keeping console output (7 days in Mongo) before anything logs.
+import { installServerLog, logHttp } from "./src/lib/server-log";
+installServerLog();
 import { createServer, IncomingMessage } from "http";
 import { parse } from "url";
 import next from "next";
@@ -71,6 +74,20 @@ app.prepare().then(() => {
           `brewstamp_id=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`
         );
       }
+    }
+
+    // An http line per API write (and any API error) and a notfound line per
+    // page 404, kept with the console output. Successful GETs are skipped:
+    // open dashboards poll every few seconds and would drown everything else.
+    const path = parsedUrl.pathname || "";
+    if (!path.startsWith("/_next/") && !/\.[a-z0-9]{2,5}$/i.test(path)) {
+      const started = Date.now();
+      res.once("finish", () => {
+        const apiHit = path.startsWith("/api/") && (req.method !== "GET" || res.statusCode >= 400);
+        if (apiHit || res.statusCode === 404) {
+          logHttp({ method: req.method || "GET", path, status: res.statusCode, ms: Date.now() - started });
+        }
+      });
     }
 
     handle(req, res, parsedUrl);

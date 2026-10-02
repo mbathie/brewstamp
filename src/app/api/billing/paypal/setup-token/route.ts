@@ -18,9 +18,10 @@ export async function POST() {
       customId: `${auth.merchant.shop._id}:verify`,
       description: `Card verification — ${auth.merchant.shop.name}`,
     });
+    console.log(`[PayPal] verify order created shop=${auth.merchant.shop._id} order=${order.id}`);
     return NextResponse.json({ orderId: order.id });
   } catch (err) {
-    console.error("[PayPal] verify order failed:", err);
+    console.error(`[PayPal] verify order failed shop=${auth.merchant.shop._id}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);
     return NextResponse.json({ error: err instanceof PayPalError ? err.message : "Could not start card update" }, { status: 502 });
   }
 }
