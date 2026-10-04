@@ -56,7 +56,9 @@ async function main() {
     console.log(`\nBoots: ${boots.length}`);
     for (const b of boots) {
       // The last memory sample before a boot shows how full it was going down.
-      const before = mem.filter((m) => m.t < b.t).at(-1);
+      // Skip the new process's own startup sample, logged seconds before "Ready".
+      const cutoff = new Date(new Date(b.t).getTime() - 60_000).toISOString();
+      const before = mem.filter((m) => m.t < cutoff).at(-1);
       console.log(`  ${b.t}  commit=${b.commit?.slice(0, 7) ?? "-"}${before ? `  last RSS before: ${before.rss} MB at ${before.t}` : ""}`);
     }
     console.log(`\nFatal process errors: ${fatal.length}`);
