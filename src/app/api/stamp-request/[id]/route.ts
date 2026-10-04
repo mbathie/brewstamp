@@ -67,11 +67,25 @@ export async function PATCH(
   }
 
   const request = await StampRequest.findById(id);
-  if (!request || request.status !== "pending") {
-    return NextResponse.json({ error: "Request not found or already processed" }, { status: 404 });
+  // Gone: pending requests expire after 10 minutes and the TTL index deletes
+  // them. Already handled: a double tap, a second device, or an auto-decline
+  // got there first. The dashboard closes the request on either code rather
+  // than offering a retry that can never succeed.
+  if (!request) {
+    return NextResponse.json({ error: "That request has expired.", code: "GONE" }, { status: 404 });
   }
   if (!merchant.shopIds.includes(request.shop.toString())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (request.status !== "pending") {
+    return NextResponse.json(
+      {
+        error: request.status === "expired" ? "That request has expired." : `That request was already ${request.status}.`,
+        code: "ALREADY_PROCESSED",
+        currentStatus: request.status,
+      },
+      { status: 409 },
+    );
   }
 
   request.status = status;
@@ -219,6 +233,18 @@ export async function PATCH(
     }
   }
 
-  await request.save();
+  // Decline (or an approval with no card to stamp): claim it atomically too,
+  // so a decline racing an approval can't overwrite an approval that has
+  // already awarded stamps.
+  const claimed = await StampRequest.updateOne(
+    { _id: id, status: "pending" },
+    { $set: { status }, $unset: { expiresAt: 1 } },
+  );
+  if (claimed.modifiedCount !== 1) {
+    return NextResponse.json(
+      { error: "That request was already handled.", code: "ALREADY_PROCESSED" },
+      { status: 409 },
+    );
+  }
   return NextResponse.json({ request });
 }

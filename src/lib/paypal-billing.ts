@@ -165,7 +165,7 @@ export async function activateFromCapture(opts: {
       stripeSubscriptionId: null,
       stripePriceId: null,
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   );
 
   const initialPayment = await Payment.create({

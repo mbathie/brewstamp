@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const card = await StampCard.findOneAndUpdate(
     { shop: shopId, customer: customerId },
     { $setOnInsert: { shop: shopId, customer: customerId } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   );
 
   const links = await issueSaveLinks(card._id.toString());

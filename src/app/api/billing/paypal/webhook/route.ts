@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         const p = await Payment.findOneAndUpdate(
           { captureId },
           { $set: { status: "refunded" }, $inc: { refundedCents: cents } },
-          { new: true }
+          { returnDocument: "after" }
         );
         if (p) await reverseReferralEarning(p._id, "refunded");
       }

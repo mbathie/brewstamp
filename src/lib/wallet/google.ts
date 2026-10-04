@@ -238,20 +238,28 @@ async function logIfError(label: string, res: Response) {
  * Create the shop's class if missing, or update its branding (logo/colours/name)
  * if it already exists — so editing the shop's brand reflects on saved passes.
  */
+// Classes this process has already written, keyed by class id, with a hash of
+// the body written. Every "Add to Google Wallet" used to GET and PATCH the
+// shop's class before touching the customer's object (four sequential Google
+// calls, 5–7s per save in the server log). The class only needs writing when
+// its branding changed, which this hash detects; a restart just re-syncs once.
+const syncedClass = new Map<string, string>();
+
 async function ensureClass(token: string, issuerId: string, d: WalletCardData) {
   const id = classId(issuerId, d.shopId);
-  const res = await apiGet(token, `loyaltyClass/${id}`);
-  if (res.status === 404) {
-    await logIfError(
-      "class create",
-      await apiWrite(token, "POST", "loyaltyClass", loyaltyClassBody(issuerId, d)),
-    );
-  } else if (res.ok) {
-    await logIfError(
-      "class update",
-      await apiWrite(token, "PATCH", `loyaltyClass/${id}`, loyaltyClassBody(issuerId, d)),
-    );
+  const body = loyaltyClassBody(issuerId, d);
+  const hash = crypto.createHash("sha1").update(JSON.stringify(body)).digest("hex");
+  if (syncedClass.get(id) === hash) return;
+
+  // Create first: for a shop's first pass that's one call. An existing class
+  // answers 409, and is then brought up to date.
+  let res = await apiWrite(token, "POST", "loyaltyClass", body);
+  if (res.status === 409) {
+    res = await logIfError("class update", await apiWrite(token, "PATCH", `loyaltyClass/${id}`, body));
+  } else {
+    await logIfError("class create", res);
   }
+  if (res.ok) syncedClass.set(id, hash);
 }
 
 /**
@@ -268,19 +276,15 @@ export async function googleSaveUrl(d: WalletCardData): Promise<string | null> {
   await ensureClass(token, creds.issuerId, d);
 
   const oid = objectId(creds.issuerId, d.cardId);
-  const existing = await apiGet(token, `loyaltyObject/${oid}`);
-  if (existing.status === 404) {
-    await logIfError(
-      "object create",
-      await apiWrite(token, "POST", "loyaltyObject", loyaltyObjectBody(creds.issuerId, d)),
-    );
-  } else if (existing.ok) {
-    // Object already exists (re-add / re-issue) — PATCH so the recovery link and
-    // balance are present/current on the already-saved pass.
-    await logIfError(
-      "object update",
-      await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, loyaltyObjectBody(creds.issuerId, d)),
-    );
+  // Create the customer's object; one call for a first save. If it already
+  // exists (re-add / re-issue) Google answers 409 and we PATCH so the recovery
+  // link and balance are current on the already-saved pass.
+  const objBody = loyaltyObjectBody(creds.issuerId, d);
+  const created = await apiWrite(token, "POST", "loyaltyObject", objBody);
+  if (created.status === 409) {
+    await logIfError("object update", await apiWrite(token, "PATCH", `loyaltyObject/${oid}`, objBody));
+  } else {
+    await logIfError("object create", created);
   }
 
   // Signed JWT save link (RS256 with the service-account private key).

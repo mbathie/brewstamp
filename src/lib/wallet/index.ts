@@ -234,11 +234,13 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
       const passes = await WalletPass.find({ shop: shopId, provider: "apple" })
         .select("registrations")
         .lean<ApplePassLike[]>();
-      await applePushUpdate(applePushTokens(passes));
+      // Mark the change BEFORE the push: a woken device immediately asks what
+      // changed, and must see the new time or it skips the update.
       await WalletPass.updateMany(
         { shop: shopId, provider: "apple" },
         { lastPushedAt: new Date() },
       );
+      await applePushUpdate(applePushTokens(passes));
     }
   } catch (err) {
     console.error("[Wallet] branding sync failed for shop", shopId, err);
@@ -298,11 +300,12 @@ export async function syncWalletPasses(cardId: string): Promise<void> {
         // Empty APNs push wakes each registered device; it then re-fetches the
         // freshly-built pass from our web service. The pass body itself is
         // rebuilt on demand in the download/web-service route.
-        await applePushUpdate(applePushTokens([p]));
+        // Mark the change before the push (see the branding sync above).
         await WalletPass.updateOne(
           { card: cardId, provider: "apple" },
           { lastPushedAt: new Date() },
         );
+        await applePushUpdate(applePushTokens([p]));
       }
     }
   } catch (err) {

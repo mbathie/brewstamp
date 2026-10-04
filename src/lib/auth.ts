@@ -96,7 +96,7 @@ const MongoDBAdapter = {
 
   async updateUser({ id, ...data }: any) {
     await connectDB();
-    const user = await User.findByIdAndUpdate(id, data, { new: true });
+    const user = await User.findByIdAndUpdate(id, data, { returnDocument: "after" });
     return {
       id: user._id.toString(),
       name: user.name,
@@ -250,6 +250,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/login",
     verifyRequest: "/verify-request",
+    // Show sign-in failures on the login page, not Auth.js's bare 500 page.
+    error: "/login",
   },
   session: {
     strategy: "jwt",

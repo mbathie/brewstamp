@@ -63,7 +63,7 @@ export async function PUT(
   const card = await StampCard.findOneAndUpdate(
     { shop: merchant.shop._id, customer: id },
     { $set: update },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!card) {

@@ -113,7 +113,7 @@ export async function recordReferralEarning(paymentId: unknown) {
           earnedAt: paidAt,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
   } catch (err) {
     console.error("[referrals] earning write failed:", err);

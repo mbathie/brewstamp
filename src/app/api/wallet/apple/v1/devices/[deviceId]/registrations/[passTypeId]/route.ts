@@ -21,7 +21,7 @@ export async function GET(
     provider: "apple",
     "registrations.deviceLibraryIdentifier": deviceId,
   })
-    .select("serial lastPushedAt")
+    .select("serial lastPushedAt createdAt")
     .lean<any[]>();
 
   const changed = passes.filter(
@@ -29,8 +29,10 @@ export async function GET(
   );
   if (changed.length === 0) return new Response(null, { status: 204 });
 
+  // The tag must move forward, or Wallet logs "lastUpdated tag remained the
+  // same" and keeps re-asking. A pass never pushed counts from its creation.
   const lastUpdated = String(
-    Math.max(...changed.map((p) => (p.lastPushedAt ? +new Date(p.lastPushedAt) : 0))),
+    Math.max(...changed.map((p) => +new Date(p.lastPushedAt || p.createdAt || Date.now()))),
   );
   return Response.json({
     lastUpdated,

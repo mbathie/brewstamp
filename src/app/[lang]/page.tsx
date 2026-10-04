@@ -15,7 +15,11 @@ import Footer from "@/components/footer";
 import { LANDING_COPY, LANDING_LANGS, buildHreflangMap } from "@/lib/i18n/landing";
 import { LANGUAGE_META } from "@/lib/i18n";
 
-export const dynamicParams = false;
+// Unknown values fall through to notFound() below rather than
+// `dynamicParams = false`: this segment catches every one-word path (bots
+// probing /feed, /wp-json, /admin…), and Next 16 logs each dynamicParams miss
+// as an internal NoFallbackError with a full stack (300+ a day in the server
+// log). Known languages are still prebuilt by generateStaticParams.
 
 export async function generateStaticParams() {
   return LANDING_LANGS.map((lang) => ({ lang }));

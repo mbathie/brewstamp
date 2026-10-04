@@ -191,7 +191,7 @@ export async function POST(req: Request) {
       const p = await Payment.findOneAndUpdate(
         { stripeChargeId: chargeId },
         { $set: { status: event.type === "charge.refunded" ? "refunded" : "disputed" } },
-        { new: true }
+        { returnDocument: "after" }
       );
       if (p) await reverseReferralEarning(p._id, event.type === "charge.refunded" ? "refunded" : "disputed");
       break;

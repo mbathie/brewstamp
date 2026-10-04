@@ -29,7 +29,7 @@ export async function PATCH(
   const card = await StampCard.findOneAndUpdate(
     { shop: merchant.shop._id, customer: id },
     { $set: { disabled } },
-    { new: true, upsert: true, setDefaultsOnInsert: true },
+    { returnDocument: "after", upsert: true, setDefaultsOnInsert: true },
   );
 
   return NextResponse.json({ disabled: !!card.disabled });

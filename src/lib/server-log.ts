@@ -111,6 +111,29 @@ export function installServerLog() {
 
   s.timer = setInterval(() => void flush(), FLUSH_MS);
   s.timer.unref?.();
+
+  // Memory every 10 minutes, so a crash can be read against the trend before
+  // it. The app runs in 512 MB and was killed once (exit 128, 2026-10-03) with
+  // nothing in the log to say why.
+  const mb = (n: number) => Math.round(n / 1048576);
+  const mem = () => {
+    const m = process.memoryUsage();
+    logLine("log", `[mem] rss=${mb(m.rss)}MB heap=${mb(m.heapUsed)}/${mb(m.heapTotal)}MB external=${mb(m.external)}MB buffers=${mb(m.arrayBuffers)}MB`);
+  };
+  mem();
+  setInterval(mem, 10 * 60_000).unref?.();
+
+  // Record fatal errors and flush them before the process goes. An uncaught
+  // exception still exits (the Monitor variant only observes). A rejection
+  // listener does stop Node treating a stray rejected promise as fatal, which
+  // Next's server already does by registering its own.
+  process.on("unhandledRejection", (reason) => {
+    logLine("error", `[process] unhandledRejection: ${formatArgs([reason])}`);
+  });
+  process.on("uncaughtExceptionMonitor", (err) => {
+    logLine("error", `[process] uncaughtException: ${formatArgs([err])}`);
+    void flush();
+  });
   // Get the tail out on the way down (a deploy sends SIGTERM).
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
     process.once(sig, () => {

@@ -185,8 +185,11 @@ export default function DashboardClient({
         perkRemaining: msg.perkRemaining,
       };
 
-      // If there's already a pending request, cancel it
+      // If there's already a pending request, cancel it. The same request can
+      // arrive twice (the 8s poll opened it, then the WebSocket frame lands);
+      // declining it then would decline the very request on screen.
       const prev = currentRequestRef.current;
+      if (prev && prev.requestId === msg.requestId) return;
       if (prev) {
         fetch(`/api/stamp-request/${prev.requestId}`, {
           method: "PATCH",
@@ -310,7 +313,39 @@ export default function DashboardClient({
     return () => clearInterval(id);
   }, [reconcile, viewOnly]);
 
-  const handleApprove = useCallback(
+  // One PATCH per request at a time: a double tap on a slow connection used
+  // to send two (the second always failing as "already processed").
+  const inFlight = useRef<Set<string>>(new Set());
+
+  // The server answers GONE (expired and deleted) or ALREADY_PROCESSED (a
+  // double tap, another device, or an auto-decline got there first). Neither
+  // can be retried, so close the request instead of leaving staff tapping a
+  // button that can only fail.
+  const closeIfStale = useCallback((requestId: string, status: number, err: { code?: string; error?: string; currentStatus?: string }) => {
+    if (status !== 404 && status !== 409) return false;
+    if (err.code !== "GONE" && err.code !== "ALREADY_PROCESSED") return false;
+    toast.message(err.error || "That request is no longer waiting.");
+    setCurrentRequest((curr) => (curr && curr.requestId === requestId ? null : curr));
+    setLimitHit(false);
+    return true;
+  }, []);
+
+  // Requests expire 10 minutes after they're made. A tablet left on the
+  // dashboard would otherwise keep showing one indefinitely.
+  useEffect(() => {
+    if (!currentRequest) return;
+    const id = currentRequest.requestId;
+    const t = setTimeout(() => {
+      const curr = currentRequestRef.current;
+      if (!curr || curr.requestId !== id) return;
+      toast.message("Stamp request expired", { description: curr.customerName });
+      setCurrentRequest(null);
+      setLimitHit(false);
+    }, 10 * 60 * 1000);
+    return () => clearTimeout(t);
+  }, [currentRequest?.requestId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const approve = useCallback(
     async (requestId: string, stampsAwarded: number, redeem: boolean) => {
       const res = await fetch(`/api/stamp-request/${requestId}`, {
         method: "PATCH",
@@ -372,27 +407,48 @@ export default function DashboardClient({
           router.refresh();
           return;
         }
+        if (closeIfStale(requestId, res.status, err)) return;
         toast.error(err.error || "Could not approve the request");
       }
 
       setCurrentRequest(null);
       setLimitHit(false);
     },
-    [currentRequest, send, router, threshold],
+    [currentRequest, send, router, threshold, closeIfStale],
+  );
+
+  const handleApprove = useCallback(
+    async (requestId: string, stampsAwarded: number, redeem: boolean) => {
+      if (inFlight.current.has(requestId)) return;
+      inFlight.current.add(requestId);
+      try {
+        await approve(requestId, stampsAwarded, redeem);
+      } finally {
+        inFlight.current.delete(requestId);
+      }
+    },
+    [approve],
   );
 
   const handleReject = useCallback(
     async (requestId: string) => {
+      if (inFlight.current.has(requestId)) return;
+      inFlight.current.add(requestId);
       const res = await fetch(`/api/stamp-request/${requestId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" }),
-      }).catch(() => null);
+      })
+        .catch(() => null)
+        .finally(() => inFlight.current.delete(requestId));
 
       // If the decline wasn't saved, say so and keep the request open —
       // telling the customer "declined" while it's still pending (and will
-      // pop up again on the next poll) is the worst of both.
+      // pop up again on the next poll) is the worst of both. Unless it can
+      // never be saved: expired or already handled closes it.
       if (!res?.ok) {
+        const err = res ? await res.json().catch(() => ({})) : {};
+        if (res && closeIfStale(requestId, res.status, err)) return;
         toast.error("Couldn't decline that request. Try again.");
         return;
       }
@@ -405,7 +461,7 @@ export default function DashboardClient({
 
       setCurrentRequest(null);
     },
-    [currentRequest, send],
+    [currentRequest, send, closeIfStale],
   );
 
   return (

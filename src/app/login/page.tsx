@@ -15,7 +15,20 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // Auth.js sends failed sign-ins here as ?error=<type> (pages.error), instead
+  // of its own bare "Server error" page. The common one is a Google sign-in
+  // that lost its security cookie: an in-app browser, blocked cookies, or a
+  // sign-in started in another tab.
+  const authError = searchParams.get("error");
+  const [error, setError] = useState(
+    !authError
+      ? ""
+      : authError === "AccessDenied"
+        ? "Sign-in was cancelled or not allowed for this account."
+        : authError === "Verification"
+          ? "That sign-in link has expired or was already used. Request a new one below."
+          : "Sign-in didn't complete. Please try again in your phone's main browser (Safari or Chrome), or sign in with your email and password.",
+  );
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"password" | "magic-link">("password");
   const registered = searchParams.get("registered");

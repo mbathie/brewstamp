@@ -75,7 +75,7 @@ export async function PATCH(
     }
   }
 
-  const customer = await Customer.findByIdAndUpdate(id, update, { new: true });
+  const customer = await Customer.findByIdAndUpdate(id, update, { returnDocument: "after" });
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
   }
