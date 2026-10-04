@@ -136,12 +136,51 @@ export const money = (cents: number, currency = "USD") => ({
 // First charge from the billing page: the JS SDK's Card Fields attach the
 // card to this order at submit time; ON_SUCCESS vaults it once the capture
 // clears. Returns the order id the SDK needs.
+// ── 3-D Secure ─────────────────────────────────────────────────────────────
+
+export type ScaMethod = "SCA_ALWAYS" | "SCA_WHEN_REQUIRED";
+
+// US time zones. Outside these, 3-D Secure is always requested: PayPal's risk
+// screen refused a London shop's UK Revolut card as "suspected fraud" (9500)
+// on 2026-09-28 with no 3DS performed, and a cardholder who has approved the
+// payment in their banking app is far less likely to be refused that way.
+// UK/EU/AU cards are built around that step; US issuers mostly aren't, so US
+// shops keep PayPal's default of only when required. The card's own country
+// isn't known until PayPal sees it, so the shop's location stands in for it.
+const US_TIMEZONES = new Set([
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Phoenix", "America/Anchorage", "America/Adak", "America/Boise",
+  "America/Detroit", "America/Juneau", "America/Sitka", "America/Metlakatla",
+  "America/Yakutat", "America/Nome", "America/Menominee", "Pacific/Honolulu",
+  "America/Puerto_Rico", "US/Eastern", "US/Central", "US/Mountain", "US/Pacific",
+]);
+export function scaFor(timezone?: string | null): ScaMethod {
+  if (!timezone) return "SCA_ALWAYS";
+  if (US_TIMEZONES.has(timezone) || /^America\/(Indiana|Kentucky|North_Dakota)\//.test(timezone)) return "SCA_WHEN_REQUIRED";
+  return "SCA_ALWAYS";
+}
+
+/**
+ * The 3-D Secure outcome on an approved order, and whether to go ahead.
+ * Refuses only an explicit failure or rejection by the card's bank
+ * (authentication_status N or R); everything else continues and PayPal's
+ * own risk checks decide. The summary goes in the server log.
+ */
+export function threeDsVerdict(order: PayPalOrder): { ok: boolean; summary: string } {
+  const r = (order as any).payment_source?.card?.authentication_result;
+  if (!r) return { ok: true, summary: "3ds=none" };
+  const tds = r.three_d_secure || {};
+  const summary = `3ds liability=${r.liability_shift ?? "-"} enrolled=${tds.enrollment_status ?? "-"} auth=${tds.authentication_status ?? "-"}`;
+  return { ok: !["N", "R"].includes(tds.authentication_status), summary };
+}
+
 export async function createCardOrder(opts: {
   amountCents: number;
   currency: string;
   description: string;
   customId: string; // our reference (shop id + plan) — echoed on the capture
   vault: boolean;
+  sca: ScaMethod;
 }): Promise<{ id: string }> {
   return api("POST", "/v2/checkout/orders", {
     intent: "CAPTURE",
@@ -156,7 +195,7 @@ export async function createCardOrder(opts: {
       card: {
         attributes: {
           ...(opts.vault ? { vault: { store_in_vault: "ON_SUCCESS" } } : {}),
-          verification: { method: "SCA_WHEN_REQUIRED" },
+          verification: { method: opts.sca },
         },
       },
     },
@@ -175,7 +214,7 @@ export async function captureOrder(orderId: string): Promise<PayPalOrder> {
 // customer may see a pending 1.00 that drops off within a few days.
 export const VERIFY_CENTS = 100;
 
-export async function createVerifyOrder(opts: { currency: string; customId: string; description: string }): Promise<{ id: string }> {
+export async function createVerifyOrder(opts: { currency: string; customId: string; description: string; sca: ScaMethod }): Promise<{ id: string }> {
   return api("POST", "/v2/checkout/orders", {
     intent: "AUTHORIZE",
     purchase_units: [
@@ -189,7 +228,7 @@ export async function createVerifyOrder(opts: { currency: string; customId: stri
       card: {
         attributes: {
           vault: { store_in_vault: "ON_SUCCESS" },
-          verification: { method: "SCA_WHEN_REQUIRED" },
+          verification: { method: opts.sca },
         },
       },
     },
@@ -256,6 +295,12 @@ export async function verifyAndVaultCard(orderId: string): Promise<{
   customerId?: string;
   card: PayPalCardSummary;
 }> {
+  const approved = await getOrder(orderId);
+  const tds = threeDsVerdict(approved);
+  console.log(`[PayPal] verify order=${orderId} ${tds.summary}`);
+  if (!tds.ok) {
+    throw new PayPalError("Your bank couldn't verify this card. Please try again, or use a different card.", 402, approved);
+  }
   const authorized = await authorizeOrder(orderId);
   const auth = authorized.purchase_units?.[0]?.payments?.authorizations?.[0];
   console.log(

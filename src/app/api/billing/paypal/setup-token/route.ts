@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Subscription } from "@/models";
-import { createVerifyOrder, PayPalError } from "@/lib/paypal";
+import { createVerifyOrder, PayPalError, scaFor } from "@/lib/paypal";
 import { paypalEnabled, requireOwner } from "../_shared";
 
 // Replacing the saved card, step 1: an AUTHORIZE order the Card Fields
@@ -17,8 +17,9 @@ export async function POST() {
       currency: sub?.currency || "usd",
       customId: `${auth.merchant.shop._id}:verify`,
       description: `Card verification — ${auth.merchant.shop.name}`,
+      sca: scaFor(auth.merchant.shop.timezone),
     });
-    console.log(`[PayPal] verify order created shop=${auth.merchant.shop._id} order=${order.id}`);
+    console.log(`[PayPal] verify order created shop=${auth.merchant.shop._id} order=${order.id} sca=${scaFor(auth.merchant.shop.timezone)}`);
     return NextResponse.json({ orderId: order.id });
   } catch (err) {
     console.error(`[PayPal] verify order failed shop=${auth.merchant.shop._id}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);

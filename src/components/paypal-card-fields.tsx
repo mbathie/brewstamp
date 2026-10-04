@@ -105,6 +105,14 @@ function friendlyPayPalError(msg: string): string | null {
     return "Your card was declined. Please try a different card, or ask your bank to allow online payments in US dollars.";
   }
   if (/CARD_EXPIRED/i.test(msg)) return "That card has expired. Please use a different card.";
+  if (/CVV|SECURITY_CODE/i.test(msg)) return "The security code (CVV) doesn't look right. Please check it and try again.";
+  if (/AUTHENTICATION|3DS|THREE_D/i.test(msg)) return "Your bank couldn't verify this card. Please try again, or use a different card.";
+  // Anything else PayPal returns raw ("…/confirm-payment-source returned status
+  // 422 (Corr ID …) {json}") is meaningless to an owner; the full text still
+  // goes to the server log via report().
+  if (/returned status \d{3}|UNPROCESSABLE_ENTITY|"debug_id"/i.test(msg)) {
+    return "That card couldn't be used. Please check the details, or try a different card.";
+  }
   return null;
 }
 
@@ -140,6 +148,10 @@ export function PayPalCardFields(props: Props) {
   propsRef.current = props;
   // Order id of the attempt in flight, so every report can be tied to PayPal's record.
   const orderIdRef = useRef<string | null>(null);
+  // Set once onApprove has succeeded. With 3-D Secure, PayPal's challenge
+  // window can close after that and reject submit() ("Window closed for
+  // postrobot_method"); that is not a failure and must not show an error.
+  const doneRef = useRef(false);
   const ctx = () => {
     const p = propsRef.current;
     return {
@@ -231,7 +243,8 @@ export function PayPalCardFields(props: Props) {
                     setError(json.error || "Payment failed");
                     return;
                   }
-                  report("success", { ...ctx(), orderId: data.orderID });
+                  doneRef.current = true;
+                  report("success", { ...ctx(), orderId: data.orderID, detail: { liabilityShift: data.liabilityShift ?? null } });
                   cur.onSuccess(json);
                 },
               }
@@ -266,7 +279,8 @@ export function PayPalCardFields(props: Props) {
                     setError(json.error || "Could not save card");
                     return;
                   }
-                  report("success", { ...ctx(), orderId: data.orderID });
+                  doneRef.current = true;
+                  report("success", { ...ctx(), orderId: data.orderID, detail: { liabilityShift: data.liabilityShift ?? null } });
                   propsRef.current.onSuccess(json);
                 },
               }
@@ -317,6 +331,7 @@ export function PayPalCardFields(props: Props) {
     setError(null);
     setSubmitting(true);
     orderIdRef.current = null;
+    doneRef.current = false;
     const fields = await fieldState(fieldsRef.current);
     report("submit", { ...ctx(), fields });
     try {
@@ -324,6 +339,7 @@ export function PayPalCardFields(props: Props) {
       // own validation message if a field is invalid.
       await fieldsRef.current.submit();
     } catch (err: any) {
+      if (doneRef.current) return;
       const msg: string = err?.message || "";
       // Field-validation errors from the SDK read "…invalid…"; anything else
       // came from our server or PayPal and should be shown as-is.

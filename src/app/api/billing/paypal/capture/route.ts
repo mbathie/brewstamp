@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPlanBySlug, type BillingInterval, type PlanSlug } from "@/lib/plans";
-import { captureOrder, captureOf, getOrder, PayPalError, withVaultId } from "@/lib/paypal";
+import { captureOrder, captureOf, getOrder, PayPalError, threeDsVerdict, withVaultId } from "@/lib/paypal";
 import { activateFromCapture, priceFor } from "@/lib/paypal-billing";
 import { paypalEnabled, requireOwner } from "../_shared";
 
@@ -33,6 +33,16 @@ export async function POST(req: Request) {
     }
     // The card is saved on capture, sometimes a moment after the response:
     // wait for its id so the subscription can renew (see withVaultId).
+    // A failed or rejected 3-D Secure check means the bank couldn't verify the
+    // cardholder: don't take the money.
+    const tds = threeDsVerdict(pre);
+    console.log(`[PayPal] capture check shop=${shopId} order=${body.orderId} ${tds.summary}`);
+    if (!tds.ok && pre.status !== "COMPLETED") {
+      return NextResponse.json(
+        { error: "Your bank couldn't verify this card. Please try again, or use a different card.", code: "3DS_FAILED" },
+        { status: 402 },
+      );
+    }
     let order = pre.status === "COMPLETED" ? pre : await captureOrder(body.orderId);
     if (captureOf(order)?.status === "COMPLETED") order = await withVaultId(order, `capture shop=${shopId}`);
     const cap = captureOf(order);

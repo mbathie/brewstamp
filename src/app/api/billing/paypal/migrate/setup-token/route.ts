@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createVerifyOrder, PayPalError } from "@/lib/paypal";
+import { createVerifyOrder, PayPalError, scaFor } from "@/lib/paypal";
 import { paypalEnabled, requireOwner } from "../../_shared";
 import { migratableStripeSub } from "../_sub";
 
@@ -20,7 +20,9 @@ export async function POST() {
       currency: sub.currency || "usd",
       customId: `brewstamp:${String(sub._id)}:verify`,
       description: `Card verification — ${auth.merchant.shop.name}`,
+      sca: scaFor(auth.merchant.shop.timezone),
     });
+    console.log(`[Migration] setup (signed in): verify order=${order.id} shop=${auth.merchant.shop._id} sca=${scaFor(auth.merchant.shop.timezone)}`);
     return NextResponse.json({ orderId: order.id });
   } catch (err) {
     console.error("[PayPal migration] verify order failed:", err);

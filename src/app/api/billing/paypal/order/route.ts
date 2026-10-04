@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Subscription } from "@/models";
 import { getPlanBySlug, type BillingInterval, type PlanSlug } from "@/lib/plans";
-import { createCardOrder, PayPalError } from "@/lib/paypal";
+import { createCardOrder, PayPalError, scaFor } from "@/lib/paypal";
 import { describe, priceFor, CURRENCY } from "@/lib/paypal-billing";
 import { paypalEnabled, requireOwner } from "../_shared";
 
@@ -38,8 +38,9 @@ export async function POST(req: Request) {
       description: describe(slug, interval, merchant.shop.name),
       customId: `${merchant.shop._id}:${slug}:${interval}:initial`,
       vault: true,
+      sca: scaFor(merchant.shop.timezone),
     });
-    console.log(`[PayPal] order created shop=${merchant.shop._id} order=${order.id} plan=${slug}/${interval} amount=${amountCents} ${CURRENCY}`);
+    console.log(`[PayPal] order created shop=${merchant.shop._id} order=${order.id} plan=${slug}/${interval} amount=${amountCents} ${CURRENCY} sca=${scaFor(merchant.shop.timezone)} tz=${merchant.shop.timezone ?? "-"}`);
     return NextResponse.json({ orderId: order.id, amountCents, currency: CURRENCY });
   } catch (err) {
     console.error(`[PayPal] create order failed shop=${merchant.shop._id} plan=${slug}/${interval}:`, err instanceof PayPalError ? `${err.status} issue=${err.issue} ${err.message}` : err);
