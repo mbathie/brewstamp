@@ -54,10 +54,14 @@ export async function completeStampyMigration(opts: {
         status: opts.sub.status === "canceled" ? "canceled" : "active",
         failedAttempts: 0,
         nextAttemptAt: opts.sub.status === "past_due" ? now : null,
-        migrationToken: null,
         ...(wasStripe ? { migratedAt: now } : {}),
         updatedAt: now,
       },
+      // Remove the used link token rather than nulling it: the unique sparse
+      // index still indexes explicit nulls, so a second migrated merchant
+      // collided with the first (E11000) and the migration failed after the
+      // card had already been saved at PayPal (Short Stop, 2026-09-30).
+      $unset: { migrationToken: "" },
     }
   );
   if (wasStripe && opts.sub.stripeSubscriptionId) {
