@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
   await connectDB();
 
+  console.log(`[Stripe webhook] ${event.type} event=${event.id} object=${(event.data.object as { id?: string }).id ?? "-"}`);
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;

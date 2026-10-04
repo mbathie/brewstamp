@@ -221,18 +221,53 @@ export async function voidAuthorization(authorizationId: string): Promise<void> 
 
 // Authorize + vault + void, returning the vault details. Throws if the card
 // was declined or didn't vault.
+type VaultInfo = { id?: string; status?: string; customer?: { id?: string } } | undefined;
+const vaultOf = (order: PayPalOrder): VaultInfo => (order as any).payment_source?.card?.attributes?.vault;
+
+/**
+ * PayPal can finish saving ("vaulting") a card a moment after it answers the
+ * authorize/capture call: the response says vault status APPROVED with no id,
+ * and the id only appears on the order shortly after. Treating that as a
+ * failure told a StampyStamp merchant (2026-09-30) "card verified but was not
+ * saved" twice, while PayPal had in fact saved the card both times. So when the
+ * id is missing, re-read the order a few times before giving up.
+ */
+export async function withVaultId<T extends PayPalOrder>(order: T, tag: string): Promise<T> {
+  const v = vaultOf(order);
+  if (v?.id) return order;
+  const delays = [500, 1000, 1500, 2500, 3500]; // ~9s in total
+  for (const ms of delays) {
+    await new Promise((r) => setTimeout(r, ms));
+    const again = (await getOrder(order.id)) as T;
+    const vv = vaultOf(again);
+    console.log(`[PayPal] ${tag} order=${order.id} waiting for saved card: vault_status=${vv?.status ?? "-"} id=${vv?.id ? "yes" : "no"} after ${ms}ms`);
+    if (vv?.id) {
+      // Keep the payment results from the original response; take the vault.
+      const merged = { ...order, payment_source: (again as any).payment_source } as T;
+      return merged;
+    }
+  }
+  console.error(`[PayPal] ${tag} order=${order.id} card never vaulted (last status ${v?.status ?? "-"})`);
+  return order;
+}
+
 export async function verifyAndVaultCard(orderId: string): Promise<{
   vaultId: string;
   customerId?: string;
   card: PayPalCardSummary;
 }> {
-  const order = await authorizeOrder(orderId);
-  const auth = order.purchase_units?.[0]?.payments?.authorizations?.[0];
-  const vault = order.payment_source?.card?.attributes?.vault;
-  if (auth?.id) await voidAuthorization(auth.id);
+  const authorized = await authorizeOrder(orderId);
+  const auth = authorized.purchase_units?.[0]?.payments?.authorizations?.[0];
+  console.log(
+    `[PayPal] verify order=${orderId} auth=${auth?.id ?? "-"} auth_status=${auth?.status ?? "-"} vault_status=${vaultOf(authorized)?.status ?? "-"} vault_id=${vaultOf(authorized)?.id ? "yes" : "no"}`,
+  );
+  // Only an approved hold needs releasing; voiding a DENIED one just errors.
+  if (auth?.id && auth.status === "CREATED") await voidAuthorization(auth.id);
   if (!auth || !["CREATED", "CAPTURED", "VOIDED", "PENDING"].includes(auth.status)) {
-    throw new PayPalError(`Card verification ${auth?.status ?? order.status ?? "failed"}`, 402, order);
+    throw new PayPalError(`Card verification ${auth?.status ?? authorized.status ?? "failed"}`, 402, authorized);
   }
+  const order = await withVaultId(authorized, "verify");
+  const vault = vaultOf(order);
   if (!vault?.id) {
     throw new PayPalError("Card verified but was not saved — please try again", 502, order);
   }

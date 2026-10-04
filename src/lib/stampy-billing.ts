@@ -66,6 +66,7 @@ export async function completeStampyMigration(opts: {
         cancel_at_period_end: true,
         metadata: { migrated_to: "paypal", migrated_at: now.toISOString() },
       });
+      console.log(`[Stampy billing] migrated ${opts.sub.merchantName}: Stripe sub ${opts.sub.stripeSubscriptionId} set to cancel at period end`);
     } catch (err) {
       console.error(`[Stampy billing] could not set Stripe sub ${opts.sub.stripeSubscriptionId} to cancel at period end:`, err);
     }

@@ -554,6 +554,7 @@ export async function completeMigration(opts: {
         cancel_at_period_end: true,
         metadata: { migrated_to: "paypal", migrated_at: new Date().toISOString() },
       });
+      console.log(`[PayPal migration] Stripe sub ${sub.stripeSubscriptionId} set to cancel at period end (shop=${sub.shop})`);
     } catch (err) {
       console.error(`[PayPal migration] could not set Stripe sub ${sub.stripeSubscriptionId} to cancel at period end:`, err);
     }

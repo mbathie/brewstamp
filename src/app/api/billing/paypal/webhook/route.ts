@@ -15,9 +15,13 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[PayPal webhook] verification call failed:", err);
   }
-  if (!ok) return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  if (!ok) {
+    console.warn("[PayPal webhook] rejected: signature did not verify");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
 
-  const event = JSON.parse(raw) as { event_type: string; resource: any };
+  const event = JSON.parse(raw) as { id?: string; event_type: string; resource: any };
+  console.log(`[PayPal webhook] ${event.event_type} event=${event.id ?? "-"} resource=${event.resource?.id ?? "-"} status=${event.resource?.status ?? "-"}`);
   await connectDB();
 
   switch (event.event_type) {

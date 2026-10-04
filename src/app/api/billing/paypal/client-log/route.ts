@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
+import { targetForToken, who as migrationWho } from "../../migrate/[token]/_shared";
 
 // The card form's own record of what happened in the browser. PayPal's card
 // iframes can refuse a payment before any call reaches our server (a merchant
@@ -53,14 +54,25 @@ export async function POST(req: Request) {
   const event = typeof body?.event === "string" ? body.event : "";
   if (!EVENTS.has(event)) return NextResponse.json({ error: "Unknown event" }, { status: 400 });
 
-  const merchant = await getMerchant().catch(() => null);
-  const who = merchant ? `shop=${merchant.shop._id} user=${merchant.user?.email ?? "-"}` : "shop=- (no session)";
+  // The card-migration page has no session; its link token identifies the
+  // subscriber instead. The token itself is a secret, so only a prefix is kept.
+  let page = typeof body?.page === "string" ? body.page : "";
+  let who = "shop=- (no session)";
+  const mig = page.match(/^\/billing\/migrate\/([a-f0-9]{64})/);
+  if (mig) {
+    const target = await targetForToken(mig[1]).catch(() => null);
+    who = target ? migrationWho(target) : "migration link (unknown or used)";
+    page = page.replace(mig[1], `${mig[1].slice(0, 6)}…`);
+  } else {
+    const merchant = await getMerchant().catch(() => null);
+    if (merchant) who = `shop=${merchant.shop._id} user=${merchant.user?.email ?? "-"}`;
+  }
 
   const line =
     `[PayPal client] ${event} ${who} mode=${clip(body?.mode, 20)} plan=${clip(body?.plan, 20)}/${clip(body?.interval, 10)}` +
     ` order=${clip(body?.orderId, 40)} status=${clip(body?.status, 10)} msg=${clip(body?.message, 500)}` +
     ` shown=${clip(body?.shown, 200)} detail=${clip(body?.detail, 1500)} fields=${clip(body?.fields, 300)}` +
-    ` page=${clip(body?.page, 120)} ua=${clip(req.headers.get("user-agent"), 200)}`;
+    ` page=${clip(page, 120)} ua=${clip(req.headers.get("user-agent"), 200)}`;
 
   if (event === "ready" || event === "submit" || event === "success") console.log(line);
   else console.warn(line);

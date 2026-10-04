@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPlanBySlug, type BillingInterval, type PlanSlug } from "@/lib/plans";
-import { captureOrder, captureOf, getOrder, PayPalError } from "@/lib/paypal";
+import { captureOrder, captureOf, getOrder, PayPalError, withVaultId } from "@/lib/paypal";
 import { activateFromCapture, priceFor } from "@/lib/paypal-billing";
 import { paypalEnabled, requireOwner } from "../_shared";
 
@@ -31,7 +31,10 @@ export async function POST(req: Request) {
     if (!customId?.startsWith(`${shopId}:`)) {
       return NextResponse.json({ error: "Order does not belong to this shop" }, { status: 403 });
     }
-    const order = pre.status === "COMPLETED" ? pre : await captureOrder(body.orderId);
+    // The card is saved on capture, sometimes a moment after the response:
+    // wait for its id so the subscription can renew (see withVaultId).
+    let order = pre.status === "COMPLETED" ? pre : await captureOrder(body.orderId);
+    if (captureOf(order)?.status === "COMPLETED") order = await withVaultId(order, `capture shop=${shopId}`);
     const cap = captureOf(order);
     if (!cap || cap.status !== "COMPLETED") {
       console.warn(
