@@ -57,7 +57,7 @@ export default async function MigratePage({ params }: { params: Promise<{ token:
           </div>
         </div>
         {clientId ? (
-          <MigrateCardForm token={token} clientId={clientId} nextChargeLabel={nextLabel} theme="stampy" />
+          <MigrateCardForm token={token} clientId={clientId} nextChargeLabel={nextLabel} theme="stampy" currency={stampy.currency || "usd"} defaultCountry="AU" />
         ) : (
           <p className="text-sm text-red-600">Card form is not configured. Please contact hello@brewstamp.app.</p>
         )}
@@ -109,7 +109,7 @@ export default async function MigratePage({ params }: { params: Promise<{ token:
       </div>
 
       {clientId ? (
-        <MigrateCardForm token={token} clientId={clientId} nextChargeLabel={nextLabel} />
+        <MigrateCardForm token={token} clientId={clientId} nextChargeLabel={nextLabel} currency={sub.currency || "usd"} />
       ) : (
         <p className="text-sm text-red-400">Card form is not configured. Please contact hello@brewstamp.app.</p>
       )}

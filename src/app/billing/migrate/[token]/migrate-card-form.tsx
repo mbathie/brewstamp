@@ -11,11 +11,16 @@ export function MigrateCardForm({
   clientId,
   nextChargeLabel,
   theme = "dark",
+  currency,
+  defaultCountry,
 }: {
   token: string;
   clientId: string;
   nextChargeLabel: string | null;
   theme?: "dark" | "stampy";
+  /** The card-check order's currency (the subscription's), so the SDK matches it. */
+  currency: string;
+  defaultCountry?: string;
 }) {
   const [done, setDone] = useState<{ card?: { brand?: string; last4?: string } } | null>(null);
 
@@ -39,6 +44,8 @@ export function MigrateCardForm({
       mode="update"
       theme={theme}
       clientId={clientId}
+      currency={currency.toUpperCase()}
+      defaultCountry={defaultCountry}
       endpoints={{
         setupToken: `/api/billing/migrate/${token}/setup-token`,
         paymentToken: `/api/billing/migrate/${token}/payment-token`,

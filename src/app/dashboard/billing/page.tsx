@@ -997,6 +997,7 @@ export default function BillingPage() {
                   <PayPalCardFields
                     mode="update"
                     clientId={data.paypalClientId}
+                    currency={(sub?.currency || "usd").toUpperCase()}
                     submitLabel="Save card"
                     onSuccess={() => {
                       setUpdatingCard(false);

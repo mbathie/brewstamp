@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,31 +22,69 @@ declare global {
   }
 }
 
-const SDK_ID = "paypal-js-sdk";
-
-function loadSdk(clientId: string, currency: string): Promise<any> {
-  if (window.paypal?.CardFields) return Promise.resolve(window.paypal);
+// PayPal requires the SDK's currency and intent to match the order the card
+// fields attach to. A card check is an AUTHORIZE order in the subscriber's
+// currency (often AUD); a checkout is a CAPTURE in USD. Until 2026-10-05 every
+// form loaded the SDK as USD + capture, so AUD card checks ran mismatched. Each
+// combination now gets its own script under its own global namespace, so a page
+// can hold more than one without them clobbering each other.
+function loadSdk(clientId: string, currency: string, intent: "capture" | "authorize"): Promise<any> {
+  const ns = `paypal_${currency.toLowerCase()}_${intent}`;
+  const id = `paypal-js-sdk-${currency.toLowerCase()}-${intent}`;
+  const w = window as any;
+  if (w[ns]?.CardFields) return Promise.resolve(w[ns]);
   return new Promise((resolve, reject) => {
-    const existing = document.getElementById(SDK_ID) as HTMLScriptElement | null;
+    const existing = document.getElementById(id) as HTMLScriptElement | null;
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.paypal));
+      existing.addEventListener("load", () => resolve(w[ns]));
       existing.addEventListener("error", reject);
       return;
     }
     const s = document.createElement("script");
-    s.id = SDK_ID;
+    s.id = id;
     const params = new URLSearchParams({
       "client-id": clientId,
       components: "card-fields",
-      currency,
-      intent: "capture",
+      currency: currency.toUpperCase(),
+      intent,
     });
     s.src = `https://www.paypal.com/sdk/js?${params.toString()}`;
+    s.setAttribute("data-namespace", ns);
     s.async = true;
-    s.onload = () => resolve(window.paypal);
+    s.onload = () => resolve(w[ns]);
     s.onerror = () => reject(new Error("PayPal SDK failed to load"));
     document.head.appendChild(s);
   });
+}
+
+// ── Billing country + postcode ─────────────────────────────────────────────
+// Sent to PayPal on submit as the card's billing address. Without it a
+// first-time foreign card has fewer signals for PayPal's risk check, which
+// refused several Australian cards outright (PAYER_CANNOT_PAY) in Oct 2026.
+
+const COUNTRY_CODES =
+  "AD AE AF AG AI AL AM AO AR AT AU AW AZ BA BB BD BE BF BG BH BI BJ BM BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CK CL CM CN CO CR CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GH GI GL GM GN GP GR GT GW GY HK HN HR HU ID IE IL IN IS IT JM JO JP KE KG KH KI KM KN KR KW KY KZ LA LC LI LK LS LT LU LV MA MC MD ME MG MH MK ML MN MO MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PL PM PN PT PW PY QA RE RO RS RW SA SB SC SE SG SH SI SK SL SM SN SO SR ST SV SZ TC TD TG TH TJ TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VN VU WF WS YE YT ZA ZM ZW".split(" ");
+
+// Countries without postcodes: the field is hidden for these.
+const NO_POSTCODE = new Set(["AE", "AG", "AO", "AW", "BF", "BI", "BJ", "BS", "BW", "BZ", "CD", "CF", "CG", "CI", "CK", "CM", "DJ", "DM", "ER", "FJ", "GA", "GD", "GH", "GM", "GY", "HK", "JM", "KI", "KM", "KN", "LC", "ML", "MO", "MR", "MS", "MW", "NR", "NU", "QA", "RW", "SB", "SC", "SL", "SR", "ST", "SY", "TD", "TG", "TO", "TT", "TV", "UG", "VU", "YE", "ZW"]);
+
+// Best guess at the payer's country from their browser, before they choose.
+function guessCountry(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    const byZone: [RegExp, string][] = [
+      [/^Australia\//, "AU"], [/^Pacific\/Auckland|^Pacific\/Chatham/, "NZ"], [/^Europe\/London/, "GB"],
+      [/^Europe\/Dublin/, "IE"], [/^Asia\/Singapore/, "SG"], [/^Asia\/Hong_Kong/, "HK"], [/^Asia\/Tokyo/, "JP"],
+      [/^Asia\/Riyadh/, "SA"], [/^Asia\/Dubai/, "AE"], [/^America\/Toronto|^America\/Vancouver|^America\/Edmonton|^America\/Winnipeg|^America\/Halifax/, "CA"],
+    ];
+    for (const [re, cc] of byZone) if (re.test(tz)) return cc;
+    const region = (navigator.language || "").split("-")[1]?.toUpperCase();
+    if (region && COUNTRY_CODES.includes(region)) return region;
+    if (/^America\/|^US\/|^Pacific\/Honolulu/.test(tz)) return "US";
+  } catch {
+    /* fall through */
+  }
+  return "US";
 }
 
 // Report a step of the card form to the server log (7-day retention) so a
@@ -117,6 +155,8 @@ function friendlyPayPalError(msg: string): string | null {
 }
 
 type Props = {
+  /** Billing country to preselect (ISO alpha-2). Defaults to a guess from the browser. */
+  defaultCountry?: string;
   clientId: string;
   currency?: string;
   submitLabel: string;
@@ -140,6 +180,21 @@ export function PayPalCardFields(props: Props) {
   const [eligible, setEligible] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState<string>(() => (props.defaultCountry || "").toUpperCase() || "US");
+  const [postcode, setPostcode] = useState("");
+  // Pick the browser-based guess after mount (navigator isn't available on the server).
+  useEffect(() => {
+    if (!props.defaultCountry) setCountry(guessCountry());
+  }, [props.defaultCountry]);
+  const countryNames = useMemo(() => {
+    let dn: Intl.DisplayNames | null = null;
+    try {
+      dn = new Intl.DisplayNames(["en"], { type: "region" });
+    } catch {
+      /* old browser: show codes */
+    }
+    return COUNTRY_CODES.map((c) => ({ code: c, name: dn?.of(c) ?? c })).sort((a, b) => a.name.localeCompare(b.name));
+  }, []);
   const fieldsRef = useRef<any>(null);
   const renderedRef = useRef<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,7 +220,7 @@ export function PayPalCardFields(props: Props) {
   useEffect(() => {
     let cancelled = false;
 
-    loadSdk(clientId, currency)
+    loadSdk(clientId, currency, propsRef.current.mode === "checkout" ? "capture" : "authorize")
       .then((paypal) => {
         if (cancelled || !containerRef.current) return;
         if (!paypal?.CardFields) {
@@ -333,11 +388,14 @@ export function PayPalCardFields(props: Props) {
     orderIdRef.current = null;
     doneRef.current = false;
     const fields = await fieldState(fieldsRef.current);
-    report("submit", { ...ctx(), fields });
+    report("submit", { ...ctx(), fields: { ...(fields || {}), country, postcode: postcode.trim() ? "given" : "blank" } });
     try {
       // Resolves after onApprove/onError have run; rejects with PayPal's
       // own validation message if a field is invalid.
-      await fieldsRef.current.submit();
+      const pc = postcode.trim();
+      await fieldsRef.current.submit({
+        billingAddress: { countryCode: country, ...(pc && !NO_POSTCODE.has(country) ? { postalCode: pc } : {}) },
+      });
     } catch (err: any) {
       if (doneRef.current) return;
       const msg: string = err?.message || "";
@@ -370,6 +428,11 @@ export function PayPalCardFields(props: Props) {
     theme === "stampy"
       ? `${frame} border border-gray-300 bg-white focus-within:border-[#7c92e7] focus-within:ring-[#7c92e7]/30`
       : `${frame} border border-input bg-[#1b1b1b] focus-within:border-ring focus-within:ring-ring/50`;
+  // Native inputs drawn to match the PayPal frames above.
+  const plainInput =
+    theme === "stampy"
+      ? "h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-[15px] text-gray-800 shadow-xs outline-none placeholder:text-gray-400 focus:border-[#7c92e7] focus:ring-[3px] focus:ring-[#7c92e7]/30"
+      : "h-11 w-full rounded-md border border-input bg-[#1b1b1b] px-3 text-[15px] text-stone-100 shadow-xs outline-none placeholder:text-stone-600 focus:border-ring focus:ring-[3px] focus:ring-ring/50";
   const label = theme === "stampy" ? "mb-1.5 block text-xs font-medium text-gray-600" : "mb-1.5 block text-xs font-medium text-muted-foreground";
   const submitCls =
     theme === "stampy"
@@ -403,6 +466,37 @@ export function PayPalCardFields(props: Props) {
               <label htmlFor="pp-card-cvv" className={label}>CVV</label>
               <div id="pp-card-cvv" className={field} />
             </div>
+          </div>
+          <div className={NO_POSTCODE.has(country) ? "" : "grid grid-cols-[1fr_9rem] gap-3"}>
+            <div>
+              <label htmlFor="pp-card-country" className={label}>Billing country</label>
+              <select
+                id="pp-card-country"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                autoComplete="country"
+                className={plainInput}
+              >
+                {countryNames.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            {!NO_POSTCODE.has(country) && (
+              <div>
+                <label htmlFor="pp-card-postcode" className={label}>Postcode</label>
+                <input
+                  id="pp-card-postcode"
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value)}
+                  autoComplete="postal-code"
+                  inputMode="text"
+                  maxLength={12}
+                  placeholder={country === "AU" ? "3000" : country === "GB" ? "SW1A 1AA" : country === "US" ? "94105" : ""}
+                  className={plainInput}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
