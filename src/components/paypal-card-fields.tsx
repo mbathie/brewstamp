@@ -68,6 +68,18 @@ const COUNTRY_CODES =
 // Countries without postcodes: the field is hidden for these.
 const NO_POSTCODE = new Set(["AE", "AG", "AO", "AW", "BF", "BI", "BJ", "BS", "BW", "BZ", "CD", "CF", "CG", "CI", "CK", "CM", "DJ", "DM", "ER", "FJ", "GA", "GD", "GH", "GM", "GY", "HK", "JM", "KI", "KM", "KN", "LC", "ML", "MO", "MR", "MS", "MW", "NR", "NU", "QA", "RW", "SB", "SC", "SL", "SR", "ST", "SY", "TD", "TG", "TO", "TT", "TV", "UG", "VU", "YE", "ZW"]);
 
+// What each country calls its postcode, and an example to show as placeholder.
+const POSTCODE_LABEL: Record<string, string> = {
+  US: "ZIP code", PH: "ZIP code", IN: "PIN code", IE: "Eircode", BR: "CEP", IT: "CAP",
+  AU: "Postcode", NZ: "Postcode", GB: "Postcode", ZA: "Postcode", SG: "Postal code",
+};
+const POSTCODE_EXAMPLE: Record<string, string> = {
+  AU: "3000", NZ: "1010", GB: "SW1A 1AA", US: "94105", CA: "M5V 3L9", IE: "D02 X285",
+  DE: "10115", FR: "75001", NL: "1012 AB", ES: "28001", IT: "00184", JP: "100-0001",
+  SG: "018956", IN: "110001", ZA: "8001", BR: "01310-100", MX: "06600", SE: "111 22",
+};
+const postcodeLabel = (cc: string) => POSTCODE_LABEL[cc] ?? "Postal code";
+
 // Best guess at the payer's country from their browser, before they choose.
 function guessCountry(): string {
   try {
@@ -484,7 +496,7 @@ export function PayPalCardFields(props: Props) {
             </div>
             {!NO_POSTCODE.has(country) && (
               <div>
-                <label htmlFor="pp-card-postcode" className={label}>Postcode</label>
+                <label htmlFor="pp-card-postcode" className={label}>{postcodeLabel(country)}</label>
                 <input
                   id="pp-card-postcode"
                   value={postcode}
@@ -492,7 +504,7 @@ export function PayPalCardFields(props: Props) {
                   autoComplete="postal-code"
                   inputMode="text"
                   maxLength={12}
-                  placeholder={country === "AU" ? "3000" : country === "GB" ? "SW1A 1AA" : country === "US" ? "94105" : ""}
+                  placeholder={POSTCODE_EXAMPLE[country] ?? ""}
                   className={plainInput}
                 />
               </div>
