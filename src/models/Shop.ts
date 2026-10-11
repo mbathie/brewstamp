@@ -40,7 +40,11 @@ const shopSchema = new mongoose.Schema(
     // When on, customers can add their card to Apple/Google Wallet (the browser
     // card always stays available as the default/fallback). Plan-gated in the UI.
     walletPasses: { type: Boolean, default: false },
+    // Customer on the legacy shared Stripe account (see @/lib/stripe).
     stripeCustomerId: { type: String },
+    // Customer on Brewstamp's own (main) Stripe account, created at the first
+    // checkout there and reused for later ones.
+    stripeMainCustomerId: { type: String },
     firstCustomerEmailSent: { type: Boolean, default: false },
     upgradeNudgeSent: { type: Boolean, default: false },
     // Free trial allowance: "free_50" for shops created from 2026-09-30,

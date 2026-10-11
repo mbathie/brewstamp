@@ -143,8 +143,6 @@ export default function BillingPage() {
   // PayPal inline card dialogs: a first subscription, or replacing the card.
   const [checkout, setCheckout] = useState<{ plan: PlanSlug; interval: BillingInterval } | null>(null);
   const [updatingCard, setUpdatingCard] = useState(false);
-  // Stripe-billed subscriber saving a card with PayPal (moves the sub over).
-  const [movingCard, setMovingCard] = useState(false);
   // "Keep plan" on a PayPal sub with no saved card: add the card, then resume.
   const [resumeAfterCard, setResumeAfterCard] = useState(false);
   // In-app confirmation before downgrading to Free (replaces window.confirm,
@@ -163,10 +161,24 @@ export default function BillingPage() {
       .then(setData);
   }
 
+  // Back from Stripe Checkout: confirm the session so the plan shows now,
+  // not whenever the webhook lands, then drop the params.
   useEffect(() => {
-    if (searchParams.get("success") === "1") {
+    if (searchParams.get("success") !== "1") return;
+    const sessionId = searchParams.get("session_id");
+    (async () => {
+      if (sessionId) {
+        await fetch("/api/billing/checkout/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        }).catch(() => null);
+        await reload();
+      }
       toast.success("Subscription activated!");
-    }
+      router.replace("/dashboard/billing", { scroll: false });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const hitShopLimit = searchParams.get("limit") === "1";
@@ -197,16 +209,6 @@ export default function BillingPage() {
   const isSeed = data?.subscription?.isSeed ?? false;
   const sub = data?.subscription ?? null;
   const isPaypalSub = currentSlug !== "free" && sub?.provider === "paypal";
-  // A Stripe-billed plan that still needs a card saved with PayPal. Saving
-  // one moves the subscription over (same price and renewal date) and lifts
-  // any cancel-at-period-end, so it's also how these subscribers keep a plan.
-  const canMoveToPaypal =
-    currentSlug !== "free" &&
-    !!sub &&
-    sub.provider !== "paypal" &&
-    (sub.status === "active" || sub.status === "past_due") &&
-    !!data?.paypalClientId &&
-    !isSeed;
   const paypalWithoutCard = isPaypalSub && !sub?.card?.last4;
 
   // Deep link from the dashboard banner ("Update card"): open the card panel
@@ -215,13 +217,11 @@ export default function BillingPage() {
   const openCard = searchParams.get("card") === "1";
   useEffect(() => {
     if (!openCard || !data) return;
-    if (canMoveToPaypal) setMovingCard(true);
-    else if (isPaypalSub) setUpdatingCard(true);
+    if (isPaypalSub) setUpdatingCard(true);
     router.replace("/dashboard/billing", { scroll: false });
-  }, [openCard, data, canMoveToPaypal, isPaypalSub, router]);
+  }, [openCard, data, isPaypalSub, router]);
 
   function keepPlan() {
-    if (canMoveToPaypal) return setMovingCard(true);
     if (paypalWithoutCard) {
       setResumeAfterCard(true);
       return setUpdatingCard(true);
@@ -409,9 +409,7 @@ export default function BillingPage() {
               <CardDescription>Current plan</CardDescription>
               <CardTitle className="flex items-center gap-2 text-xl">
                 {currentPlan.label}
-                {/* A Stripe plan awaiting its PayPal card isn't really ending —
-                    saving the card lifts the cancel — so don't call it that. */}
-                <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd && !canMoveToPaypal} />
+                <StatusPill status={sub.status} cancelAtPeriodEnd={sub.cancelAtPeriodEnd} />
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-1 flex-col gap-1.5">
@@ -423,8 +421,8 @@ export default function BillingPage() {
               </div>
               {sub.currentPeriodEnd && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">{sub.cancelAtPeriodEnd && !canMoveToPaypal ? "Ends on " : "Next bill "}</span>
-                  <span className={sub.cancelAtPeriodEnd && !canMoveToPaypal ? "text-amber-400" : "text-foreground"}>{fmtDate(sub.currentPeriodEnd)}</span>
+                  <span className="text-muted-foreground">{sub.cancelAtPeriodEnd ? "Ends on " : "Next bill "}</span>
+                  <span className={sub.cancelAtPeriodEnd ? "text-amber-400" : "text-foreground"}>{fmtDate(sub.currentPeriodEnd)}</span>
                   {!sub.cancelAtPeriodEnd && sub.creditCents > 0 && (
                     <span className="text-muted-foreground"> · {formatCents(sub.creditCents)} credit applied</span>
                   )}
@@ -456,9 +454,7 @@ export default function BillingPage() {
                   ? sub.card?.last4
                     ? `${sub.card.brand ? sub.card.brand[0] + sub.card.brand.slice(1).toLowerCase() : "Card"} •••• ${sub.card.last4}`
                     : "No card saved"
-                  : canMoveToPaypal
-                    ? "Card needed"
-                    : "Card on file"}
+                  : "Card on file"}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-1 flex-col gap-1.5">
@@ -467,16 +463,10 @@ export default function BillingPage() {
                   ? sub.card?.expiry
                     ? `Expires ${sub.card.expiry.replace("-", "/")} · charged automatically each period.`
                     : "Charged automatically each period."
-                  : canMoveToPaypal
-                    ? `We've moved card payments to PayPal. Save your card once to keep ${currentPlan.label} renewing at the same price on ${fmtDate(sub.currentPeriodEnd)}. Nothing is charged today.`
-                    : "Managed securely by Stripe — update your card, view invoices or cancel in the portal."}
+                  : "Managed securely by Stripe — update your card, view invoices or cancel in the portal."}
               </p>
               <CardActions>
-                {canMoveToPaypal ? (
-                  <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setMovingCard(true)}>
-                    Save card
-                  </Button>
-                ) : isPaypalSub ? (
+                {isPaypalSub ? (
                   <Button size="sm" variant={sub.card?.last4 ? "outline" : "default"} className={`cursor-pointer ${sub.card?.last4 ? "" : "bg-amber-700 text-white hover:bg-amber-800"}`} onClick={() => setUpdatingCard(true)}>
                     {sub.card?.last4 ? "Update card" : "Add a card"}
                   </Button>
@@ -1073,25 +1063,6 @@ export default function BillingPage() {
               <span>Your customers, cards and stamps are kept.</span>
             </li>
           </ul>
-          {canMoveToPaypal && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-              <p className="text-amber-200">
-                Here because of the card update? You don&apos;t need to cancel — save your card and{" "}
-                {currentPlan.label} carries on with no interruption.
-              </p>
-              <Button
-                size="sm"
-                variant="link"
-                className="mt-1 h-auto cursor-pointer p-0 text-amber-300"
-                onClick={() => {
-                  setConfirmCancel(false);
-                  setMovingCard(true);
-                }}
-              >
-                Update card instead →
-              </Button>
-            </div>
-          )}
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
@@ -1112,60 +1083,6 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Stripe → PayPal: save a card once; the plan carries over unchanged */}
-      <Sheet open={movingCard} onOpenChange={setMovingCard}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-[440px]">
-          {data.paypalClientId && sub && (
-            <>
-              <SheetHeader>
-                <SheetTitle>Save your card</SheetTitle>
-                <SheetDescription>
-                  Card payments have moved to PayPal. Your plan, price and renewal date stay exactly the same, and
-                  nothing is charged today.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-4 px-4 pb-6">
-                <div className="space-y-1.5 rounded-lg border bg-muted/30 p-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Plan</span>
-                    <span className="text-foreground">{currentPlan.label}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price</span>
-                    <span className="text-foreground">
-                      {sub.priceCents != null
-                        ? moneyWithCode(sub.priceCents, sub.currency)
-                        : formatCents(planPriceCents(currentPlan, currentInterval ?? "month"))}{" "}
-                      / {currentInterval === "year" ? "year" : "month"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Next charge</span>
-                    <span className="text-foreground">{fmtDate(sub.currentPeriodEnd)}</span>
-                  </div>
-                </div>
-                {movingCard && (
-                  <PayPalCardFields
-                    mode="update"
-                    clientId={data.paypalClientId}
-                    currency={(sub.currency || "usd").toUpperCase()}
-                    endpoints={{
-                      setupToken: "/api/billing/paypal/migrate/setup-token",
-                      paymentToken: "/api/billing/paypal/migrate/payment-token",
-                    }}
-                    submitLabel="Save card — nothing charged today"
-                    onSuccess={() => {
-                      setMovingCard(false);
-                      toast.success(`Card saved. ${currentPlan.label} renews on ${fmtDate(sub.currentPeriodEnd)}.`);
-                      reload();
-                    }}
-                  />
-                )}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

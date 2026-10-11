@@ -5,22 +5,19 @@
 //   ended_capped    plan ended and the shop is over the Free cap — stamping paused
 //   cap_reached     never paid, used the whole Free allowance — stamping paused
 //   ending          plan set to cancel at period end
-//   save_card       Stripe-billed plan that still needs a card saved with PayPal
 //   ended           plan ended in the last 30 days (shop is under the cap)
 //
-// Actions point at /dashboard/billing, where "Save card" / "Keep plan" open the
-// right card form for the subscription's provider.
+// Actions point at /dashboard/billing, where "Update card" / "Keep plan" open
+// the right card form for the subscription's provider.
 
 import { Subscription } from "@/models";
 import { resolveSub } from "@/lib/plans";
-import { billingProvider } from "@/lib/paypal";
 
 export type BillingNoticeKind =
   | "payment_failed"
   | "ended_capped"
   | "cap_reached"
   | "ending"
-  | "save_card"
   | "ended";
 
 export interface BillingNotice {
@@ -52,20 +49,15 @@ export async function getBillingNotice(opts: {
   const FREE_LIMIT = opts.freeLimit;
   const sub: any = await Subscription.findOne({ shop: opts.shopId })
     .select(
-      "status provider cancelAtPeriodEnd currentPeriodEnd nextAttemptAt updatedAt migratedAt migrationToken stripePriceId planLabel planSlug interval priceCents card",
+      "status provider cancelAtPeriodEnd currentPeriodEnd nextAttemptAt updatedAt stripePriceId planLabel planSlug interval priceCents card",
     )
     .lean();
 
   const label = sub ? resolveSub(sub).label : "Pro";
   const overCap = opts.totalStamps >= FREE_LIMIT;
-  // Stripe-billed plans move to a card saved with PayPal — only offered when
-  // PayPal card billing is switched on.
-  const paypalOn = billingProvider() === "paypal" && !!process.env.PAYPAL_CLIENT_ID;
-  const needsPaypalCard =
-    paypalOn && !!sub && sub.provider !== "paypal" && !sub.migratedAt && ["active", "past_due"].includes(sub.status);
   // Card actions deep-link with ?card=1 so the billing page opens the card
-  // panel straight away (PayPal save-card for Stripe plans, add/replace card
-  // for PayPal plans) instead of leaving the owner to find the button.
+  // panel straight away (add/replace card for PayPal plans, the billing
+  // portal for Stripe plans) instead of leaving the owner to find the button.
   const billing = (actionLabel: string, opensCard = false) =>
     opts.canManageBilling
       ? { label: actionLabel, href: opensCard ? "/dashboard/billing?card=1" : "/dashboard/billing" }
@@ -121,21 +113,6 @@ export async function getBillingNotice(opts: {
       });
     }
     return null;
-  }
-
-  // A Stripe-billed plan that still needs its card saved with PayPal. Saving
-  // the card also lifts any cancel-at-period-end (completeMigration), so this
-  // reads as a routine card update with no interruption — not "plan ending",
-  // which alarmed owners whose last payment had gone through fine.
-  if (needsPaypalCard && sub.status === "active") {
-    return make({
-      kind: "save_card",
-      tone: "warning",
-      title: "Action needed: update your card on file",
-      body: "We're moving to a different payment provider to save on credit card fees, so we can continue to offer our service to you at current prices. Please click here to update your card details.",
-      action: billing("Update card", true),
-      bodyLink: "click here",
-    });
   }
 
   if (sub?.cancelAtPeriodEnd && sub.status === "active") {

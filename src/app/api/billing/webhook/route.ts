@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Subscription, Shop, User, Payment } from "@/models";
-import { stripe } from "@/lib/stripe";
+import { stripe as stripeMain, stripeLegacy, type StripeAccount } from "@/lib/stripe";
 import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
 import { sendPaymentReceiptEmail } from "@/lib/email";
 import { recordReferralEarning, reverseReferralEarning } from "@/lib/referrals";
+import { activateCheckoutSession, getPeriodDates } from "@/lib/stripe-billing";
 import type Stripe from "stripe";
-
-function getPeriodDates(sub: Stripe.Subscription) {
-  const item = sub.items.data[0];
-  return {
-    currentPeriodStart: item
-      ? new Date(item.current_period_start * 1000)
-      : undefined,
-    currentPeriodEnd: item
-      ? new Date(item.current_period_end * 1000)
-      : undefined,
-  };
-}
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -27,57 +16,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+  // Both Stripe accounts post here (see @/lib/stripe). The signing secret
+  // that verifies the event tells us which account sent it, and so which
+  // client to use for follow-up reads.
+  const secrets: [StripeAccount, string | undefined][] = [
+    ["main", process.env.STRIPE_WEBHOOK_SECRET],
+    ["legacy", process.env.STRIPE_LEGACY_WEBHOOK_SECRET],
+  ];
+  let event: Stripe.Event | null = null;
+  let account: StripeAccount = "main";
+  for (const [acct, secret] of secrets) {
+    if (!secret) continue;
+    try {
+      event = stripeMain.webhooks.constructEvent(body, signature, secret);
+      account = acct;
+      break;
+    } catch {
+      // Try the other account's secret.
+    }
+  }
+  if (!event) {
+    console.error(
+      `Webhook signature verification failed (main secret: ${!!process.env.STRIPE_WEBHOOK_SECRET}, legacy secret: ${!!process.env.STRIPE_LEGACY_WEBHOOK_SECRET})`
     );
-  } catch (err) {
-    console.error("Webhook signature verification failed:", err);
-    console.error("Secret present:", !!process.env.STRIPE_WEBHOOK_SECRET);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
+  const stripe = account === "main" ? stripeMain : stripeLegacy;
 
   await connectDB();
 
-  console.log(`[Stripe webhook] ${event.type} event=${event.id} object=${(event.data.object as { id?: string }).id ?? "-"}`);
+  console.log(`[Stripe webhook] ${account} ${event.type} event=${event.id} object=${(event.data.object as { id?: string }).id ?? "-"}`);
   switch (event.type) {
     case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      if (session.mode !== "subscription" || !session.subscription) break;
-
-      const shopId = session.metadata?.shopId;
-      if (!shopId) break;
-
-      const sub = await stripe.subscriptions.retrieve(
-        session.subscription as string
-      );
-      const period = getPeriodDates(sub);
-
-      const priceId = sub.items.data[0]?.price.id;
-      const planLabel = priceId ? getPlanByPriceId(priceId)?.label : undefined;
-
-      await Subscription.findOneAndUpdate(
-        { shop: shopId },
-        {
-          shop: shopId,
-          stripeCustomerId: session.customer as string,
-          stripeSubscriptionId: sub.id,
-          stripePriceId: priceId,
-          ...(planLabel ? { planLabel } : {}),
-          cancelAtPeriodEnd: sub.cancel_at_period_end,
-          status: "active",
-          ...period,
-        },
-        { upsert: true }
-      );
-
-      // Ensure shop has stripeCustomerId
-      await Shop.findByIdAndUpdate(shopId, {
-        stripeCustomerId: session.customer as string,
-      });
+      await activateCheckoutSession(event.data.object as Stripe.Checkout.Session, account);
       break;
     }
 
@@ -166,17 +137,20 @@ export async function POST(req: Request) {
       };
       const mappedStatus = statusMap[sub.status] || sub.status;
       const period = getPeriodDates(sub);
-      // Subscription.updated fires on plan changes — keep priceId + label in
-      // sync so the top-bar badge follows the live tier.
-      const priceId = sub.items.data[0]?.price.id;
-      const planLabel = priceId ? getPlanByPriceId(priceId)?.label : undefined;
+      // Subscription.updated fires on plan changes — keep the price, tier and
+      // amount in sync so the top-bar badge and billing page follow the live
+      // plan (planSlug wins over stripePriceId in subscriptionTier).
+      const price = sub.items.data[0]?.price;
+      const priceId = price?.id;
+      const plan = priceId ? getPlanByPriceId(priceId) : undefined;
 
       await Subscription.findOneAndUpdate(
         { stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } },
         {
           status: mappedStatus,
           ...(priceId ? { stripePriceId: priceId } : {}),
-          ...(planLabel ? { planLabel } : {}),
+          ...(plan ? { planLabel: plan.label, planSlug: plan.slug, interval: getIntervalByPriceId(priceId!) ?? "month" } : {}),
+          ...(price?.unit_amount != null ? { priceCents: price.unit_amount, currency: price.currency } : {}),
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           ...period,
         }

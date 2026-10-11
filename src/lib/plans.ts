@@ -239,6 +239,15 @@ export function resolvePlanPriceId(
   return process.env[envVar] || null;
 }
 
+// The USD plan prices on the legacy shared Stripe account — current until
+// Brewstamp moved to its own account on 2026-10-12 (STRIPE_PRICE_* now point
+// there). Subscriptions still on the legacy account renew on these.
+const LEGACY_ACCOUNT_PRICES: Record<Exclude<PlanSlug, "free">, Record<BillingInterval, string>> = {
+  pro: { month: "price_1TxlSoHxHWKx0vW14KWYDnNL", year: "price_1TxlSqHxHWKx0vW1QMagBYru" }, // US$7 / US$77
+  plus: { month: "price_1TxlSpHxHWKx0vW1spV4qCjP", year: "price_1TxlSqHxHWKx0vW1c2a6o1Cq" }, // US$19 / US$209
+  max: { month: "price_1TxlSpHxHWKx0vW1OXPc9PeU", year: "price_1TxlSrHxHWKx0vW1KSKdVtNp" }, // US$29 / US$319
+};
+
 // Match a Stripe price ID back to a plan slug, regardless of interval. Used
 // by the billing page to identify the user's current plan tier from their
 // Subscription doc.
@@ -248,7 +257,8 @@ export function resolvePlanPriceId(
 // sub would fall through to "legacy Pro" — mis-reporting MRR and mis-labelling
 // tiers. Map each to its plan + interval so classification keeps working
 // without re-pricing anyone. (The US$5 STRIPE_PRICE_ID Pro is intentionally
-// absent — it stays a genuine legacy $5 sub.)
+// absent — it stays a genuine legacy $5 sub.) The legacy account's USD prices
+// are mapped the same way, since STRIPE_PRICE_* now name the main account's.
 const LEGACY_PRICE_IDS: Record<
   string,
   { slug: PlanSlug; interval: BillingInterval }
@@ -259,7 +269,25 @@ const LEGACY_PRICE_IDS: Record<
   price_1Tgb6THxHWKx0vW1pSsb9qQ7: { slug: "plus", interval: "year" }, // Plus A$209/yr
   price_1TdLiIHxHWKx0vW1BLazXMgu: { slug: "max", interval: "month" }, // Max A$29/mo
   price_1Tgb6UHxHWKx0vW1H90R8Xhx: { slug: "max", interval: "year" }, // Max A$319/yr
+  ...Object.fromEntries(
+    Object.entries(LEGACY_ACCOUNT_PRICES).flatMap(([slug, byInterval]) =>
+      Object.entries(byInterval).map(([interval, id]) => [id, { slug: slug as PlanSlug, interval: interval as BillingInterval }])
+    )
+  ),
 };
+
+// Plan prices on a subscription's own Stripe account. Subscriptions on the
+// legacy account can only move to prices that exist there; everything else
+// (new checkouts, main-account subs) uses the STRIPE_PRICE_* env vars.
+export function resolvePlanPriceIdFor(
+  account: "main" | "legacy",
+  slug: PlanSlug,
+  interval: BillingInterval
+): string | null {
+  if (account === "main") return resolvePlanPriceId(slug, interval);
+  if (slug === "free") return null;
+  return LEGACY_ACCOUNT_PRICES[slug]?.[interval] ?? null;
+}
 
 export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
   for (const p of PLANS) {

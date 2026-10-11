@@ -1,5 +1,25 @@
 # PayPal card billing — how it works and how to go live
 
+> **Status (2026-10-12): new checkouts are back on Stripe.** PayPal kept
+> refusing non-US cards (`PAYER_CANNOT_PAY`) on the US business account, so
+> `BILLING_PROVIDER=stripe` again and new subscriptions go through Stripe
+> Checkout on Brewstamp's own Stripe account. Existing PayPal subscriptions
+> keep renewing through the cron below, and their owners can still update the
+> card and change plan. The in-app "move your Stripe plan to PayPal" prompts
+> are gone; the emailed migration links (`/billing/migrate/<token>`) still work.
+>
+> Two Stripe accounts are wired in (`src/lib/stripe.ts`):
+>
+> | Account | Env | Holds |
+> |---|---|---|
+> | main — `acct_1UPW9TK5tILQfL0k` | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` | every checkout from 2026-10-12, discount codes |
+> | legacy — the account shared with TippyTip/StampyStamp | `STRIPE_LEGACY_SECRET_KEY`, `STRIPE_LEGACY_WEBHOOK_SECRET` | subscriptions created before then; they renew there untouched |
+>
+> `Subscription.stripeAccount` (`main` / missing = legacy) picks the client
+> for the portal, plan switches and the overdue run. The webhook verifies with
+> either secret and uses the matching account. Legacy subs switch plans onto
+> the legacy account's prices (`LEGACY_ACCOUNT_PRICES` in `src/lib/plans.ts`).
+
 Brewstamp bills through **PayPal Advanced Credit and Debit Card Payments**
 on the US business account (`uspaypal@bathie.me`). Customers enter a card
 inline on `/dashboard/billing` (no redirect, no PayPal account). PayPal

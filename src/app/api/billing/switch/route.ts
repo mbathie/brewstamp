@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Subscription, Shop } from "@/models";
-import { stripe } from "@/lib/stripe";
+import { stripeFor, stripeAccountOf } from "@/lib/stripe";
 import {
   getPlanBySlug,
-  resolvePlanPriceId,
+  resolvePlanPriceIdFor,
   type PlanSlug,
   type BillingInterval,
 } from "@/lib/plans";
@@ -95,6 +95,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // The subscription stays on whichever Stripe account it was created on.
+  const account = stripeAccountOf(sub);
+  const stripe = stripeFor(sub);
+
   // Downgrade to Free = cancel at period end. Subscription doc keeps its
   // current state until Stripe fires the canceled webhook.
   if (targetPlan.slug === "free") {
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const newPriceId = resolvePlanPriceId(targetPlan.slug, interval);
+  const newPriceId = resolvePlanPriceIdFor(account, targetPlan.slug, interval);
   if (!newPriceId) {
     const envVar =
       interval === "year"
@@ -152,6 +156,8 @@ export async function POST(req: Request) {
   // canonical state still comes from Stripe webhooks.
   sub.stripePriceId = newPriceId;
   sub.planLabel = targetPlan.label;
+  sub.planSlug = targetPlan.slug;
+  sub.interval = interval;
   sub.status = updated.status;
   sub.cancelAtPeriodEnd = updated.cancel_at_period_end;
   await sub.save();

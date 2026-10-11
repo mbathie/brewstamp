@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PayPalError, verifyAndVaultCard } from "@/lib/paypal";
 import { completeMigration } from "@/lib/paypal-billing";
 import { completeStampyMigration } from "@/lib/stampy-billing";
-import { stripe } from "@/lib/stripe";
+import { stripeLegacy as stripe } from "@/lib/stripe"; // migrations only ever move legacy-account subs
 import { targetForToken, who } from "../_shared";
 
 // Public, token-gated: the card is approved — authorize (then void) to vault

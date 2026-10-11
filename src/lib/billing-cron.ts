@@ -3,7 +3,7 @@ import { connectDB } from "./mongoose";
 import Subscription from "../models/Subscription";
 import Shop from "../models/Shop";
 import User from "../models/User";
-import { stripe } from "./stripe";
+import { stripeFor } from "./stripe";
 import { sendSubscriptionDowngradedEmail } from "./email";
 import { runPaypalRenewals } from "./paypal-billing";
 import { runStampyRenewals } from "./stampy-billing";
@@ -60,6 +60,7 @@ export async function runOverdueDowngrades() {
   let downgraded = 0;
   for (const sub of candidates) {
     try {
+      const stripe = stripeFor(sub);
       // "Outstanding since" = the oldest still-open (finalized but unpaid)
       // invoice on the subscription. Fall back to the local period end if
       // Stripe returns none.

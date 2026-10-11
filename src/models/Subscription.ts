@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 
 // One subscription per shop. Two billing providers coexist:
-//   - "stripe": the original integration. Stripe owns the schedule, dunning
+//   - "stripe": the original integration, again the default for new
+//     checkouts since 2026-10-12 (on Brewstamp's own account, see
+//     stripeAccount). Stripe owns the schedule, dunning
 //     and invoices; webhooks mirror state into this doc.
 //   - "paypal": cards are vaulted with PayPal (Advanced Card Payments) and
 //     WE own the schedule — billing-cron charges the vault when
@@ -17,6 +19,9 @@ const subscriptionSchema = new mongoose.Schema(
     provider: { type: String, enum: ["stripe", "paypal"], default: "stripe" },
 
     // ── Stripe ────────────────────────────────────────────────────────────
+    // Which Stripe account the subscription lives on (see @/lib/stripe).
+    // Missing = "legacy": every Stripe sub created before 2026-10-12.
+    stripeAccount: { type: String, enum: ["main", "legacy"] },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
     stripePriceId: { type: String },

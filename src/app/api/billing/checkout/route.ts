@@ -66,16 +66,19 @@ export async function POST(req: Request) {
 
   const shop = merchant.shop;
 
-  // Create or retrieve Stripe customer. Skip when the existing ID is a
-  // seed placeholder so we never feed Stripe a fake customer.
-  let customerId = shop.stripeCustomerId;
+  // Create or retrieve the shop's customer on the main Stripe account (new
+  // checkouts never go to the legacy account, whose customer stays in
+  // shop.stripeCustomerId). Skip a seed placeholder so we never feed Stripe a
+  // fake customer.
+  let customerId = shop.stripeMainCustomerId;
   if (!customerId || customerId.startsWith("cus_seed_")) {
     const customer = await stripe.customers.create({
       email: merchant.user.email,
+      name: shop.name,
       metadata: { shopId: shop._id.toString() },
     });
     customerId = customer.id;
-    await Shop.findByIdAndUpdate(shop._id, { stripeCustomerId: customerId });
+    await Shop.findByIdAndUpdate(shop._id, { stripeMainCustomerId: customerId });
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -88,7 +91,9 @@ export async function POST(req: Request) {
     // discount codes created in the admin Discounts page. Stripe validates the
     // code (expiry, plan restriction, redemption cap) against this cart.
     allow_promotion_codes: true,
-    success_url: `${appUrl}/dashboard/billing?success=1`,
+    // {CHECKOUT_SESSION_ID} is filled in by Stripe; the billing page confirms
+    // the session on return (/api/billing/checkout/confirm).
+    success_url: `${appUrl}/dashboard/billing?success=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/dashboard/billing`,
     metadata: { shopId: shop._id.toString(), plan: plan.slug, interval },
   });

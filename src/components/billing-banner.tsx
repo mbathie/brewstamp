@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CreditCard } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import type { BillingNotice } from "@/lib/billing-notice";
 
 // Full-width billing notice at the top of every dashboard page. Not
@@ -35,13 +35,12 @@ function BodyWithLink({ notice }: { notice: BillingNotice }) {
 
 export default function BillingBanner({ notice }: { notice: BillingNotice }) {
   const t = TONE[notice.tone];
-  const Icon = notice.kind === "save_card" ? CreditCard : AlertTriangle;
   return (
     <div
       role={notice.tone === "danger" ? "alert" : "status"}
       className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-2.5 ${t.bar}`}
     >
-      <Icon className={`size-4 shrink-0 ${t.icon}`} aria-hidden />
+      <AlertTriangle className={`size-4 shrink-0 ${t.icon}`} aria-hidden />
       <p className="min-w-0 flex-1 text-sm">
         <span className="font-medium text-foreground">{notice.title}.</span>{" "}
         <span className="text-muted-foreground">
