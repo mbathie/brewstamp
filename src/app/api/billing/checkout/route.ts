@@ -96,6 +96,18 @@ export async function POST(req: Request) {
     success_url: `${appUrl}/dashboard/billing?success=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/dashboard/billing`,
     metadata: { shopId: shop._id.toString(), plan: plan.slug, interval },
+    // Brewstamp look on Stripe's hosted page: the dashboard's dark stone
+    // background, amber buttons and the wordmark logo (white text, so it needs
+    // the dark background). Assets come from the live site — Stripe fetches
+    // them, so a localhost URL wouldn't load.
+    branding_settings: {
+      background_color: "#1c1917",
+      button_color: "#b45309",
+      border_style: "rounded",
+      font_family: "inter",
+      logo: { type: "url", url: "https://brewstamp.app/email-logo.png" },
+      icon: { type: "url", url: "https://brewstamp.app/apple-touch-icon.png" },
+    },
   });
 
   return NextResponse.json({ url: session.url });
