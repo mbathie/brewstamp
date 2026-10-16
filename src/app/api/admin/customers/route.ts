@@ -72,6 +72,8 @@ export async function GET() {
       ownerEmail: owner?.email ?? "?",
       ownerName: owner?.name ?? "",
       provider: s.provider ?? "stripe",
+      // Which Stripe account (see @/lib/stripe); null for PayPal.
+      stripeAccount: (s.provider ?? "stripe") === "stripe" ? (s.stripeAccount === "main" ? "main" : "legacy") : null,
       status: s.status,
       cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
       planSlug: tier.slug,
@@ -127,6 +129,8 @@ export async function GET() {
         ownerEmail: s.merchantEmail,
         ownerName: "",
         provider: s.provider,
+        // StampyStamp's Stripe subs live on the shared (legacy) account.
+        stripeAccount: s.provider === "stripe" ? "legacy" : null,
         status: s.status,
         cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
         planSlug: "stampy",

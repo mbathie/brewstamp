@@ -23,6 +23,8 @@ interface CustomerRow {
   ownerEmail: string;
   ownerName: string;
   provider: "stripe" | "paypal";
+  // Which Stripe account: Brewstamp's own ("main") or the old shared one.
+  stripeAccount: "main" | "legacy" | null;
   status: string;
   cancelAtPeriodEnd: boolean;
   planSlug: string;
@@ -133,8 +135,9 @@ export default function CustomersClient() {
     for (const r of rows ?? []) for (const [c, v] of Object.entries(r.totalPaid)) collected[c] = (collected[c] ?? 0) + v;
     const dueSoon = live.filter((r) => { const d = daysUntil(r.nextBillAt); return d != null && d <= 7; }).length;
     const onPaypal = live.filter((r) => r.provider === "paypal").length;
+    const onStripeMain = live.filter((r) => r.provider === "stripe" && r.stripeAccount === "main").length;
     const stampy = live.filter((r) => r.legacy === "stampystamp").length;
-    return { live: live.length, mrr, collected, dueSoon, onPaypal, stampy };
+    return { live: live.length, mrr, collected, dueSoon, onPaypal, onStripeMain, stampy };
   }, [rows]);
 
   if (loading && !rows) {
@@ -174,7 +177,7 @@ export default function CustomersClient() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onPaypal} on PayPal · ${summary.live - summary.onPaypal} on Stripe${summary.stampy ? ` · ${summary.stampy} legacy StampyStamp` : ""}`} />
+        <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onStripeMain} on Stripe · ${summary.live - summary.onPaypal - summary.onStripeMain} on old Stripe · ${summary.onPaypal} on PayPal${summary.stampy ? ` · ${summary.stampy} legacy StampyStamp` : ""}`} />
         <Tile label="MRR" value={totalLabel(summary.mrr, true)} sub="at current prices" />
         <Tile label="Collected all-time" value={totalLabel(summary.collected, true)} sub="gross of refunds" />
         <Tile label="Renewing in 7 days" value={String(summary.dueSoon)} sub="next charge within a week" />
@@ -227,7 +230,12 @@ export default function CustomersClient() {
                       {r.interval === "year" && <div className="text-xs text-muted-foreground">{money(r.monthlyCents, r.currency)}/mo</div>}
                     </TableCell>
                     <TableCell>
-                      <div className="capitalize text-foreground">{r.provider}</div>
+                      <div className="text-foreground">{r.provider === "paypal" ? "PayPal" : "Stripe"}</div>
+                      {r.provider === "stripe" && (
+                        <div className={`text-xs ${r.stripeAccount === "main" ? "text-emerald-400" : "text-muted-foreground"}`}>
+                          {r.stripeAccount === "main" ? "Brewstamp account" : "old shared account"}
+                        </div>
+                      )}
                       {r.card && <div className="text-xs text-muted-foreground">{r.card.brand?.toLowerCase()} •••• {r.card.last4}</div>}
                     </TableCell>
                     <TableCell>
