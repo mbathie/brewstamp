@@ -35,6 +35,18 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "best-coffee-shop-loyalty-apps",
+    title: "The Best Coffee Shop Loyalty Apps in 2026, Compared",
+    description:
+      "Brewstamp, Square Loyalty, Stamp Me, Loopy Loyalty, Loyverse, PunchPass and Smile.io side by side — app downloads, POS lock-in, pricing, and which cafe each one suits.",
+    tag: "Comparison",
+    image:
+      "https://images.pexels.com/photos/30294330/pexels-photo-30294330.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Modern cafe interior with a coffee counter",
+    publishedAt: "2026-10-21",
+    publishedAtDisplay: "21 Oct 2026",
+  },
+  {
     slug: "apple-google-wallet-loyalty-card",
     title:
       "Your Coffee Loyalty Card, Now in Apple Wallet & Google Wallet",

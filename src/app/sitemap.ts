@@ -107,6 +107,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/blog/best-coffee-shop-loyalty-apps`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/blog/coffee-shop-loyalty-cards`,
       lastModified: new Date(),
       priority: 0.8,

@@ -108,6 +108,16 @@ export default function AlternativesIndex() {
           owners consider. Pricing and features pulled from each
           product&apos;s public website. Last reviewed May 2026.
         </p>
+        <p className="mt-3 text-base text-stone-500">
+          Want every option on one page?{" "}
+          <Link
+            href="/blog/best-coffee-shop-loyalty-apps"
+            className="font-medium text-amber-700 underline-offset-4 hover:underline"
+          >
+            See the best coffee shop loyalty apps compared side by side
+          </Link>
+          .
+        </p>
         <div className="mt-10 space-y-6">
           {comparisons.map((c) => (
             <Link

@@ -29,6 +29,11 @@ const GUIDES: Array<{ href: string; anchor: string; blurb: string }> = [
     blurb: "The rewards that keep customers coming back, the 8-stamp rule, and how to launch a coffee shop loyalty card in minutes.",
   },
   {
+    href: "/blog/best-coffee-shop-loyalty-apps",
+    anchor: "Best coffee shop loyalty apps, compared",
+    blurb: "Seven cafe loyalty apps side by side — customer app downloads, POS lock-in, free tiers and pricing.",
+  },
+  {
     href: "/blog/coffee-shop-loyalty-card-printing",
     anchor: "Coffee shop loyalty card printing",
     blurb: "Print one QR code instead of a stack of paper punch cards. Free PDF, ready in minutes.",
