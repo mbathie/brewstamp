@@ -23,9 +23,6 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   serverExternalPackages: ["mongoose", "bcrypt"],
-  experimental: {
-    inlineCss: true,
-  },
   images: {
     remotePatterns: [
       {
