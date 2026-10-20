@@ -64,6 +64,12 @@ export async function buildCardData(
   };
 }
 
+// What a pass shows, as a hash. Two syncs with the same fingerprint would push
+// an identical pass, which Apple Wallet logs as an error ("pass was unchanged").
+function passFingerprint(d: WalletCardData): string {
+  return crypto.createHash("sha256").update(JSON.stringify(d)).digest("hex");
+}
+
 export interface SaveLinks {
   google: string | null;
   apple: string | null;
@@ -235,10 +241,11 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
         .select("registrations")
         .lean<ApplePassLike[]>();
       // Mark the change BEFORE the push: a woken device immediately asks what
-      // changed, and must see the new time or it skips the update.
+      // changed, and must see the new time or it skips the update. Branding is
+      // part of every pass's fingerprint, so the stored ones are now stale.
       await WalletPass.updateMany(
         { shop: shopId, provider: "apple" },
-        { lastPushedAt: new Date() },
+        { $set: { lastPushedAt: new Date() }, $unset: { contentHash: 1 } },
       );
       await applePushUpdate(applePushTokens(passes));
     }
@@ -275,7 +282,7 @@ export async function syncWalletPassesForCustomer(
 export async function syncWalletPasses(cardId: string): Promise<void> {
   try {
     const passes = await WalletPass.find({ card: cardId })
-      .select("provider registrations")
+      .select("provider registrations contentHash")
       .lean<any[]>();
     if (!passes.length) {
       console.log(`[Wallet] sync: no passes for card=${cardId} (nothing to push)`);
@@ -289,12 +296,17 @@ export async function syncWalletPasses(cardId: string): Promise<void> {
         .map((p) => p.provider)
         .join(",")}] appleRegs=${(applePass?.registrations || []).length}`,
     );
+    const contentHash = passFingerprint(d);
     for (const p of passes) {
+      if (p.contentHash === contentHash) {
+        console.log(`[Wallet] sync card=${cardId} ${p.provider}: unchanged, not pushed`);
+        continue;
+      }
       if (p.provider === "google") {
         await googleUpdateObject(d);
         await WalletPass.updateOne(
           { card: cardId, provider: "google" },
-          { lastPushedAt: new Date() },
+          { lastPushedAt: new Date(), contentHash },
         );
       } else if (p.provider === "apple") {
         // Empty APNs push wakes each registered device; it then re-fetches the
@@ -303,7 +315,7 @@ export async function syncWalletPasses(cardId: string): Promise<void> {
         // Mark the change before the push (see the branding sync above).
         await WalletPass.updateOne(
           { card: cardId, provider: "apple" },
-          { lastPushedAt: new Date() },
+          { lastPushedAt: new Date(), contentHash },
         );
         await applePushUpdate(applePushTokens([p]));
       }

@@ -138,17 +138,18 @@ export async function PATCH(req: Request) {
     shop.timezone = timezone.trim();
   }
 
+  // Anything the wallet pass shows that actually changed (not merely sent: the
+  // settings form resends every field, and pushing an unchanged pass makes
+  // Apple Wallet log errors). Checked before save, which clears the flags.
+  const brandingChanged = ["name", "logo", "logoUrl", "fgColor", "bgColor", "perkMode", "stampThreshold", "language"].some(
+    (f) => shop.isModified(f),
+  );
+
   await shop.save();
 
   // If wallet-relevant branding changed, push it to saved Apple/Google passes
-  // so existing wallets reflect the new logo/colour/name. Fire-and-forget —
-  // never block or fail the settings save on a wallet API hiccup.
-  const brandingChanged =
-    name !== undefined ||
-    logo !== undefined ||
-    fgColor !== undefined ||
-    bgColor !== undefined ||
-    perkMode !== undefined;
+  // so existing wallets reflect it. Fire-and-forget — never block or fail the
+  // settings save on a wallet API hiccup.
   if (brandingChanged && shop.walletPasses) {
     void syncWalletBranding(shop._id.toString());
   }

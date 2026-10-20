@@ -29,6 +29,9 @@ const walletPassSchema = new mongoose.Schema(
       },
     ],
     lastPushedAt: { type: Date },
+    // Fingerprint of the card data last pushed (see passFingerprint), so a
+    // sync that changes nothing on the pass doesn't push it again.
+    contentHash: { type: String },
   },
   { timestamps: true },
 );
