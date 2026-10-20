@@ -52,6 +52,7 @@ Each row is a trailing-28-day window vs the preceding 28 days.
 | 2026-09-21 | 08-22 → 09-18 | 10,321 (+44%) | 184 (+18%) | 1.8% | 10.0 |
 | 2026-09-27 | 08-28 → 09-24 | 10,024 (+26%) | 190 (+14%) | 1.9% | 9.7 |
 | 2026-09-28 | 08-29 → 09-25 | 9,941 (+24%) | 188 (+11%) | 1.9% | 9.6 |
+| 2026-10-21 | 09-21 → 10-18 | 8,103 (−22%) | 171 (−5%) | 2.1% | 9.0 |
 
 **Trend:** the mid-July inflection has held and re-accelerated. Homepage meta
 restored 2026-07-15 (commit 45ab3f5); since then clicks 95 → 172, avg pos 14.5
@@ -69,6 +70,20 @@ Not a snippet win; the next lever on that page is rank into the top 5. Click
 growth is coming from the homepage (128 → 148 in a fortnight) and from the
 US/UK/Philippines. Site CTR (1.9%) is held down by impressions compounding
 faster than clicks.
+
+---
+
+## 2026-10-21
+
+- **Impressions:** 8,103 (−22%) · **Clicks:** 171 (−5%) · **CTR:** 2.1% · **Avg pos:** 9.0 (new best)
+- First pull in three weeks. The −22% is the comparison window (late-Aug/early-Sep peak), not a slide: weekly impressions bottomed at ~1,750 (w/c 09-28) and the latest week is back to 2,372, near the August high (~2,800). Clicks steady ~45–60/wk.
+- Money page `/blog/coffee-shop-loyalty-cards`: 4,178 impr, pos 9.5, **7 clicks (0.2%)**. Still page 1 without clicks. "coffee shop loyalty programs" sends it 155 impr at **pos 5.3 with 0 clicks** — a top-5 rank that earns nothing, so the snippet/SERP (title says "Cards", query says "programs"; likely AI Overview above) is the problem, not rank.
+- Homepage `/`: 3,124 impr, pos 9.6, **4.4% CTR** (best yet), 136 clicks. Brand "brewstamp" 52 clicks (+30%).
+- De-cannibalisation (7d3f371) half-worked: the guide dropped out of "coffee loyalty card" (pos 61) and climbed on its own terms (pos 19.9 → 12.2), but the query is still split between `/` (18.2) and the money page (16.0); site-level pos 11.4 (was 12.5).
+- **Landing pages not working:** `/coffee-rewards-app` ranks 57.7 for "coffee rewards app" while the homepage ranks 10.3 for it; `/cafe-loyalty-app` has **never been seen by Google**.
+- **Discovery gap found:** URL Inspection reports "URL is unknown to Google" for `/cafe-loyalty-app`, `/features`, `/how-it-works`, `/partners` and `/blog/how-many-stamps-for-a-free-coffee` — zero impressions since April despite homepage nav links. GSC shows the sitemap was **last downloaded 2026-06-17** (44 URLs then, 47 now). All other sitemap URLs incl. the 13 language homepages are indexed.
+- USA 2,388 impr at 0.7% CTR (AUS 4.0%, GBR 1.4%). Desktop 1.2% vs mobile 3.3%.
+- Pipeline (same day): 14 paying, MRR $106 (30d ago $83).
 
 ---
 
