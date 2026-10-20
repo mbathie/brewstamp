@@ -205,7 +205,7 @@ export default function LoopyLoyaltyAlternative() {
                   },
                   {
                     feature: "Apple/Google Wallet",
-                    brewstamp: { good: true, text: "Not needed — opens in browser" },
+                    brewstamp: { good: true, text: "Optional — works in the browser first" },
                     loopy: { good: true, text: "Native Wallet passes" },
                   },
                   {
@@ -311,7 +311,7 @@ export default function LoopyLoyaltyAlternative() {
             {[
               {
                 bold: "You want Apple Wallet / Google Wallet integration.",
-                text: "Loopy's whole architecture is built around Wallet passes. If you want your loyalty card sitting next to your customers' boarding passes and credit cards, Loopy nails that — Brewstamp doesn't ship Wallet passes (yet).",
+                text: "Loopy's whole architecture is built around Wallet passes. If you want your loyalty card sitting next to your customers' boarding passes and credit cards, Loopy nails that. Brewstamp offers Apple and Google Wallet passes too, but as an optional extra: the card works in the browser first.",
               },
               {
                 bold: "You're running a multi-merchant program.",

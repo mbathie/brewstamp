@@ -7,9 +7,9 @@ import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title:
-    "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
+    "Coffee Shop Loyalty Cards & Programs That Actually Work",
   description:
-    "How coffee shop loyalty cards work, how many stamps to ask for, and the rewards regulars actually return for. Set one up free in 2 minutes — no app.",
+    "Coffee shop loyalty programs and cards that bring regulars back: how many stamps to ask for, rewards that work, paper vs digital. Set one up free in 2 minutes.",
   alternates: {
     canonical: "/blog/coffee-shop-loyalty-cards",
   },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     type: "article",
     url: "/blog/coffee-shop-loyalty-cards",
     title:
-      "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
+      "Coffee Shop Loyalty Cards & Programs That Actually Work",
     description:
       "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
     images: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title:
-      "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
+      "Coffee Shop Loyalty Cards & Programs That Actually Work",
     description:
       "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
     images: [
@@ -45,7 +45,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline:
-    "Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start",
+    "Coffee Shop Loyalty Cards & Programs That Actually Work",
   description:
     "How many stamps to ask for, the rewards regulars actually return for, and how to set up a free coffee shop loyalty card in 2 minutes — no app.",
   author: { "@type": "Organization", name: "Brewstamp" },
@@ -59,7 +59,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-cards",
   datePublished: "2026-05-05",
-  dateModified: "2026-08-12",
+  dateModified: "2026-10-21",
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -154,7 +154,7 @@ export default function BlogPost() {
               Guide
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              Coffee Shop Loyalty Cards: 8 Stamps, No App, Free to Start
+              Coffee Shop Loyalty Cards & Programs That Actually Work
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
               Everything you need to know about coffee shop loyalty cards — how
@@ -164,7 +164,7 @@ export default function BlogPost() {
             </p>
             <p className="mt-3 text-sm text-stone-400">
               Published <time dateTime="2026-05-05">5 May 2026</time> · Updated{" "}
-              <time dateTime="2026-08-12">12 Aug 2026</time>
+              <time dateTime="2026-10-21">21 Oct 2026</time>
             </p>
           </header>
 

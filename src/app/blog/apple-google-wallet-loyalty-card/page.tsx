@@ -170,7 +170,7 @@ export default function BlogPost() {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               No — the counter flow is identical. The customer still scans your
-              QR code (or opens their wallet pass, which carries the same code),
+              QR code at the counter (the wallet pass shows their stamps; there&apos;s nothing on it to scan),
               requests a stamp, and you approve it on your device in real time.
               The wallet pass is an extra home for the card, not a different
               system. Your staff don&apos;t need to learn anything new.
