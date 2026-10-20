@@ -166,6 +166,11 @@ export async function getBrewstampFinance(opts?: {
   const owners = (await User.find({ _id: { $in: shops.map((x) => x.owner) } }).select("email").lean()) as any[];
   const emailById = new Map(owners.map((u) => [String(u._id), u.email as string]));
   const ownerEmail = new Map(shops.map((sh) => [String(sh._id), emailById.get(String(sh.owner)) ?? "?"]));
+  // Which Stripe account each payment's subscription lives on (missing = the
+  // old shared account, as in stripeAccountOf).
+  const subIds = [...new Set(payments.filter((p) => p.subscription).map((p) => String(p.subscription)))];
+  const subs = (await Subscription.find({ _id: { $in: subIds } }).select("stripeAccount").lean()) as any[];
+  const accountBySub = new Map(subs.map((s) => [String(s._id), s.stripeAccount === "main" ? "main" : "legacy"] as const));
 
   for (const p of payments) {
     const when = new Date(p.paidAt ?? p.createdAt);
@@ -182,15 +187,17 @@ export async function getBrewstampFinance(opts?: {
       addCur(bucket, cur, p.amountCents);
       byMonth.set(mk, bucket);
       if (recent.length < 200) {
+        // The provider field is set on every row; the processor ids are the
+        // fallback for any row written before it existed.
+        const provider: "stripe" | "paypal" = p.provider ?? (p.stripeInvoiceId ? "stripe" : "paypal");
         recent.push({
           date: DAY(when),
           email: ownerEmail.get(String(p.shop)) ?? "?",
           plan: `Brewstamp ${getPlanBySlug(p.planSlug ?? "")?.label ?? "Pro"}`,
           amountCents: p.amountCents,
           currency: cur,
-          // The provider field is set on every row; the processor ids are the
-          // fallback for any row written before it existed.
-          provider: p.provider ?? (p.stripeInvoiceId ? "stripe" : "paypal"),
+          provider,
+          stripeAccount: provider === "stripe" ? (accountBySub.get(String(p.subscription)) ?? "legacy") : null,
         });
       }
     }

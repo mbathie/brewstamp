@@ -382,6 +382,11 @@ export default function FinanceClient() {
                       >
                         {t.provider === "paypal" ? "PayPal" : "Stripe"}
                       </span>
+                      {t.provider === "stripe" && (
+                        <div className={`mt-0.5 text-xs ${t.stripeAccount === "main" ? "text-emerald-400" : "text-muted-foreground"}`}>
+                          {t.stripeAccount === "main" ? "Brewstamp account" : "old shared account"}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(t.amountCents, t.currency)}</TableCell>
                   </TableRow>

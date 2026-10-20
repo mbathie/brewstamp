@@ -46,6 +46,8 @@ export interface FinanceSummary {
     currency: string;
     /** Which processor took the money. */
     provider: "stripe" | "paypal";
+    /** Which Stripe account: Brewstamp's own ("main") or the old shared one. Null for PayPal. */
+    stripeAccount: "main" | "legacy" | null;
   }>;
 }
 
