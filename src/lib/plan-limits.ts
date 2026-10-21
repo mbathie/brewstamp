@@ -4,15 +4,8 @@
 
 import { connectDB } from "./mongoose";
 import { Shop, ShopMembership, Subscription } from "@/models";
-import {
-  PLANS,
-  getPlanBySlug,
-  getPlanRank,
-  subscriptionTier,
-  type PlanConfig,
-  type PlanSlug,
-  LIVE_SUB_STATUSES,
-} from "./plans";
+import { type PlanConfig, type PlanSlug, LIVE_SUB_STATUSES } from "./plans";
+import { getPlanCatalog } from "./plan-catalog";
 
 export interface UserPlanLimits {
   planSlug: PlanSlug;
@@ -45,21 +38,20 @@ export async function getUserPlanLimits(
     status: { $in: LIVE_SUB_STATUSES },
   });
 
+  const catalog = await getPlanCatalog();
   let highest: PlanSlug = "free";
   for (const sub of subs) {
-    let slug: PlanSlug = subscriptionTier(sub)?.slug ?? "free";
+    let slug: PlanSlug = catalog.subscriptionTier(sub)?.slug ?? "free";
     if (slug === "free" && sub.planLabel) {
       const fallback = String(sub.planLabel).toLowerCase();
-      if (PLANS.some((p) => p.slug === fallback)) {
-        slug = fallback as PlanSlug;
-      }
+      if (catalog.bySlug(fallback)) slug = fallback;
     }
-    if (getPlanRank(slug) > getPlanRank(highest)) {
+    if (catalog.rank(slug) > catalog.rank(highest)) {
       highest = slug;
     }
   }
 
-  const plan = getPlanBySlug(highest)!;
+  const plan = catalog.bySlug(highest)!;
   return {
     planSlug: highest,
     plan,
@@ -83,7 +75,7 @@ export async function getShopPlanLimits(
   await connectDB();
   const shop = await Shop.findById(shopId).select("owner");
   if (!shop?.owner) {
-    const free = getPlanBySlug("free")!;
+    const free = (await getPlanCatalog()).free;
     return {
       planSlug: "free",
       plan: free,

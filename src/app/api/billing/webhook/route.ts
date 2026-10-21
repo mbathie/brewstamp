@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Subscription, Shop, User, Payment } from "@/models";
 import { stripe as stripeMain, stripeLegacy, type StripeAccount } from "@/lib/stripe";
-import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { sendPaymentReceiptEmail } from "@/lib/email";
 import { recordReferralEarning, reverseReferralEarning } from "@/lib/referrals";
 import { activateCheckoutSession, getPeriodDates, recordPaidInvoice } from "@/lib/stripe-billing";
@@ -80,14 +80,15 @@ export async function POST(req: Request) {
       // plan (planSlug wins over stripePriceId in subscriptionTier).
       const price = sub.items.data[0]?.price;
       const priceId = price?.id;
-      const plan = priceId ? getPlanByPriceId(priceId) : undefined;
+      const hit = (await getPlanCatalog()).byPriceId(priceId);
+      const plan = hit?.plan;
 
       await Subscription.findOneAndUpdate(
         { stripeSubscriptionId: sub.id, provider: { $ne: "paypal" } },
         {
           status: mappedStatus,
           ...(priceId ? { stripePriceId: priceId } : {}),
-          ...(plan ? { planLabel: plan.label, planSlug: plan.slug, interval: getIntervalByPriceId(priceId!) ?? "month" } : {}),
+          ...(plan ? { planLabel: plan.label, planSlug: plan.slug, interval: hit!.price.interval } : {}),
           ...(price?.unit_amount != null ? { priceCents: price.unit_amount, currency: price.currency } : {}),
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           ...period,

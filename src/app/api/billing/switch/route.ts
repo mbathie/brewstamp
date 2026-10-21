@@ -2,13 +2,8 @@ import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Subscription, Shop } from "@/models";
 import { stripeFor, stripeAccountOf } from "@/lib/stripe";
-import {
-  subscriptionTier,
-  getPlanBySlug,
-  resolvePlanPriceIdFor,
-  type PlanSlug,
-  type BillingInterval,
-} from "@/lib/plans";
+import { type PlanSlug, type BillingInterval } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { switchPaypalPlan } from "@/lib/paypal-billing";
 import { PayPalError } from "@/lib/paypal";
 
@@ -45,13 +40,14 @@ export async function POST(req: Request) {
 
   const interval: BillingInterval = body.interval === "year" ? "year" : "month";
   const targetSlug = body.plan as PlanSlug | undefined;
-  const targetPlan = targetSlug ? getPlanBySlug(targetSlug) : null;
+  const catalog = await getPlanCatalog();
+  const targetPlan = targetSlug ? catalog.bySlug(targetSlug) : null;
   if (!targetPlan) {
     return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
   }
   // A plan we no longer sell can't be switched to (a shop already on it
   // keeps it; that's checked below against its subscription).
-  const hiddenTarget = !!targetPlan.hidden;
+  const hiddenTarget = targetPlan.status !== "active";
 
   const sub = await Subscription.findOne({ shop: merchant.shop._id });
   if (!sub) {
@@ -60,7 +56,7 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  if (hiddenTarget && subscriptionTier(sub)?.slug !== targetPlan.slug) {
+  if (hiddenTarget && catalog.subscriptionTier(sub)?.slug !== targetPlan.slug) {
     return NextResponse.json({ error: `${targetPlan.label} is no longer offered` }, { status: 400 });
   }
 
@@ -122,15 +118,13 @@ export async function POST(req: Request) {
     });
   }
 
-  const newPriceId = resolvePlanPriceIdFor(account, targetPlan.slug, interval);
+  // The plan's active price on the subscription's own Stripe account: a sub
+  // still on the legacy account can only move to prices that exist there.
+  const newPriceId = catalog.activePrice(targetPlan.slug, interval, account)?.stripePriceId;
   if (!newPriceId) {
-    const envVar =
-      interval === "year"
-        ? targetPlan.stripePriceEnvVarAnnual
-        : targetPlan.stripePriceEnvVar;
     return NextResponse.json(
       {
-        error: `Stripe price for plan "${targetPlan.slug}" (${interval}ly) is not configured. Set ${envVar} in env.`,
+        error: `No active ${account}-account Stripe price for plan "${targetPlan.slug}" (${interval}ly) in the plan catalogue.`,
       },
       { status: 500 }
     );

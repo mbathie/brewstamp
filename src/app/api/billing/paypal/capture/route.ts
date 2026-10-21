@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getPlanBySlug, type BillingInterval, type PlanSlug } from "@/lib/plans";
+import { type BillingInterval, type PlanSlug } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { captureOrder, captureOf, getOrder, PayPalError, threeDsVerdict, withVaultId } from "@/lib/paypal";
 import { activateFromCapture, priceFor } from "@/lib/paypal-billing";
 import { paypalEnabled, requireOwner } from "../_shared";
@@ -16,7 +17,8 @@ export async function POST(req: Request) {
   const { merchant } = auth;
 
   const body = (await req.json().catch(() => ({}))) as { orderId?: string; plan?: string; interval?: string };
-  const plan = getPlanBySlug(body.plan || "");
+  const catalog = await getPlanCatalog();
+  const plan = catalog.bySlug(body.plan || "");
   if (!body.orderId || !plan || plan.slug === "free") {
     return NextResponse.json({ error: "Missing orderId or plan" }, { status: 400 });
   }
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
       order,
       slug,
       interval,
-      amountCents: priceFor(slug, interval),
+      amountCents: priceFor(catalog, slug, interval),
     });
     return NextResponse.json({ ok: true, plan: slug, interval, currentPeriodEnd: sub?.currentPeriodEnd });
   } catch (err) {

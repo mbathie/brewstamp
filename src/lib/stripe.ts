@@ -4,7 +4,7 @@ import Stripe from "stripe";
 //
 //   main    Brewstamp's own account (acct_1UPW9T…, from 2026-10-12). Every new
 //           checkout, the customer portal for its subscriptions, and discount
-//           codes. Env: STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / STRIPE_PRICE_*.
+//           codes. Env: STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET (plan prices live in the `plans` collection).
 //   legacy  The account shared with TippyTip and StampyStamp, which Brewstamp
 //           used before. Subscriptions created there keep renewing there; we
 //           only mirror and manage them. Env: STRIPE_LEGACY_SECRET_KEY /

@@ -16,7 +16,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, User, StampCard, StampRequest, Subscription, WalletPass, Payment } from "@/models";
-import { resolveSub, freeStampLimit } from "@/lib/plans";
+import { freeStampLimit } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { scoreFreeShop, DEFAULT_BG_COLOR } from "@/lib/conversion-score";
 import { getBrewstampFinance } from "@/lib/finance";
 import { combineAtRate } from "@/lib/finance-math";
@@ -28,6 +29,7 @@ const EXCLUDE = /mbathie|mailinator|mark@mark|miovision/i;
 
 async function main() {
   await connectDB();
+  const catalog = await getPlanCatalog();
   const now = Date.now();
   const fin = await getBrewstampFinance({});
   const mrr = combineAtRate(fin.mrr) / 100;
@@ -177,7 +179,7 @@ async function main() {
       const pays = payments.filter((p) => String(p.shop) === id);
       const ok = pays.filter((p) => p.status === "paid" || p.status === "refunded");
       const last = pays[pays.length - 1];
-      const tier = resolveSub(s);
+      const tier = catalog.resolveSub(s);
       const monthly = s.priceCents != null ? (s.interval === "year" ? Math.round(s.priceCents / 12) : s.priceCents) : tier.monthlyCents;
       const startedMs = ok.length ? new Date(ok[0].paidAt ?? ok[0].createdAt).getTime() : new Date(s.createdAt).getTime();
       const endedMs = new Date(s.updatedAt).getTime();

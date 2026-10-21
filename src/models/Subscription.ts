@@ -39,13 +39,14 @@ const subscriptionSchema = new mongoose.Schema(
     },
     // Plan the shop is on — stored per subscription for both providers (the
     // backfill script fills it for Stripe subs; stripePriceId remains the
-    // fallback for resolution, see subscriptionTier in @/lib/plans).
-    planSlug: { type: String, enum: ["pro", "plus", "max"] },
+    // fallback for resolution, see PlanCatalog.subscriptionTier). Any paid
+    // plan slug in the `plans` collection.
+    planSlug: { type: String },
     interval: { type: String, enum: ["month", "year"] },
     currency: { type: String, default: "usd" },
     // A downgrade (lower tier, or annual → monthly) takes effect at the next
     // renewal. Stored here until the cron applies it.
-    pendingPlanSlug: { type: String, enum: ["pro", "plus", "max"] },
+    pendingPlanSlug: { type: String },
     pendingInterval: { type: String, enum: ["month", "year"] },
     // What this subscription pays per period, in `currency`. Set from the
     // catalogue on PayPal checkout, from the live Stripe price for Stripe subs
@@ -68,9 +69,9 @@ const subscriptionSchema = new mongoose.Schema(
     lastPaymentAt: { type: Date },
 
     // ── Shared ────────────────────────────────────────────────────────────
-    // Display label for the plan ("Pro", "Plus", "Max"). Resolved from
-    // stripePriceId via the env-var lookup in @/lib/plans, with this field
-    // as the fallback for seed accounts that have no real Stripe price.
+    // Display label for the plan ("Pro", "Business"). Resolved from the plan
+    // catalogue (planSlug, or stripePriceId), with this field as the fallback
+    // for seed accounts that have no real Stripe price.
     planLabel: { type: String },
     // True when the subscription is set to cancel at the end of the current
     // period (a downgrade-to-Free that hasn't taken effect yet). Mirrors

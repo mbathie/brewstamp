@@ -9,7 +9,8 @@ import {
   User,
 } from "@/models";
 import { getCurrentShopContext } from "@/lib/shop-context";
-import { getPlanBySlug } from "@/lib/plans";
+import { hasStaffLogins } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { getShopPlanLimits } from "@/lib/plan-limits";
 import { sendTeamInviteEmail } from "@/lib/email";
 
@@ -79,7 +80,7 @@ export async function GET() {
     : ctx.shop._id.toString();
   const plan = planShopId
     ? (await getShopPlanLimits(planShopId)).plan
-    : getPlanBySlug("free")!;
+    : (await getPlanCatalog()).free;
 
   // Viewer's role per accessible shop. The UI uses this to decide whether
   // the actions column should render (e.g. a manager on Shop A can edit
@@ -102,7 +103,7 @@ export async function GET() {
     plan: {
       slug: plan.slug,
       label: plan.label,
-      hasStaffLogins: plan.hasStaffLogins,
+      hasStaffLogins: hasStaffLogins(plan),
       staffLoginLimit: plan.staffLoginLimit,
     },
     // Single-shop view only: seats taken against staffLoginLimit.
@@ -193,7 +194,7 @@ export async function POST(req: Request) {
   // OWNER's effective plan so it covers every shop the owner pays for, not
   // just the one carrying the Stripe subscription.
   const plan = (await getShopPlanLimits(ctx.shop._id.toString())).plan;
-  if (!plan.hasStaffLogins) {
+  if (!hasStaffLogins(plan)) {
     return NextResponse.json(
       {
         error: `The ${plan.label} plan doesn't include team logins. Upgrade to Pro for one staff login, or Business for unlimited.`,

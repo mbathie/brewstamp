@@ -24,6 +24,10 @@ import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
 import { FREE_STAMPS } from "@/lib/plans";
 import PlanCards from "@/app/pricing/plan-cards";
+import { getPlanCatalog } from "@/lib/plan-catalog";
+
+// The pricing section reads the plan catalogue; refresh every 5 minutes.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: {
@@ -196,7 +200,8 @@ const cleanJsonLd = JSON.parse(
   JSON.stringify(jsonLd, (_, v) => (v === undefined ? undefined : v))
 );
 
-export default function Home() {
+export default async function Home() {
+  const catalog = await getPlanCatalog();
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
@@ -590,7 +595,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-12">
-            <PlanCards />
+            <PlanCards plans={catalog.plans} />
           </div>
           <div className="mt-10 text-center">
             <Link

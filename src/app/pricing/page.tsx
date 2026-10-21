@@ -5,37 +5,54 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import PlanCards from "./plan-cards";
-import { FREE_STAMPS, PUBLIC_PLANS } from "@/lib/plans";
+import { FREE_STAMPS, formatCents, type PlanCatalog, type PlanConfig } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 
-export const metadata: Metadata = {
-  title: "Pricing — Free, Pro & Business plans",
-  description:
-    `Brewstamp pricing for cafes and small businesses. Free for your first ${FREE_STAMPS} stamps. Pro is $12/month for unlimited stamps and a staff login; Business adds unlimited staff logins, up to 3 shops, CSV exports and corporate perk mode. Annual billing gets 2 months free.`,
-  alternates: { canonical: "/pricing" },
-};
+// Plans and prices come from the database; re-render at most every 5 minutes
+// so a catalogue change shows without a deploy.
+export const revalidate = 300;
 
-interface FeatureRow {
-  label: string;
-  free: string | boolean;
-  pro: string | boolean;
-  business: string | boolean;
+export async function generateMetadata(): Promise<Metadata> {
+  const catalog = await getPlanCatalog();
+  const paid = catalog.publicPlans.filter((p) => p.slug !== "free");
+  const names = catalog.publicPlans.map((p) => p.label);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names.at(-1)}` : names[0];
+  const from = paid.length ? Math.min(...paid.map((p) => catalog.priceCents(p, "month"))) : 0;
+  return {
+    title: `Pricing — ${list} plans`,
+    description: `Brewstamp pricing for cafes and small businesses. Free for your first ${FREE_STAMPS} stamps. Paid plans from ${formatCents(from)}/month: unlimited stamps, staff logins, multiple shops, CSV exports and corporate perk mode. Annual billing saves more.`,
+    alternates: { canonical: "/pricing" },
+  };
 }
 
-const FEATURES: FeatureRow[] = [
-  { label: "Shops", free: "1", pro: "1", business: "Up to 3" },
-  { label: "Stamps issued per month", free: `${FREE_STAMPS} total`, pro: "Unlimited", business: "Unlimited" },
-  { label: "Real-time stamp approvals", free: true, pro: true, business: true },
-  { label: "Custom logo, colours, patterns", free: true, pro: true, business: true },
-  { label: "Customer dashboard", free: true, pro: true, business: true },
-  { label: "Customer insights & analytics", free: false, pro: true, business: true },
-  { label: "Apple & Google Wallet passes", free: true, pro: true, business: true },
-  { label: "Staff & manager logins", free: false, pro: "1", business: "Unlimited" },
-  { label: "CSV customer exports", free: false, pro: false, business: true },
-  { label: "Cross-shop rollup reporting", free: false, pro: false, business: true },
-  { label: "Corporate perk mode (subsidised staff coffee)", free: false, pro: false, business: true },
-  { label: "Email support", free: true, pro: true, business: true },
-  { label: "Priority support", free: false, pro: true, business: true },
+const count = (n: number | "unlimited", one: string) =>
+  n === "unlimited" ? "Unlimited" : n === 0 ? false : n === 1 ? one : `Up to ${n}`;
+
+// Comparison rows, each read off the plan's own limits and flags.
+const FEATURES: Array<{ label: string; value: (p: PlanConfig) => string | boolean }> = [
+  { label: "Shops", value: (p) => count(p.shopLimit, "1") },
+  {
+    label: "Stamps issued per month",
+    value: (p) => (p.stampLimit === "unlimited" ? "Unlimited" : `${p.slug === "free" ? FREE_STAMPS : p.stampLimit} total`),
+  },
+  { label: "Real-time stamp approvals", value: () => true },
+  { label: "Custom logo, colours, patterns", value: () => true },
+  { label: "Customer dashboard", value: () => true },
+  { label: "Customer insights & analytics", value: (p) => p.hasAnalytics },
+  { label: "Apple & Google Wallet passes", value: (p) => p.hasWalletPasses },
+  { label: "Staff & manager logins", value: (p) => count(p.staffLoginLimit, "1") },
+  { label: "CSV customer exports", value: (p) => p.hasCsvExport },
+  { label: "Cross-shop rollup reporting", value: (p) => p.hasCrossShopReporting },
+  { label: "Corporate perk mode (subsidised staff coffee)", value: (p) => p.hasPerkMode },
+  { label: "Email support", value: () => true },
+  { label: "Priority support", value: (p) => p.prioritySupport },
+  { label: "Dedicated account support", value: (p) => p.dedicatedSupport },
 ];
+
+function visibleRows(catalog: PlanCatalog) {
+  // Skip a row no offered plan has (e.g. dedicated support once Max retired).
+  return FEATURES.filter((row) => catalog.publicPlans.some((p) => row.value(p) !== false));
+}
 
 function Cell({ value }: { value: string | boolean }) {
   if (value === true) {
@@ -51,7 +68,8 @@ function Cell({ value }: { value: string | boolean }) {
   return <span className="text-sm text-stone-700">{value}</span>;
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const catalog = await getPlanCatalog();
   return (
     <>
       <PublicHeader />
@@ -75,7 +93,7 @@ export default function PricingPage() {
 
         {/* Plan cards */}
         <section className="bg-stone-50 px-6 pb-20">
-          <PlanCards />
+          <PlanCards plans={catalog.plans} />
         </section>
 
         {/* Feature comparison */}
@@ -97,11 +115,11 @@ export default function PricingPage() {
                     <th className="px-5 py-4 font-semibold text-stone-900">
                       Feature
                     </th>
-                    {PUBLIC_PLANS.map((p) => (
+                    {catalog.publicPlans.map((p) => (
                       <th
                         key={p.slug}
                         className={`px-5 py-4 text-center font-semibold ${
-                          p.slug === "plus" ? "text-amber-700" : "text-stone-900"
+                          p.badge ? "text-amber-700" : "text-stone-900"
                         }`}
                       >
                         {p.label}
@@ -110,7 +128,7 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {FEATURES.map((row, i) => (
+                  {visibleRows(catalog).map((row, i) => (
                     <tr
                       key={row.label}
                       className={
@@ -120,15 +138,11 @@ export default function PricingPage() {
                       <td className="px-5 py-3.5 text-sm text-stone-700">
                         {row.label}
                       </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.free} />
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.pro} />
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.business} />
-                      </td>
+                      {catalog.publicPlans.map((p) => (
+                        <td key={p.slug} className="px-5 py-3.5 text-center">
+                          <Cell value={row.value(p)} />
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>

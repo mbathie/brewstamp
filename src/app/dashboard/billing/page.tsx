@@ -44,12 +44,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  PLANS,
-  PUBLIC_PLANS,
-  FREE_MONTHS,
-  getPlanRank,
-  annualPriceCents,
-  planPriceCents,
+  PlanCatalog,
+  formatCents,
+  hasStaffLogins,
+  type PlanConfig,
   FREE_STAMPS,
   type PlanSlug,
   type BillingInterval,
@@ -64,11 +62,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// "$7" for whole dollars, "$6.42" otherwise.
-function formatCents(cents: number): string {
-  const dollars = cents / 100;
-  return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
-}
 // With the currency spelled out — a migrated subscriber may be on A$ or US$.
 function moneyWithCode(cents: number, currency: string): string {
   const sym = currency === "aud" ? "A$" : currency === "usd" ? "US$" : currency.toUpperCase() + " ";
@@ -87,6 +80,8 @@ function StatusPill({ status, cancelAtPeriodEnd }: { status: string; cancelAtPer
 
 interface BillingData {
   totalStamps: number;
+  /** The plan catalogue, archived plans and prices included. */
+  plans: PlanConfig[];
   // This shop's Free allowance: 50, or 100 if grandfathered.
   limit: number;
   freeTier: {
@@ -200,13 +195,11 @@ export default function BillingPage() {
     const sub = data?.subscription;
     if (!sub || sub.status === "canceled") return "free";
     const slug = sub.planSlug;
-    if (slug === "pro" || slug === "plus" || slug === "max") {
-      return slug;
-    }
-    return "free";
+    return slug && slug !== "free" && data?.plans.some((p) => p.slug === slug) ? slug : "free";
   }, [data]);
 
-  const currentRank = useMemo(() => getPlanRank(currentSlug), [currentSlug]);
+  const catalog = useMemo(() => new PlanCatalog(data?.plans ?? []), [data]);
+  const currentRank = catalog.rank(currentSlug);
   const currentInterval = currentSlug === "free" ? null : (data?.subscription?.interval ?? null);
   const isSeed = data?.subscription?.isSeed ?? false;
   const sub = data?.subscription ?? null;
@@ -231,13 +224,16 @@ export default function BillingPage() {
     handleSwitch(currentSlug);
   }
   const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
-  const currentPlan = PLANS.find((p) => p.slug === currentSlug)!;
+  const currentPlan = catalog.bySlug(currentSlug);
   // The plans on offer, plus the shop's own plan if it's one we no longer sell.
-  const shownPlans = PLANS.filter((p) => !p.hidden || p.slug === currentSlug);
+  const shownPlans = catalog.plans.filter((p) => p.status === "active" || p.slug === currentSlug);
+  const paidShown = shownPlans.filter((p) => p.slug !== "free");
+  // The annual saving to advertise on the toggle (best across paid plans).
+  const monthsFree = Math.max(0, ...paidShown.map((p) => catalog.monthsFree(p)));
   // A subscriber paying less than today's price for their plan keeps that price
   // (grandfathered when prices rose on 2026-10-21, or the US$5 legacy Pro).
   const lockedInCents =
-    currentSlug !== "free" && sub?.priceCents != null && sub.priceCents < planPriceCents(currentPlan, currentInterval ?? "month")
+    currentPlan && currentSlug !== "free" && sub?.priceCents != null && sub.priceCents < catalog.priceCents(currentPlan, currentInterval ?? "month")
       ? sub.priceCents
       : null;
 
@@ -279,7 +275,7 @@ export default function BillingPage() {
         return;
       }
 
-      const label = PLANS.find((p) => p.slug === target)?.label;
+      const label = catalog.bySlug(target)?.label;
       if (target === "free") {
         toast.success("Plan will cancel at the end of your current period.");
       } else if (result.kind === "immediate") {
@@ -348,7 +344,7 @@ export default function BillingPage() {
       </div>
     );
   }
-  if (!data) return null;
+  if (!data || !currentPlan) return null;
 
   return (
     <div className="space-y-6">
@@ -382,7 +378,7 @@ export default function BillingPage() {
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
-              Switching to {PLANS.find((p) => p.slug === sub.pendingPlanSlug)?.label}
+              Switching to {catalog.bySlug(sub.pendingPlanSlug)?.label}
               {sub.pendingInterval === "year" ? " (annual)" : " (monthly)"} on {fmtDate(sub.currentPeriodEnd)}.
               You keep your current plan until then.
             </span>
@@ -425,7 +421,7 @@ export default function BillingPage() {
             <CardContent className="flex flex-1 flex-col gap-1.5">
               <div className="text-sm text-muted-foreground">
                 <span className="text-2xl font-semibold text-foreground">
-                  {sub.priceCents != null ? moneyWithCode(sub.priceCents, sub.currency) : formatCents(planPriceCents(currentPlan, currentInterval ?? "month"))}
+                  {sub.priceCents != null ? moneyWithCode(sub.priceCents, sub.currency) : formatCents(catalog.priceCents(currentPlan, currentInterval ?? "month"))}
                 </span>{" "}
                 / {currentInterval === "year" ? "year" : "month"}
               </div>
@@ -523,7 +519,7 @@ export default function BillingPage() {
                     document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                 >
-                  {data.ownedShops >= currentPlan.shopLimit && currentRank < getPlanRank("plus") ? "Need another shop? Upgrade" : "Compare plans"}
+                  {data.ownedShops >= currentPlan.shopLimit && catalog.publicPlans.some((p) => p.shopLimit > currentPlan.shopLimit) ? "Need another shop? Upgrade" : "Compare plans"}
                 </Button>
               </CardActions>
             </CardContent>
@@ -597,14 +593,14 @@ export default function BillingPage() {
           >
             Annual
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-500">
-              {FREE_MONTHS} months free
+              {monthsFree} months free
             </span>
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
           {interval === "year"
-            ? `Pay for ${12 - FREE_MONTHS} months, get 12 — on every paid plan.`
-            : `Switch to annual billing and get ${FREE_MONTHS} months on us.`}
+            ? `Pay for ${12 - monthsFree} months, get 12 — on every paid plan.`
+            : `Switch to annual billing and get ${monthsFree} months on us.`}
         </p>
       </div>
 
@@ -619,14 +615,15 @@ export default function BillingPage() {
             (plan.slug === "free" || currentInterval === interval);
           const isIntervalSwitch =
             isCurrentTier && plan.slug !== "free" && !isCurrent;
-          const targetRank = getPlanRank(plan.slug);
+          const targetRank = catalog.rank(plan.slug);
           const isUpgrade = targetRank > currentRank;
           const isDowngrade = targetRank < currentRank;
           // Spotlight the recommended tier — but never over the active plan,
           // whose emerald treatment takes precedence.
-          const isPopular = plan.slug === "plus" && !isCurrent;
+          const isPopular = !!plan.badge && !isCurrent;
           const isPaid = plan.slug !== "free";
-          const annualCents = annualPriceCents(plan);
+          const monthCents = catalog.priceCents(plan, "month");
+          const annualCents = catalog.priceCents(plan, "year");
 
           const canResume =
             isCurrent && isPaypalSub && !!(sub?.cancelAtPeriodEnd || sub?.pendingPlanSlug);
@@ -660,7 +657,7 @@ export default function BillingPage() {
               )}
               {isPopular && (
                 <div className="absolute -top-2.5 right-4 rounded-full bg-amber-600 px-2.5 py-0.5 text-xs font-medium text-white">
-                  Best for teams
+                  {plan.badge}
                 </div>
               )}
               <CardHeader className="pb-0">
@@ -672,11 +669,7 @@ export default function BillingPage() {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold tracking-tight text-foreground">
-                      {plan.slug === "free"
-                        ? plan.priceLabel
-                        : interval === "year"
-                          ? formatCents(annualCents)
-                          : plan.priceLabel}
+                      {isPaid && interval === "year" ? formatCents(annualCents) : formatCents(monthCents)}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       {plan.slug === "free"
@@ -692,7 +685,7 @@ export default function BillingPage() {
                     {isPaid && interval === "year" ? (
                       <span>
                         <span className="font-semibold text-emerald-500">
-                          Save {formatCents(plan.priceCents * FREE_MONTHS)}/yr
+                          Save {formatCents(monthCents * 12 - annualCents)}/yr
                         </span>
                         <span className="text-muted-foreground">
                           {" · "}
@@ -936,8 +929,8 @@ export default function BillingPage() {
       <Sheet open={!!checkout} onOpenChange={(o) => !o && setCheckout(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-[440px]">
           {checkout && data.paypalClientId && (() => {
-            const plan = PLANS.find((p) => p.slug === checkout.plan)!;
-            const cents = checkout.interval === "year" ? annualPriceCents(plan) : plan.priceCents;
+            const plan = catalog.bySlug(checkout.plan)!;
+            const cents = catalog.priceCents(plan, checkout.interval);
             const renews = new Date();
             if (checkout.interval === "year") renews.setFullYear(renews.getFullYear() + 1);
             else renews.setMonth(renews.getMonth() + 1);
@@ -960,7 +953,7 @@ export default function BillingPage() {
                     </div>
                     {checkout.interval === "year" && (
                       <div className="mt-1 text-xs text-emerald-500">
-                        {FREE_MONTHS} months free — {formatCents(Math.round(cents / 12))}/mo equivalent
+                        {catalog.monthsFree(plan)} months free — {formatCents(Math.round(cents / 12))}/mo equivalent
                       </div>
                     )}
                     <div className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
@@ -1064,12 +1057,12 @@ export default function BillingPage() {
                 )}
               </span>
             </li>
-            {(currentPlan.hasStaffLogins || currentPlan.hasCsvExport) && (
+            {(hasStaffLogins(currentPlan) || currentPlan.hasCsvExport) && (
               <li className="flex gap-2">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-400" />
                 <span>
                   {[
-                    currentPlan.hasStaffLogins && "staff logins",
+                    hasStaffLogins(currentPlan) && "staff logins",
                     currentPlan.hasCsvExport && "CSV exports",
                     currentPlan.hasAnalytics && "customer analytics",
                   ]

@@ -6,7 +6,7 @@
 // doesn't matter.
 import type Stripe from "stripe";
 import { Subscription, Shop, User, Payment } from "@/models";
-import { getIntervalByPriceId, getPlanByPriceId } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { stripe as stripeMain, stripeLegacy, type StripeAccount } from "@/lib/stripe";
 import { sendPaymentReceiptEmail } from "@/lib/email";
 import { recordReferralEarning } from "@/lib/referrals";
@@ -41,7 +41,7 @@ export async function activateCheckoutSession(
 
   const price = sub.items.data[0]?.price;
   const priceId = price?.id;
-  const plan = priceId ? getPlanByPriceId(priceId) : undefined;
+  const plan = (await getPlanCatalog()).byPriceId(priceId)?.plan;
 
   // One subscription doc per shop: a new checkout replaces whatever was
   // there (an ended PayPal or legacy-Stripe plan). Set provider and clear
@@ -133,7 +133,8 @@ export async function recordPaidInvoice(invoice: Stripe.Invoice, sub: Stripe.Sub
 
   const line = invoice.lines.data[0];
   const priceId = sub.items.data[0]?.price.id;
-  const plan = priceId ? getPlanByPriceId(priceId) : undefined;
+  const hit = (await getPlanCatalog()).byPriceId(priceId);
+  const plan = hit?.plan;
   const priorPaid = await Payment.countDocuments({ subscription: localSub._id, status: "paid", stripeInvoiceId: { $ne: invoice.id } });
   // The unique index on stripeInvoiceId settles a race between the webhook
   // and the checkout return: the loser gets a duplicate-key error.
@@ -153,7 +154,7 @@ export async function recordPaidInvoice(invoice: Stripe.Invoice, sub: Stripe.Sub
         amountCents: invoice.amount_paid,
         currency: invoice.currency,
         planSlug: plan?.slug,
-        interval: priceId ? getIntervalByPriceId(priceId) : undefined,
+        interval: hit?.price.interval,
         description: line?.description ?? plan?.label ?? "Brewstamp",
         periodStart: line?.period ? new Date(line.period.start * 1000) : undefined,
         periodEnd: line?.period ? new Date(line.period.end * 1000) : undefined,

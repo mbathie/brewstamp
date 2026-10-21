@@ -16,7 +16,11 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
-import { FREE_STAMPS, PUBLIC_PLANS } from "@/lib/plans";
+import { FREE_STAMPS, formatCents } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
+
+// Plan cards read the catalogue from the database; refresh every 5 minutes.
+export const revalidate = 300;
 
 // Owns the OPERATOR angle: running a loyalty program at the counter (QR at
 // the till, approving stamps, staff logins, multiple shops, dashboard, CSV,
@@ -163,7 +167,8 @@ const OPERATOR_FEATURES: Array<{ icon: typeof Users; title: string; body: string
   },
 ];
 
-export default function CafeLoyaltyAppPage() {
+export default async function CafeLoyaltyAppPage() {
+  const catalog = await getPlanCatalog();
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
@@ -404,7 +409,7 @@ export default function CafeLoyaltyAppPage() {
               shops. Prices in USD; annual billing gets you two months free.
             </p>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {PUBLIC_PLANS.map((p) => (
+              {catalog.publicPlans.map((p) => (
                 <div
                   key={p.slug}
                   className="rounded-2xl border border-stone-200 bg-stone-50 p-6"
@@ -414,8 +419,8 @@ export default function CafeLoyaltyAppPage() {
                   </h3>
                   <p className="text-sm text-stone-500">{p.tagline}</p>
                   <p className="mt-3 text-2xl font-bold text-stone-900">
-                    {p.priceLabel}
-                    {p.priceCents > 0 && (
+                    {formatCents(catalog.priceCents(p, "month"))}
+                    {catalog.priceCents(p, "month") > 0 && (
                       <span className="text-sm font-normal text-stone-500">
                         /month
                       </span>

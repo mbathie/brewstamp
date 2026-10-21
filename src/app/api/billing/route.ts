@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Payment, ShopMembership, StampCard, Subscription } from "@/models";
-import { subscriptionTier, freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
+import { freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { billingProvider } from "@/lib/paypal";
 
 export async function GET() {
@@ -48,10 +49,11 @@ export async function GET() {
   // Resolve current plan slug from the subscription's stripePriceId so the
   // billing UI can mark the active plan in its grid. Fall back to planLabel
   // (set on seed accounts) when the price ID doesn't match a known plan.
+  const catalog = await getPlanCatalog();
   let currentPlanSlug: string | null = null;
   let currentInterval: BillingInterval | null = null;
   if (subscription) {
-    const tier = subscriptionTier(subscription);
+    const tier = catalog.subscriptionTier(subscription);
     if (tier) {
       currentPlanSlug = tier.slug;
       currentInterval = tier.interval;
@@ -81,6 +83,9 @@ export async function GET() {
       changedAt: FREE_TIER_CHANGED_AT,
     },
     ownedShops,
+    // The whole catalogue (archived plans and prices included) — the page
+    // shows active plans plus the shop's own plan if it's been archived.
+    plans: catalog.plans,
     provider,
     paypalClientId,
     paypalEnv: process.env.PAYPAL_ENV === "live" ? "live" : "sandbox",

@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongoose";
 import { Payment, Shop, Subscription, User } from "@/models";
-import { getPlanBySlug, resolveSub } from "@/lib/plans";
+import type { PlanCatalog } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import type {
   CurrencyMap,
   FinanceSummary,
@@ -26,18 +27,11 @@ function addCur(m: CurrencyMap, currency: string, cents: number) {
 
 const DAY = (d: Date) => d.toISOString().slice(0, 10);
 
-// A Stripe-billed sub's currency isn't stored on the doc; the plan's price
-// currency is what the invoices carry. Legacy AUD price ids are AUD, the
-// current price ids and legacy $5 Pro are USD.
-const AUD_PRICE_IDS = new Set([
-  "price_1TdLiFHxHWKx0vW1hxK3RRYW", "price_1Tgb6SHxHWKx0vW11dqmu96g",
-  "price_1TdLiHHxHWKx0vW189oSCDPX", "price_1Tgb6THxHWKx0vW1pSsb9qQ7",
-  "price_1TdLiIHxHWKx0vW1BLazXMgu", "price_1Tgb6UHxHWKx0vW1H90R8Xhx",
-]);
-function subCurrency(s: any): string {
+// A Stripe-billed sub's currency isn't always stored on the doc; the plan
+// price it's on (AUD for the pre-2026-07-28 prices) says what invoices carry.
+function subCurrency(catalog: PlanCatalog, s: any): string {
   if (s.currency) return String(s.currency).toLowerCase();
-  if (s.stripePriceId && AUD_PRICE_IDS.has(s.stripePriceId)) return "aud";
-  return "usd";
+  return catalog.byPriceId(s.stripePriceId)?.price.currency ?? "usd";
 }
 
 export interface MrrSnapshot {
@@ -56,6 +50,7 @@ export interface MrrSnapshot {
  */
 export async function getMrrSnapshot(): Promise<MrrSnapshot> {
   await connectDB();
+  const catalog = await getPlanCatalog();
   // ---- Subscriptions → MRR (and MRR as it stood a month ago) ----
   const mrr: CurrencyMap = {};
   const mrrMonthAgo: CurrencyMap = {};
@@ -85,8 +80,8 @@ export async function getMrrSnapshot(): Promise<MrrSnapshot> {
   );
 
   for (const s of real) {
-    const tier = resolveSub(s);
-    const cur = subCurrency(s);
+    const tier = catalog.resolveSub(s);
+    const cur = subCurrency(catalog, s);
     // Stored per-sub price (exact, incl. grandfathered) → monthly equivalent;
     // catalogue-derived tier price as the fallback for unbackfilled docs.
     const m =
@@ -138,6 +133,7 @@ export async function getBrewstampFinance(opts?: {
   await connectDB();
   const to = opts?.to ?? new Date();
   const from = opts?.from ?? new Date("2026-01-01T00:00:00Z");
+  const catalog = await getPlanCatalog();
 
   const snap = await getMrrSnapshot();
   const { mrr } = snap;
@@ -193,7 +189,7 @@ export async function getBrewstampFinance(opts?: {
         recent.push({
           date: DAY(when),
           email: ownerEmail.get(String(p.shop)) ?? "?",
-          plan: `Brewstamp ${getPlanBySlug(p.planSlug ?? "")?.label ?? "Pro"}`,
+          plan: `Brewstamp ${catalog.bySlug(p.planSlug)?.label ?? "Pro"}`,
           amountCents: p.amountCents,
           currency: cur,
           provider,

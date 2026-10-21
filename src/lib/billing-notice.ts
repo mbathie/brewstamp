@@ -11,7 +11,7 @@
 // the right card form for the subscription's provider.
 
 import { Subscription } from "@/models";
-import { resolveSub } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 
 export type BillingNoticeKind =
   | "payment_failed"
@@ -53,7 +53,7 @@ export async function getBillingNotice(opts: {
     )
     .lean();
 
-  const label = sub ? resolveSub(sub).label : "Pro";
+  const label = sub ? (await getPlanCatalog()).resolveSub(sub).label : "Pro";
   const overCap = opts.totalStamps >= FREE_LIMIT;
   // Card actions deep-link with ?card=1 so the billing page opens the card
   // panel straight away (add/replace card for PayPal plans, the billing

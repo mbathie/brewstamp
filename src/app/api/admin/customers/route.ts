@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Payment, Shop, Subscription, User } from "@/models";
-import { resolveSub, subscriptionTier } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { stripeAmount } from "@/lib/paypal-billing";
 import { stampyCollections } from "@/lib/stampy-db";
 
@@ -51,18 +51,19 @@ export async function GET() {
   ]);
   const billing = new Map(agg.map((a: any) => [String(a._id), a]));
 
+  const catalog = await getPlanCatalog();
   const rows = subs.map((s) => {
     const shop = shopById.get(String(s.shop));
     const owner = shop ? ownerById.get(String(shop.owner)) : null;
     const b = billing.get(String(s.shop));
     const totalPaid: Record<string, number> = {};
     for (const t of b?.totals ?? []) totalPaid[t.currency] = (totalPaid[t.currency] ?? 0) + t.cents;
-    const tier = resolveSub(s);
-    const interval = subscriptionTier(s)?.interval ?? s.interval ?? "month";
+    const tier = catalog.resolveSub(s);
+    const interval = catalog.subscriptionTier(s)?.interval ?? s.interval ?? "month";
     const live = ["active", "past_due"].includes(s.status);
     // Exact stored price/currency when backfilled; otherwise derived from the
     // Stripe price id (AUD legacy tiers included) rather than assuming USD.
-    const amt = stripeAmount(s);
+    const amt = stripeAmount(catalog, s);
     const priceCents = s.priceCents ?? amt.amountCents;
     const currency = (s.currency ?? amt.currency).toLowerCase();
     return {

@@ -4,7 +4,8 @@ import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, Account, Payment } from "@/models";
 import Customer from "@/models/Customer";
 import { generateAnimalName } from "@/lib/animal-names";
-import { resolveSub, freeTierOf, LIVE_SUB_STATUSES } from "@/lib/plans";
+import { freeTierOf, LIVE_SUB_STATUSES } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 
 // This shop's payment history from our ledger (`payments`), whichever
 // provider took the money. Returns null when the shop has never been billed.
@@ -148,7 +149,7 @@ export async function GET(
   const activeSub = await Subscription.findOne({ shop: shop._id, status: { $in: LIVE_SUB_STATUSES } }).lean();
   // Free trial allowance: 50 for new shops, 100 if grandfathered.
   const freeTier = freeTierOf(shop as any);
-  const plan = activeSub ? resolveSub(activeSub as any) : null;
+  const plan = activeSub ? (await getPlanCatalog()).resolveSub(activeSub as any) : null;
 
   // Billing / payment history — any subscription for this shop (a canceled one
   // still has a payment history worth showing), from our own ledger.

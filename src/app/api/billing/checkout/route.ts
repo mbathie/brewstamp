@@ -2,17 +2,13 @@ import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
 import { Shop } from "@/models";
 import { stripe } from "@/lib/stripe";
-import {
-  getPlanBySlug,
-  resolvePlanPriceId,
-  type PlanSlug,
-  type BillingInterval,
-} from "@/lib/plans";
+import { type PlanSlug, type BillingInterval } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 
 // Start a Stripe Checkout session for a paid plan. Accepts an optional
-// `plan` slug in the body — defaults to "pro" for back-compat with
-// the old single-plan checkout button (and falls back to the legacy
-// STRIPE_PRICE_ID env if no plan-specific env is configured yet).
+// `plan` slug in the body — defaults to "pro" for back-compat with the old
+// single-plan checkout button. The price is the plan's active main-account
+// price in the catalogue (the `plans` collection).
 export async function POST(req: Request) {
   const merchant = await getMerchant();
   if (!merchant) {
@@ -33,8 +29,9 @@ export async function POST(req: Request) {
   }
 
   const slug = (body.plan as PlanSlug) || "pro";
-  const plan = getPlanBySlug(slug);
-  if (!plan || plan.slug === "free" || plan.hidden) {
+  const catalog = await getPlanCatalog();
+  const plan = catalog.bySlug(slug);
+  if (!plan || plan.slug === "free" || plan.status !== "active") {
     return NextResponse.json(
       { error: "Plan must be a paid tier (pro or plus)" },
       { status: 400 }
@@ -43,22 +40,11 @@ export async function POST(req: Request) {
 
   const interval: BillingInterval = body.interval === "year" ? "year" : "month";
 
-  const priceId =
-    resolvePlanPriceId(plan.slug, interval) ||
-    // Back-compat: legacy single-plan setups stored the monthly Pro price as
-    // STRIPE_PRICE_ID. Use it if the plan-specific var isn't set yet.
-    (plan.slug === "pro" && interval === "month"
-      ? process.env.STRIPE_PRICE_ID
-      : null);
-
+  const priceId = catalog.activePrice(plan.slug, interval, "main")?.stripePriceId;
   if (!priceId) {
-    const envVar =
-      interval === "year"
-        ? plan.stripePriceEnvVarAnnual
-        : plan.stripePriceEnvVar;
     return NextResponse.json(
       {
-        error: `Stripe price for plan "${plan.slug}" (${interval}ly) is not configured. Set ${envVar} in env, then run scripts/stripe-setup-plans.ts.`,
+        error: `No active Stripe price for plan "${plan.slug}" (${interval}ly) in the plan catalogue. Run scripts/seed-plans.ts --create-stripe.`,
       },
       { status: 500 }
     );

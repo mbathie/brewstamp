@@ -6,20 +6,20 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppleMark, GoogleMark } from "@/components/wallet-badges";
 import {
-  PUBLIC_PLANS,
-  FREE_MONTHS,
-  annualPriceCents,
+  PlanCatalog,
+  formatCents,
   type BillingInterval,
+  type PlanConfig,
 } from "@/lib/plans";
 
-// "$7" for whole dollars, "$6.42" otherwise.
-function formatCents(cents: number): string {
-  const dollars = cents / 100;
-  return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
-}
-
-export default function PlanCards() {
+// Pricing cards for the public pages. `plans` is the catalogue from the
+// database (getPlanCatalog().plans), passed down by the server page.
+export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
   const [interval, setInterval] = useState<BillingInterval>("month");
+  const catalog = new PlanCatalog(plans);
+  const paid = catalog.publicPlans.filter((p) => p.slug !== "free");
+  // Shown on the toggle: the best annual saving across the paid plans.
+  const monthsFree = Math.max(0, ...paid.map((p) => catalog.monthsFree(p)));
 
   return (
     <>
@@ -54,17 +54,22 @@ export default function PlanCards() {
                   : "bg-amber-100 text-amber-700"
               }`}
             >
-              {FREE_MONTHS} months free
+              {monthsFree} months free
             </span>
           </button>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
-        {PUBLIC_PLANS.map((p) => {
-          const highlight = p.slug === "plus";
+      <div
+        className={`mx-auto grid gap-6 ${
+          catalog.publicPlans.length > 3 ? "max-w-6xl sm:grid-cols-2 lg:grid-cols-4" : "max-w-5xl md:grid-cols-3"
+        }`}
+      >
+        {catalog.publicPlans.map((p) => {
+          const highlight = !!p.badge;
           const isFree = p.slug === "free";
-          const annualCents = annualPriceCents(p);
+          const monthCents = catalog.priceCents(p, "month");
+          const annualCents = catalog.priceCents(p, "year");
           return (
             <div
               key={p.slug}
@@ -76,7 +81,7 @@ export default function PlanCards() {
             >
               {highlight && (
                 <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
-                  Best for teams
+                  {p.badge}
                 </div>
               )}
               <h3 className="text-lg font-semibold text-stone-900">
@@ -85,11 +90,9 @@ export default function PlanCards() {
               <p className="mt-1 text-sm text-stone-500">{p.tagline}</p>
               <p className="mt-5">
                 <span className="text-4xl font-bold text-stone-900">
-                  {isFree
-                    ? p.priceLabel
-                    : interval === "year"
-                      ? formatCents(annualCents)
-                      : p.priceLabel}
+                  {interval === "year" && !isFree
+                    ? formatCents(annualCents)
+                    : formatCents(monthCents)}
                 </span>
                 <span className="text-stone-500">
                   {" "}
@@ -104,7 +107,7 @@ export default function PlanCards() {
                   stay aligned across the monthly/annual toggle. */}
               <p className="mt-1 h-4 text-xs text-amber-700">
                 {!isFree && interval === "year"
-                  ? `${formatCents(Math.round(annualCents / 12))}/mo billed annually · save ${formatCents(p.priceCents * FREE_MONTHS)}`
+                  ? `${formatCents(Math.round(annualCents / 12))}/mo billed annually · save ${formatCents(monthCents * 12 - annualCents)}`
                   : ""}
               </p>
               <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
@@ -133,7 +136,7 @@ export default function PlanCards() {
         })}
       </div>
       <p className="mt-8 text-center text-sm text-stone-500">
-        More than 3 shops?{" "}
+        More than {Math.max(...catalog.publicPlans.map((p) => p.shopLimit))} shops?{" "}
         <a href="mailto:hello@brewstamp.app" className="text-amber-700 hover:underline">
           Email hello@brewstamp.app
         </a>{" "}

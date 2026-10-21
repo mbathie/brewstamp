@@ -9,7 +9,8 @@ import ImpersonationBanner from "@/components/impersonation-banner";
 import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "./sidebar";
 import { StampUsageIndicator } from "@/components/stamp-usage-indicator";
-import { getPlanBySlug, subscriptionTier, LIVE_SUB_STATUSES, freeTierOf } from "@/lib/plans";
+import { LIVE_SUB_STATUSES, freeTierOf } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { getShopPlanLimits } from "@/lib/plan-limits";
 import { getBillingNotice } from "@/lib/billing-notice";
 import BillingBanner from "@/components/billing-banner";
@@ -111,6 +112,7 @@ export default async function DashboardLayout({
   // The plan that applies to this shop is the owner's: a paid sub on any of
   // their shops covers all of them (same rule as the approve route's cap).
   const shopPlan = aggregate ? null : await getShopPlanLimits(ctx.shop._id.toString());
+  const catalog = await getPlanCatalog();
   const hasPaidPlan = aggregate ? !!activeSub : shopPlan!.planSlug !== "free";
   // This shop's Free allowance (50, or 100 if grandfathered) — the approve
   // route enforces the same number. "All shops" has no single shop; it uses
@@ -213,7 +215,7 @@ export default async function DashboardLayout({
                   // planLabel field (or where it lags the price) used to
                   // fall back to "Pro" regardless of tier.
                   (activeSub &&
-                    getPlanBySlug(subscriptionTier(activeSub)?.slug ?? "")
+                    catalog.bySlug(catalog.subscriptionTier(activeSub)?.slug)
                       ?.label) ||
                   activeSub?.planLabel ||
                   // Covered by the owner's plan on another shop.

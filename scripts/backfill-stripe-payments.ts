@@ -25,7 +25,7 @@ import mongoose from "mongoose";
 import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { Payment, Shop, Subscription, User } from "../src/models";
-import { getIntervalByPriceId, getPlanByPriceId, getPlanBySlug } from "../src/lib/plans";
+import { readPlanCatalog } from "../src/lib/plan-catalog";
 
 const APPLY = process.argv.includes("--apply");
 
@@ -45,6 +45,7 @@ async function main() {
   const stripe = new Stripe(stripeKey());
   const acct = await stripe.accounts.retrieve();
   await mongoose.connect(process.env.MONGODB_URI);
+  const catalog = await readPlanCatalog();
   console.log(`${APPLY ? "APPLY" : "DRY RUN"} · Stripe ${acct.id} → ${mongoose.connection.db!.databaseName}\n`);
 
   // Brewstamp products only (shared account).
@@ -110,8 +111,9 @@ async function main() {
     matched++;
 
     const priceId = (lines[0] as any)?.pricing?.price_details?.price as string | undefined;
-    const plan = priceId ? getPlanByPriceId(priceId) : undefined;
-    const interval = priceId ? getIntervalByPriceId(priceId) : undefined;
+    const hit = catalog.byPriceId(priceId);
+    const plan = hit?.plan;
+    const interval = hit?.price.interval;
     const subId = (inv.parent?.subscription_details?.subscription as string | undefined) ?? null;
     const isProration = lines.some((l) => (l as any).proration);
     let kind: "initial" | "renewal" | "upgrade" = "renewal";
@@ -179,7 +181,7 @@ async function main() {
     const prodId = typeof price.product === "string" ? price.product : price.product.id;
     const prodName = brewProducts.get(prodId) ?? "";
     const fromName = (/\bmax\b/i.test(prodName) ? "max" : /\bplus\b/i.test(prodName) ? "plus" : "pro") as "pro" | "plus" | "max";
-    const plan = getPlanByPriceId(price.id) ?? getPlanBySlug(fromName);
+    const plan = catalog.byPriceId(price.id)?.plan ?? catalog.bySlug(fromName);
     const slug = plan?.slug ?? fromName;
     const set = {
       provider: doc.provider ?? "stripe",

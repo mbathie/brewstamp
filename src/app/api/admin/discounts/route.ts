@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireAdmin } from "@/lib/api-auth";
 import { stripe } from "@/lib/stripe";
-import { resolvePlanPriceId, getPlanBySlug, type PlanSlug } from "@/lib/plans";
+import { type PlanSlug } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 
 type PlanScope = "any" | PlanSlug;
 type DurationType = "once" | "forever" | "repeating";
@@ -10,7 +11,7 @@ type DurationType = "once" | "forever" | "repeating";
 // Resolve a plan slug to its Stripe product id (shared across monthly+annual
 // prices) so a coupon can be restricted to that plan only.
 async function productIdForPlan(slug: PlanSlug): Promise<string | null> {
-  const priceId = resolvePlanPriceId(slug, "month");
+  const priceId = (await getPlanCatalog()).activePrice(slug, "month", "main")?.stripePriceId;
   if (!priceId) return null;
   const price = await stripe.prices.retrieve(priceId);
   return typeof price.product === "string" ? price.product : price.product.id;
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  if (plan !== "any" && !getPlanBySlug(plan)) {
+  if (plan !== "any" && !(await getPlanCatalog()).bySlug(plan)) {
     return NextResponse.json({ error: "Unknown plan." }, { status: 400 });
   }
   if (duration === "repeating" && (!durationInMonths || durationInMonths < 1)) {

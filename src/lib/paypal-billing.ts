@@ -8,15 +8,8 @@
 
 import { connectDB } from "./mongoose";
 import { Payment, Shop, Subscription, User } from "../models";
-import {
-  getPlanBySlug,
-  getPlanRank,
-  planPriceCents,
-  resolveSub,
-  subscriptionTier,
-  type BillingInterval,
-  type PlanSlug,
-} from "./plans";
+import { LEGACY_PRO_CENTS, type BillingInterval, type PlanCatalog, type PlanSlug } from "./plans";
+import { getPlanCatalog } from "./plan-catalog";
 import {
   captureOf,
   cardSummaryOf,
@@ -48,12 +41,13 @@ export function addInterval(from: Date, interval: BillingInterval): Date {
   return d;
 }
 
-export function priceFor(slug: PaidSlug, interval: BillingInterval): number {
-  return planPriceCents(getPlanBySlug(slug)!, interval);
+// Today's catalogue price for a plan (what a new PayPal subscription pays).
+export function priceFor(catalog: PlanCatalog, slug: PaidSlug, interval: BillingInterval): number {
+  return catalog.priceCents(catalog.bySlug(slug)!, interval);
 }
 
-export function describe(slug: PaidSlug, interval: BillingInterval, shopName: string) {
-  return `Brewstamp ${getPlanBySlug(slug)!.label} (${interval === "year" ? "annual" : "monthly"}) — ${shopName}`;
+export function describe(catalog: PlanCatalog, slug: PaidSlug, interval: BillingInterval, shopName: string) {
+  return `Brewstamp ${catalog.bySlug(slug)!.label} (${interval === "year" ? "annual" : "monthly"}) — ${shopName}`;
 }
 
 // Fraction of the current period still unused, 0..1.
@@ -68,10 +62,11 @@ export function remainingFraction(sub: { currentPeriodStart?: Date; currentPerio
 // Is moving current → target an immediate (charge now) change or a deferred
 // one (apply at renewal)? Higher tier, or monthly → annual, is immediate.
 export function isImmediateChange(
+  catalog: PlanCatalog,
   current: { slug: PaidSlug; interval: BillingInterval },
   target: { slug: PaidSlug; interval: BillingInterval }
 ): boolean {
-  const rankDelta = getPlanRank(target.slug) - getPlanRank(current.slug);
+  const rankDelta = catalog.rank(target.slug) - catalog.rank(current.slug);
   if (rankDelta > 0) return true;
   if (rankDelta < 0) return false;
   return current.interval === "month" && target.interval === "year";
@@ -136,7 +131,7 @@ export async function activateFromCapture(opts: {
   const now = new Date();
   const periodEnd = addInterval(now, interval);
   const card = cardSummaryOf(order);
-  const plan = getPlanBySlug(slug)!;
+  const plan = (await getPlanCatalog()).bySlug(slug)!;
 
   const sub = await Subscription.findOneAndUpdate(
     { shop: opts.shopId },
@@ -208,6 +203,7 @@ export async function switchPaypalPlan(
   const sub = await Subscription.findById(subId);
   if (!sub || sub.provider !== "paypal") throw new Error("Not a PayPal subscription");
   if (!sub.planSlug || !sub.interval) throw new Error("Subscription has no plan");
+  const catalog = await getPlanCatalog();
   const current = { slug: sub.planSlug as PaidSlug, interval: sub.interval as BillingInterval };
 
   // Cancel → Free at period end.
@@ -229,7 +225,7 @@ export async function switchPaypalPlan(
     return { kind: "resumed" };
   }
 
-  if (!isImmediateChange(current, tgt)) {
+  if (!isImmediateChange(catalog, current, tgt)) {
     // Downgrade: keep what they paid for, switch at renewal.
     sub.pendingPlanSlug = tgt.slug;
     sub.pendingInterval = tgt.interval;
@@ -244,9 +240,9 @@ export async function switchPaypalPlan(
   const now = new Date();
   // Grandfathered (migrated) prices end on a plan change: the credit is what
   // they actually paid, the new charge is catalogue USD.
-  const paidPrice = sub.priceCents ?? priceFor(current.slug, current.interval);
+  const paidPrice = sub.priceCents ?? priceFor(catalog, current.slug, current.interval);
   const credit = Math.round(paidPrice * remainingFraction(sub, now)) + (sub.creditCents || 0);
-  const newPrice = priceFor(tgt.slug, tgt.interval);
+  const newPrice = priceFor(catalog, tgt.slug, tgt.interval);
   const charge = Math.max(0, newPrice - credit);
   const carry = Math.max(0, credit - newPrice);
 
@@ -256,7 +252,7 @@ export async function switchPaypalPlan(
       vaultId: sub.paypalVaultId,
       amountCents: charge,
       currency: CURRENCY,
-      description: describe(tgt.slug, tgt.interval, shopName),
+      description: describe(catalog, tgt.slug, tgt.interval, shopName),
       customId: `${sub.shop}:${tgt.slug}:${tgt.interval}:upgrade`,
       requestId: `upgrade-${sub._id}-${now.getTime()}`,
     });
@@ -267,7 +263,7 @@ export async function switchPaypalPlan(
   }
 
   const periodEnd = addInterval(now, tgt.interval);
-  const plan = getPlanBySlug(tgt.slug)!;
+  const plan = catalog.bySlug(tgt.slug)!;
   sub.planSlug = tgt.slug;
   sub.interval = tgt.interval;
   sub.planLabel = plan.label;
@@ -325,6 +321,7 @@ export interface RenewalRunSummary {
 // derived from the period it's paying for.
 export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSummary> {
   await connectDB();
+  const catalog = await getPlanCatalog();
   const summary: RenewalRunSummary = { due: 0, renewed: 0, failed: 0, canceled: 0, skipped: 0 };
 
   const subs = await Subscription.find({
@@ -359,17 +356,17 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
       if (sub.pendingPlanSlug) {
         sub.planSlug = sub.pendingPlanSlug;
         sub.interval = sub.pendingInterval || sub.interval;
-        sub.planLabel = getPlanBySlug(sub.planSlug)!.label;
+        sub.planLabel = catalog.bySlug(sub.planSlug)!.label;
         sub.pendingPlanSlug = undefined;
         sub.pendingInterval = undefined;
-        sub.priceCents = priceFor(sub.planSlug as PaidSlug, (sub.interval || "month") as BillingInterval);
+        sub.priceCents = priceFor(catalog, sub.planSlug as PaidSlug, (sub.interval || "month") as BillingInterval);
         sub.currency = CURRENCY;
       }
       const slug = sub.planSlug as PaidSlug;
       const interval = (sub.interval || "month") as BillingInterval;
       // The stored price is what this subscriber pays (grandfathered prices
       // included); the catalogue is only a fallback for older docs.
-      const price = sub.priceCents ?? priceFor(slug, interval);
+      const price = sub.priceCents ?? priceFor(catalog, slug, interval);
       const currency = (sub.currency || CURRENCY) as string;
       const amount = Math.max(0, price - (sub.creditCents || 0));
       const periodStart = sub.currentPeriodEnd as Date;
@@ -388,7 +385,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
             vaultId: sub.paypalVaultId,
             amountCents: amount,
             currency,
-            description: describe(slug, interval, shopName),
+            description: describe(catalog, slug, interval, shopName),
             customId: `${sub.shop}:${slug}:${interval}:renewal`,
             requestId: `renewal-${sub._id}-${periodStart.getTime()}-${attempt}`,
           });
@@ -422,7 +419,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
             currency,
             planSlug: slug,
             interval,
-            description: `${getPlanBySlug(slug)!.label} (${interval}) renewal`,
+            description: `${catalog.bySlug(slug)!.label} (${interval}) renewal`,
             periodStart,
             periodEnd,
           });
@@ -447,7 +444,7 @@ export async function runPaypalRenewals(now = new Date()): Promise<RenewalRunSum
         currency,
         planSlug: slug,
         interval,
-        description: `${getPlanBySlug(slug)!.label} (${interval}) renewal — attempt ${attempt}`,
+        description: `${catalog.bySlug(slug)!.label} (${interval}) renewal — attempt ${attempt}`,
         periodStart,
         periodEnd,
         failureReason: failure,
@@ -528,8 +525,9 @@ export async function completeMigration(opts: {
   const sub = await Subscription.findById(opts.subId);
   if (!sub) throw new Error("Subscription not found");
   if (sub.provider === "paypal") return sub; // already migrated (double submit)
-  const tier = resolveSub(sub);
-  const { amountCents, currency } = stripeAmount(sub);
+  const catalog = await getPlanCatalog();
+  const tier = catalog.resolveSub(sub);
+  const { amountCents, currency } = stripeAmount(catalog, sub);
 
   sub.provider = "paypal";
   sub.cancelAtPeriodEnd = false; // the Stripe-side cancel is Stripe's business, not ours
@@ -537,7 +535,7 @@ export async function completeMigration(opts: {
   if (opts.customerId) sub.paypalCustomerId = opts.customerId;
   sub.card = opts.card;
   sub.planSlug = tier.slug;
-  sub.interval = subscriptionTier(sub)?.interval ?? "month";
+  sub.interval = catalog.subscriptionTier(sub)?.interval ?? "month";
   sub.planLabel = tier.label;
   sub.priceCents = amountCents;
   sub.currency = currency;
@@ -569,22 +567,18 @@ export async function completeMigration(opts: {
 }
 
 // What a Stripe-billed sub actually pays per period, in its own currency.
-export function stripeAmount(sub: { stripePriceId?: string; planLabel?: string; planSlug?: string; interval?: string; priceCents?: number; currency?: string }) {
-  const interval = subscriptionTier(sub)?.interval ?? "month";
+export function stripeAmount(
+  catalog: PlanCatalog,
+  sub: { stripePriceId?: string; planLabel?: string; planSlug?: string; interval?: string; priceCents?: number; currency?: string }
+) {
+  const interval = catalog.subscriptionTier(sub)?.interval ?? "month";
   // Stored by the backfill from the live Stripe price — authoritative.
   if (sub.priceCents != null && sub.currency) {
     return { amountCents: sub.priceCents, currency: sub.currency.toLowerCase(), interval };
   }
-  const tier = resolveSub(sub);
-  const isAud = sub.stripePriceId ? AUD_PRICE_IDS.has(sub.stripePriceId) : false;
-  // resolveSub normalises annual to monthly; undo that for the charge.
-  const amountCents = interval === "year" ? tier.monthlyCents * 11 : tier.monthlyCents;
-  return { amountCents, currency: isAud ? "aud" : "usd", interval };
+  // Every price we've ever sold (AUD and archived ones included) is in the
+  // catalogue; anything else is the original US$5 Pro.
+  const hit = catalog.byPriceId(sub.stripePriceId);
+  if (hit) return { amountCents: hit.price.amountCents, currency: hit.price.currency, interval: hit.price.interval };
+  return { amountCents: LEGACY_PRO_CENTS, currency: "usd", interval };
 }
-
-// Historical AUD price ids (pre 2026-07-28 USD switch). Mirrors finance.ts.
-const AUD_PRICE_IDS = new Set([
-  "price_1TdLiFHxHWKx0vW1hxK3RRYW", "price_1Tgb6SHxHWKx0vW11dqmu96g",
-  "price_1TdLiHHxHWKx0vW189oSCDPX", "price_1Tgb6THxHWKx0vW1pSsb9qQ7",
-  "price_1TdLiIHxHWKx0vW1BLazXMgu", "price_1Tgb6UHxHWKx0vW1H90R8Xhx",
-]);

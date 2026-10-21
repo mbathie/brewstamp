@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, StampCard, StampRequest, User, Subscription, WalletPass } from "@/models";
-import { resolveSub, freeTierOf, FREE_STAMPS, type PlanSlug } from "@/lib/plans";
+import { freeTierOf, FREE_STAMPS, type PlanSlug } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { getMrrSnapshot } from "@/lib/finance";
 import { combineAtRate } from "@/lib/finance-math";
 import { scoreFreeShop, DEFAULT_BG_COLOR, type Likelihood } from "@/lib/conversion-score";
@@ -153,10 +154,11 @@ export async function GET() {
   const shopOwner = new Map(shops.map((s) => [key(s._id), key(s.owner)]));
   // Ignore subs whose shop has since been deleted (the query isn't scoped).
   const subs = (liveSubs as any[]).filter((s) => shopOwner.has(key(s.shop)));
+  const catalog = await getPlanCatalog();
   const subMap = new Map(
     subs.map((s: any) => [
       key(s.shop),
-      { ...resolveSub(s), status: s.status as "active" | "past_due", cancelAtPeriodEnd: !!s.cancelAtPeriodEnd },
+      { ...catalog.resolveSub(s), status: s.status as "active" | "past_due", cancelAtPeriodEnd: !!s.cancelAtPeriodEnd },
     ]),
   );
   // A paid plan covers every shop the owner has (see getShopPlanLimits), so
@@ -164,7 +166,7 @@ export async function GET() {
   const payingOwners = new Map<string, string>();
   for (const s of subs) {
     const owner = shopOwner.get(key(s.shop));
-    if (owner) payingOwners.set(owner, resolveSub(s).label);
+    if (owner) payingOwners.set(owner, catalog.resolveSub(s).label);
   }
 
   const planCounts: Record<PlanSlug, number> = { free: 0, pro: 0, plus: 0, max: 0 };

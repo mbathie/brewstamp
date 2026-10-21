@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
-import { getPlanBySlug, FREE_STAMPS } from "./plans";
+import { FREE_STAMPS, formatCents } from "./plans";
+import { getPlanCatalog } from "./plan-catalog";
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_SERVER_HOST,
@@ -1113,8 +1114,8 @@ export async function sendUpgradeNudgeEmail({
   /** The shop's own Free allowance (50, or 100 if grandfathered). */
   freeStampLimit: number;
 }) {
-  const proPlan = getPlanBySlug("pro")!;
-  const proPriceLabel = proPlan.priceLabel;
+  const catalog = await getPlanCatalog();
+  const proPriceLabel = formatCents(catalog.priceCents(catalog.bySlug("pro")!, "month"));
   const stampsRemaining = freeStampLimit - stampsUsed;
   const billingLink = utm("/dashboard/billing", "drip-upgrade");
 

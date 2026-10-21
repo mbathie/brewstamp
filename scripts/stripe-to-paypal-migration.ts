@@ -31,7 +31,10 @@ import "../src/lib/load-env";
 import { randomBytes } from "node:crypto";
 import mongoose from "mongoose";
 import { Shop, Subscription, User } from "../src/models";
-import { resolveSub } from "../src/lib/plans";
+import { readPlanCatalog } from "../src/lib/plan-catalog";
+import type { PlanCatalog } from "../src/lib/plans";
+
+let catalog: PlanCatalog;
 import { stripeAmount } from "../src/lib/paypal-billing";
 import { sendBillingMigrationEmail, sendBillingMigrationNudgeEmail } from "../src/lib/email";
 import { stampyCollections } from "../src/lib/stampy-db";
@@ -82,9 +85,9 @@ async function candidates(): Promise<any[]> {
   return out;
 }
 
-const tierOf = (c: any) => (c.stampy ? { label: `StampyStamp ${c.sub.planLabel}` } : resolveSub(c.sub));
+const tierOf = (c: any) => (c.stampy ? { label: `StampyStamp ${c.sub.planLabel}` } : catalog.resolveSub(c.sub));
 const amountOf = (c: any) =>
-  c.stampy ? { amountCents: c.sub.priceCents, currency: c.sub.currency, interval: c.sub.interval } : stripeAmount(c.sub);
+  c.stampy ? { amountCents: c.sub.priceCents, currency: c.sub.currency, interval: c.sub.interval } : stripeAmount(catalog, c.sub);
 
 function summarise(c: any) {
   const tier = tierOf(c);
@@ -131,6 +134,7 @@ async function sendFor(c: any, to: string, deadline: Date | null, dryRun: boolea
 
 async function main() {
   await mongoose.connect(process.env.MONGODB_URI!);
+  catalog = await readPlanCatalog();
   const list = await candidates();
 
   if (flag("--list") || argv.length === 0) {

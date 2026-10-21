@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Coffee, CreditCard } from "lucide-react";
 import { connectDB } from "@/lib/mongoose";
 import { Shop, Subscription } from "@/models";
-import { resolveSub } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { stripeAmount } from "@/lib/paypal-billing";
 import { stampySubForToken } from "@/lib/stampy-billing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,8 +78,9 @@ export default async function MigratePage({ params }: { params: Promise<{ token:
   }
 
   const shop = await Shop.findById(sub.shop).select("name").lean<any>();
-  const tier = resolveSub(sub);
-  const { amountCents, currency, interval } = stripeAmount(sub);
+  const catalog = await getPlanCatalog();
+  const tier = catalog.resolveSub(sub);
+  const { amountCents, currency, interval } = stripeAmount(catalog, sub);
   const sym = currency === "aud" ? "A$" : "US$";
   const next = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
   const nextLabel = next ? next.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : null;

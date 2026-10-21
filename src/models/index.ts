@@ -12,6 +12,7 @@ import WalletPass from "./WalletPass";
 import Payment from "./Payment";
 import ServerLog from "./ServerLog";
 import ReferralEarning from "./ReferralEarning";
+import Plan from "./Plan";
 
 export {
   Shop,
@@ -28,4 +29,5 @@ export {
   Payment,
   ServerLog,
   ReferralEarning,
+  Plan,
 };

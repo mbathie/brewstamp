@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Subscription } from "@/models";
-import { getPlanBySlug, type BillingInterval, type PlanSlug } from "@/lib/plans";
+import { type BillingInterval, type PlanSlug } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
 import { createCardOrder, PayPalError, scaFor } from "@/lib/paypal";
 import { describe, priceFor, CURRENCY } from "@/lib/paypal-billing";
 import { paypalEnabled, requireOwner } from "../_shared";
@@ -17,8 +18,9 @@ export async function POST(req: Request) {
   const { merchant } = auth;
 
   const body = (await req.json().catch(() => ({}))) as { plan?: string; interval?: string };
-  const plan = getPlanBySlug(body.plan || "");
-  if (!plan || plan.slug === "free" || plan.hidden) {
+  const catalog = await getPlanCatalog();
+  const plan = catalog.bySlug(body.plan || "");
+  if (!plan || plan.slug === "free" || plan.status !== "active") {
     return NextResponse.json({ error: "Plan must be a paid tier (pro or plus)" }, { status: 400 });
   }
   const slug = plan.slug as Exclude<PlanSlug, "free">;
@@ -30,12 +32,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "You already have an active subscription — switch plans instead." }, { status: 400 });
   }
 
-  const amountCents = priceFor(slug, interval);
+  const amountCents = priceFor(catalog, slug, interval);
   try {
     const order = await createCardOrder({
       amountCents,
       currency: CURRENCY,
-      description: describe(slug, interval, merchant.shop.name),
+      description: describe(catalog, slug, interval, merchant.shop.name),
       customId: `${merchant.shop._id}:${slug}:${interval}:initial`,
       vault: true,
       sca: scaFor(merchant.shop.timezone),
