@@ -23,21 +23,11 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   serverExternalPackages: ["mongoose", "bcrypt"],
+  // Images are resized by the CDN they come from (src/lib/image-loader.ts),
+  // not by Next's built-in optimiser, which keeps sharp out of server memory.
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.pexels.com",
-      },
-      {
-        protocol: "https",
-        hostname: "cultcha.syd1.cdn.digitaloceanspaces.com",
-      },
-    ],
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
   },
   async headers() {
     return [
