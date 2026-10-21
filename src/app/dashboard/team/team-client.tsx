@@ -58,7 +58,8 @@ interface TeamData {
   shop: { _id: string; name: string } | null;
   myRole: Role | null;
   myRolesByShop: Record<string, Role>;
-  plan: { slug: string; label: string; hasStaffLogins: boolean };
+  plan: { slug: string; label: string; hasStaffLogins: boolean; staffLoginLimit: number | "unlimited" };
+  staffLoginsUsed: number | null;
   members: Member[];
   invites: Invite[];
 }
@@ -244,7 +245,12 @@ export default function TeamClient() {
   const canManage = data.myRole === "owner" || data.myRole === "manager";
   // Invites are scoped to a single shop, so only offered in single-shop mode.
   const showInviteForm = !data.aggregate && !!data.shop && canManage;
-  const canInvite = showInviteForm && data.plan.hasStaffLogins;
+  // Out of seats on a plan with a fixed number of staff logins (Pro: one).
+  const seatsFull =
+    data.plan.staffLoginLimit !== "unlimited" &&
+    data.staffLoginsUsed != null &&
+    data.staffLoginsUsed >= data.plan.staffLoginLimit;
+  const canInvite = showInviteForm && data.plan.hasStaffLogins && !seatsFull;
 
   return (
     <div className="space-y-6">
@@ -255,12 +261,35 @@ export default function TeamClient() {
             <Lock className="mt-0.5 size-5 shrink-0 text-amber-400" />
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">
-                Team logins are a Plus &amp; Max feature
+                Team logins start on the Pro plan
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                You&apos;re on the {data.plan.label} plan. Upgrade to Plus or
-                Max to invite managers and staff who can accept stamps on the
-                counter.
+                You&apos;re on the {data.plan.label} plan. Pro includes one staff
+                login; Business gives you unlimited managers and staff who can
+                accept stamps on the counter.
+              </p>
+              <Link href="/dashboard/billing">
+                <Button className="mt-3 cursor-pointer bg-amber-700 hover:bg-amber-800">
+                  See plans
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Seat limit reached (Pro: one staff login) */}
+      {showInviteForm && seatsFull && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="flex items-start gap-3 py-4">
+            <Lock className="mt-0.5 size-5 shrink-0 text-amber-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                You&apos;re using {data.staffLoginsUsed} of {data.plan.staffLoginLimit} staff login{data.plan.staffLoginLimit === 1 ? "" : "s"} on {data.plan.label}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upgrade to Business for unlimited managers and staff, or remove
+                someone (or cancel a pending invite) to free up the seat.
               </p>
               <Link href="/dashboard/billing">
                 <Button className="mt-3 cursor-pointer bg-amber-700 hover:bg-amber-800">
@@ -290,7 +319,7 @@ export default function TeamClient() {
           aligns by grid row (immune to control-height quirks) and stacks
           cleanly on mobile. Hidden entirely when the plan can't invite — the
           gate card above already explains why, so we don't show a dead form. */}
-      {showInviteForm && data.plan.hasStaffLogins && (
+      {canInvite && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">

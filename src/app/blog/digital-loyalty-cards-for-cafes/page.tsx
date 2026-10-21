@@ -53,7 +53,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/digital-loyalty-cards-for-cafes",
   datePublished: "2026-02-27",
-  dateModified: "2026-09-20",
+  dateModified: "2026-10-21",
   image:
     "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };
@@ -305,7 +305,7 @@ export default function BlogPost() {
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               Brewstamp, for example, is free for your first {FREE_STAMPS}{" "}stamps —
               enough to test if a loyalty program works for your shop. After
-              that, it&apos;s $7/month for unlimited stamps. If you&apos;re
+              that, it&apos;s $12/month for unlimited stamps. If you&apos;re
               deciding how many stamps to ask for and what reward to offer, the{" "}
               <Link
                 href="/blog/coffee-shop-loyalty-cards"

@@ -479,7 +479,7 @@ export default function CustomerSearch({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              CSV export is available on Plus and Max plans.
+              CSV export is available on the Business plan.
               {planLabel ? ` You're on ${planLabel}.` : ""}{" "}
               <a
                 href="/dashboard/billing"

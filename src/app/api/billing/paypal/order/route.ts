@@ -18,8 +18,8 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => ({}))) as { plan?: string; interval?: string };
   const plan = getPlanBySlug(body.plan || "");
-  if (!plan || plan.slug === "free") {
-    return NextResponse.json({ error: "Plan must be a paid tier (pro, plus, max)" }, { status: 400 });
+  if (!plan || plan.slug === "free" || plan.hidden) {
+    return NextResponse.json({ error: "Plan must be a paid tier (pro or plus)" }, { status: 400 });
   }
   const slug = plan.slug as Exclude<PlanSlug, "free">;
   const interval: BillingInterval = body.interval === "year" ? "year" : "month";

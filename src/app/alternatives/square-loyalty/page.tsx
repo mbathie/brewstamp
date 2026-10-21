@@ -21,14 +21,14 @@ import { FREE_STAMPS } from "@/lib/plans";
 export const metadata: Metadata = {
   title: "Square Loyalty Alternative — Free Digital Stamp Card",
   description:
-    `Brewstamp is a free Square Loyalty alternative — no Square POS lock-in, transparent free tier (${FREE_STAMPS} stamps), and $7/mo flat after.`,
+    `Brewstamp is a free Square Loyalty alternative — no Square POS lock-in, transparent free tier (${FREE_STAMPS} stamps), and $12/mo flat after.`,
   alternates: { canonical: "/alternatives/square-loyalty" },
   openGraph: {
     type: "website",
     url: "/alternatives/square-loyalty",
     title: "Square Loyalty Alternative — Brewstamp",
     description:
-      `A Square Loyalty alternative for cafes that aren't locked into Square POS. Free up to ${FREE_STAMPS} stamps, $7/mo flat after.`,
+      `A Square Loyalty alternative for cafes that aren't locked into Square POS. Free up to ${FREE_STAMPS} stamps, $12/mo flat after.`,
     images: [
       {
         url: "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Square Loyalty Alternative — Brewstamp",
     description:
-      `A Square Loyalty alternative without POS lock-in. Free up to ${FREE_STAMPS} stamps, $7/mo flat.`,
+      `A Square Loyalty alternative without POS lock-in. Free up to ${FREE_STAMPS} stamps, $12/mo flat.`,
     images: [
       "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -54,7 +54,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Square Loyalty Alternative — Brewstamp",
   description:
-    "Brewstamp is a Square Loyalty alternative for cafes — a digital coffee loyalty card with no POS lock-in, a free tier, and flat $7/mo pricing.",
+    "Brewstamp is a Square Loyalty alternative for cafes — a digital coffee loyalty card with no POS lock-in, a free tier, and flat $12/mo pricing.",
   url: "https://brewstamp.app/alternatives/square-loyalty",
   about: {
     "@type": "SoftwareApplication",
@@ -100,7 +100,7 @@ export default function SquareLoyaltyAlternative() {
               running Square POS. If you&apos;re not — or you don&apos;t want
               your loyalty program tied to your card terminal — Brewstamp is the
               standalone, browser-based alternative. Free up to {FREE_STAMPS}{" "}stamps. From
-              $7/mo after.
+              $12/mo after.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/register">
@@ -206,7 +206,7 @@ export default function SquareLoyaltyAlternative() {
                   },
                   {
                     feature: "Starting monthly price",
-                    brewstamp: { good: true, text: "$7/mo flat (after free tier)" },
+                    brewstamp: { good: true, text: "$12/mo flat (after free tier)" },
                     square: { good: false, text: "$45/month + Square POS fees" },
                   },
                   {
@@ -264,8 +264,8 @@ export default function SquareLoyaltyAlternative() {
               },
               {
                 icon: DollarSign,
-                title: "$7/mo vs $45/month",
-                desc: `Square Loyalty starts at around $45/month on top of your Square processing fees. Brewstamp is $7/mo flat after a free tier of ${FREE_STAMPS} stamps. For an independent cafe that's $480/year saved on a single line item.`,
+                title: "$12/mo vs $45/month",
+                desc: `Square Loyalty starts at around $45/month on top of your Square processing fees. Brewstamp is $12/mo flat after a free tier of ${FREE_STAMPS} stamps. For an independent cafe that's roughly $400/year saved on a single line item.`,
               },
               {
                 icon: Eye,
@@ -350,7 +350,7 @@ export default function SquareLoyaltyAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to {FREE_STAMPS}{" "}stamps. $7/mo flat after. No POS lock-in.
+              Free up to {FREE_STAMPS}{" "}stamps. $12/mo flat after. No POS lock-in.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -388,7 +388,7 @@ export default function SquareLoyaltyAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$7</span>
+                <span className="text-4xl font-bold text-stone-900">$12</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -414,8 +414,8 @@ export default function SquareLoyaltyAlternative() {
           </div>
           <div className="mt-10 text-center">
             <p className="text-sm text-stone-500">
-              Need multi-shop, team logins, or CSV exports? Plus & Max
-              plans go from $19–$29/mo.{" "}
+              Need multi-shop, team logins, or CSV exports? The Business
+              plan is $29/mo for up to 3 shops.{" "}
               <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
                 See full plan comparison →
               </a>
@@ -439,7 +439,7 @@ export default function SquareLoyaltyAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Square Loyalty alternative?",
-                a: `Yes. Brewstamp has a public free tier covering your first ${FREE_STAMPS} stamps, then $7/mo for unlimited stamps. Square Loyalty is a paid Square add-on, typically around $45/month, with no free tier of its own.`,
+                a: `Yes. Brewstamp has a public free tier covering your first ${FREE_STAMPS} stamps, then $12/mo for unlimited stamps. Square Loyalty is a paid Square add-on, typically around $45/month, with no free tier of its own.`,
               },
               {
                 q: "Do I need a specific POS to use Brewstamp?",
@@ -447,7 +447,7 @@ export default function SquareLoyaltyAlternative() {
               },
               {
                 q: "How is Brewstamp different from Square Loyalty?",
-                a: "Square Loyalty is a points-based program tightly coupled to Square POS purchases. Brewstamp is a stamp-based program that runs independently of any POS, lives in the browser, and prices at $7/mo flat instead of around $45.",
+                a: "Square Loyalty is a points-based program tightly coupled to Square POS purchases. Brewstamp is a stamp-based program that runs independently of any POS, lives in the browser, and prices at $12/mo flat instead of around $45.",
               },
               {
                 q: "Can I use Brewstamp if I run Square POS?",

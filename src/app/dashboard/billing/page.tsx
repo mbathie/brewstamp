@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/tooltip";
 import {
   PLANS,
+  PUBLIC_PLANS,
+  FREE_MONTHS,
   getPlanRank,
   annualPriceCents,
   planPriceCents,
@@ -230,6 +232,14 @@ export default function BillingPage() {
   }
   const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
   const currentPlan = PLANS.find((p) => p.slug === currentSlug)!;
+  // The plans on offer, plus the shop's own plan if it's one we no longer sell.
+  const shownPlans = PLANS.filter((p) => !p.hidden || p.slug === currentSlug);
+  // A subscriber paying less than today's price for their plan keeps that price
+  // (grandfathered when prices rose on 2026-10-21, or the US$5 legacy Pro).
+  const lockedInCents =
+    currentSlug !== "free" && sub?.priceCents != null && sub.priceCents < planPriceCents(currentPlan, currentInterval ?? "month")
+      ? sub.priceCents
+      : null;
 
   async function handleSwitch(target: PlanSlug, confirmed = false) {
     // Leaving a paid plan always goes through the confirmation dialog first.
@@ -419,6 +429,11 @@ export default function BillingPage() {
                 </span>{" "}
                 / {currentInterval === "year" ? "year" : "month"}
               </div>
+              {lockedInCents != null && (
+                <div className="text-xs text-emerald-400">
+                  Your original price, locked in while you stay on {currentPlan.label}.
+                </div>
+              )}
               {sub.currentPeriodEnd && (
                 <div className="text-sm">
                   <span className="text-muted-foreground">{sub.cancelAtPeriodEnd ? "Ends on " : "Next bill "}</span>
@@ -508,7 +523,7 @@ export default function BillingPage() {
                     document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                 >
-                  {data.ownedShops >= currentPlan.shopLimit && currentSlug !== "max" ? "Need another shop? Upgrade" : "Compare plans"}
+                  {data.ownedShops >= currentPlan.shopLimit && currentRank < getPlanRank("plus") ? "Need another shop? Upgrade" : "Compare plans"}
                 </Button>
               </CardActions>
             </CardContent>
@@ -582,20 +597,20 @@ export default function BillingPage() {
           >
             Annual
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-500">
-              1 month free
+              {FREE_MONTHS} months free
             </span>
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
           {interval === "year"
-            ? "Pay for 11 months, get 12 — on every paid plan."
-            : "Switch to annual billing and get a month on us."}
+            ? `Pay for ${12 - FREE_MONTHS} months, get 12 — on every paid plan.`
+            : `Switch to annual billing and get ${FREE_MONTHS} months on us.`}
         </p>
       </div>
 
       {/* Plan grid */}
-      <div className="grid gap-5 lg:grid-cols-4">
-        {PLANS.map((plan) => {
+      <div className={`grid gap-5 ${shownPlans.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+        {shownPlans.map((plan) => {
           const isCurrentTier = plan.slug === currentSlug;
           // For a paid tier the user only counts as "on" it when the billing
           // interval matches too — switching monthly↔annual is still a change.
@@ -645,7 +660,7 @@ export default function BillingPage() {
               )}
               {isPopular && (
                 <div className="absolute -top-2.5 right-4 rounded-full bg-amber-600 px-2.5 py-0.5 text-xs font-medium text-white">
-                  Most popular
+                  Best for teams
                 </div>
               )}
               <CardHeader className="pb-0">
@@ -677,7 +692,7 @@ export default function BillingPage() {
                     {isPaid && interval === "year" ? (
                       <span>
                         <span className="font-semibold text-emerald-500">
-                          Save {formatCents(plan.priceCents)}/yr
+                          Save {formatCents(plan.priceCents * FREE_MONTHS)}/yr
                         </span>
                         <span className="text-muted-foreground">
                           {" · "}
@@ -724,6 +739,11 @@ export default function BillingPage() {
           );
         })}
       </div>
+      <p className="text-center text-sm text-muted-foreground">
+        More than 3 shops? Email{" "}
+        <a href="mailto:hello@brewstamp.app" className="text-amber-500 hover:underline">hello@brewstamp.app</a>{" "}
+        and we&apos;ll set you up.
+      </p>
 
       {/* Feature matrix */}
       <Card>
@@ -739,7 +759,7 @@ export default function BillingPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[260px]">Feature</TableHead>
-                  {PLANS.map((p) => (
+                  {shownPlans.map((p) => (
                     <TableHead
                       key={p.slug}
                       className={`text-center ${
@@ -755,14 +775,14 @@ export default function BillingPage() {
                 <FeatureRow
                   label="Shops"
                   hint="How many separate shop locations you can run under one account, each with its own card, QR code, and customers."
-                  values={PLANS.map((p) =>
+                  values={shownPlans.map((p) =>
                     p.shopLimit === 1 ? "1" : `Up to ${p.shopLimit}`,
                   )}
                 />
                 <FeatureRow
                   label="Stamps per month"
                   hint={`On the free trial your shop can award ${data.limit} stamps in total, ever. Paid plans award unlimited stamps with no monthly cap.`}
-                  values={PLANS.map((p) =>
+                  values={shownPlans.map((p) =>
                     p.stampLimit === "unlimited"
                       ? "Unlimited"
                       : `${p.slug === "free" ? data.limit : p.stampLimit} total`,
@@ -771,45 +791,47 @@ export default function BillingPage() {
                 <FeatureRow
                   label="Customer analytics"
                   hint="See who visits, how often they come back, your busiest hours, and how close customers are to a reward."
-                  values={PLANS.map((p) => p.hasAnalytics)}
+                  values={shownPlans.map((p) => p.hasAnalytics)}
                 />
                 <FeatureRow
                   label="Staff & manager logins"
                   hint="Give baristas and managers their own logins to approve stamps, so you don't have to share one account."
-                  values={PLANS.map((p) =>
-                    p.hasStaffLogins ? "Unlimited" : false,
+                  values={shownPlans.map((p) =>
+                    p.staffLoginLimit === "unlimited" ? "Unlimited" : p.staffLoginLimit > 0 ? String(p.staffLoginLimit) : false,
                   )}
                 />
                 <FeatureRow
                   label="CSV customer exports"
                   hint="Download your full customer list — names, emails, stamps, and rewards redeemed — as a spreadsheet."
-                  values={PLANS.map((p) => p.hasCsvExport)}
+                  values={shownPlans.map((p) => p.hasCsvExport)}
                 />
                 <FeatureRow
                   label="Apple & Google Wallet passes"
                   hint="Customers add their loyalty card to Apple Wallet or Google Wallet — lock-screen presence and push updates when they earn a stamp. The browser card still works for everyone."
-                  values={PLANS.map((p) => p.hasWalletPasses)}
+                  values={shownPlans.map((p) => p.hasWalletPasses)}
                 />
                 <FeatureRow
                   label="Cross-shop reporting"
                   hint="Roll up stamps, customers, and redemptions across all your shops into one combined view."
-                  values={PLANS.map((p) => p.hasCrossShopReporting)}
+                  values={shownPlans.map((p) => p.hasCrossShopReporting)}
                 />
                 <FeatureRow
                   label="Corporate perk mode"
                   hint="Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free reward (no stamps), limited to staff email domains and capped per person per day."
-                  values={PLANS.map((p) => p.hasPerkMode)}
+                  values={shownPlans.map((p) => p.hasPerkMode)}
                 />
                 <FeatureRow
                   label="Priority support"
                   hint="Your support emails jump the queue for a faster response."
-                  values={PLANS.map((p) => p.prioritySupport)}
+                  values={shownPlans.map((p) => p.prioritySupport)}
                 />
-                <FeatureRow
-                  label="Dedicated support"
-                  hint="A named contact who knows your account, for hands-on help and onboarding."
-                  values={PLANS.map((p) => p.dedicatedSupport)}
-                />
+                {shownPlans.some((p) => p.dedicatedSupport) && (
+                  <FeatureRow
+                    label="Dedicated support"
+                    hint="A named contact who knows your account, for hands-on help and onboarding."
+                    values={shownPlans.map((p) => p.dedicatedSupport)}
+                  />
+                )}
               </TableBody>
             </Table>
           </div>
@@ -938,7 +960,7 @@ export default function BillingPage() {
                     </div>
                     {checkout.interval === "year" && (
                       <div className="mt-1 text-xs text-emerald-500">
-                        1 month free — {formatCents(Math.round(cents / 12))}/mo equivalent
+                        {FREE_MONTHS} months free — {formatCents(Math.round(cents / 12))}/mo equivalent
                       </div>
                     )}
                     <div className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">

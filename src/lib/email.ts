@@ -372,7 +372,7 @@ export async function sendWelcomeEmail({
             <td style="padding: 20px;">
               <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #1c1917;">Pricing</h3>
               <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
-                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first ${FREE_STAMPS} stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$7/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
+                Brewstamp is <strong style="color: #1c1917;">free to use</strong> for your first ${FREE_STAMPS} stamps. After that, it&rsquo;s just <strong style="color: #1c1917;">$12/month</strong> for unlimited stamps and full access to customer insights. No contracts, cancel anytime.
               </p>
             </td>
           </tr>

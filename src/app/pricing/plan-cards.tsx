@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppleMark, GoogleMark } from "@/components/wallet-badges";
 import {
-  PLANS,
+  PUBLIC_PLANS,
+  FREE_MONTHS,
   annualPriceCents,
   type BillingInterval,
 } from "@/lib/plans";
@@ -52,14 +54,14 @@ export default function PlanCards() {
                   : "bg-amber-100 text-amber-700"
               }`}
             >
-              1 month free
+              {FREE_MONTHS} months free
             </span>
           </button>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {PLANS.map((p) => {
+      <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+        {PUBLIC_PLANS.map((p) => {
           const highlight = p.slug === "plus";
           const isFree = p.slug === "free";
           const annualCents = annualPriceCents(p);
@@ -74,7 +76,7 @@ export default function PlanCards() {
             >
               {highlight && (
                 <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
-                  Most popular
+                  Best for teams
                 </div>
               )}
               <h3 className="text-lg font-semibold text-stone-900">
@@ -102,14 +104,22 @@ export default function PlanCards() {
                   stay aligned across the monthly/annual toggle. */}
               <p className="mt-1 h-4 text-xs text-amber-700">
                 {!isFree && interval === "year"
-                  ? `${formatCents(Math.round(annualCents / 12))}/mo billed annually`
+                  ? `${formatCents(Math.round(annualCents / 12))}/mo billed annually · save ${formatCents(p.priceCents * FREE_MONTHS)}`
                   : ""}
               </p>
               <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                    {f}
+                    {/Wallet passes/.test(f) ? (
+                      <span className="inline-flex flex-wrap items-center gap-x-1.5">
+                        {f}
+                        <AppleMark className="h-4 w-4 text-stone-900" />
+                        <GoogleMark className="h-4 w-4" />
+                      </span>
+                    ) : (
+                      f
+                    )}
                   </li>
                 ))}
               </ul>
@@ -122,6 +132,13 @@ export default function PlanCards() {
           );
         })}
       </div>
+      <p className="mt-8 text-center text-sm text-stone-500">
+        More than 3 shops?{" "}
+        <a href="mailto:hello@brewstamp.app" className="text-amber-700 hover:underline">
+          Email hello@brewstamp.app
+        </a>{" "}
+        and we&apos;ll set you up.
+      </p>
     </>
   );
 }

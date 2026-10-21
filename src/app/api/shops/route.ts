@@ -19,7 +19,7 @@ const COOKIE_OPTS = {
 // + switcher immediately, and sets bs_current_shop so the dashboard lands
 // scoped to the new shop after redirect.
 //
-// Enforces the active plan's shopLimit (Free/Pro=1, Plus=3, Max=10).
+// Enforces the active plan's shopLimit (Free/Pro=1, Business=3, Max=10).
 // Hitting the limit returns 402 with a `limitReached` flag so clients can
 // route the user to the billing page.
 export async function POST(req: Request) {
@@ -41,7 +41,11 @@ export async function POST(req: Request) {
   if (limits.atShopLimit) {
     return NextResponse.json(
       {
-        error: `You've reached the ${limits.shopLimit}-shop limit on the ${limits.plan.label} plan. Upgrade to add more shops.`,
+        // Business is the top plan on sale; past its limit we set shops up by hand.
+        error:
+          limits.plan.slug === "free" || limits.plan.slug === "pro"
+            ? `You've reached the ${limits.shopLimit}-shop limit on the ${limits.plan.label} plan. Upgrade to Business for up to 3 shops.`
+            : `You've reached the ${limits.shopLimit}-shop limit on the ${limits.plan.label} plan. Email hello@brewstamp.app and we'll add more.`,
         limitReached: true,
         currentPlan: limits.planSlug,
         shopLimit: limits.shopLimit,

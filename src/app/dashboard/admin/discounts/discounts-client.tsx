@@ -48,7 +48,7 @@ interface Discount {
 const PLAN_LABEL: Record<string, string> = {
   any: "Any plan",
   pro: "Pro",
-  plus: "Plus",
+  plus: "Business",
   max: "Max",
 };
 
@@ -268,7 +268,7 @@ export default function DiscountsClient() {
                       <SelectContent>
                         <SelectItem value="any">Any plan</SelectItem>
                         <SelectItem value="pro">Pro</SelectItem>
-                        <SelectItem value="plus">Plus</SelectItem>
+                        <SelectItem value="plus">Business</SelectItem>
                         <SelectItem value="max">Max</SelectItem>
                       </SelectContent>
                     </Select>

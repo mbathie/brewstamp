@@ -82,7 +82,7 @@ const PLAN_BAR: Record<PlanSlug, string> = {
   plus: "bg-sky-500",
   max: "bg-violet-500",
 };
-const PLAN_LABEL: Record<PlanSlug, string> = { free: "Free", pro: "Pro", plus: "Plus", max: "Max" };
+const PLAN_LABEL: Record<PlanSlug, string> = { free: "Free", pro: "Pro", plus: "Business", max: "Max" };
 
 // ── Series helpers ───────────────────────────────────────────────────────
 // The API sends sparse daily rows (only days with data). These densify to a

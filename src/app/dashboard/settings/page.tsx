@@ -663,7 +663,7 @@ export default function SettingsPage() {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[240px] text-center">
-                      Corporate perk mode is on the Plus and Max plans. Click to
+                      Corporate perk mode is on the Business plan. Click to
                       upgrade.
                     </TooltipContent>
                   </Tooltip>

@@ -21,14 +21,14 @@ import { FREE_STAMPS } from "@/lib/plans";
 export const metadata: Metadata = {
   title: "Loopy Loyalty Alternative — Free Stamp Card",
   description:
-    `Brewstamp is a browser-based Loopy Loyalty alternative. No Apple Wallet pass setup, free up to ${FREE_STAMPS} stamps, $7/mo flat after.`,
+    `Brewstamp is a browser-based Loopy Loyalty alternative. No Apple Wallet pass setup, free up to ${FREE_STAMPS} stamps, $12/mo flat after.`,
   alternates: { canonical: "/alternatives/loopy-loyalty" },
   openGraph: {
     type: "website",
     url: "/alternatives/loopy-loyalty",
     title: "Loopy Loyalty Alternative — Brewstamp",
     description:
-      `A simpler, cheaper Loopy Loyalty alternative. Browser-based, free up to ${FREE_STAMPS} stamps, and $7/mo flat after.`,
+      `A simpler, cheaper Loopy Loyalty alternative. Browser-based, free up to ${FREE_STAMPS} stamps, and $12/mo flat after.`,
     images: [
       {
         url: "https://images.pexels.com/photos/30267627/pexels-photo-30267627.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -54,7 +54,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Loopy Loyalty Alternative — Brewstamp",
   description:
-    `Brewstamp is a Loopy Loyalty alternative for independent cafes — a browser-based digital coffee loyalty card with no Apple Wallet setup, free up to ${FREE_STAMPS} stamps, and flat $7/mo pricing.`,
+    `Brewstamp is a Loopy Loyalty alternative for independent cafes — a browser-based digital coffee loyalty card with no Apple Wallet setup, free up to ${FREE_STAMPS} stamps, and flat $12/mo pricing.`,
   url: "https://brewstamp.app/alternatives/loopy-loyalty",
   about: {
     "@type": "SoftwareApplication",
@@ -132,7 +132,7 @@ export default function LoopyLoyaltyAlternative() {
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
-                $7/mo flat
+                $12/mo flat
               </span>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function LoopyLoyaltyAlternative() {
                   },
                   {
                     feature: "Multi-shop under one account",
-                    brewstamp: { good: true, text: "Up to 10 shops (Plus & Max)" },
+                    brewstamp: { good: true, text: "Up to 3 shops on Business (contact us for more)" },
                     loopy: { good: true, text: "Yes" },
                   },
                   {
@@ -258,8 +258,8 @@ export default function LoopyLoyaltyAlternative() {
             {[
               {
                 icon: DollarSign,
-                title: "Free to start, $7/mo flat after",
-                desc: `Loopy Loyalty's lowest plan is $25/month. Brewstamp covers your first ${FREE_STAMPS} stamps for free, then $7/mo for unlimited stamps. For most independent cafes, that's the difference between trying it and not.`,
+                title: "Free to start, $12/mo flat after",
+                desc: `Loopy Loyalty's lowest plan is $25/month. Brewstamp covers your first ${FREE_STAMPS} stamps for free, then $12/mo for unlimited stamps. For most independent cafes, that's the difference between trying it and not.`,
               },
               {
                 icon: Zap,
@@ -388,7 +388,7 @@ export default function LoopyLoyaltyAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$7</span>
+                <span className="text-4xl font-bold text-stone-900">$12</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -414,8 +414,8 @@ export default function LoopyLoyaltyAlternative() {
           </div>
           <div className="mt-10 text-center">
             <p className="text-sm text-stone-500">
-              Need multi-shop, team logins, or CSV exports? Plus & Max
-              plans go from $19–$29/mo.{" "}
+              Need multi-shop, team logins, or CSV exports? The Business
+              plan is $29/mo for up to 3 shops.{" "}
               <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
                 See full plan comparison →
               </a>
@@ -439,7 +439,7 @@ export default function LoopyLoyaltyAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Loopy Loyalty alternative?",
-                a: `Yes — Brewstamp is free for your first ${FREE_STAMPS} stamps total, then $7/mo for unlimited stamps. Loopy Loyalty's lowest plan is $25/month with a free trial.`,
+                a: `Yes — Brewstamp is free for your first ${FREE_STAMPS} stamps total, then $12/mo for unlimited stamps. Loopy Loyalty's lowest plan is $25/month with a free trial.`,
               },
               {
                 q: "Does Brewstamp support Apple Wallet and Google Wallet?",

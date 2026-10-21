@@ -13,6 +13,22 @@ import { getPlanBySlug } from "@/lib/plans";
 import { getShopPlanLimits } from "@/lib/plan-limits";
 import { sendTeamInviteEmail } from "@/lib/email";
 
+// Staff logins a shop is using against its plan's allowance: everyone on the
+// team except the owner, plus invites still waiting to be accepted (an
+// invite holds its seat until it expires).
+async function staffLoginsUsed(shopId: unknown, exceptEmail?: string): Promise<number> {
+  const [members, invites] = await Promise.all([
+    ShopMembership.countDocuments({ shop: shopId, role: { $ne: "owner" } }),
+    Invite.countDocuments({
+      shop: shopId,
+      acceptedAt: { $exists: false },
+      expiresAt: { $gt: new Date() },
+      ...(exceptEmail ? { email: { $ne: exceptEmail } } : {}),
+    }),
+  ]);
+  return members + invites;
+}
+
 // GET /api/team — list members + pending invites.
 //
 // Single-shop context: returns just that shop's team.
@@ -87,7 +103,10 @@ export async function GET() {
       slug: plan.slug,
       label: plan.label,
       hasStaffLogins: plan.hasStaffLogins,
+      staffLoginLimit: plan.staffLoginLimit,
     },
+    // Single-shop view only: seats taken against staffLoginLimit.
+    staffLoginsUsed: aggregate ? null : await staffLoginsUsed(ctx.shop._id),
     members: memberships.map((m: any) => ({
       _id: m._id.toString(),
       role: m.role,
@@ -170,14 +189,28 @@ export async function POST(req: Request) {
 
   await connectDB();
 
-  // Plan gate — staff logins are a Plus+ feature. Resolved from the shop
+  // Plan gate — staff logins are a Pro+ feature (Pro: one). Resolved from the shop
   // OWNER's effective plan so it covers every shop the owner pays for, not
   // just the one carrying the Stripe subscription.
   const plan = (await getShopPlanLimits(ctx.shop._id.toString())).plan;
   if (!plan.hasStaffLogins) {
     return NextResponse.json(
       {
-        error: `The ${plan.label} plan doesn't include team logins. Upgrade to Plus or Max to invite team members.`,
+        error: `The ${plan.label} plan doesn't include team logins. Upgrade to Pro for one staff login, or Business for unlimited.`,
+        upgradeRequired: true,
+        currentPlan: plan.slug,
+      },
+      { status: 402 }
+    );
+  }
+  // Re-sending a pending invite to the same address doesn't take a new seat.
+  if (
+    plan.staffLoginLimit !== "unlimited" &&
+    (await staffLoginsUsed(ctx.shop._id, email)) >= plan.staffLoginLimit
+  ) {
+    return NextResponse.json(
+      {
+        error: `The ${plan.label} plan includes ${plan.staffLoginLimit} staff login${plan.staffLoginLimit === 1 ? "" : "s"}. Upgrade to Business for unlimited team logins.`,
         upgradeRequired: true,
         currentPlan: plan.slug,
       },

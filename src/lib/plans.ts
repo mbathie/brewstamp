@@ -11,12 +11,12 @@
 export type PlanSlug = "free" | "pro" | "plus" | "max";
 
 // Paid plans bill either monthly or annually. The annual price is twelve
-// months charged at the cost of eleven — one month free (see FREE_MONTHS).
+// months charged at the cost of ten — two months free (see FREE_MONTHS).
 export type BillingInterval = "month" | "year";
 
 // How many months are waived on an annual subscription. Annual amount =
 // monthly × (12 − FREE_MONTHS).
-const FREE_MONTHS = 1;
+export const FREE_MONTHS = 2;
 
 // ── Free trial tiers ──────────────────────────────────────────────────────
 // The Free plan comes in two allowances. Shops created from 2026-09-30 get
@@ -72,15 +72,21 @@ export interface PlanConfig {
   stampLimit: number | "unlimited";
   hasCsvExport: boolean;
   hasStaffLogins: boolean;
+  /** Staff/manager logins a shop may have besides the owner (memberships plus
+   *  pending invites). */
+  staffLoginLimit: number | "unlimited";
   hasAnalytics: boolean;
   hasCrossShopReporting: boolean;
-  // Corporate "perk mode" — employer-subsidised staff coffee. Plus & Max.
+  // Corporate "perk mode" — employer-subsidised staff coffee. Business (plus) & Max.
   hasPerkMode: boolean;
   // Apple & Google Wallet passes — included on every plan (shown in the billing
   // feature comparison; not a gate).
   hasWalletPasses: boolean;
   prioritySupport: boolean;
   dedicatedSupport: boolean;
+  /** Kept for existing subscribers and price lookups, but not offered on the
+   *  pricing or billing pages. */
+  hidden?: boolean;
   features: string[];
 }
 
@@ -99,6 +105,7 @@ export const PLANS: PlanConfig[] = [
     stampLimit: FREE_STAMPS,
     hasCsvExport: false,
     hasStaffLogins: false,
+    staffLoginLimit: 0,
     hasAnalytics: false,
     hasCrossShopReporting: false,
     hasPerkMode: false,
@@ -117,14 +124,15 @@ export const PLANS: PlanConfig[] = [
     slug: "pro",
     label: "Pro",
     tagline: "For a single busy shop",
-    priceCents: 700,
-    priceLabel: "$7",
+    priceCents: 1200,
+    priceLabel: "$12",
     stripePriceEnvVar: "STRIPE_PRICE_PRO",
     stripePriceEnvVarAnnual: "STRIPE_PRICE_PRO_ANNUAL",
     shopLimit: 1,
     stampLimit: "unlimited",
     hasCsvExport: false,
-    hasStaffLogins: false,
+    hasStaffLogins: true,
+    staffLoginLimit: 1,
     hasAnalytics: true,
     hasCrossShopReporting: false,
     hasPerkMode: false,
@@ -134,6 +142,7 @@ export const PLANS: PlanConfig[] = [
     features: [
       "Unlimited stamps",
       "1 shop",
+      "1 staff login",
       "Apple & Google Wallet passes",
       "Customer insights & analytics",
       "Priority support",
@@ -141,16 +150,19 @@ export const PLANS: PlanConfig[] = [
   },
   {
     slug: "plus",
-    label: "Plus",
-    tagline: "Growing brands",
-    priceCents: 1900,
-    priceLabel: "$19",
+    // Sold as "Business" since 2026-10-21; the slug stays "plus" so existing
+    // subscriptions, discounts and Stripe metadata keep resolving.
+    label: "Business",
+    tagline: "For cafes with a team",
+    priceCents: 2900,
+    priceLabel: "$29",
     stripePriceEnvVar: "STRIPE_PRICE_PLUS",
     stripePriceEnvVarAnnual: "STRIPE_PRICE_PLUS_ANNUAL",
     shopLimit: 3,
     stampLimit: "unlimited",
     hasCsvExport: true,
     hasStaffLogins: true,
+    staffLoginLimit: "unlimited",
     hasAnalytics: true,
     hasCrossShopReporting: true,
     hasPerkMode: true,
@@ -159,8 +171,8 @@ export const PLANS: PlanConfig[] = [
     dedicatedSupport: false,
     features: [
       "Everything in Pro",
-      "Up to 3 shops",
       "Unlimited staff logins",
+      "Up to 3 shops",
       "CSV customer exports",
       "Cross-shop reporting",
       "Corporate perk mode (subsidised staff coffee)",
@@ -168,6 +180,10 @@ export const PLANS: PlanConfig[] = [
   },
   {
     slug: "max",
+    // No longer sold (2026-10-21): nobody needed more than one shop, so the
+    // public plans stop at Business and larger groups contact us. Kept so a
+    // Max price id or planSlug still resolves.
+    hidden: true,
     label: "Max",
     tagline: "Multi-location chains",
     priceCents: 2900,
@@ -178,6 +194,7 @@ export const PLANS: PlanConfig[] = [
     stampLimit: "unlimited",
     hasCsvExport: true,
     hasStaffLogins: true,
+    staffLoginLimit: "unlimited",
     hasAnalytics: true,
     hasCrossShopReporting: true,
     hasPerkMode: true,
@@ -185,7 +202,7 @@ export const PLANS: PlanConfig[] = [
     prioritySupport: true,
     dedicatedSupport: true,
     features: [
-      "Everything in Plus",
+      "Everything in Business",
       "Up to 10 shops",
       "Cross-shop reporting",
       "Priority + dedicated support",
@@ -201,6 +218,9 @@ const PLAN_RANK: Record<PlanSlug, number> = {
   plus: 2,
   max: 3,
 };
+
+/** The plans offered to new customers, in display order. */
+export const PUBLIC_PLANS: PlanConfig[] = PLANS.filter((p) => !p.hidden);
 
 export function getPlanBySlug(slug: string): PlanConfig | undefined {
   return PLANS.find((p) => p.slug === slug);
@@ -269,6 +289,15 @@ const LEGACY_PRICE_IDS: Record<
   price_1Tgb6THxHWKx0vW1pSsb9qQ7: { slug: "plus", interval: "year" }, // Plus A$209/yr
   price_1TdLiIHxHWKx0vW1BLazXMgu: { slug: "max", interval: "month" }, // Max A$29/mo
   price_1Tgb6UHxHWKx0vW1H90R8Xhx: { slug: "max", interval: "year" }, // Max A$319/yr
+  // Main-account prices current 2026-10-12 → 2026-10-21, before Pro went to
+  // $12, Plus became Business at $29 and annual went to two months free.
+  // Subscribers on them keep paying these amounts.
+  price_1UPWMKK5tILQfL0kllsN36r9: { slug: "pro", interval: "month" }, // Pro US$7/mo
+  price_1UPWMLK5tILQfL0k0ptyoydT: { slug: "pro", interval: "year" }, // Pro US$77/yr
+  price_1UPWMMK5tILQfL0kKTWdJd0T: { slug: "plus", interval: "month" }, // Plus US$19/mo
+  price_1UPWMNK5tILQfL0kzS79Ftz0: { slug: "plus", interval: "year" }, // Plus US$209/yr
+  price_1UPWMOK5tILQfL0k4vBVAhNg: { slug: "max", interval: "month" }, // Max US$29/mo
+  price_1UPWMPK5tILQfL0kBsDxPUPX: { slug: "max", interval: "year" }, // Max US$319/yr
   ...Object.fromEntries(
     Object.entries(LEGACY_ACCOUNT_PRICES).flatMap(([slug, byInterval]) =>
       Object.entries(byInterval).map(([interval, id]) => [id, { slug: slug as PlanSlug, interval: interval as BillingInterval }])

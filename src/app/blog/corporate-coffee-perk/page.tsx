@@ -60,7 +60,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/corporate-coffee-perk",
   datePublished: "2026-06-13",
-  dateModified: "2026-06-13",
+  dateModified: "2026-10-21",
   image:
     "https://images.unsplash.com/photo-1726666339581-07d2c51baeeb?w=1600&q=70&auto=format&fit=crop",
 };
@@ -107,8 +107,7 @@ export default function BlogPost() {
               free-coffee limit per person. Staff scan the QR, enter their
               work email, and collect — no stamps, no app, no account.
               Per-person redemption reports make reimbursement simple. Perk
-              mode is included on the <strong>Plus</strong> and{" "}
-              <strong>Max</strong> plans.
+              mode is included on the <strong>Business</strong> plan.
             </p>
           </div>
 
@@ -250,7 +249,7 @@ export default function BlogPost() {
               </li>
             </ol>
             <p className="mt-6 text-sm text-stone-500">
-              Perk mode is on the Plus and Max plans.{" "}
+              Perk mode is on the Business plan.{" "}
               <Link
                 href="/pricing"
                 className="text-amber-700 underline-offset-2 hover:underline"
@@ -284,7 +283,7 @@ export default function BlogPost() {
                 },
                 {
                   q: "Which plans include perk mode?",
-                  a: "Plus and Max. You can set it up the same day you upgrade.",
+                  a: "The Business plan ($29/month). You can set it up the same day you upgrade.",
                 },
               ].map(({ q, a }) => (
                 <details
@@ -310,7 +309,7 @@ export default function BlogPost() {
               Run a coffee perk for your team
             </h3>
             <p className="mt-2 text-stone-500">
-              Already on Brewstamp? Upgrade to Plus or Max and flip a shop
+              Already on Brewstamp? Upgrade to Business and flip a shop
               into perk mode. New here? Get started free and explore how it
               works first.
             </p>

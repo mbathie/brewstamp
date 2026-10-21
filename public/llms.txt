@@ -1,14 +1,14 @@
 # Brewstamp
 
-> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 50 stamps; paid plans from $7/month (Pro), with Plus ($19, up to 3 shops) and Max ($29, up to 10 shops) for multi-location brands. Works on any iPhone or Android in the browser, worldwide, in 14 customer-facing languages: English, Spanish, French, German, Portuguese, Italian, Mandarin Chinese, Japanese, Korean, Arabic, Hindi, Indonesian, Filipino, and Turkish. Brewstamp also offers a corporate perk mode (Plus and Max plans): a company subsidises its team's coffee at a local cafe — staff get a free coffee by scanning a QR code and entering their work email, capped per person per day, with per-person reports the company can reimburse against.
+> Brewstamp is a free digital coffee loyalty card and rewards app for cafes. Customers scan a QR code at the counter — no app to download, no signup — to collect stamps and earn a free coffee. The merchant approves each stamp from their phone, so it can't be gamed. Free for the first 50 stamps; Pro is $12/month for unlimited stamps at one shop, and Business ($29/month) adds unlimited staff logins, up to 3 shops, CSV customer exports and cross-shop reporting. Annual billing gets two months free; groups with more than 3 shops can contact hello@brewstamp.app. Works on any iPhone or Android in the browser, worldwide, in 14 customer-facing languages: English, Spanish, French, German, Portuguese, Italian, Mandarin Chinese, Japanese, Korean, Arabic, Hindi, Indonesian, Filipino, and Turkish. Brewstamp also offers a corporate perk mode (Business plan): a company subsidises its team's coffee at a local cafe — staff get a free coffee by scanning a QR code and entering their work email, capped per person per day, with per-person reports the company can reimburse against.
 
 ## Product
 - [Coffee loyalty card app (home)](https://brewstamp.app/): What Brewstamp is, how it works, and why digital beats paper punch cards.
 - [How it works](https://brewstamp.app/how-it-works): The three-step setup — customise your branded card, print one QR code for the counter, and approve stamps from your phone or tablet.
 - [Coffee rewards app](https://brewstamp.app/coffee-rewards-app): The coffee rewards card with no app to download — scan, stamp, free coffee.
-- [Features](https://brewstamp.app/features): Full feature list across the Free, Pro, Plus, and Max plans.
-- [Pricing](https://brewstamp.app/pricing): Free, Pro ($7), Plus ($19), and Max ($29) plans compared side by side.
-- [Corporate perk mode (subsidised staff coffee)](https://brewstamp.app/blog/corporate-coffee-perk): Employer-paid staff coffee at a local cafe — staff scan and enter their work email for a free coffee, gated to the company's email domain and capped per person per day. On the Plus and Max plans.
+- [Features](https://brewstamp.app/features): Full feature list across the Free, Pro, and Business plans.
+- [Pricing](https://brewstamp.app/pricing): Free, Pro ($12/mo), and Business ($29/mo) plans compared side by side.
+- [Corporate perk mode (subsidised staff coffee)](https://brewstamp.app/blog/corporate-coffee-perk): Employer-paid staff coffee at a local cafe — staff scan and enter their work email for a free coffee, gated to the company's email domain and capped per person per day. On the Business plan.
 
 ## Guides
 - [Coffee Loyalty Card: The Complete Guide for Cafes](https://brewstamp.app/blog/digital-loyalty-cards-for-cafes): How digital loyalty cards work and what to look for.

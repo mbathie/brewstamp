@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
-import { FREE_STAMPS, PLANS } from "@/lib/plans";
+import { FREE_STAMPS, PUBLIC_PLANS } from "@/lib/plans";
 
 // Owns the OPERATOR angle: running a loyalty program at the counter (QR at
 // the till, approving stamps, staff logins, multiple shops, dashboard, CSV,
@@ -66,19 +66,19 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "Can my baristas have their own logins?",
-    a: "Yes, on Plus and Max. Invite people by email as staff or managers, so you're not sharing the owner's password across the team. Staff handle the counter; managers can also invite and manage staff.",
+    a: "Yes, on the Business plan. Invite people by email as staff or managers, so you're not sharing the owner's password across the team. Staff handle the counter; managers can also invite and manage staff.",
   },
   {
     q: "Can I run one loyalty program across several cafes?",
-    a: "Yes. Plus covers up to 3 shops and Max up to 10, all under one account. Each shop gets its own QR code, branding, reward threshold and language, and cross-shop reporting rolls stamps, customers and redemptions into one view.",
+    a: "Yes. Business covers up to 3 shops under one account (contact us if you run more). Each shop gets its own QR code, branding, reward threshold and language, and cross-shop reporting rolls stamps, customers and redemptions into one view.",
   },
   {
     q: "Can I export my cafe's customer list?",
-    a: "Yes. On Plus and Max you can download your customers as a CSV — names, emails, stamps and rewards redeemed — for your own records or email tool. On every plan you can browse, search, tag and add notes to customers in the dashboard.",
+    a: "Yes. On the Business plan you can download your customers as a CSV — names, emails, stamps and rewards redeemed — for your own records or email tool. On every plan you can browse, search, tag and add notes to customers in the dashboard.",
   },
   {
     q: "What happens when I use up the free stamps?",
-    a: `Free covers your first ${FREE_STAMPS} stamps with the full single-shop setup, no card details needed. When you reach the limit, the dashboard asks you to pick a plan before awarding more. Customers' existing stamps are kept. Pro is $7/month for unlimited stamps at one shop.`,
+    a: `Free covers your first ${FREE_STAMPS} stamps with the full single-shop setup, no card details needed. When you reach the limit, the dashboard asks you to pick a plan before awarding more. Customers' existing stamps are kept. Pro is $12/month for unlimited stamps at one shop.`,
   },
 ];
 
@@ -96,7 +96,7 @@ const jsonLd = {
         "@type": "Offer",
         price: "0",
         priceCurrency: "USD",
-        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $7/month.`,
+        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $12/month.`,
       },
       url: "https://brewstamp.app/cafe-loyalty-app",
     },
@@ -139,12 +139,12 @@ const OPERATOR_FEATURES: Array<{ icon: typeof Users; title: string; body: string
   {
     icon: Users,
     title: "Staff and manager logins",
-    body: "Invite your team by email with their own roles instead of sharing one password. Unlimited staff logins on Plus and Max.",
+    body: "Invite your team by email with their own roles instead of sharing one password. One staff login on Pro, unlimited on Business.",
   },
   {
     icon: Store,
     title: "Multiple shops, one account",
-    body: "Run up to 3 shops on Plus or 10 on Max, each with its own QR, branding and threshold, plus cross-shop reporting.",
+    body: "Run up to 3 shops on Business (more on request), each with its own QR, branding and threshold, plus cross-shop reporting.",
   },
   {
     icon: BarChart3,
@@ -154,7 +154,7 @@ const OPERATOR_FEATURES: Array<{ icon: typeof Users; title: string; body: string
   {
     icon: Download,
     title: "Your customer data, exportable",
-    body: "Download names, emails, stamps and rewards redeemed as a CSV on Plus and Max. The list belongs to your cafe.",
+    body: "Download names, emails, stamps and rewards redeemed as a CSV on the Business plan. The list belongs to your cafe.",
   },
   {
     icon: Languages,
@@ -322,8 +322,8 @@ export default function CafeLoyaltyAppPage() {
             <p className="mt-4 text-base leading-relaxed text-stone-600">
               A single-owner cafe can run Brewstamp from one login. Once you
               have a team, sharing that login gets messy: everyone knows the
-              password, and nobody can tell who approved what. On Plus and Max
-              you invite people by email and give each one a role. Staff
+              password, and nobody can tell who approved what. On the Business
+              plan you invite people by email and give each one a role. Staff
               approve stamps at the counter; managers can also invite and
               manage staff, so the owner isn&apos;t the bottleneck for every
               new hire.
@@ -364,7 +364,7 @@ export default function CafeLoyaltyAppPage() {
               "A searchable customer list with each person's stamps, lifetime total and rewards redeemed",
               "Private notes and tags on any customer — \"oat flat white\", \"wholesale\", \"staff\"",
               "Turn off a card at one shop if someone is misusing it",
-              "CSV export of names, emails, stamps and rewards on Plus and Max",
+              "CSV export of names, emails, stamps and rewards on the Business plan",
               "Automatic emails: a welcome for you, a note when your first customer joins, and gentle re-engagement",
             ].map((item) => (
               <li
@@ -401,10 +401,10 @@ export default function CafeLoyaltyAppPage() {
             <p className="mx-auto mt-3 max-w-2xl text-center text-base leading-relaxed text-stone-600">
               Start free for your first {FREE_STAMPS}{" "}stamps, no card
               details. Upgrade when you need unlimited stamps, a team or more
-              shops. Prices in USD; annual billing gets you a month free.
+              shops. Prices in USD; annual billing gets you two months free.
             </p>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {PLANS.map((p) => (
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_PLANS.map((p) => (
                 <div
                   key={p.slug}
                   className="rounded-2xl border border-stone-200 bg-stone-50 p-6"

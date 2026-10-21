@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   title:
     "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    `Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to ${FREE_STAMPS} stamps, $7/mo unlimited — no premium tier gating.`,
+    `Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to ${FREE_STAMPS} stamps; Pro is $12/mo for unlimited stamps, with card branding free on every plan.`,
   alternates: { canonical: "/features" },
   keywords: [
     "loyalty card features",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     url: "/features",
     title: "Brewstamp Features — Free, Customisable, No App Required",
     description:
-      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 14 languages. Real-time stamp approval. CSV export. One $7/mo plan — no feature gating.",
+      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 14 languages. Real-time stamp approval. CSV export. Free to start; Pro is $12/mo for unlimited stamps.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&h=630&q=70&auto=format&fit=crop",
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brewstamp Features — Free Customisable Loyalty Card",
     description:
-      "No customer app. Branded card design free. 14 languages. One $7/mo plan, no feature gating.",
+      "No customer app. Branded card design free. 14 languages. Free to start; Pro is $12/mo for unlimited stamps.",
   },
 };
 
@@ -81,7 +81,7 @@ const jsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
-    description: `Free up to ${FREE_STAMPS} stamps. $7/month for unlimited stamps.`,
+    description: `Free up to ${FREE_STAMPS} stamps. $12/month for unlimited stamps.`,
   },
   featureList: [
     "No app download for customers — opens in any phone browser",
@@ -234,7 +234,7 @@ const FEATURE_TABLE: Array<{
       {
         label: "CSV export of your customers",
         free: "—",
-        pro: "Plus & Max",
+        pro: "Business",
         hint: "Download your customer list — names, emails, stamps, and rewards redeemed — as a spreadsheet.",
       },
     ],
@@ -246,24 +246,24 @@ const FEATURE_TABLE: Array<{
       {
         label: "Multiple shops under one account",
         free: "1 shop",
-        pro: "Up to 10",
+        pro: "Up to 3",
       },
       {
         label: "Manager & staff logins",
         free: "—",
-        pro: "Plus & Max",
+        pro: "1 on Pro, unlimited on Business",
         hint: "Give baristas and managers their own logins to approve stamps, instead of sharing one account.",
       },
       {
         label: "Cross-shop rollup reporting",
         free: "—",
-        pro: "Plus & Max",
+        pro: "Business",
         hint: "Combine stamps, customers, and redemptions across all your shops into one view.",
       },
       {
         label: "Corporate perk mode (subsidised staff coffee)",
         free: "—",
-        pro: "Plus & Max",
+        pro: "Business",
         hint: "Designed for companies running their own staff coffee program in partnership with a local cafe — every scan is a free drink (no stamps), limited to staff email domains and capped per person per day.",
       },
     ],
@@ -273,7 +273,7 @@ const FEATURE_TABLE: Array<{
     icon: Tag,
     rows: [
       { label: "Stamps included", free: `${FREE_STAMPS} lifetime`, pro: "Unlimited" },
-      { label: "Monthly price", free: "$0", pro: "From $7" },
+      { label: "Monthly price", free: "$0", pro: "From $12" },
     ],
   },
 ];
@@ -307,7 +307,7 @@ export default function FeaturesPage() {
             A loyalty card you&apos;d actually want at your cafe.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-stone-200 md:text-xl">
-            No app to download. No premium-tier gating. Just a QR code at the
+            No app to download. No paywall on branding. Just a QR code at the
             counter and a card that opens in any phone browser — or saves to
             Apple &amp; Google Wallet — fully branded, in 14 languages.
           </p>
@@ -684,7 +684,7 @@ export default function FeaturesPage() {
                   </Link>
                 </div>
                 <p className="mt-8 text-xs text-stone-400">
-                  No app to download. No feature gating. Cancel anytime.
+                  No app to download. Branding free on every plan. Cancel anytime.
                 </p>
               </div>
             </div>

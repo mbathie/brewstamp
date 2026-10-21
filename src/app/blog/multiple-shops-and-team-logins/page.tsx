@@ -9,14 +9,14 @@ import { FREE_STAMPS } from "@/lib/plans";
 export const metadata: Metadata = {
   title: "Multi-Shop, Team Logins, and a New Pricing Lineup",
   description:
-    "Run multiple cafes under one Brewstamp account, invite managers and staff to accept stamps at the counter, and pick the plan that fits — Free, Pro, Plus, or Max.",
+    "Run multiple cafes under one Brewstamp account, invite managers and staff to accept stamps at the counter, and pick the plan that fits — Free, Pro, or Business.",
   alternates: { canonical: "/blog/multiple-shops-and-team-logins" },
   openGraph: {
     type: "article",
     url: "/blog/multiple-shops-and-team-logins",
     title: "Multi-Shop, Team Logins, and a New Pricing Lineup",
     description:
-      "Run multiple cafes under one Brewstamp account, invite managers and staff, and pick from four plans.",
+      "Run multiple cafes under one Brewstamp account, invite managers and staff, and pick from three plans.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Multi-Shop, Team Logins, and a New Pricing Lineup",
     description:
-      "Run multiple cafes under one Brewstamp account, invite managers and staff, and pick from four plans.",
+      "Run multiple cafes under one Brewstamp account, invite managers and staff, and pick from three plans.",
     images: [
       "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop",
     ],
@@ -42,7 +42,7 @@ const jsonLd = {
   "@type": "Article",
   headline: "Multi-Shop, Team Logins, and a New Pricing Lineup",
   description:
-    "Brewstamp now supports multiple shops under one account, team logins for managers and staff, and a refreshed plan lineup: Free, Pro, Plus, and Max.",
+    "Brewstamp now supports multiple shops under one account, team logins for managers and staff, and a refreshed plan lineup: Free, Pro, and Business.",
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",
@@ -55,7 +55,7 @@ const jsonLd = {
   mainEntityOfPage:
     "https://brewstamp.app/blog/multiple-shops-and-team-logins",
   datePublished: "2026-05-16",
-  dateModified: "2026-05-16",
+  dateModified: "2026-10-21",
   image:
     "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop",
 };
@@ -76,27 +76,22 @@ const PLANS: Array<{
   },
   {
     name: "Pro",
-    price: "$7/mo",
+    price: "$12/mo",
     tagline: "A single busy shop",
     shops: "1 shop",
-    highlights: ["Unlimited stamps", "Customer analytics", "Priority support"],
+    highlights: ["Unlimited stamps", "1 staff login", "Apple & Google Wallet passes", "Customer analytics", "Priority support"],
   },
   {
-    name: "Plus",
-    price: "$19/mo",
-    tagline: "Growing brands",
-    shops: "Up to 3 shops",
-    highlights: ["Unlimited staff logins", "CSV customer exports", "Everything in Pro"],
-  },
-  {
-    name: "Max",
+    name: "Business",
     price: "$29/mo",
-    tagline: "Multi-location chains",
-    shops: "Up to 10 shops",
+    tagline: "Teams and multi-shop brands",
+    shops: "Up to 3 shops",
     highlights: [
+      "Everything in Pro",
+      "Unlimited staff logins",
+      "CSV customer exports",
       "Cross-shop rollup reporting",
-      "Priority + dedicated support",
-      "Everything in Plus",
+      "Corporate perk mode",
     ],
   },
 ];
@@ -119,10 +114,10 @@ export default function BlogPost() {
               One account, multiple shops, your whole team
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-stone-500">
-              Brewstamp now runs up to ten cafes under a single login, lets
+              Brewstamp now runs multiple cafes under a single login, lets
               you invite managers and staff to approve stamps at the
-              counter, and ships a refreshed plan lineup — Free, Pro, Plus,
-              and Max — so you only pay for what your shop actually needs.
+              counter, and ships a refreshed plan lineup — Free, Pro, and
+              Business — so you only pay for what your shop actually needs.
             </p>
             <p className="mt-3 text-sm text-stone-400">
               Published <time dateTime="2026-05-16">16 May 2026</time>
@@ -135,8 +130,8 @@ export default function BlogPost() {
             </p>
             <p className="mt-2 text-base leading-relaxed text-stone-700">
               Add another shop from the top-bar switcher. Invite team
-              members on the new <strong>Team</strong> page (Plus &amp; Max
-              plans). Export your customer list as a CSV. Flip to an
+              members on the new <strong>Team</strong> page (Business
+              plan). Export your customer list as a CSV. Flip to an
               &ldquo;All shops&rdquo; rollup view to see every cafe at
               once. Plan switching is prorated, so you only pay for what
               you use.
@@ -168,17 +163,24 @@ export default function BlogPost() {
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-stone-200 bg-white p-5">
-                <p className="text-sm font-semibold text-stone-900">Plus</p>
+                <p className="text-sm font-semibold text-stone-900">Business</p>
                 <p className="mt-1 text-sm text-stone-600">
-                  Up to <strong>3 shops</strong> — perfect for a small
-                  group of cafes under one brand.
+                  Up to <strong>3 shops</strong> with cross-shop rollup
+                  reporting — perfect for a small group of cafes under one
+                  brand.
                 </p>
               </div>
               <div className="rounded-xl border border-stone-200 bg-white p-5">
-                <p className="text-sm font-semibold text-stone-900">Max</p>
+                <p className="text-sm font-semibold text-stone-900">More than 3 shops?</p>
                 <p className="mt-1 text-sm text-stone-600">
-                  Up to <strong>10 shops</strong> with cross-shop rollup
-                  reporting for multi-location chains.
+                  Running a larger chain? Email{" "}
+                  <a
+                    href="mailto:hello@brewstamp.app"
+                    className="text-amber-700 underline-offset-2 hover:underline"
+                  >
+                    hello@brewstamp.app
+                  </a>{" "}
+                  and we&apos;ll set you up.
                 </p>
               </div>
             </div>
@@ -236,8 +238,8 @@ export default function BlogPost() {
             <p className="mt-6 text-base leading-relaxed text-stone-600">
               Invites go out as a magic link — your teammate clicks it,
               creates an account with their email, and lands straight on
-              the shop dashboard. Unlimited staff logins are included on
-              Plus &amp; Max plans.
+              the shop dashboard. Pro includes one staff login; Business
+              includes unlimited.
             </p>
           </section>
 
@@ -276,7 +278,7 @@ export default function BlogPost() {
               </h2>
             </div>
             <p className="mt-4 text-base leading-relaxed text-stone-600">
-              On Plus and Max plans, the Customers page has an{" "}
+              On the Business plan, the Customers page has an{" "}
               <strong>Export CSV</strong> button that downloads your
               entire customer list — names, emails, tags, notes, stamp
               counts, redemption counts, and last-visit dates. Useful for
@@ -294,12 +296,12 @@ export default function BlogPost() {
               Refreshed pricing — pick what fits
             </h2>
             <p className="mt-3 text-base leading-relaxed text-stone-600">
-              Four plans. Free covers your first hundred stamps. Pro
-              unlocks unlimited stamps for a single shop. Plus adds team
-              logins, CSV exports, and up to three shops. Max scales up
-              to ten shops with cross-shop reporting.
+              Three plans. Free covers your first {FREE_STAMPS} stamps. Pro
+              unlocks unlimited stamps for a single shop. Business adds team
+              logins, CSV exports, cross-shop reporting, and up to three
+              shops. Annual billing gets you two months free.
             </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {PLANS.map((p) => (
                 <div
                   key={p.name}
@@ -361,12 +363,12 @@ export default function BlogPost() {
                   a: "Staff can approve stamps, view customers, and add tags or notes. They can't open billing, change shop settings, or invite teammates. Managers can do everything except billing and shop deletion.",
                 },
                 {
-                  q: "Is CSV export only for Plus and up?",
-                  a: "Yes — Plus and Max include CSV export. On Free and Pro you'll see the button on the Customers page but it's disabled with a tooltip pointing at the upgrade path.",
+                  q: "Is CSV export only on Business?",
+                  a: "Yes — Business includes CSV export. On Free and Pro you'll see the button on the Customers page but it's disabled with a tooltip pointing at the upgrade path.",
                 },
                 {
                   q: "What's cross-shop rollup reporting?",
-                  a: "On Plus and Max, the dashboard 'All shops' view shows totals across every cafe you own — customers, stamps, rewards redeemed — plus a per-shop breakdown table. Useful for comparing locations or seeing how the brand is performing as a whole.",
+                  a: "On Business, the dashboard 'All shops' view shows totals across every cafe you own — customers, stamps, rewards redeemed — plus a per-shop breakdown table. Useful for comparing locations or seeing how the brand is performing as a whole.",
                 },
               ].map(({ q, a }) => (
                 <details

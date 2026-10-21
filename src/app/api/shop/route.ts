@@ -109,7 +109,7 @@ export async function PATCH(req: Request) {
       if (!limits.plan.hasPerkMode) {
         return NextResponse.json(
           {
-            error: "Corporate perk mode requires the Plus or Max plan.",
+            error: "Corporate perk mode requires the Business plan.",
             code: "PLAN_REQUIRED",
           },
           { status: 403 },

@@ -5,98 +5,36 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import PlanCards from "./plan-cards";
-import { FREE_STAMPS } from "@/lib/plans";
+import { FREE_STAMPS, PUBLIC_PLANS } from "@/lib/plans";
 
 export const metadata: Metadata = {
-  title: "Pricing — Free, Pro, Plus, Max plans",
+  title: "Pricing — Free, Pro & Business plans",
   description:
-    `Brewstamp pricing for cafes and small businesses. Free for your first ${FREE_STAMPS} stamps. Paid plans from $7/month with unlimited stamps, multi-shop, staff logins, CSV exports, and corporate perk mode for subsidised staff coffee.`,
+    `Brewstamp pricing for cafes and small businesses. Free for your first ${FREE_STAMPS} stamps. Pro is $12/month for unlimited stamps and a staff login; Business adds unlimited staff logins, up to 3 shops, CSV exports and corporate perk mode. Annual billing gets 2 months free.`,
   alternates: { canonical: "/pricing" },
 };
-
-interface Plan {
-  name: string;
-  tagline: string;
-  price: string;
-  highlight?: boolean;
-  features: string[];
-}
-
-const PLANS: Plan[] = [
-  {
-    name: "Free",
-    tagline: "Try it out",
-    price: "$0",
-    features: [
-      `Up to ${FREE_STAMPS} stamps total`,
-      "1 shop",
-      "QR codes & real-time approvals",
-      "Apple & Google Wallet passes",
-      "Customer dashboard",
-    ],
-  },
-  {
-    name: "Pro",
-    tagline: "For a single busy shop",
-    price: "$7",
-    features: [
-      "Unlimited stamps",
-      "1 shop",
-      "Apple & Google Wallet passes",
-      "Customer insights & analytics",
-      "Priority support",
-    ],
-  },
-  {
-    name: "Plus",
-    tagline: "Growing brands",
-    price: "$19",
-    highlight: true,
-    features: [
-      "Everything in Pro",
-      "Up to 3 shops",
-      "Unlimited staff logins",
-      "CSV customer exports",
-      "Cross-shop reporting",
-      "Corporate perk mode",
-    ],
-  },
-  {
-    name: "Max",
-    tagline: "Multi-location chains",
-    price: "$29",
-    features: [
-      "Everything in Plus",
-      "Up to 10 shops",
-      "Cross-shop reporting",
-      "Priority + dedicated support",
-    ],
-  },
-];
 
 interface FeatureRow {
   label: string;
   free: string | boolean;
-  starter: string | boolean;
-  roast: string | boolean;
-  reserve: string | boolean;
+  pro: string | boolean;
+  business: string | boolean;
 }
 
 const FEATURES: FeatureRow[] = [
-  { label: "Shops", free: "1", starter: "1", roast: "Up to 3", reserve: "Up to 10" },
-  { label: "Stamps issued per month", free: `${FREE_STAMPS} total`, starter: "Unlimited", roast: "Unlimited", reserve: "Unlimited" },
-  { label: "Real-time stamp approvals", free: true, starter: true, roast: true, reserve: true },
-  { label: "Custom logo, colours, patterns", free: true, starter: true, roast: true, reserve: true },
-  { label: "Customer dashboard", free: true, starter: true, roast: true, reserve: true },
-  { label: "Customer insights & analytics", free: false, starter: true, roast: true, reserve: true },
-  { label: "Apple & Google Wallet passes", free: true, starter: true, roast: true, reserve: true },
-  { label: "Staff & manager logins", free: false, starter: false, roast: "Unlimited", reserve: "Unlimited" },
-  { label: "CSV customer exports", free: false, starter: false, roast: true, reserve: true },
-  { label: "Cross-shop rollup reporting", free: false, starter: false, roast: true, reserve: true },
-  { label: "Corporate perk mode (subsidised staff coffee)", free: false, starter: false, roast: true, reserve: true },
-  { label: "Email support", free: true, starter: true, roast: true, reserve: true },
-  { label: "Priority support", free: false, starter: true, roast: true, reserve: true },
-  { label: "Dedicated account support", free: false, starter: false, roast: false, reserve: true },
+  { label: "Shops", free: "1", pro: "1", business: "Up to 3" },
+  { label: "Stamps issued per month", free: `${FREE_STAMPS} total`, pro: "Unlimited", business: "Unlimited" },
+  { label: "Real-time stamp approvals", free: true, pro: true, business: true },
+  { label: "Custom logo, colours, patterns", free: true, pro: true, business: true },
+  { label: "Customer dashboard", free: true, pro: true, business: true },
+  { label: "Customer insights & analytics", free: false, pro: true, business: true },
+  { label: "Apple & Google Wallet passes", free: true, pro: true, business: true },
+  { label: "Staff & manager logins", free: false, pro: "1", business: "Unlimited" },
+  { label: "CSV customer exports", free: false, pro: false, business: true },
+  { label: "Cross-shop rollup reporting", free: false, pro: false, business: true },
+  { label: "Corporate perk mode (subsidised staff coffee)", free: false, pro: false, business: true },
+  { label: "Email support", free: true, pro: true, business: true },
+  { label: "Priority support", free: false, pro: true, business: true },
 ];
 
 function Cell({ value }: { value: string | boolean }) {
@@ -152,21 +90,21 @@ export default function PricingPage() {
               </p>
             </div>
 
-            <div className="mt-10 overflow-x-auto rounded-2xl border border-stone-200">
-              <table className="w-full min-w-[680px] text-left">
+            <div className="mx-auto mt-10 max-w-5xl overflow-x-auto rounded-2xl border border-stone-200">
+              <table className="w-full min-w-[560px] text-left">
                 <thead>
                   <tr className="border-b border-stone-200 bg-stone-50 text-sm">
                     <th className="px-5 py-4 font-semibold text-stone-900">
                       Feature
                     </th>
-                    {PLANS.map((p) => (
+                    {PUBLIC_PLANS.map((p) => (
                       <th
-                        key={p.name}
+                        key={p.slug}
                         className={`px-5 py-4 text-center font-semibold ${
-                          p.highlight ? "text-amber-700" : "text-stone-900"
+                          p.slug === "plus" ? "text-amber-700" : "text-stone-900"
                         }`}
                       >
-                        {p.name}
+                        {p.label}
                       </th>
                     ))}
                   </tr>
@@ -186,13 +124,10 @@ export default function PricingPage() {
                         <Cell value={row.free} />
                       </td>
                       <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.starter} />
+                        <Cell value={row.pro} />
                       </td>
                       <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.roast} />
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <Cell value={row.reserve} />
+                        <Cell value={row.business} />
                       </td>
                     </tr>
                   ))}

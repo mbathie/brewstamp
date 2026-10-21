@@ -95,7 +95,7 @@ const jsonLd = {
         "@type": "Offer",
         price: "0",
         priceCurrency: "USD",
-        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $7/month.`,
+        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $12/month.`,
       },
       url: "https://brewstamp.app/coffee-rewards-app",
     },
@@ -447,7 +447,7 @@ export default function CoffeeRewardsAppPage() {
               Everything on this page — your branded card, wallet passes, 14
               languages — is included on Free, for your first {FREE_STAMPS}{" "}
               stamps. When your regulars are hooked, Pro gives one shop
-              unlimited stamps for $7/month.
+              unlimited stamps for $12/month.
             </p>
             <Link href="/pricing" className="mt-6 inline-block">
               <Button

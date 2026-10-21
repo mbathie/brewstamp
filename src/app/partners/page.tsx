@@ -38,7 +38,7 @@ const FAQ = [
   },
   {
     q: "How much can I earn?",
-    a: `${REFERRAL_RATE_PERCENT}% of what a referred shop pays, on every payment, for ${REFERRAL_MONTHS} months from their first payment. A shop on Plus (US$19/month) is about US$45 to you over the year; a Max shop about US$70. Refer ten cafes and it adds up.`,
+    a: `${REFERRAL_RATE_PERCENT}% of what a referred shop pays, on every payment, for ${REFERRAL_MONTHS} months from their first payment. A shop on Pro (US$12/month) is about US${Math.round((12 * 12 * REFERRAL_RATE_PERCENT) / 100)} to you over the year; a Business shop (US$29/month) about US${Math.round((29 * 12 * REFERRAL_RATE_PERCENT) / 100)}. Refer ten cafes and it adds up.`,
   },
   {
     q: "How is a referral tracked?",
@@ -119,7 +119,7 @@ export default function PartnersPage() {
                   What a referral is worth
                 </h2>
                 <p className="mt-3 text-stone-500">
-                  Plans start at US$7/month. Most cafés land on Pro or Plus. Here&apos;s
+                  Plans start at US$12/month. Most cafés land on Pro or Business. Here&apos;s
                   what one referred shop earns you over its first year, if it stays
                   subscribed.
                 </p>
@@ -149,9 +149,8 @@ export default function PartnersPage() {
                   </thead>
                   <tbody>
                     {[
-                      ["Pro", 7],
-                      ["Plus", 19],
-                      ["Max", 29],
+                      ["Pro", 12],
+                      ["Business", 29],
                     ].map(([name, price]) => (
                       <tr key={name as string} className="border-b border-stone-100 last:border-0">
                         <td className="px-5 py-3.5 font-medium text-stone-900">{name}</td>

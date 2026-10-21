@@ -77,7 +77,7 @@ const posts = [
     title:
       "Multi-Shop, Team Logins, and a New Pricing Lineup",
     description:
-      "Brewstamp now runs up to 10 cafes under one account, lets you invite managers and staff to accept stamps at the counter, and ships a fresh four-plan lineup — Free, Pro, Plus, and Max.",
+      "Brewstamp now runs multiple cafes under one account, lets you invite managers and staff to accept stamps at the counter, and ships a refreshed plan lineup — Free, Pro, and Business.",
     tag: "Product update",
     image:
       "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=400&q=70&auto=format&fit=crop",

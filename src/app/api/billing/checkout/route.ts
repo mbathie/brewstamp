@@ -34,9 +34,9 @@ export async function POST(req: Request) {
 
   const slug = (body.plan as PlanSlug) || "pro";
   const plan = getPlanBySlug(slug);
-  if (!plan || plan.slug === "free") {
+  if (!plan || plan.slug === "free" || plan.hidden) {
     return NextResponse.json(
-      { error: "Plan must be a paid tier (pro, plus, max)" },
+      { error: "Plan must be a paid tier (pro or plus)" },
       { status: 400 }
     );
   }

@@ -23,6 +23,7 @@ import { WalletBadges } from "@/components/wallet-badges";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
 import { FREE_STAMPS } from "@/lib/plans";
+import PlanCards from "@/app/pricing/plan-cards";
 
 export const metadata: Metadata = {
   title: {
@@ -174,7 +175,7 @@ const jsonLd = {
           name: "How much does a digital loyalty card for cafes cost?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.`,
+            text: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $12/month for unlimited stamps (or $120/year, two months free).`,
           },
         },
         {
@@ -455,12 +456,12 @@ export default function Home() {
               {
                 icon: Users,
                 title: "Multi-shop support",
-                desc: "Support up to 10 shops under one account, and multiple team members.",
+                desc: "Run up to 3 shops under one account on Business, with logins for your whole team.",
               },
               {
                 icon: Building2,
                 title: "Corporate perk mode",
-                desc: "Run employer-subsidised staff coffee: every scan is a free drink, gated to work-email domains and capped per person per day. On Plus and Max.",
+                desc: "Run employer-subsidised staff coffee: every scan is a free drink, gated to work-email domains and capped per person per day. On the Business plan.",
               },
             ].map(({ icon: Icon, title, desc, badges }, i, arr) => {
               const isLastOrphan =
@@ -506,7 +507,7 @@ export default function Home() {
             {[
               { value: "< 5s", label: "Customer setup time" },
               { value: "0", label: "Apps to download" },
-              { value: "$7", label: `Per month after ${FREE_STAMPS} total stamps` },
+              { value: "$12", label: `Per month after ${FREE_STAMPS} total stamps` },
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="text-3xl font-bold text-amber-700 md:text-4xl">
@@ -588,153 +589,8 @@ export default function Home() {
               shop, your team, or your number of locations grows.
             </p>
           </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Free */}
-            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-stone-900">Free</h3>
-              <p className="mt-1 text-sm text-stone-500">Try it out</p>
-              <p className="mt-5">
-                <span className="text-4xl font-bold text-stone-900">$0</span>
-                <span className="text-stone-500"> /month</span>
-              </p>
-              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Up to {FREE_STAMPS}{" "}stamps total
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  1 shop
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  QR codes &amp; real-time approvals
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Apple &amp; Google Wallet passes
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Customer dashboard
-                </li>
-              </ul>
-              <Link href="/register" className="mt-8">
-                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
-                  Get started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Pro */}
-            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
-              <p className="mt-1 text-sm text-stone-500">For a single busy shop</p>
-              <p className="mt-5">
-                <span className="text-4xl font-bold text-stone-900">$7</span>
-                <span className="text-stone-500"> /month</span>
-              </p>
-              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Unlimited stamps
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  1 shop
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Apple &amp; Google Wallet passes
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Customer insights &amp; analytics
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Priority support
-                </li>
-              </ul>
-              <Link href="/register" className="mt-8">
-                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
-                  Get started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Plus — most popular */}
-            <div className="relative flex flex-col rounded-2xl border-2 border-amber-600 bg-white p-6 shadow-sm">
-              <div className="absolute -top-3 right-6 rounded-full bg-amber-700 px-3 py-0.5 text-xs font-medium text-white">
-                Most popular
-              </div>
-              <h3 className="text-lg font-semibold text-stone-900">Plus</h3>
-              <p className="mt-1 text-sm text-stone-500">Growing brands</p>
-              <p className="mt-5">
-                <span className="text-4xl font-bold text-stone-900">$19</span>
-                <span className="text-stone-500"> /month</span>
-              </p>
-              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Everything in Pro
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 3 shops
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Unlimited staff logins
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  CSV customer exports
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Cross-shop reporting
-                </li>
-              </ul>
-              <Link href="/register" className="mt-8">
-                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
-                  Get started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Max */}
-            <div className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-stone-900">Max</h3>
-              <p className="mt-1 text-sm text-stone-500">Multi-location chains</p>
-              <p className="mt-5">
-                <span className="text-4xl font-bold text-stone-900">$29</span>
-                <span className="text-stone-500"> /month</span>
-              </p>
-              <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Everything in Plus
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Up to 10 shops
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Cross-shop reporting
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  Priority + dedicated support
-                </li>
-              </ul>
-              <Link href="/register" className="mt-8">
-                <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
-                  Get started
-                </Button>
-              </Link>
-            </div>
+          <div className="mt-12">
+            <PlanCards />
           </div>
           <div className="mt-10 text-center">
             <Link
@@ -797,7 +653,7 @@ export default function Home() {
               },
               {
                 q: "How much does a digital loyalty card for cafes cost?",
-                a: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $7/month for unlimited stamps.`,
+                a: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $12/month for unlimited stamps (or $120/year, two months free).`,
               },
               {
                 q: "How long does it take to set up a coffee shop loyalty program?",

@@ -1,4 +1,4 @@
-// Provision the Brewstamp paid plans (Pro, Plus, Max) in your Stripe
+// Provision the Brewstamp paid plans (Pro, Business) in your Stripe
 // account. Idempotent — re-runs safely:
 //   1. Looks for a product with the NEW metadata slug (brewstamp_pro etc.)
 //      and reuses it.
@@ -7,7 +7,13 @@
 //      RENAMES it in place (updates name, description, metadata.brewstamp_slug).
 //   3. Otherwise creates a new product.
 // Prices on each product are reused when the amount/currency match; the
-// price IDs you've already paid against stay valid across the rename.
+// price IDs you've already paid against stay valid across the rename. A price
+// change creates new prices and leaves the old ones active, so existing
+// subscribers keep renewing at what they signed up for (add the old ids to
+// LEGACY_PRICE_IDS in src/lib/plans.ts so they still map to a plan).
+//
+// Max is no longer sold (2026-10-21) and isn't provisioned; its existing
+// prices stay as they are.
 //
 // Prints the env vars to paste into .env.local at the end.
 //
@@ -29,7 +35,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Number of months waived on an annual plan. Annual amount = monthly ×
 // (12 − FREE_MONTHS). Keep in sync with FREE_MONTHS in src/lib/plans.ts.
-const FREE_MONTHS = 1;
+const FREE_MONTHS = 2;
 
 interface PlanSpec {
   slug: string;        // new metadata slug
@@ -49,32 +55,22 @@ const PLANS: PlanSpec[] = [
     name: "Brewstamp Pro",
     description:
       "Unlimited stamps for one shop with customer analytics and priority support.",
-    amount: 700,
-    currency: "aud",
+    amount: 1200,
+    currency: "usd",
     envVar: "STRIPE_PRICE_PRO",
     envVarAnnual: "STRIPE_PRICE_PRO_ANNUAL",
   },
   {
+    // The "plus" slug, sold as Business since 2026-10-21.
     slug: "brewstamp_plus",
     legacySlug: "brewstamp_roast",
-    name: "Brewstamp Plus",
+    name: "Brewstamp Business",
     description:
-      "Up to 3 shops, unlimited staff logins, and CSV customer exports.",
-    amount: 1900,
-    currency: "aud",
+      "Unlimited staff logins, up to 3 shops, CSV customer exports, cross-shop reporting and corporate perk mode.",
+    amount: 2900,
+    currency: "usd",
     envVar: "STRIPE_PRICE_PLUS",
     envVarAnnual: "STRIPE_PRICE_PLUS_ANNUAL",
-  },
-  {
-    slug: "brewstamp_max",
-    legacySlug: "brewstamp_reserve",
-    name: "Brewstamp Max",
-    description:
-      "Up to 10 shops, cross-shop reporting, and dedicated support.",
-    amount: 2900,
-    currency: "aud",
-    envVar: "STRIPE_PRICE_MAX",
-    envVarAnnual: "STRIPE_PRICE_MAX_ANNUAL",
   },
 ];
 
@@ -121,7 +117,7 @@ async function main() {
     process.exit(1);
   }
 
-  const isLive = process.env.STRIPE_SECRET_KEY.startsWith("sk_live_");
+  const isLive = /^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY);
   console.log(
     `Using ${isLive ? "LIVE 🔴" : "TEST 🟢"} Stripe key. ${
       confirm ? "Real writes." : "DRY RUN — no writes."
@@ -158,6 +154,15 @@ async function main() {
       }
     }
 
+    if (product && (product.name !== plan.name || product.description !== plan.description)) {
+      console.log(`  ${confirm ? "Renaming" : "Would rename"} product ${product.id} "${product.name}" → "${plan.name}"`);
+      if (confirm) {
+        product = await stripe.products.update(product.id, {
+          name: plan.name,
+          description: plan.description,
+        });
+      }
+    }
     if (product) {
       console.log(`  Reusing existing product ${product.id}`);
     } else if (confirm) {

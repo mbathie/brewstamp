@@ -3,6 +3,7 @@ import { getMerchant } from "@/lib/auth";
 import { Subscription, Shop } from "@/models";
 import { stripeFor, stripeAccountOf } from "@/lib/stripe";
 import {
+  subscriptionTier,
   getPlanBySlug,
   resolvePlanPriceIdFor,
   type PlanSlug,
@@ -48,6 +49,9 @@ export async function POST(req: Request) {
   if (!targetPlan) {
     return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
   }
+  // A plan we no longer sell can't be switched to (a shop already on it
+  // keeps it; that's checked below against its subscription).
+  const hiddenTarget = !!targetPlan.hidden;
 
   const sub = await Subscription.findOne({ shop: merchant.shop._id });
   if (!sub) {
@@ -55,6 +59,9 @@ export async function POST(req: Request) {
       { error: "No existing subscription — start with checkout instead" },
       { status: 400 }
     );
+  }
+  if (hiddenTarget && subscriptionTier(sub)?.slug !== targetPlan.slug) {
+    return NextResponse.json({ error: `${targetPlan.label} is no longer offered` }, { status: 400 });
   }
 
   // PayPal-billed shop: we own the schedule, so proration/deferral is ours.
