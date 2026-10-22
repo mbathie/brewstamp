@@ -65,6 +65,7 @@ import { generateAnimalName } from "@/lib/animal-names";
 import { Sparkline } from "@/components/sparkline";
 import { getProgram } from "@/lib/program";
 import { ActivityValue } from "@/components/activity-value";
+import InsightsSection from "@/components/insights-section";
 
 type Range = "today" | "week" | "month" | "all" | "date";
 
@@ -113,6 +114,7 @@ interface Props {
   hasActivity?: boolean;
   needsProfileUpdate?: boolean;
   setupComplete?: boolean;
+  canManageBilling?: boolean;
 }
 
 const chartConfig = {
@@ -137,6 +139,7 @@ export default function DashboardContent({
   hasActivity = false,
   needsProfileUpdate,
   setupComplete = false,
+  canManageBilling = false,
 }: Props) {
   const program = getProgram(perkMode);
   const [range, setRange] = useState<Range>("today");
@@ -829,6 +832,12 @@ export default function DashboardContent({
             )}
             </div>
           )}
+
+          <InsightsSection
+            perkMode={perkMode}
+            stampThreshold={stampThreshold}
+            canManageBilling={canManageBilling}
+          />
 
           {/* Top customers — lifetime view, surfaces the regulars the shop wants
           to know on sight. Hidden until at least one customer qualifies

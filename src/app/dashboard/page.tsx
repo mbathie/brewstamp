@@ -159,6 +159,9 @@ export default async function DashboardPage({
       hasActivity={!!hasActivity}
       needsProfileUpdate={needsProfileUpdate}
       setupComplete={setupComplete}
+      canManageBilling={
+        ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role === "owner"
+      }
     />
   );
 }
