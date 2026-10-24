@@ -14,7 +14,8 @@ import {
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
 // The single-shop dashboard's data: GET ?period=7d|30d|90d|12m, or
-// ?from=YYYY-MM-DD&to=YYYY-MM-DD (local days, inclusive). Retention and loyalty
+// ?from=YYYY-MM-DD&to=YYYY-MM-DD (local days, inclusive). An optional
+// &day=YYYY-MM-DD points the "Today" card at another (past) day. Retention and loyalty
 // insights are a plan feature (hasAnalytics); without it `pro` is null and the
 // dashboard shows an upgrade card in their place.
 export async function GET(req: Request) {
@@ -45,7 +46,15 @@ export async function GET(req: Request) {
     from = today - days + 1;
   }
 
+  const dayParam = url.searchParams.get("day");
+  const day = dayParam && YMD.test(dayParam) ? dayNumOf(dayParam) : undefined;
+
   const limits = await getShopPlanLimits(merchant.shop._id.toString());
-  const stats = await getDashboardStats(merchant.shop, { from, to }, limits.plan.hasAnalytics);
+  const stats = await getDashboardStats(
+    merchant.shop,
+    { from, to },
+    limits.plan.hasAnalytics,
+    day !== undefined && Number.isFinite(day) ? day : undefined,
+  );
   return NextResponse.json(stats);
 }

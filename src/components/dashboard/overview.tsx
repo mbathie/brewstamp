@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { DateRange } from "react-day-picker";
-import { CalendarIcon, Lock, Sparkles } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,18 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** A YYYY-MM-DD as a local-midnight Date, for the calendar. */
+function fromIsoDate(ymd: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** Shift a YYYY-MM-DD by whole days without timezone drift. */
+function addDays(ymd: string, n: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
 export default function DashboardOverview({
   perkMode,
   stampThreshold,
@@ -60,12 +72,15 @@ export default function DashboardOverview({
     kind: "preset",
     period: typeof window === "undefined" ? "30d" : readSavedPeriod(),
   }));
+  // The day the "Today" card shows; null follows the real today.
+  const [day, setDay] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<{ query: string; stats: DashboardStats } | null>(null);
   const [top, setTop] = useState<TopCustomer[] | null>(null);
   const requestId = useRef(0);
 
   const query =
-    selection.kind === "preset" ? `period=${selection.period}` : `from=${selection.from}&to=${selection.to}`;
+    (selection.kind === "preset" ? `period=${selection.period}` : `from=${selection.from}&to=${selection.to}`) +
+    (day ? `&day=${day}` : "");
   const data = loaded?.stats ?? null;
   // The previous period's numbers stay on screen, dimmed, while the next loads.
   const loading = loaded?.query !== query;
@@ -120,6 +135,14 @@ export default function DashboardOverview({
 
   const { today, period, pro } = data;
   const weekday = fmtDay(today.date, { weekday: "long" });
+  const shortDate = fmtDay(today.date, { weekday: "short", day: "numeric", month: "short" });
+  const dayTitle = today.isToday
+    ? "Today"
+    : today.date === addDays(data.todayDate, -1)
+      ? "Yesterday"
+      : weekday;
+  // Stepping onto today goes back to following the live day.
+  const goTo = (ymd: string) => setDay(ymd >= data.todayDate ? null : ymd);
   const rangeLabel =
     selection.kind === "preset"
       ? PRESETS.find((p) => p.value === selection.period)!.long
@@ -138,22 +161,34 @@ export default function DashboardOverview({
   const prev = (v: number | null) => (comparable ? v : null);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8">
+    <div className="space-y-8">
       {/* ── Today ─────────────────────────────────────────────────────── */}
       <Section
-        title="Today"
-        description={`${fmtDay(today.date, { weekday: "short", day: "numeric", month: "short" })} · vs last ${weekday} at this time`}
+        title={dayTitle}
+        description={
+          today.isToday ? `${shortDate} · vs last ${weekday} at this time` : `${shortDate} · vs the ${weekday} before`
+        }
         right={
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-            </span>
-            Live
-          </span>
+          <div className="flex items-center gap-3">
+            {today.isToday && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                </span>
+                Live
+              </span>
+            )}
+            <DayPicker
+              date={today.date}
+              todayDate={data.todayDate}
+              firstDate={data.firstDate}
+              onChange={goTo}
+            />
+          </div>
         }
       >
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className={`grid gap-4 transition-opacity lg:grid-cols-3 ${loading ? "opacity-60" : ""}`}>
           <Card className="gap-6 lg:col-span-2">
             <CardContent className="space-y-6">
               <div className={`grid gap-4 ${perkMode ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`}>
@@ -175,7 +210,9 @@ export default function DashboardOverview({
           </Card>
           <Card className="gap-3">
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">Latest check-ins</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                {today.isToday ? "Latest check-ins" : `Check-ins on ${shortDate}`}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <LatestFeed items={data.latest.slice(0, 6)} perkMode={perkMode} />
@@ -378,6 +415,84 @@ function MiniFigure({ value, label }: { value: string; label: string }) {
   );
 }
 
+/**
+ * Prev / next day arrows around a calendar for the "Today" card. Days before
+ * the shop's first stamp and after today can't be picked, and the month and
+ * year dropdowns only offer that same span.
+ */
+function DayPicker({
+  date,
+  todayDate,
+  firstDate,
+  onChange,
+}: {
+  date: string;
+  todayDate: string;
+  firstDate: string | null;
+  onChange: (ymd: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const first = firstDate ?? todayDate;
+  const canPrev = date > first;
+  const canNext = date < todayDate;
+  const firstD = fromIsoDate(first);
+  const todayD = fromIsoDate(todayDate);
+
+  return (
+    <div className="flex items-center gap-1 rounded-lg border bg-card p-1">
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        className="cursor-pointer text-muted-foreground"
+        aria-label="Previous day"
+        disabled={!canPrev}
+        onClick={() => onChange(addDays(date, -1))}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button size="xs" variant="ghost" className="cursor-pointer gap-1.5 tabular-nums" aria-label="Pick a day">
+            <CalendarIcon className="h-3.5 w-3.5" />
+            {date === todayDate ? "Today" : fmtDay(date, { day: "numeric", month: "short", year: "numeric" })}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            mode="single"
+            selected={fromIsoDate(date)}
+            onSelect={(d) => {
+              if (!d) return;
+              onChange(toIsoDate(d));
+              setOpen(false);
+            }}
+            disabled={[{ before: firstD }, { after: todayD }]}
+            defaultMonth={fromIsoDate(date)}
+            captionLayout="dropdown"
+            startMonth={firstD}
+            endMonth={todayD}
+          />
+        </PopoverContent>
+      </Popover>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        className="cursor-pointer text-muted-foreground"
+        aria-label="Next day"
+        disabled={!canNext}
+        onClick={() => onChange(addDays(date, 1))}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+      {date !== todayDate && (
+        <Button size="xs" variant="secondary" className="cursor-pointer" onClick={() => onChange(todayDate)}>
+          Today
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function PeriodPicker({
   selection,
   onPreset,
@@ -511,7 +626,7 @@ function LockedInsights({ canManageBilling }: { canManageBilling: boolean }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8">
+    <div className="space-y-8">
       <Skeleton className="h-6 w-64" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Skeleton className="h-[320px] lg:col-span-2" />

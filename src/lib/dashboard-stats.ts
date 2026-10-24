@@ -90,15 +90,27 @@ export interface ProInsights {
 }
 
 export interface DashboardStats {
+  /**
+   * The selected day (today unless the merchant has stepped back). Named
+   * `today` for its default; `isToday` says which it is.
+   */
   today: {
     date: string;
-    /** Current local hour, 0–23. */
+    isToday: boolean;
+    /** Current local hour, 0–23, when the day is today; 23 for a past day. */
     hour: number;
     totals: Totals;
-    /** Same weekday last week, up to the same hour — a like-for-like pace. */
+    /**
+     * Same weekday a week earlier — up to the same hour when the day is
+     * today (a like-for-like pace), the whole day otherwise.
+     */
     lastWeek: Totals;
     hourly: { hour: number; stamps: number; rewards: number; lastWeekStamps: number; lastWeekRewards: number }[];
   };
+  /** The shop's local date today, and of its first approved stamp (null if none). */
+  todayDate: string;
+  firstDate: string | null;
+  /** Most recent check-ins: overall for today, or the selected day's. */
   latest: CheckIn[];
   period: {
     from: string;
@@ -287,14 +299,17 @@ export async function getDashboardStats(
   },
   range: { from: number; to: number },
   withPro: boolean,
+  selectedDay?: number,
 ): Promise<DashboardStats> {
   const tz = shop.timezone || "UTC";
   const now = nowIn(tz);
   const { from, to } = range;
   const days = to - from + 1;
   const threshold = Math.max(1, shop.stampThreshold || 8);
+  const day = Math.min(selectedDay ?? now.day, now.day);
+  const isToday = day === now.day;
 
-  const [rawRows, latestRaw, periodRaw] = await Promise.all([
+  const [rawRows, latestRaw, periodRaw, dayRaw] = await Promise.all([
     StampRequest.aggregate<{ c: Types.ObjectId; d: string; h: number; s: number; r?: boolean }>([
       { $match: { shop: shop._id, status: "approved" } },
       {
@@ -322,6 +337,17 @@ export async function getDashboardStats(
       .sort({ createdAt: -1 })
       .limit(200)
       .lean<RawCheckIn[]>(),
+    isToday
+      ? Promise.resolve([] as RawCheckIn[])
+      : StampRequest.find({
+          shop: shop._id,
+          status: { $in: ["approved", "rejected"] },
+          createdAt: { $gte: localMidnight(tz, day), $lt: localMidnight(tz, day + 1) },
+        })
+          .populate("customer", "name email cookieId")
+          .sort({ createdAt: -1 })
+          .limit(8)
+          .lean<RawCheckIn[]>(),
   ]);
 
   const rows: Row[] = rawRows
@@ -348,8 +374,8 @@ export async function getDashboardStats(
     newCustomers: k.newCustomers,
     visits: k.visits,
   });
-  const todayTotals = strip(totalsFor(rows, firstDay, now.day, now.day));
-  const lastWeekTotals = strip(totalsFor(rows, firstDay, now.day - 7, now.day - 7, now.hour + 1));
+  const todayTotals = strip(totalsFor(rows, firstDay, day, day));
+  const lastWeekTotals = strip(totalsFor(rows, firstDay, day - 7, day - 7, isToday ? now.hour + 1 : 24));
   const hourly = Array.from({ length: 24 }, (_, hour) => ({
     hour,
     stamps: 0,
@@ -358,10 +384,10 @@ export async function getDashboardStats(
     lastWeekRewards: 0,
   }));
   for (const row of rows) {
-    if (row.d === now.day) {
+    if (row.d === day) {
       hourly[row.h].stamps += row.s;
       if (row.r) hourly[row.h].rewards++;
-    } else if (row.d === now.day - 7) {
+    } else if (row.d === day - 7) {
       hourly[row.h].lastWeekStamps += row.s;
       if (row.r) hourly[row.h].lastWeekRewards++;
     }
@@ -407,7 +433,7 @@ export async function getDashboardStats(
   // Tags for the check-in rows, so the log can show them inline.
   const listedIds = [
     ...new Set(
-      [...latestRaw, ...periodRaw].map((r) => r.customer?._id?.toString()).filter((x): x is string => !!x),
+      [...latestRaw, ...periodRaw, ...dayRaw].map((r) => r.customer?._id?.toString()).filter((x): x is string => !!x),
     ),
   ];
   const tagCards = listedIds.length
@@ -419,13 +445,16 @@ export async function getDashboardStats(
 
   const stats: DashboardStats = {
     today: {
-      date: ymdOf(now.day),
-      hour: now.hour,
+      date: ymdOf(day),
+      isToday,
+      hour: isToday ? now.hour : 23,
       totals: todayTotals,
       lastWeek: lastWeekTotals,
       hourly,
     },
-    latest: latestRaw.map((r) => toCheckIn(r, tags)),
+    todayDate: ymdOf(now.day),
+    firstDate: rows.length ? ymdOf(Math.min(...rows.map((r) => r.d))) : null,
+    latest: (isToday ? latestRaw : dayRaw).map((r) => toCheckIn(r, tags)),
     period: {
       from: ymdOf(from),
       to: ymdOf(to),

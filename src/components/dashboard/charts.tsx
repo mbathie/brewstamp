@@ -10,7 +10,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import type { Bucket, DashboardStats, Grain } from "@/lib/dashboard-stats";
-import { COLORS, EmptyState, bucketLabel, bucketTick, fmtHour } from "./parts";
+import { COLORS, EmptyState, bucketLabel, bucketTick, fmtHour, fmtDay } from "./parts";
 
 // Shared axis styling: no axis lines or ticks, light horizontal gridlines only,
 // so the bars carry the eye and every chart reads the same way.
@@ -34,7 +34,10 @@ export function TodayChart({
   const key = perkMode ? "rewards" : "stamps";
   const lwKey = perkMode ? "lastWeekRewards" : "lastWeekStamps";
   const config = {
-    [key]: { label: "Today", color: perkMode ? COLORS.rewards : COLORS.stamps },
+    [key]: {
+      label: today.isToday ? "Today" : fmtDay(today.date, { weekday: "short", day: "numeric", month: "short" }),
+      color: perkMode ? COLORS.rewards : COLORS.stamps,
+    },
     [lwKey]: { label: `Last ${weekday}`, color: COLORS.muted },
   } satisfies ChartConfig;
 
@@ -44,14 +47,14 @@ export function TodayChart({
     return (
       <EmptyState
         height={200}
-        title="Nothing yet today"
+        title={today.isToday ? "Nothing yet today" : "No check-ins this day"}
         hint={`${perkMode ? "Free rewards" : "Stamps"} will appear here by the hour as customers check in.`}
       />
     );
   }
   // Trading band: never narrower than 6am–6pm, widened to any activity and to now.
   const start = Math.min(6, ...active);
-  const end = Math.max(18, today.hour, ...active);
+  const end = Math.max(18, today.isToday ? today.hour : 0, ...active);
   const data = rows
     .filter((r) => r.hour >= start && r.hour <= end)
     .map((r) => ({
