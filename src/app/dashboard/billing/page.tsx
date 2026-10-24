@@ -61,6 +61,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageHeader } from "@/components/page-header";
 
 // With the currency spelled out — a migrated subscriber may be on A$ or US$.
 function moneyWithCode(cents: number, currency: string): string {
@@ -349,12 +350,14 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Billing</h1>
-        <p className="text-muted-foreground">
-          {currentSlug === "free"
-            ? "Pick a plan when you're ready — no card is charged until you subscribe."
-            : "Your subscription, payment method and history. Change plan anytime — unused time is credited."}
-        </p>
+        <PageHeader
+          title="Billing"
+          description={
+            currentSlug === "free"
+              ? "Pick a plan when you're ready — no card is charged until you subscribe."
+              : "Your subscription, payment method and history. Change plan anytime — unused time is credited."
+          }
+        />
         {isPaypalSub && !sub?.card && sub?.status !== "canceled" && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/15 p-3 text-sm text-amber-200">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />

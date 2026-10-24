@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X, ChevronDown, ChevronUp } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 export default function AccountPage() {
   const [name, setName] = useState("");
@@ -122,7 +123,7 @@ export default function AccountPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-xl font-semibold text-foreground">Account</h1>
+      <PageHeader title="Account" />
 
       {/* Profile */}
       <Card>

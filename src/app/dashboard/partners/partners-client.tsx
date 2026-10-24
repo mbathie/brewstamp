@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 interface Data {
   ratePercent: number;
@@ -71,13 +72,15 @@ export default function PartnersClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Partners</h1>
-        <p className="text-muted-foreground">
-          Refer cafés to Brewstamp and earn {data.ratePercent}% of everything they pay for their first {data.months} months.{" "}
-          <Link href="/partners" className="text-amber-500 hover:underline" target="_blank">How it works</Link>
-        </p>
-      </div>
+      <PageHeader
+        title="Partners"
+        description={
+          <>
+            Refer cafés to Brewstamp and earn {data.ratePercent}% of everything they pay for their first {data.months} months.{" "}
+            <Link href="/partners" className="text-amber-500 hover:underline" target="_blank">How it works</Link>
+          </>
+        }
+      />
 
       {!data.partner ? (
         <Card>

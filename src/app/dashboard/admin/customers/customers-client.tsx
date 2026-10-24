@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 interface CustomerRow {
   shopId: string | null;
@@ -151,12 +152,7 @@ export default function CustomersClient() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Customers</h1>
-          <p className="text-sm text-muted-foreground">
-            Every shop that has held a paid plan — from the billing ledger, both providers.
-          </p>
-        </div>
+        <PageHeader title="Customers" description="Every shop that has held a paid plan — from the billing ledger, both providers." />
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
             {(["active", "canceled", "all"] as StatusFilter[]).map((f) => (

@@ -62,6 +62,7 @@ import {
   resolveLanguage,
   t,
 } from "@/lib/i18n";
+import { PageHeader } from "@/components/page-header";
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved";
 
@@ -410,7 +411,7 @@ export default function SettingsPage() {
   if (aggregate) {
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold text-foreground">Shop Setup</h1>
+        <PageHeader title="Shop Setup" />
         <Card>
           <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
             <div className="flex size-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">

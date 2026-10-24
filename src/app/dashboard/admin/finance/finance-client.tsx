@@ -36,6 +36,7 @@ import {
   type CurrencyMap,
   type FinanceSummary,
 } from "@/lib/finance-math";
+import { PageHeader } from "@/components/page-header";
 
 // ---- formatting helpers ----
 const SYM: Record<string, string> = { usd: "US$", aud: "A$", nzd: "NZ$", gbp: "£", eur: "€" };
@@ -157,17 +158,19 @@ export default function FinanceClient() {
   const projectedEnd = projection.length ? projection[projection.length - 1].mrr : 0;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Finance</h1>
-          <p className="text-sm text-muted-foreground">
-            Brewstamp · live from Stripe + PayPal
-            {data && (
-              <> · updated {new Date(data.generatedAt).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}</>
-            )}
-          </p>
-        </div>
+        <PageHeader
+          title="Finance"
+          description={
+            <>
+              Brewstamp · live from Stripe + PayPal
+              {data && (
+                <> · updated {new Date(data.generatedAt).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}</>
+              )}
+            </>
+          }
+        />
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
           <RefreshCw className={`mr-2 size-4 ${loading ? "animate-spin" : ""}`} />
           Refresh

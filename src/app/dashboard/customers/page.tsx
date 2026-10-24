@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongoose";
 import { StampCard, StampRequest } from "@/models";
 import { startOfDayInTz } from "@/lib/perk";
 import CustomerSearch from "@/components/customer-search";
+import { PageHeader } from "@/components/page-header";
 
 /**
  * Reporting windows for perk shops. `freeRedeemed` on the card is a lifetime
@@ -149,7 +150,7 @@ export default async function CustomersPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-foreground">Customers</h1>
+      <PageHeader title="Customers" />
       <CustomerSearch
         stampCards={serialized}
         threshold={aggregate ? 8 : ctx.shop.stampThreshold}

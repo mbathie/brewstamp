@@ -32,6 +32,7 @@ import {
   type PlanSlug,
   type ShopRow,
 } from "./shops-table";
+import { PageHeader } from "@/components/page-header";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 const DAY_MS = 86_400_000;
@@ -265,12 +266,7 @@ export default function AdminShopsPage() {
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Shops</h1>
-          <p className="text-sm text-muted-foreground">
-            {shops.length} shops · {data.paidCount} paying · ${data.mrrUsd.toFixed(0)} MRR
-          </p>
-        </div>
+        <PageHeader title="Shops" description={`${shops.length} shops · ${data.paidCount} paying · $${data.mrrUsd.toFixed(0)} MRR`} />
         <Link
           href="/dashboard/admin/finance"
           className="text-xs text-muted-foreground hover:text-foreground hover:underline"

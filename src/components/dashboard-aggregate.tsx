@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Users, Stamp, Gift, Plus } from "lucide-react";
 import SwitchShopRow from "@/components/switch-shop-row";
+import { PageHeader } from "@/components/page-header";
 
 interface PerShop {
   shopId: string;
@@ -53,12 +54,7 @@ export default function DashboardAggregate({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">All shops</h1>
-        <p className="text-sm text-muted-foreground">
-          Combined activity across {shops.length} shops you own.
-        </p>
-      </div>
+      <PageHeader title="All shops" description={`Combined activity across ${shops.length} shops you own.`} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>

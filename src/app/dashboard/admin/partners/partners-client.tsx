@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 interface Row {
   id: string; email: string; name: string; code: string; payoutEmail: string | null; since: string | null;
@@ -37,10 +38,7 @@ export default function AdminPartnersClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Partners</h1>
-        <p className="text-sm text-muted-foreground">Referral partners, what they&apos;ve brought in, and what they&apos;re owed. &quot;Payable now&quot; is earnings older than 60 days (past the chargeback window), net of refunds. Pay via PayPal, then mark paid.</p>
-      </div>
+      <PageHeader title="Partners" description={<>Referral partners, what they&apos;ve brought in, and what they&apos;re owed. &quot;Payable now&quot; is earnings older than 60 days (past the chargeback window), net of refunds. Pay via PayPal, then mark paid.</>} />
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <Table>

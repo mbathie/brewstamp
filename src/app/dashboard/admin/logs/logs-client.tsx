@@ -11,6 +11,7 @@ import { Loader2, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader } from "@/components/page-header";
 
 const HOURS = [
   { value: "1", label: "Last hour" },
@@ -100,15 +101,12 @@ export default function LogsClient() {
   const lines = data?.lines || [];
 
   return (
-    <div className="space-y-5 p-4 md:p-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Server logs</h1>
-          <p className="text-sm text-muted-foreground">
-            Production logs kept for 7 days: errors, warnings, 404s, API writes and the card form&apos;s own reports.
-            {data?.oldest ? ` Oldest kept: ${fmt(data.oldest)}.` : ""}
-          </p>
-        </div>
+        <PageHeader
+          title="Server logs"
+          description={<>Kept for 7 days: errors, warnings, 404s, API writes and the card form&apos;s own reports.{data?.oldest ? ` Oldest kept: ${fmt(data.oldest)}.` : ""}</>}
+        />
         <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setReload((n) => n + 1)} disabled={loading}>
           {loading ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <RefreshCw className="mr-1.5 size-4" />}
           Refresh

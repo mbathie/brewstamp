@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { Store } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getUserPlanLimits } from "@/lib/plan-limits";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import NewShopForm from "./new-shop-form";
 
 export default async function NewShopPage() {
@@ -20,18 +20,10 @@ export default async function NewShopPage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-          <Store className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Add a new shop</h1>
-          <p className="text-sm text-muted-foreground">
-            {limits.plan.label} plan: {limits.ownedShopCount} of{" "}
-            {limits.shopLimit} shops used.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Add a new shop"
+        description={`${limits.plan.label} plan: ${limits.ownedShopCount} of ${limits.shopLimit} shops used.`}
+      />
 
       <Card>
         <CardHeader>

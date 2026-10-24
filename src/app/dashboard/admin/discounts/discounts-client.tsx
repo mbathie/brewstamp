@@ -30,6 +30,7 @@ import {
 import { Plus, Ticket, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { DateField } from "@/components/date-field";
+import { PageHeader } from "@/components/page-header";
 
 interface Discount {
   id: string;
@@ -194,7 +195,7 @@ export default function DiscountsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Discounts</h1>
+        <PageHeader title="Discounts" />
         <div className="flex gap-2">
           <Button
             variant="outline"
