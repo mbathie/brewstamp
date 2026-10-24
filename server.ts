@@ -12,6 +12,7 @@ import { Socket } from "net";
 import { randomUUID } from "crypto";
 import { startDripCron } from "./src/lib/drip-cron";
 import { startBillingCron } from "./src/lib/billing-cron";
+import { isProbePath } from "./src/lib/probe-paths";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -60,6 +61,14 @@ app.prepare().then(() => {
 
   const server = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
+
+    // Scanner probes (/wp-admin, *.php, /.env, …) get a bare 404 before Next
+    // or the request log sees them (src/lib/probe-paths).
+    if (isProbePath(parsedUrl.pathname)) {
+      res.statusCode = 404;
+      res.end();
+      return;
+    }
 
     // Set brewstamp_id cookie for /s/ routes if not present
     if (parsedUrl.pathname?.startsWith("/s/")) {
