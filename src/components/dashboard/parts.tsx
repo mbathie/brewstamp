@@ -62,9 +62,9 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-0.5">
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>

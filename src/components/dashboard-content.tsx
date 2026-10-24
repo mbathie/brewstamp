@@ -30,7 +30,6 @@ interface Props {
 }
 
 export default function DashboardContent({
-  shopName,
   perkMode = false,
   stampThreshold,
   isNewShop,
@@ -247,7 +246,6 @@ export default function DashboardContent({
             </Card>
           )}
           <DashboardOverview
-            shopName={shopName}
             perkMode={perkMode}
             stampThreshold={stampThreshold}
             canManageBilling={canManageBilling}

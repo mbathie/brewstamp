@@ -46,12 +46,10 @@ function toIsoDate(d: Date): string {
 }
 
 export default function DashboardOverview({
-  shopName,
   perkMode,
   stampThreshold,
   canManageBilling,
 }: {
-  shopName: string;
   perkMode: boolean;
   stampThreshold: number;
   canManageBilling: boolean;
@@ -140,16 +138,11 @@ export default function DashboardOverview({
   const prev = (v: number | null) => (comparable ? v : null);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-10">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">{shopName}</p>
-      </div>
-
+    <div className="mx-auto w-full max-w-7xl space-y-8">
       {/* ── Today ─────────────────────────────────────────────────────── */}
       <Section
         title="Today"
-        description={`${fmtDay(today.date, { weekday: "long", day: "numeric", month: "long" })} · compared with last ${weekday} at this time`}
+        description={`${fmtDay(today.date, { weekday: "short", day: "numeric", month: "short" })} · vs last ${weekday} at this time`}
         right={
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="relative flex size-2">
@@ -518,11 +511,8 @@ function LockedInsights({ canManageBilling }: { canManageBilling: boolean }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-10">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-40" />
-        <Skeleton className="h-4 w-28" />
-      </div>
+    <div className="mx-auto w-full max-w-7xl space-y-8">
+      <Skeleton className="h-6 w-64" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Skeleton className="h-[320px] lg:col-span-2" />
         <Skeleton className="h-[320px]" />
