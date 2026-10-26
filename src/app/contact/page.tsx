@@ -133,6 +133,7 @@ export default function ContactPage() {
                   </FieldLabel>
                   <input
                     id="name"
+                    name="name"
                     type="text"
                     placeholder="Your name"
                     autoComplete="name"
@@ -150,6 +151,7 @@ export default function ContactPage() {
                   </FieldLabel>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     required
                     placeholder="you@email.com"
@@ -169,6 +171,7 @@ export default function ContactPage() {
                 </FieldLabel>
                 <textarea
                   id="message"
+                  name="message"
                   required
                   placeholder="How can we help?"
                   rows={6}

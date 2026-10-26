@@ -92,6 +92,8 @@ export default function SetupPage() {
               <Label htmlFor="shopName">Shop Name</Label>
               <Input
                 id="shopName"
+                name="shopName"
+                autoComplete="organization"
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
                 placeholder="e.g. Bean & Brew"
@@ -102,6 +104,8 @@ export default function SetupPage() {
               <Label htmlFor="name">Your Name</Label>
               <Input
                 id="name"
+                name="name"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -112,6 +116,8 @@ export default function SetupPage() {
               </Label>
               <Input
                 id="phone"
+                name="phone"
+                autoComplete="tel"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
