@@ -16,6 +16,11 @@ import {
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
+
+// Plans and prices (in the JSON-LD offers) come from the database.
+export const revalidate = 300;
 
 // Owns the CUSTOMER-REWARDS angle: what the rewards card looks like to the
 // customer, wallet passes, and reward design ("coffee rewards app/card").
@@ -91,12 +96,7 @@ const jsonLd = {
       operatingSystem: "Web",
       description:
         "A coffee rewards app that gives cafe customers a branded digital rewards card: scan a QR code, collect stamps toward a free coffee, and save the card to Apple Wallet or Google Wallet — no app download required.",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $12/month.`,
-      },
+      offers: PLAN_OFFERS,
       url: "https://brewstamp.app/coffee-rewards-app",
     },
     {
@@ -165,12 +165,13 @@ const CARD_DETAILS = [
   "A redeem button that appears as soon as the reward is unlocked",
 ];
 
-export default function CoffeeRewardsAppPage() {
+export default async function CoffeeRewardsAppPage() {
+  const catalog = await getPlanCatalog();
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd, catalog)) }}
       />
       <PublicHeader />
 

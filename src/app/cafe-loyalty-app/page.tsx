@@ -18,6 +18,7 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS, formatCents } from "@/lib/plans";
 import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
 
 // Plan cards read the catalogue from the database; refresh every 5 minutes.
 export const revalidate = 300;
@@ -96,12 +97,7 @@ const jsonLd = {
       operatingSystem: "Web",
       description:
         "A cafe loyalty app for running a digital stamp card at the counter: customers scan a QR code at the till, staff approve stamps in real time on any device, and owners manage staff, multiple shops and customer data from one dashboard.",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-        description: `Free for your first ${FREE_STAMPS} stamps; paid plans from $12/month.`,
-      },
+      offers: PLAN_OFFERS,
       url: "https://brewstamp.app/cafe-loyalty-app",
     },
     {
@@ -173,7 +169,7 @@ export default async function CafeLoyaltyAppPage() {
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd, catalog)) }}
       />
       <PublicHeader />
 

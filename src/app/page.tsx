@@ -22,9 +22,10 @@ import RelatedGuides from "@/components/related-guides";
 import { WalletBadges } from "@/components/wallet-badges";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
-import { FREE_STAMPS } from "@/lib/plans";
+import { FREE_STAMPS, formatCents, type PlanCatalog } from "@/lib/plans";
 import PlanCards from "@/app/pricing/plan-cards";
 import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
 
 // The pricing section reads the plan catalogue; refresh every 5 minutes.
 export const revalidate = 300;
@@ -73,7 +74,21 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
+// The FAQ's price answer, from the plan catalogue (it appears both on the
+// page and in the FAQPage JSON-LD, which must match).
+function costAnswer(catalog: PlanCatalog): string {
+  const pro = catalog.bySlug("pro");
+  const business = catalog.publicPlans.find((p) => p.slug === "plus");
+  const proLine = pro
+    ? ` After that, Pro is ${formatCents(catalog.priceCents(pro, "month"))}/month for unlimited stamps (or ${formatCents(catalog.priceCents(pro, "year"))}/year, ${catalog.monthsFree(pro)} months free)`
+    : "";
+  const bizLine = business
+    ? `, and ${business.label} is ${formatCents(catalog.priceCents(business, "month"))}/month for teams and up to ${business.shopLimit} shops`
+    : "";
+  return `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop.${proLine}${bizLine}.`;
+}
+
+const jsonLd = (cost: string) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -91,11 +106,7 @@ const jsonLd = {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: "https://brewstamp.app",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-      },
+      offers: PLAN_OFFERS,
       description:
         "Free digital coffee loyalty card for cafes worldwide. Customers scan a QR code to collect stamps and earn rewards.",
       audience: {
@@ -179,7 +190,7 @@ const jsonLd = {
           name: "How much does a digital loyalty card for cafes cost?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $12/month for unlimited stamps (or $120/year, two months free).`,
+            text: cost,
           },
         },
         {
@@ -193,20 +204,16 @@ const jsonLd = {
       ],
     },
   ],
-};
-
-// Remove undefined values from JSON-LD
-const cleanJsonLd = JSON.parse(
-  JSON.stringify(jsonLd, (_, v) => (v === undefined ? undefined : v))
-);
+});
 
 export default async function Home() {
   const catalog = await getPlanCatalog();
+  const cost = costAnswer(catalog);
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(cleanJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd(cost), catalog)) }}
       />
       <PublicHeader transparent />
 
@@ -609,7 +616,7 @@ export default async function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-white py-24">
+      <section id="faq" className="scroll-mt-20 bg-white py-24">
         <div className="mx-auto max-w-3xl px-6">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
@@ -658,7 +665,7 @@ export default async function Home() {
               },
               {
                 q: "How much does a digital loyalty card for cafes cost?",
-                a: `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop. After that, it's $12/month for unlimited stamps (or $120/year, two months free).`,
+                a: cost,
               },
               {
                 q: "How long does it take to set up a coffee shop loyalty program?",

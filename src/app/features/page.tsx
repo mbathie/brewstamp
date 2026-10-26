@@ -30,6 +30,11 @@ import { WalletBadges } from "@/components/wallet-badges";
 import FeaturesCardCarousel from "@/components/features-card-carousel";
 import { patterns } from "@/lib/patterns";
 import { FREE_STAMPS } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
+
+// Plans and prices (in the JSON-LD offers) come from the database.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title:
@@ -77,12 +82,7 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   url: "https://brewstamp.app",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-    description: `Free up to ${FREE_STAMPS} stamps. $12/month for unlimited stamps.`,
-  },
+  offers: PLAN_OFFERS,
   featureList: [
     "No app download for customers — opens in any phone browser",
     "14 languages including Arabic (RTL), Mandarin, Japanese, Korean, Hindi, Turkish",
@@ -278,12 +278,13 @@ const FEATURE_TABLE: Array<{
   },
 ];
 
-export default function FeaturesPage() {
+export default async function FeaturesPage() {
+  const catalog = await getPlanCatalog();
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd, catalog)) }}
       />
       <PublicHeader transparent />
 

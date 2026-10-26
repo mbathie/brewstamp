@@ -17,6 +17,11 @@ import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
 import Testimonials from "@/components/testimonials";
 import { FREE_STAMPS } from "@/lib/plans";
+import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
+
+// Plans and prices (in the JSON-LD offers) come from the database.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Square Loyalty Alternative — Free Digital Stamp Card",
@@ -61,16 +66,17 @@ const jsonLd = {
     name: "Brewstamp",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    offers: PLAN_OFFERS,
   },
 };
 
-export default function SquareLoyaltyAlternative() {
+export default async function SquareLoyaltyAlternative() {
+  const catalog = await getPlanCatalog();
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd, catalog)) }}
       />
       <PublicHeader transparent />
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppleMark, GoogleMark } from "@/components/wallet-badges";
+import { planAnchor } from "@/lib/structured-data";
 import {
   PlanCatalog,
   CUSTOM_PLAN_CONTACT_HREF,
@@ -82,7 +83,8 @@ export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
           return (
             <div
               key={p.slug}
-              className={`relative flex flex-col rounded-2xl bg-white p-6 ${
+              id={planAnchor(p.label)}
+              className={`relative flex scroll-mt-24 flex-col rounded-2xl bg-white p-6 ${
                 highlight
                   ? "border-2 border-amber-600 shadow-sm"
                   : "border border-stone-200"
@@ -143,7 +145,7 @@ export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
             </div>
           );
         })}
-        <div className="relative flex flex-col rounded-2xl border border-stone-200 bg-stone-50 p-6">
+        <div id="custom" className="relative flex scroll-mt-24 flex-col rounded-2xl border border-stone-200 bg-stone-50 p-6">
           <h3 className="text-lg font-semibold text-stone-900">{custom.label}</h3>
           <p className="mt-1 text-sm text-stone-500">{custom.tagline}</p>
           <p className="mt-5">

@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import PlanCards from "./plan-cards";
 import { FREE_STAMPS, formatCents, type PlanCatalog, type PlanConfig } from "@/lib/plans";
 import { getPlanCatalog } from "@/lib/plan-catalog";
+import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
+import { pricingFaq } from "@/lib/pricing-faq";
+import { SITE_URL } from "@/lib/site";
 
 // Plans and prices come from the database; re-render at most every 5 minutes
 // so a catalogue change shows without a deploy.
@@ -70,8 +73,35 @@ function Cell({ value }: { value: string | boolean }) {
 
 export default async function PricingPage() {
   const catalog = await getPlanCatalog();
+  const faq = pricingFaq(catalog);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: "Brewstamp",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web, iOS, Android",
+        url: `${SITE_URL}/pricing`,
+        description: "Digital coffee loyalty cards for cafes: customers scan a QR code to collect stamps, no app needed.",
+        offers: PLAN_OFFERS,
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+    ],
+  };
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd, catalog)) }}
+      />
       <PublicHeader />
       <main className="bg-white">
         {/* Hero */}
@@ -159,6 +189,21 @@ export default async function PricingPage() {
                 No credit card required. Upgrade when your loyalty program is taking off.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Pricing FAQ — mirrored in the FAQPage JSON-LD above */}
+        <section id="faq" className="border-t border-stone-200 bg-white px-6 py-20">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-center text-2xl font-bold tracking-tight text-stone-900">Pricing questions</h2>
+            <dl className="mt-10 divide-y divide-stone-200">
+              {faq.map((f) => (
+                <div key={f.q} className="py-5">
+                  <dt className="font-semibold text-stone-900">{f.q}</dt>
+                  <dd className="mt-2 text-stone-600">{f.a}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </section>
 
