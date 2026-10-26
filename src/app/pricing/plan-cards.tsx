@@ -14,8 +14,9 @@ import {
   type PlanConfig,
 } from "@/lib/plans";
 
-// Pricing cards for the public pages. `plans` is the catalogue from the
-// database (getPlanCatalog().plans), passed down by the server page.
+// Pricing cards for the public pages. `plans` is the public catalogue
+// (getPlanCatalog().publicPlans) — never the whole list, which would put
+// custom deals in the page source.
 export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
   const [interval, setInterval] = useState<BillingInterval>("month");
   const catalog = new PlanCatalog(plans);

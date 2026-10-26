@@ -93,7 +93,7 @@ export default async function PricingPage() {
 
         {/* Plan cards */}
         <section className="bg-stone-50 px-6 pb-20">
-          <PlanCards plans={catalog.plans} />
+          <PlanCards plans={catalog.publicPlans} />
         </section>
 
         {/* Feature comparison */}

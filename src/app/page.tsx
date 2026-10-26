@@ -595,7 +595,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="mt-12">
-            <PlanCards plans={catalog.plans} />
+            <PlanCards plans={catalog.publicPlans} />
           </div>
           <div className="mt-10 text-center">
             <Link

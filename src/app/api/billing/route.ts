@@ -85,7 +85,8 @@ export async function GET() {
     ownedShops,
     // The whole catalogue (archived plans and prices included) — the page
     // shows active plans plus the shop's own plan if it's been archived.
-    plans: catalog.plans,
+    // Another customer's custom deal is never sent.
+    plans: catalog.plans.filter((p) => !p.custom || p.slug === currentPlanSlug),
     provider,
     paypalClientId,
     paypalEnv: process.env.PAYPAL_ENV === "live" ? "live" : "sandbox",
