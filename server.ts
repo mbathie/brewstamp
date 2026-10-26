@@ -13,7 +13,7 @@ import { randomUUID } from "crypto";
 import { startDripCron } from "./src/lib/drip-cron";
 import { startBillingCron } from "./src/lib/billing-cron";
 import { scheduleIndexNowAfterDeploy } from "./src/lib/indexnow";
-import { isProbePath } from "./src/lib/probe-paths";
+import { isProbeAction, isProbePath } from "./src/lib/probe-paths";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -63,9 +63,10 @@ app.prepare().then(() => {
   const server = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
 
-    // Scanner probes (/wp-admin, *.php, /.env, …) get a bare 404 before Next
-    // or the request log sees them (src/lib/probe-paths).
-    if (isProbePath(parsedUrl.pathname)) {
+    // Scanner probes (/wp-admin, *.php, /.env, …, and Server Action calls to
+    // pages that have none) get a bare 404 before Next or the request log
+    // sees them (src/lib/probe-paths).
+    if (isProbePath(parsedUrl.pathname) || isProbeAction(req.method, parsedUrl.pathname, req.headers["next-action"])) {
       res.statusCode = 404;
       res.end();
       return;
