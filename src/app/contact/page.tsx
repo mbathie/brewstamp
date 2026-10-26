@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Send,
@@ -49,6 +49,14 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The pricing pages' "Custom" card links here with ?plan=custom.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("plan") !== "custom") return;
+    setFormData((f) =>
+      f.message ? f : { ...f, message: "Hi! I'm interested in a custom plan for my group of ___ shops." }
+    );
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

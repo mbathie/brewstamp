@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/tooltip";
 import {
   PlanCatalog,
+  CUSTOM_PLAN_CONTACT_HREF,
+  customPlanCard,
   formatCents,
   hasStaffLogins,
   type PlanConfig,
@@ -228,6 +230,7 @@ export default function BillingPage() {
   const currentPlan = catalog.bySlug(currentSlug);
   // The plans on offer, plus the shop's own plan if it's one we no longer sell.
   const shownPlans = catalog.plans.filter((p) => p.status === "active" || p.slug === currentSlug);
+  const customPlan = customPlanCard(Math.max(...catalog.publicPlans.map((p) => p.shopLimit)));
   const paidShown = shownPlans.filter((p) => p.slug !== "free");
   // The annual saving to advertise on the toggle (best across paid plans).
   const monthsFree = Math.max(0, ...paidShown.map((p) => catalog.monthsFree(p)));
@@ -608,7 +611,11 @@ export default function BillingPage() {
       </div>
 
       {/* Plan grid */}
-      <div className={`grid gap-5 ${shownPlans.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      <div
+        className={`grid gap-5 ${
+          shownPlans.length + 1 > 4 ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
+        }`}
+      >
         {shownPlans.map((plan) => {
           const isCurrentTier = plan.slug === currentSlug;
           // For a paid tier the user only counts as "on" it when the billing
@@ -734,12 +741,32 @@ export default function BillingPage() {
             </Card>
           );
         })}
+        <Card className="relative flex flex-col border-dashed">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg">{customPlan.label}</CardTitle>
+            <CardDescription>{customPlan.tagline}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-5 pt-5">
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight text-foreground">Let&apos;s talk</span>
+              </div>
+              <div className="mt-1.5 h-4 text-xs text-muted-foreground">Priced per shop for your group</div>
+            </div>
+            <ul className="flex-1 space-y-2.5 text-sm">
+              {customPlan.features.map((f) => (
+                <li key={f} className="flex items-start gap-2">
+                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+                  <span className="text-muted-foreground">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button asChild variant="outline" className="w-full cursor-pointer">
+              <a href={CUSTOM_PLAN_CONTACT_HREF}>Contact us</a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-      <p className="text-center text-sm text-muted-foreground">
-        More than 3 shops? Email{" "}
-        <a href="mailto:hello@brewstamp.app" className="text-amber-500 hover:underline">hello@brewstamp.app</a>{" "}
-        and we&apos;ll set you up.
-      </p>
 
       {/* Feature matrix */}
       <Card>

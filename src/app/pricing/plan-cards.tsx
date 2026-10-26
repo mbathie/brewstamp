@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { AppleMark, GoogleMark } from "@/components/wallet-badges";
 import {
   PlanCatalog,
+  CUSTOM_PLAN_CONTACT_HREF,
+  customPlanCard,
   formatCents,
   type BillingInterval,
   type PlanConfig,
@@ -20,6 +22,8 @@ export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
   const paid = catalog.publicPlans.filter((p) => p.slug !== "free");
   // Shown on the toggle: the best annual saving across the paid plans.
   const monthsFree = Math.max(0, ...paid.map((p) => catalog.monthsFree(p)));
+  const custom = customPlanCard(Math.max(...catalog.publicPlans.map((p) => p.shopLimit)));
+  const cardCount = catalog.publicPlans.length + 1;
 
   return (
     <>
@@ -62,7 +66,11 @@ export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
 
       <div
         className={`mx-auto grid gap-6 ${
-          catalog.publicPlans.length > 3 ? "max-w-6xl sm:grid-cols-2 lg:grid-cols-4" : "max-w-5xl md:grid-cols-3"
+          cardCount > 4
+            ? "max-w-7xl sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+            : cardCount > 3
+              ? "max-w-6xl sm:grid-cols-2 lg:grid-cols-4"
+              : "max-w-5xl md:grid-cols-3"
         }`}
       >
         {catalog.publicPlans.map((p) => {
@@ -134,14 +142,28 @@ export default function PlanCards({ plans }: { plans: PlanConfig[] }) {
             </div>
           );
         })}
+        <div className="relative flex flex-col rounded-2xl border border-stone-200 bg-stone-50 p-6">
+          <h3 className="text-lg font-semibold text-stone-900">{custom.label}</h3>
+          <p className="mt-1 text-sm text-stone-500">{custom.tagline}</p>
+          <p className="mt-5">
+            <span className="text-4xl font-bold text-stone-900">Let&apos;s talk</span>
+          </p>
+          <p className="mt-1 h-4 text-xs text-amber-700">Priced per shop for your group</p>
+          <ul className="mt-6 flex-1 space-y-3 text-sm text-stone-600">
+            {custom.features.map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <Link href={CUSTOM_PLAN_CONTACT_HREF} className="mt-8">
+            <Button className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800">
+              Contact us
+            </Button>
+          </Link>
+        </div>
       </div>
-      <p className="mt-8 text-center text-sm text-stone-500">
-        More than {Math.max(...catalog.publicPlans.map((p) => p.shopLimit))} shops?{" "}
-        <a href="mailto:hello@brewstamp.app" className="text-amber-700 hover:underline">
-          Email hello@brewstamp.app
-        </a>{" "}
-        and we&apos;ll set you up.
-      </p>
     </>
   );
 }

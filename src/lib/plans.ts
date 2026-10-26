@@ -114,6 +114,24 @@ export function hasStaffLogins(plan: Pick<PlanConfig, "staffLoginLimit">): boole
   return plan.staffLoginLimit === "unlimited" || plan.staffLoginLimit > 0;
 }
 
+// The "Custom" card shown after the public plans on /pricing and billing. Not
+// a catalogue plan: it can't be bought online, its CTA opens the contact form.
+export const CUSTOM_PLAN_CONTACT_HREF = "/contact?plan=custom";
+
+export function customPlanCard(maxPublicShops: number) {
+  return {
+    label: "Custom",
+    tagline: "For groups and chains",
+    features: [
+      "Everything in Business",
+      `${maxPublicShops + 1}+ shops under one account`,
+      "Volume pricing per shop",
+      "Help setting up every shop",
+      "Dedicated account support",
+    ],
+  };
+}
+
 /** "$12" for whole dollars, "$6.42" otherwise. */
 export function formatCents(cents: number): string {
   const dollars = cents / 100;
