@@ -282,14 +282,21 @@ export default function FinanceClient() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Plan</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead className="text-right">Subs</TableHead>
                   <TableHead className="text-right">MRR</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.mrrByPlan.map((p) => (
-                  <TableRow key={`${p.plan}-${p.currency}`}>
-                    <TableCell>{p.plan} <span className="text-muted-foreground">({p.currency.toUpperCase()})</span></TableCell>
+                  <TableRow key={`${p.plan}-${p.currency}-${p.interval}-${p.priceCents}`}>
+                    <TableCell className="font-medium">{p.plan}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {fmt(p.priceCents, p.currency)}/{p.interval === "year" ? "yr" : "mo"}
+                      {p.grandfathered && (
+                        <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">grandfathered</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{p.subscriptions}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(p.monthlyCents, p.currency)}</TableCell>
                   </TableRow>

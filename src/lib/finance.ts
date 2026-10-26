@@ -106,14 +106,27 @@ export async function getMrrSnapshot(): Promise<MrrSnapshot> {
     activeSubscriptions += 1;
     activeShops.add(shopKey);
     addCur(mrr, cur, m);
-    const planName = `Brewstamp ${tier.label}${tier.legacy ? " (legacy)" : ""}`;
-    const key = `${planName}|${cur}`;
+    // One row per plan, currency, interval and price actually paid, so a
+    // grandfathered US$5 Pro and today's US$12 Pro don't blur together.
+    const interval: "month" | "year" = s.interval === "year" ? "year" : "month";
+    const priceCents = s.priceCents ?? (interval === "year" ? m * 12 : m);
+    const plan = catalog.bySlug(tier.slug);
+    const catalogueCents = plan ? catalog.priceCents(plan, interval) : 0;
+    const key = `${tier.slug}|${cur}|${interval}|${priceCents}`;
     const existing = planAgg.get(key);
     if (existing) {
       existing.monthlyCents += m;
       existing.subscriptions += 1;
     } else {
-      planAgg.set(key, { plan: planName, currency: cur, monthlyCents: m, subscriptions: 1 });
+      planAgg.set(key, {
+        plan: tier.label,
+        currency: cur,
+        priceCents,
+        interval,
+        grandfathered: catalogueCents > 0 && priceCents < catalogueCents,
+        monthlyCents: m,
+        subscriptions: 1,
+      });
     }
   }
   return {

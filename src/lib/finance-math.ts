@@ -9,8 +9,14 @@
 export type CurrencyMap = Record<string, number>; // currency -> cents
 
 export interface PlanMrr {
+  /** Plan label, e.g. "Pro", "Business", "Custom". */
   plan: string;
   currency: string;
+  /** What each of these subscriptions pays per `interval`. */
+  priceCents: number;
+  interval: "month" | "year";
+  /** Below today's catalogue price for the plan (kept from an earlier price). */
+  grandfathered: boolean;
   monthlyCents: number;
   subscriptions: number;
 }
