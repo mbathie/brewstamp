@@ -174,7 +174,7 @@ export function nowIn(tz: string): { day: number; hour: number } {
 }
 
 /** The UTC instant of local midnight starting the given local day. */
-function localMidnight(tz: string, dayNum: number): Date {
+export function localMidnight(tz: string, dayNum: number): Date {
   // Guess the offset at UTC midnight of that date, then correct once — enough
   // for any real timezone, DST transitions included.
   let guess = dayNum * DAY_MS;
@@ -187,11 +187,11 @@ function localMidnight(tz: string, dayNum: number): Date {
 }
 
 /** Monday on or before the given day. Day 0 (1970-01-01) was a Thursday. */
-function weekStartOf(dayNum: number): number {
+export function weekStartOf(dayNum: number): number {
   return dayNum - ((dayNum + 3) % 7);
 }
 
-function monthStartOf(dayNum: number): number {
+export function monthStartOf(dayNum: number): number {
   return dayNumOf(ymdOf(dayNum).slice(0, 8) + "01");
 }
 
@@ -219,7 +219,7 @@ const FREQUENCY_BUCKETS: { label: string; min: number; max: number }[] = [
 
 // ── Rows ─────────────────────────────────────────────────────────────────────
 
-interface Row {
+export interface Row {
   c: string; // customer id
   d: number; // local day number
   h: number; // local hour
@@ -232,7 +232,7 @@ function emptyTotals(): Totals {
 }
 
 /** Totals for rows in [from, to] (day numbers), optionally only before an hour on `to`. */
-function totalsFor(
+export function totalsFor(
   rows: Row[],
   firstDay: Map<string, number>,
   from: number,

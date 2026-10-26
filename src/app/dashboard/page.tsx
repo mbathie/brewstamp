@@ -20,66 +20,12 @@ export default async function DashboardPage({
   await connectDB();
 
   if (ctx.mode === "all") {
-    const shopIds = ctx.allShops.map((s) => s._id);
-
-    // Per-shop rollup: customers / stamps / redemptions. Customers are
-    // counted via distinct customer ids on stamp cards for the shop so a
-    // single customer with cards at multiple shops counts once per shop.
-    const [stampAgg, redeemAgg, customerAgg] = await Promise.all([
-      StampCard.aggregate([
-        { $match: { shop: { $in: shopIds } } },
-        {
-          $group: {
-            _id: "$shop",
-            stamps: { $sum: "$totalEarned" },
-          },
-        },
-      ]),
-      StampRequest.aggregate([
-        {
-          $match: { shop: { $in: shopIds }, redeem: true, status: "approved" },
-        },
-        { $group: { _id: "$shop", count: { $sum: 1 } } },
-      ]),
-      StampCard.aggregate([
-        { $match: { shop: { $in: shopIds } } },
-        { $group: { _id: "$shop", customers: { $addToSet: "$customer" } } },
-        {
-          $project: {
-            _id: 1,
-            customers: { $size: "$customers" },
-          },
-        },
-      ]),
-    ]);
-
-    const stampByShop = new Map(
-      stampAgg.map((s) => [s._id.toString(), s.stamps]),
-    );
-    const redeemByShop = new Map(
-      redeemAgg.map((r) => [r._id.toString(), r.count]),
-    );
-    const customerByShop = new Map(
-      customerAgg.map((c) => [c._id.toString(), c.customers]),
-    );
-
-    const perShop = ctx.allShops
-      .map((s) => ({
-        shopId: s._id.toString(),
-        shopName: s.name,
-        customers: customerByShop.get(s._id.toString()) || 0,
-        stamps: stampByShop.get(s._id.toString()) || 0,
-        redemptions: redeemByShop.get(s._id.toString()) || 0,
-      }))
-      .sort((a, b) => b.stamps - a.stamps);
-
     const session = await auth();
     const userId = (session?.user as any)?.id as string | undefined;
     const planLimits = userId ? await getUserPlanLimits(userId) : null;
 
     return (
       <DashboardAggregate
-        shops={perShop}
         atShopLimit={planLimits?.atShopLimit ?? false}
         shopLimit={planLimits?.shopLimit ?? 1}
         planLabel={planLimits?.plan.label ?? "Free"}
