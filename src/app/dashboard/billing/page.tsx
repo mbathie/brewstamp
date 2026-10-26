@@ -47,6 +47,7 @@ import {
   PlanCatalog,
   CUSTOM_PLAN_CONTACT_HREF,
   customPlanCard,
+  isCustomPlan,
   formatCents,
   hasStaffLogins,
   type PlanConfig,
@@ -229,8 +230,11 @@ export default function BillingPage() {
   const canCardCheckout = data?.provider === "paypal" && !!data.paypalClientId;
   const currentPlan = catalog.bySlug(currentSlug);
   // The plans on offer, plus the shop's own plan if it's one we no longer sell.
-  const shownPlans = catalog.plans.filter((p) => p.status === "active" || p.slug === currentSlug);
+  const shownPlans = catalog.plans.filter((p) => catalog.isOnSale(p) || p.slug === currentSlug);
   const customPlan = customPlanCard(Math.max(...catalog.publicPlans.map((p) => p.shopLimit)));
+  // On a private deal their own plan card replaces the "Let's talk" one, and
+  // changing plan goes through us rather than a self-serve switch.
+  const onCustom = isCustomPlan(currentPlan);
   const paidShown = shownPlans.filter((p) => p.slug !== "free");
   // The annual saving to advertise on the toggle (best across paid plans).
   const monthsFree = Math.max(0, ...paidShown.map((p) => catalog.monthsFree(p)));
@@ -613,16 +617,19 @@ export default function BillingPage() {
       {/* Plan grid */}
       <div
         className={`grid gap-5 ${
-          shownPlans.length + 1 > 4 ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
+          shownPlans.length + (onCustom ? 0 : 1) > 4 ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
         }`}
       >
         {shownPlans.map((plan) => {
           const isCurrentTier = plan.slug === currentSlug;
+          const custom = isCustomPlan(plan);
           // For a paid tier the user only counts as "on" it when the billing
           // interval matches too — switching monthly↔annual is still a change.
+          // A custom plan has the one price it was agreed at.
           const isCurrent =
             isCurrentTier &&
-            (plan.slug === "free" || currentInterval === interval);
+            (plan.slug === "free" || custom || currentInterval === interval);
+          const shownInterval = custom ? (currentInterval ?? "month") : interval;
           const isIntervalSwitch =
             isCurrentTier && plan.slug !== "free" && !isCurrent;
           const targetRank = catalog.rank(plan.slug);
@@ -639,7 +646,8 @@ export default function BillingPage() {
             isCurrent && isPaypalSub && !!(sub?.cancelAtPeriodEnd || sub?.pendingPlanSlug);
 
           let ctaLabel: string;
-          if (canResume) ctaLabel = "Keep this plan";
+          if (onCustom && !isCurrent) ctaLabel = "Contact us to change";
+          else if (canResume) ctaLabel = "Keep this plan";
           else if (isCurrent) ctaLabel = "Current plan";
           else if (plan.slug === "free") ctaLabel = "Cancel paid plan";
           else if (isIntervalSwitch)
@@ -679,12 +687,12 @@ export default function BillingPage() {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold tracking-tight text-foreground">
-                      {isPaid && interval === "year" ? formatCents(annualCents) : formatCents(monthCents)}
+                      {isPaid && shownInterval === "year" ? formatCents(annualCents) : formatCents(monthCents)}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       {plan.slug === "free"
                         ? "forever"
-                        : interval === "year"
+                        : shownInterval === "year"
                           ? "/yr"
                           : "/mo"}
                     </span>
@@ -692,7 +700,9 @@ export default function BillingPage() {
                   {/* Reserved line: keeps card bodies aligned across the
                       monthly/annual toggle. */}
                   <div className="mt-1.5 h-4 text-xs">
-                    {isPaid && interval === "year" ? (
+                    {custom ? (
+                      <span className="text-muted-foreground">Your custom plan, agreed with Brewstamp</span>
+                    ) : isPaid && interval === "year" ? (
                       <span>
                         <span className="font-semibold text-emerald-500">
                           Save {formatCents(monthCents * 12 - annualCents)}/yr
@@ -730,7 +740,7 @@ export default function BillingPage() {
                   }`}
                   variant={isCurrent || isDowngrade ? "outline" : "default"}
                   disabled={(isCurrent && !canResume) || isSeed || !!switchingTo}
-                  onClick={() => handleSwitch(plan.slug)}
+                  onClick={() => (onCustom && !isCurrent ? router.push(CUSTOM_PLAN_CONTACT_HREF) : handleSwitch(plan.slug))}
                 >
                   {switchingTo === plan.slug ? (
                     <Loader2 className="mr-2 size-4 animate-spin" />
@@ -741,6 +751,7 @@ export default function BillingPage() {
             </Card>
           );
         })}
+        {!onCustom && (
         <Card className="relative flex flex-col border-dashed">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg">{customPlan.label}</CardTitle>
@@ -766,6 +777,7 @@ export default function BillingPage() {
             </Button>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Feature matrix */}

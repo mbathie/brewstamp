@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   }
   // A plan we no longer sell can't be switched to (a shop already on it
   // keeps it; that's checked below against its subscription).
-  const hiddenTarget = targetPlan.status !== "active";
+  const hiddenTarget = !catalog.isOnSale(targetPlan);
 
   const sub = await Subscription.findOne({ shop: merchant.shop._id });
   if (!sub) {

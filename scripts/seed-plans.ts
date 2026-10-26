@@ -31,7 +31,7 @@ import type { PlanConfig, PlanPrice } from "../src/lib/plans";
 const FREE_STAMPS = 50;
 
 type SeedPrice = Omit<PlanPrice, "stripePriceId"> & { stripePriceId?: string | null };
-type SeedPlan = Omit<PlanConfig, "prices"> & { prices: SeedPrice[] };
+type SeedPlan = Omit<PlanConfig, "prices" | "custom"> & { prices: SeedPrice[] };
 
 const usd = (interval: "month" | "year", amountCents: number, status: "active" | "archived"): SeedPrice => ({
   interval,

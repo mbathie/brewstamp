@@ -85,6 +85,12 @@ export interface PlanConfig {
   /** Tier order: higher = higher tier. Decides upgrade vs downgrade. */
   rank: number;
   status: CatalogStatus;
+  /**
+   * A private deal for one customer: never listed or sold in the app, bought
+   * through a Stripe payment link, shown on that customer's billing page as
+   * their plan.
+   */
+  custom: boolean;
   /** Optional ribbon on the pricing card, e.g. "Best for teams". */
   badge: string | null;
   shopLimit: number;
@@ -117,6 +123,10 @@ export function hasStaffLogins(plan: Pick<PlanConfig, "staffLoginLimit">): boole
 // The "Custom" card shown after the public plans on /pricing and billing. Not
 // a catalogue plan: it can't be bought online, its CTA opens the contact form.
 export const CUSTOM_PLAN_CONTACT_HREF = "/contact?plan=custom";
+
+export function isCustomPlan(plan: Pick<PlanConfig, "custom"> | null | undefined): boolean {
+  return !!plan?.custom;
+}
 
 export function customPlanCard(maxPublicShops: number) {
   return {
@@ -165,7 +175,12 @@ export class PlanCatalog {
 
   /** Plans offered to new customers, cheapest first. */
   get publicPlans(): PlanConfig[] {
-    return this.plans.filter((p) => p.status === "active");
+    return this.plans.filter((p) => this.isOnSale(p));
+  }
+
+  /** Can be bought or switched to in the app: active and not a custom deal. */
+  isOnSale(plan: PlanConfig): boolean {
+    return plan.status === "active" && !plan.custom;
   }
 
   get free(): PlanConfig {

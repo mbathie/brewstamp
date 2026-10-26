@@ -26,6 +26,7 @@ export function toPlanConfig(doc: any): PlanConfig {
     tagline: doc.tagline ?? "",
     rank: doc.rank,
     status: doc.status,
+    custom: !!doc.custom,
     badge: doc.badge ?? null,
     shopLimit: doc.shopLimit,
     stampLimit: doc.stampLimit,

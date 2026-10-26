@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { plan?: string; interval?: string };
   const catalog = await getPlanCatalog();
   const plan = catalog.bySlug(body.plan || "");
-  if (!plan || plan.slug === "free" || plan.status !== "active") {
+  if (!plan || plan.slug === "free" || !catalog.isOnSale(plan)) {
     return NextResponse.json({ error: "Plan must be a paid tier (pro or plus)" }, { status: 400 });
   }
   const slug = plan.slug as Exclude<PlanSlug, "free">;

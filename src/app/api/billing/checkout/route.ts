@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const slug = (body.plan as PlanSlug) || "pro";
   const catalog = await getPlanCatalog();
   const plan = catalog.bySlug(slug);
-  if (!plan || plan.slug === "free" || plan.status !== "active") {
+  if (!plan || plan.slug === "free" || !catalog.isOnSale(plan)) {
     return NextResponse.json(
       { error: "Plan must be a paid tier (pro or plus)" },
       { status: 400 }

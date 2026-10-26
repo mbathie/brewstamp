@@ -26,6 +26,9 @@ const planSchema = new mongoose.Schema(
     tagline: { type: String, default: "" },
     rank: { type: Number, required: true },
     status: { type: String, enum: ["active", "archived"], required: true },
+    // A private deal for one customer: never listed or sold in the app, bought
+    // through a Stripe payment link (scripts/create-custom-plan.ts).
+    custom: { type: Boolean, default: false },
     badge: { type: String, default: null },
     shopLimit: { type: Number, required: true },
     // A number, or "unlimited".
