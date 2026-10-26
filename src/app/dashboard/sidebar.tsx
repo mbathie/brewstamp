@@ -8,8 +8,8 @@ import {
   CreditCard,
   Home,
   Users,
-  Users2,
-  Settings,
+  IdCard,
+  Store,
   LogOut,
   ChevronUp,
   UserCog,
@@ -43,14 +43,27 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const ADMIN_EMAIL = "mbathie@gmail.com";
 
-// `ownerOnly` items are hidden from staff/manager — the matching API routes
-// enforce the same gate server-side, this just avoids showing a link that
-// would 403. Billing is owner-only.
-const navItems = [
+type NavItem = {
+  title: string;
+  href: string;
+  icon: typeof Home;
+  /** Hidden from managers and staff (Billing). */
+  ownerOnly?: boolean;
+  /** Hidden from staff (Team). */
+  managerUp?: boolean;
+};
+
+// Grouped by job: running the shop day to day first, account admin below.
+// The role flags only avoid showing links that would 403 — the API routes
+// enforce the same gates server-side.
+const shopItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
-  { title: "Shop Setup", href: "/dashboard/settings", icon: Settings },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
-  { title: "Team", href: "/dashboard/team", icon: Users2 },
+  { title: "Shop setup", href: "/dashboard/settings", icon: Store },
+];
+
+const manageItems: NavItem[] = [
+  { title: "Team", href: "/dashboard/team", icon: IdCard, managerUp: true },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
   { title: "Partners", href: "/dashboard/partners", icon: Handshake },
 ];
@@ -69,17 +82,43 @@ export function DashboardSidebar({
   shopName,
   userEmail,
   canManageBilling = true,
+  canManageTeam = true,
 }: {
   userName: string;
   shopName: string;
   userEmail: string;
   canManageBilling?: boolean;
+  canManageTeam?: boolean;
 }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const visibleNavItems = navItems.filter(
-    (item) => !item.ownerOnly || canManageBilling
-  );
+  const visible = (items: NavItem[]) =>
+    items.filter((i) => (!i.ownerOnly || canManageBilling) && (!i.managerUp || canManageTeam));
+
+  const group = (label: string | null, items: NavItem[]) =>
+    items.length > 0 && (
+      <SidebarGroup>
+        {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {items.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href)}
+                  tooltip={item.title}
+                >
+                  <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
 
   return (
     <Sidebar collapsible="icon">
@@ -104,31 +143,8 @@ export function DashboardSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.href === "/dashboard"
-                        ? pathname === "/dashboard"
-                        : pathname.startsWith(item.href)
-                    }
-                    tooltip={item.title}
-                  >
-                    <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {group(null, visible(shopItems))}
+        {group("Manage", visible(manageItems))}
 
         {userEmail === ADMIN_EMAIL && (
           <SidebarGroup>

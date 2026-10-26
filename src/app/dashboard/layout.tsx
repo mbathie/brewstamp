@@ -140,6 +140,10 @@ export default async function DashboardLayout({
   const canManageBilling = aggregate
     ? ctx.memberships.some((m) => m.role === "owner")
     : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role === "owner";
+  // Team is for owners and managers; staff can't change anything there.
+  const canManageTeam = aggregate
+    ? ctx.memberships.some((m) => m.role !== "staff")
+    : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role !== "staff";
 
   // Only hit the DB for this when a "view as" is actually active.
   // The one billing message to surface at the top (failed payment, plan
@@ -172,6 +176,7 @@ export default async function DashboardLayout({
           shopName={aggregate ? "All shops" : ctx.shop.name}
           userEmail={session.user.email || ""}
           canManageBilling={canManageBilling}
+          canManageTeam={canManageTeam}
         />
         <SidebarInset>
           {billingNotice && <BillingBanner notice={billingNotice} />}
