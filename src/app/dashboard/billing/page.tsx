@@ -152,7 +152,9 @@ export default function BillingPage() {
   // In-app confirmation before downgrading to Free (replaces window.confirm,
   // which owners clicked through without seeing what they'd lose).
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [tab, setTab] = useState<"plans" | "history">("plans");
+  // null = the default for the shop: plans while on Free, history once paying
+  // (the plan grid is then one click away under "Change plan").
+  const [tabChoice, setTab] = useState<"plans" | "history" | null>(null);
 
   const router = useRouter();
   function reload() {
@@ -206,6 +208,13 @@ export default function BillingPage() {
   }, [data]);
 
   const catalog = useMemo(() => new PlanCatalog(data?.plans ?? []), [data]);
+  const paying = currentSlug !== "free";
+  const tab = tabChoice ?? (paying ? "history" : "plans");
+  const showPlans = () => {
+    setTab("plans");
+    // After the tab renders.
+    requestAnimationFrame(() => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
   const currentRank = catalog.rank(currentSlug);
   const currentInterval = currentSlug === "free" ? null : (data?.subscription?.interval ?? null);
   const isSeed = data?.subscription?.isSeed ?? false;
@@ -453,7 +462,7 @@ export default function BillingPage() {
                 </div>
               )}
               <CardActions>
-                <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => setTab("plans")} disabled={isSeed}>
+                <Button size="sm" className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={showPlans} disabled={isSeed}>
                   Change plan
                 </Button>
                 {sub.cancelAtPeriodEnd || sub.pendingPlanSlug || sub.status === "past_due" ? (
@@ -527,10 +536,7 @@ export default function BillingPage() {
                   size="sm"
                   variant="outline"
                   className="cursor-pointer"
-                  onClick={() => {
-                    setTab("plans");
-                    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
+                  onClick={showPlans}
                 >
                   {data.ownedShops >= currentPlan.shopLimit && catalog.publicPlans.some((p) => p.shopLimit > currentPlan.shopLimit) ? "Need another shop? Upgrade" : "Compare plans"}
                 </Button>
@@ -562,7 +568,7 @@ export default function BillingPage() {
                   ` Your shop joined before ${fmtDate(data.freeTier.changedAt)}, so it keeps ${data.limit} free stamps (new shops get ${FREE_STAMPS}).`}
               </p>
             </div>
-            <Button className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={() => { setTab("plans"); document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+            <Button className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800" onClick={showPlans}>
               Choose a plan
             </Button>
           </CardContent>
@@ -571,13 +577,23 @@ export default function BillingPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "plans" | "history")} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="plans" className="cursor-pointer">Plans</TabsTrigger>
-          <TabsTrigger value="history" className="cursor-pointer">
-            Billing history
-            {data.invoices.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{data.invoices.length}</span>
-            )}
-          </TabsTrigger>
+          {paying && (
+            <TabsTrigger value="history" className="cursor-pointer">
+              Billing history
+              {data.invoices.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{data.invoices.length}</span>
+              )}
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="plans" className="cursor-pointer">{paying ? "Change plan" : "Plans"}</TabsTrigger>
+          {!paying && (
+            <TabsTrigger value="history" className="cursor-pointer">
+              Billing history
+              {data.invoices.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{data.invoices.length}</span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="plans" id="plans" className="space-y-6">
@@ -647,9 +663,9 @@ export default function BillingPage() {
           const isPopular = !!plan.badge && !isCurrent;
           // An archived plan may have no catalogue price at all; fall back to
           // what the subscription pays.
-          const paying = isCurrentTier && sub?.priceCents != null ? sub.priceCents : 0;
-          const monthCents = catalog.priceCents(plan, "month") || (currentInterval === "month" ? paying : 0);
-          const annualCents = catalog.priceCents(plan, "year") || (currentInterval === "year" ? paying : 0);
+          const subCents = isCurrentTier && sub?.priceCents != null ? sub.priceCents : 0;
+          const monthCents = catalog.priceCents(plan, "month") || (currentInterval === "month" ? subCents : 0);
+          const annualCents = catalog.priceCents(plan, "year") || (currentInterval === "year" ? subCents : 0);
           const features =
             plan.slug === "free"
               ? // The shop's own allowance, not the new-shop default.
