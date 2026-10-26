@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import {
   Check,
+  ChevronDown,
   Minus,
   Loader2,
   Mail,
@@ -139,6 +140,8 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [switchingTo, setSwitchingTo] = useState<PlanSlug | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("month");
+  // Plan cards show their top features; this opens every card's full list.
+  const [allFeatures, setAllFeatures] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   // PayPal inline card dialogs: a first subscription, or replacing the card.
@@ -616,8 +619,8 @@ export default function BillingPage() {
 
       {/* Plan grid */}
       <div
-        className={`grid gap-5 ${
-          shownPlans.length + (onCustom ? 0 : 1) > 4 ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
+        className={`grid gap-4 ${
+          shownPlans.length + (onCustom ? 0 : 1) > 4 ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" : "sm:grid-cols-2 xl:grid-cols-4"
         }`}
       >
         {shownPlans.map((plan) => {
@@ -629,7 +632,11 @@ export default function BillingPage() {
           const isCurrent =
             isCurrentTier &&
             (plan.slug === "free" || custom || currentInterval === interval);
-          const shownInterval = custom ? (currentInterval ?? "month") : interval;
+          const isPaid = plan.slug !== "free";
+          // A plan with no price for the toggled interval (a custom deal, or an
+          // archived plan sold only one way) shows the price they pay.
+          const shownInterval =
+            custom || (isPaid && !catalog.priceCents(plan, interval)) ? (currentInterval ?? "month") : interval;
           const isIntervalSwitch =
             isCurrentTier && plan.slug !== "free" && !isCurrent;
           const targetRank = catalog.rank(plan.slug);
@@ -638,9 +645,16 @@ export default function BillingPage() {
           // Spotlight the recommended tier — but never over the active plan,
           // whose emerald treatment takes precedence.
           const isPopular = !!plan.badge && !isCurrent;
-          const isPaid = plan.slug !== "free";
-          const monthCents = catalog.priceCents(plan, "month");
-          const annualCents = catalog.priceCents(plan, "year");
+          // An archived plan may have no catalogue price at all; fall back to
+          // what the subscription pays.
+          const paying = isCurrentTier && sub?.priceCents != null ? sub.priceCents : 0;
+          const monthCents = catalog.priceCents(plan, "month") || (currentInterval === "month" ? paying : 0);
+          const annualCents = catalog.priceCents(plan, "year") || (currentInterval === "year" ? paying : 0);
+          const features =
+            plan.slug === "free"
+              ? // The shop's own allowance, not the new-shop default.
+                plan.features.map((f) => (/stamps total/.test(f) ? `Up to ${data.limit} stamps total` : f))
+              : plan.features;
 
           const canResume =
             isCurrent && isPaypalSub && !!(sub?.cancelAtPeriodEnd || sub?.pendingPlanSlug);
@@ -660,7 +674,7 @@ export default function BillingPage() {
           return (
             <Card
               key={plan.slug}
-              className={`relative flex flex-col transition-shadow ${
+              className={`relative flex flex-col gap-4 py-5 transition-shadow ${
                 isCurrent
                   ? "border-2 border-emerald-500/60"
                   : isPopular
@@ -678,15 +692,15 @@ export default function BillingPage() {
                   {plan.badge}
                 </div>
               )}
-              <CardHeader className="pb-0">
-                <CardTitle className="text-lg">{plan.slug === "free" ? data.freeTier.label : plan.label}</CardTitle>
-                <CardDescription>{plan.tagline}</CardDescription>
+              <CardHeader className="gap-0.5 pb-0">
+                <CardTitle className="text-base">{plan.slug === "free" ? data.freeTier.label : plan.label}</CardTitle>
+                <CardDescription className="text-xs">{plan.tagline}</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-1 flex-col gap-5 pt-5">
+              <CardContent className="flex flex-1 flex-col gap-4">
                 {/* Price — the focal point of the card */}
                 <div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tracking-tight text-foreground">
+                    <span className="text-3xl font-bold tracking-tight text-foreground">
                       {isPaid && shownInterval === "year" ? formatCents(annualCents) : formatCents(monthCents)}
                     </span>
                     <span className="text-sm text-muted-foreground">
@@ -702,7 +716,7 @@ export default function BillingPage() {
                   <div className="mt-1.5 h-4 text-xs">
                     {custom ? (
                       <span className="text-muted-foreground">Your custom plan, agreed with Brewstamp</span>
-                    ) : isPaid && interval === "year" ? (
+                    ) : isPaid && shownInterval === "year" && monthCents > 0 ? (
                       <span>
                         <span className="font-semibold text-emerald-500">
                           Save {formatCents(monthCents * 12 - annualCents)}/yr
@@ -712,7 +726,7 @@ export default function BillingPage() {
                           {formatCents(Math.round(annualCents / 12))}/mo
                         </span>
                       </span>
-                    ) : isPaid ? (
+                    ) : isPaid && annualCents > 0 && shownInterval === "month" ? (
                       <span className="text-muted-foreground">
                         or {formatCents(annualCents)}/yr billed annually
                       </span>
@@ -720,19 +734,9 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                <ul className="flex-1 space-y-2.5 text-sm">
-                  {(plan.slug === "free"
-                    ? // The shop's own allowance, not the new-shop default.
-                      plan.features.map((f) => (/stamps total/.test(f) ? `Up to ${data.limit} stamps total` : f))
-                    : plan.features
-                  ).map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                      <span className="text-muted-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
+                <FeatureList features={features} all={allFeatures} />
                 <Button
+                  size="sm"
                   className={`w-full cursor-pointer ${
                     (isUpgrade || isPopular) && !isCurrent
                       ? "bg-amber-700 text-white hover:bg-amber-800"
@@ -752,32 +756,35 @@ export default function BillingPage() {
           );
         })}
         {!onCustom && (
-        <Card className="relative flex flex-col border-dashed">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg">{customPlan.label}</CardTitle>
-            <CardDescription>{customPlan.tagline}</CardDescription>
+        <Card className="relative flex flex-col gap-4 border-dashed py-5">
+          <CardHeader className="gap-0.5 pb-0">
+            <CardTitle className="text-base">{customPlan.label}</CardTitle>
+            <CardDescription className="text-xs">{customPlan.tagline}</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-5 pt-5">
+          <CardContent className="flex flex-1 flex-col gap-4">
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight text-foreground">Let&apos;s talk</span>
+                <span className="text-3xl font-bold tracking-tight text-foreground">Let&apos;s talk</span>
               </div>
               <div className="mt-1.5 h-4 text-xs text-muted-foreground">Priced per shop for your group</div>
             </div>
-            <ul className="flex-1 space-y-2.5 text-sm">
-              {customPlan.features.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                  <span className="text-muted-foreground">{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Button asChild variant="outline" className="w-full cursor-pointer">
+            <FeatureList features={customPlan.features} all={allFeatures} />
+            <Button asChild size="sm" variant="outline" className="w-full cursor-pointer">
               <a href={CUSTOM_PLAN_CONTACT_HREF}>Contact us</a>
             </Button>
           </CardContent>
         </Card>
         )}
+      </div>
+      <div className="-mt-2 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setAllFeatures((v) => !v)}
+          className="inline-flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          {allFeatures ? "Show fewer features" : "Show all features"}
+          <ChevronDown className={`size-4 transition-transform ${allFeatures ? "rotate-180" : ""}`} />
+        </button>
       </div>
 
       {/* Feature matrix */}
@@ -1195,4 +1202,22 @@ function FeatureRow({
 // (mt-auto) behind a divider, so actions line up across cards of any height.
 function CardActions({ children }: { children: React.ReactNode }) {
   return <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">{children}</div>;
+}
+
+// The top few features of a plan card, or all of them.
+const TOP_FEATURES = 3;
+function FeatureList({ features, all }: { features: string[]; all: boolean }) {
+  return (
+    <ul className="flex-1 space-y-1.5 text-[13px]">
+      {(all ? features : features.slice(0, TOP_FEATURES)).map((f) => (
+        <li key={f} className="flex items-start gap-2">
+          <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-500" />
+          <span className="text-muted-foreground">{f}</span>
+        </li>
+      ))}
+      {!all && features.length > TOP_FEATURES && (
+        <li className="pl-5.5 text-xs text-muted-foreground/70">+{features.length - TOP_FEATURES} more</li>
+      )}
+    </ul>
+  );
 }
