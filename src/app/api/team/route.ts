@@ -3,282 +3,178 @@ import { findUserByEmail } from "@/lib/user-email";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
-import {
-  Invite,
-  ShopMembership,
-  User,
-} from "@/models";
+import { Invite, ShopMembership } from "@/models";
 import { getCurrentShopContext } from "@/lib/shop-context";
-import { hasStaffLogins } from "@/lib/plans";
-import { getPlanCatalog } from "@/lib/plan-catalog";
-import { getShopPlanLimits } from "@/lib/plan-limits";
+import { canAssign, seatFree, shopList, teamShops, type TeamRole } from "@/lib/team";
 import { sendTeamInviteEmail } from "@/lib/email";
 
-// Staff logins a shop is using against its plan's allowance: everyone on the
-// team except the owner, plus invites still waiting to be accepted (an
-// invite holds its seat until it expires).
-async function staffLoginsUsed(shopId: unknown, exceptEmail?: string): Promise<number> {
-  const [members, invites] = await Promise.all([
-    ShopMembership.countDocuments({ shop: shopId, role: { $ne: "owner" } }),
-    Invite.countDocuments({
-      shop: shopId,
-      acceptedAt: { $exists: false },
-      expiresAt: { $gt: new Date() },
-      ...(exceptEmail ? { email: { $ne: exceptEmail } } : {}),
-    }),
-  ]);
-  return members + invites;
-}
-
-// GET /api/team — list members + pending invites.
-//
-// Single-shop context: returns just that shop's team.
-// Aggregate ("All shops"): returns the rollup across every shop the viewer
-// has membership on, with the shop attached to each row so the UI can
-// show a Shop column. Invite form is hidden in aggregate (invites are
-// shop-scoped — the user picks a specific shop to invite to).
+// GET /api/team — everyone with access to any of the viewer's shops, one entry
+// per person with their access per shop, plus pending invites grouped by email
+// (a multi-shop invite is one Invite row per shop).
 export async function GET() {
   const ctx = await getCurrentShopContext();
-  if (!ctx) {
+  if (!ctx || ctx.memberships.length === 0) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (ctx.mode === "unset") {
-    return NextResponse.json(
-      { error: "Pick a shop or 'All shops' from the top bar first." },
-      { status: 400 }
-    );
-  }
-
   await connectDB();
 
-  const aggregate = ctx.mode === "all";
-  const accessibleShopIds = ctx.memberships.map((m) => m.shopId);
-  const shopFilter = aggregate
-    ? { $in: accessibleShopIds }
-    : ctx.shop._id;
+  const shops = await teamShops(ctx);
+  const shopIds = shops.map((s) => s._id);
 
-  const memberships = await ShopMembership.find({ shop: shopFilter })
-    .populate("user", "name email")
-    .populate("shop", "_id name")
-    .sort({ createdAt: 1 })
-    .lean();
+  const [memberships, invites] = await Promise.all([
+    ShopMembership.find({ shop: { $in: shopIds } })
+      .populate("user", "name email")
+      .sort({ createdAt: 1 })
+      .lean(),
+    Invite.find({ shop: { $in: shopIds }, acceptedAt: { $exists: false } })
+      .populate("invitedBy", "name email")
+      .sort({ createdAt: -1 })
+      .lean(),
+  ]);
 
-  const invites = await Invite.find({
-    shop: shopFilter,
-    acceptedAt: { $exists: false },
-  })
-    .populate("invitedBy", "name email")
-    .populate("shop", "_id name")
-    .sort({ createdAt: -1 })
-    .lean();
-
-  // Per-shop plan info. In aggregate mode the invite form is hidden so we
-  // only need a single representative plan flag — pick the viewer's
-  // current single shop or the first accessible shop.
-  const planShopId = aggregate
-    ? ctx.memberships[0]?.shopId
-    : ctx.shop._id.toString();
-  const plan = planShopId
-    ? (await getShopPlanLimits(planShopId)).plan
-    : (await getPlanCatalog()).free;
-
-  // Viewer's role per accessible shop. The UI uses this to decide whether
-  // the actions column should render (e.g. a manager on Shop A can edit
-  // its rows but is staff on Shop B and can't edit those).
-  const myRolesByShop: Record<string, string> = {};
-  for (const m of ctx.memberships) {
-    myRolesByShop[m.shopId] = m.role;
+  const people = new Map<string, any>();
+  for (const m of memberships as any[]) {
+    if (!m.user) continue;
+    const id = m.user._id.toString();
+    if (!people.has(id)) {
+      people.set(id, {
+        userId: id,
+        name: m.user.name || "",
+        email: m.user.email || "",
+        isMe: id === ctx.userId,
+        since: m.createdAt,
+        access: [],
+      });
+    }
+    people.get(id).access.push({ membershipId: m._id.toString(), shopId: m.shop.toString(), role: m.role });
   }
-  const myRole = aggregate
-    ? null
-    : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role || null;
+
+  const pending = new Map<string, any>();
+  for (const inv of invites as any[]) {
+    let group = pending.get(inv.email);
+    if (!group) {
+      group = {
+        email: inv.email,
+        role: inv.role,
+        expiresAt: inv.expiresAt,
+        invitedBy: inv.invitedBy?.name || inv.invitedBy?.email || "",
+        items: [],
+      };
+      pending.set(inv.email, group);
+    }
+    if (inv.expiresAt > group.expiresAt) group.expiresAt = inv.expiresAt;
+    group.items.push({ inviteId: inv._id.toString(), shopId: inv.shop.toString(), role: inv.role });
+  }
 
   return NextResponse.json({
-    aggregate,
-    shop: aggregate
-      ? null
-      : { _id: ctx.shop._id.toString(), name: ctx.shop.name },
-    myRole,
-    myRolesByShop,
-    plan: {
-      slug: plan.slug,
-      label: plan.label,
-      hasStaffLogins: hasStaffLogins(plan),
-      staffLoginLimit: plan.staffLoginLimit,
-    },
-    // Single-shop view only: seats taken against staffLoginLimit.
-    staffLoginsUsed: aggregate ? null : await staffLoginsUsed(ctx.shop._id),
-    members: memberships.map((m: any) => ({
-      _id: m._id.toString(),
-      role: m.role,
-      acceptedAt: m.acceptedAt,
-      createdAt: m.createdAt,
-      shop: {
-        _id: m.shop?._id?.toString(),
-        name: m.shop?.name || "",
-      },
-      user: {
-        _id: m.user?._id?.toString(),
-        name: m.user?.name || "",
-        email: m.user?.email || "",
-      },
-    })),
-    invites: invites.map((inv: any) => ({
-      _id: inv._id.toString(),
-      email: inv.email,
-      role: inv.role,
-      expiresAt: inv.expiresAt,
-      createdAt: inv.createdAt,
-      shop: {
-        _id: inv.shop?._id?.toString(),
-        name: inv.shop?.name || "",
-      },
-      invitedBy: {
-        name: inv.invitedBy?.name || "",
-        email: inv.invitedBy?.email || "",
-      },
-    })),
+    currentShopId: ctx.mode === "single" ? ctx.shopId : null,
+    shops,
+    people: [...people.values()],
+    invites: [...pending.values()],
   });
 }
 
-// POST /api/team — invite a new member to the current shop.
-// Body: { email: string, role: 'manager' | 'staff' }
+// POST /api/team — invite someone to one or more shops.
+// Body: { email, role: 'manager' | 'staff', shopIds?: string[] } — shopIds
+// defaults to the current shop. One email goes out; accepting it accepts the
+// invite at every shop (see /api/invites/accept).
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user) {
+  const ctx = await getCurrentShopContext();
+  if (!session?.user || !ctx || ctx.memberships.length === 0) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const ctx = await getCurrentShopContext();
-  if (!ctx || ctx.mode !== "single") {
-    return NextResponse.json(
-      { error: "Pick a single shop to invite team members." },
-      { status: 400 }
-    );
-  }
 
-  const myMembership = ctx.memberships.find((m) => m.shopId === ctx.shopId);
-  if (!myMembership || (myMembership.role !== "owner" && myMembership.role !== "manager")) {
-    return NextResponse.json(
-      { error: "Only the shop owner or a manager can invite team members." },
-      { status: 403 }
-    );
-  }
-
-  const body = (await req.json().catch(() => ({}))) as {
-    email?: string;
-    role?: "manager" | "staff";
-  };
+  const body = (await req.json().catch(() => ({}))) as { email?: string; role?: TeamRole; shopIds?: string[] };
   const email = body.email?.trim().toLowerCase();
   const role = body.role;
-
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
   }
   if (role !== "manager" && role !== "staff") {
-    return NextResponse.json(
-      { error: "Role must be 'manager' or 'staff'" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Role must be 'manager' or 'staff'" }, { status: 400 });
   }
-  // Only the owner can invite at the manager level.
-  if (role === "manager" && myMembership.role !== "owner") {
-    return NextResponse.json(
-      { error: "Only the shop owner can invite managers." },
-      { status: 403 }
-    );
+  const wanted = body.shopIds?.length ? body.shopIds : ctx.shopId ? [ctx.shopId] : [];
+  if (!wanted.length) {
+    return NextResponse.json({ error: "Pick at least one shop." }, { status: 400 });
   }
 
   await connectDB();
-
-  // Plan gate — staff logins are a Pro+ feature (Pro: one). Resolved from the shop
-  // OWNER's effective plan so it covers every shop the owner pays for, not
-  // just the one carrying the Stripe subscription.
-  const plan = (await getShopPlanLimits(ctx.shop._id.toString())).plan;
-  if (!hasStaffLogins(plan)) {
-    return NextResponse.json(
-      {
-        error: `The ${plan.label} plan doesn't include team logins. Upgrade to Pro for one staff login, or Business for unlimited.`,
-        upgradeRequired: true,
-        currentPlan: plan.slug,
-      },
-      { status: 402 }
-    );
+  const shops = (await teamShops(ctx)).filter((s) => wanted.includes(s._id));
+  if (shops.length !== new Set(wanted).size) {
+    return NextResponse.json({ error: "You don't have access to one of those shops." }, { status: 403 });
   }
-  // Re-sending a pending invite to the same address doesn't take a new seat.
-  if (
-    plan.staffLoginLimit !== "unlimited" &&
-    (await staffLoginsUsed(ctx.shop._id, email)) >= plan.staffLoginLimit
-  ) {
+  const denied = shops.filter((s) => !canAssign(s.myRole, role));
+  if (denied.length) {
     return NextResponse.json(
       {
-        error: `The ${plan.label} plan includes ${plan.staffLoginLimit} staff login${plan.staffLoginLimit === 1 ? "" : "s"}. Upgrade to Business for unlimited team logins.`,
-        upgradeRequired: true,
-        currentPlan: plan.slug,
+        error:
+          role === "manager"
+            ? `Only the owner can add managers (${shopList(denied.map((s) => s.name))}).`
+            : `You can't invite people to ${shopList(denied.map((s) => s.name))}.`,
       },
-      { status: 402 }
+      { status: 403 },
     );
   }
 
-  // No-op if the target email already has a membership on this shop.
+  // Shops they're already on are skipped rather than refused.
   const existingUser = await findUserByEmail(email);
-  if (existingUser) {
-    const already = await ShopMembership.findOne({
-      user: existingUser._id,
-      shop: ctx.shop._id,
-    });
-    if (already) {
-      return NextResponse.json(
-        { error: `${email} is already on the team for this shop.` },
-        { status: 400 }
-      );
-    }
+  const already = existingUser
+    ? new Set(
+        (await ShopMembership.find({ user: existingUser._id, shop: { $in: wanted } }).select("shop").lean()).map(
+          (m: any) => m.shop.toString(),
+        ),
+      )
+    : new Set<string>();
+  const targets = shops.filter((s) => !already.has(s._id));
+  if (!targets.length) {
+    return NextResponse.json({ error: `${email} already has access to ${shopList(shops.map((s) => s.name))}.` }, { status: 400 });
   }
 
-  // Reuse a pending invite if one already exists for this email/shop —
-  // refresh the token + expiry instead of creating duplicates.
-  const token = crypto.randomBytes(24).toString("hex");
+  // Plan gate per shop. Re-inviting the same address doesn't take a new seat.
+  const pendingHere = new Set(
+    (await Invite.find({ shop: { $in: targets.map((s) => s._id) }, email, acceptedAt: { $exists: false } }).select("shop").lean()).map(
+      (i: any) => i.shop.toString(),
+    ),
+  );
+  const full = targets.filter((s) => !pendingHere.has(s._id) && !seatFree(s));
+  if (full.length) {
+    const plan = full[0].plan;
+    return NextResponse.json(
+      {
+        error: plan.hasStaffLogins
+          ? `The ${plan.label} plan includes ${plan.staffLoginLimit} staff login${plan.staffLoginLimit === 1 ? "" : "s"} per shop and ${shopList(full.map((s) => s.name))} ${full.length === 1 ? "is" : "are"} full. Upgrade to Business for unlimited team logins.`
+          : `The ${plan.label} plan doesn't include team logins. Upgrade to Pro for one staff login, or Business for unlimited.`,
+        upgradeRequired: true,
+      },
+      { status: 402 },
+    );
+  }
+
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  let invite = await Invite.findOne({
-    shop: ctx.shop._id,
-    email,
-    acceptedAt: { $exists: false },
-  });
-  if (invite) {
-    invite.role = role;
-    invite.token = token;
-    invite.expiresAt = expiresAt;
-    invite.invitedBy = session.user.id;
-    await invite.save();
-  } else {
-    invite = await Invite.create({
-      shop: ctx.shop._id,
-      email,
-      role,
-      token,
-      invitedBy: session.user.id,
-      expiresAt,
-    });
+  const tokens: string[] = [];
+  for (const s of targets) {
+    const token = crypto.randomBytes(24).toString("hex");
+    tokens.push(token);
+    await Invite.findOneAndUpdate(
+      { shop: s._id, email, acceptedAt: { $exists: false } },
+      { $set: { role, token, expiresAt, invitedBy: session.user.id } },
+      { upsert: true },
+    );
   }
 
-  // Best-effort email send (don't block the response on delivery).
-  const inviterName = session.user.name || "A teammate";
-  const shopName = ctx.shop.name;
+  // Best-effort email; the first shop's token accepts them all.
   sendTeamInviteEmail({
     to: email,
-    shopName,
-    inviterName,
+    shopName: shopList(targets.map((s) => s.name)),
+    inviterName: session.user.name || "A teammate",
     role,
-    token,
+    token: tokens[0],
   }).catch((err) => console.error("[team] invite email failed:", err));
 
   return NextResponse.json({
     ok: true,
-    invite: {
-      _id: invite._id.toString(),
-      email: invite.email,
-      role: invite.role,
-      expiresAt: invite.expiresAt,
-    },
+    invited: targets.map((s) => s.name),
+    skipped: shops.filter((s) => already.has(s._id)).map((s) => s.name),
   });
 }

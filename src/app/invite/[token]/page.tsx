@@ -8,6 +8,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Invite, Shop, User } from "@/models";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { shopList } from "@/lib/team";
 import AcceptInviteButton from "./accept-button";
 
 export const metadata: Metadata = {
@@ -61,7 +62,21 @@ export default async function InviteLandingPage({
     );
   }
 
-  const shop = await Shop.findById(invite.shop);
+  // Every shop this address is invited to; accepting takes them all.
+  const siblings = await Invite.find({
+    email: invite.email,
+    acceptedAt: { $exists: false },
+    expiresAt: { $gt: new Date() },
+  })
+    .select("shop")
+    .lean<{ shop: unknown }[]>();
+  const shops = await Shop.find({ _id: { $in: [invite.shop, ...siblings.map((i) => i.shop)] } })
+    .select("name")
+    .lean<{ _id: unknown; name: string }[]>();
+  const shopNames = shopList([
+    ...shops.filter((s) => String(s._id) === String(invite.shop)).map((s) => s.name),
+    ...shops.filter((s) => String(s._id) !== String(invite.shop)).map((s) => s.name),
+  ]);
 
   const session = await auth();
   // Not signed in → send them to /login (or /register if no account exists
@@ -79,10 +94,10 @@ export default async function InviteLandingPage({
   const emailMatches = userEmail === invite.email.toLowerCase();
 
   return (
-    <CenteredCard title={`Join ${shop?.name || "this shop"}`}>
+    <CenteredCard title={`Join ${shopNames || "this shop"}`}>
       <p className="text-sm text-muted-foreground">
         <strong>{invite.invitedBy?.name || "A teammate"}</strong> invited
-        you to <strong>{shop?.name}</strong> as a{" "}
+        you to <strong>{shopNames}</strong> as a{" "}
         <strong>{invite.role === "manager" ? "Manager" : "Staff"}</strong>.
       </p>
 

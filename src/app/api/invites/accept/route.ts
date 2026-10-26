@@ -64,23 +64,28 @@ export async function POST(req: Request) {
     );
   }
 
-  // Idempotent: skip the create if membership already exists.
-  const existing = await ShopMembership.findOne({
-    user: user._id,
-    shop: invite.shop,
+  // A multi-shop invite is one Invite per shop sharing an email, so accepting
+  // one accepts every live invite to this address. Idempotent: an existing
+  // membership is left as it is.
+  const invites = await Invite.find({
+    email: invite.email,
+    acceptedAt: { $exists: false },
+    expiresAt: { $gt: new Date() },
   });
-  if (!existing) {
-    await ShopMembership.create({
-      user: user._id,
-      shop: invite.shop,
-      role: invite.role,
-      invitedBy: invite.invitedBy,
-      acceptedAt: new Date(),
-    });
+  for (const inv of invites) {
+    const existing = await ShopMembership.findOne({ user: user._id, shop: inv.shop });
+    if (!existing) {
+      await ShopMembership.create({
+        user: user._id,
+        shop: inv.shop,
+        role: inv.role,
+        invitedBy: inv.invitedBy,
+        acceptedAt: new Date(),
+      });
+    }
+    inv.acceptedAt = new Date();
+    await inv.save();
   }
-
-  invite.acceptedAt = new Date();
-  await invite.save();
 
   const res = NextResponse.json({
     ok: true,
