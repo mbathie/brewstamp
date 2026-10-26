@@ -11,6 +11,8 @@ const AI_BOTS = [
   "OAI-SearchBot", // ChatGPT search
   "ChatGPT-User", // ChatGPT live browsing
   "ClaudeBot", // Anthropic crawler
+  "Claude-SearchBot", // Claude search index
+  "Claude-User", // Claude fetching a page for a user
   "Claude-Web",
   "anthropic-ai",
   "PerplexityBot", // Perplexity index
@@ -19,6 +21,10 @@ const AI_BOTS = [
   "Applebot-Extended", // Apple Intelligence
   "CCBot", // Common Crawl (feeds many LLMs)
   "cohere-ai",
+  "Meta-ExternalAgent", // Meta AI
+  "Amazonbot", // Alexa / Amazon answers
+  "DuckAssistBot", // DuckDuckGo AI answers
+  "MistralAI-User", // Le Chat live fetch
 ];
 
 export default function robots(): MetadataRoute.Robots {

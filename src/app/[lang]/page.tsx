@@ -84,6 +84,14 @@ export default async function LandingPage({ params }: RouteParams) {
       lang={lang}
       dir={isRtl ? "rtl" : undefined}
     >
+      {/* The root layout renders <html lang="en">; correct it (and the text
+          direction) before paint so browsers don't offer to "translate
+          from English" and assistive tech reads the right language. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.lang=${JSON.stringify(lang)};${isRtl ? 'document.documentElement.dir="rtl";' : ""}`,
+        }}
+      />
       <PublicHeader transparent />
       <main className="flex-1">
         {/* Hero */}

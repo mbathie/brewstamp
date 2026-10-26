@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title:
@@ -55,7 +56,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/thirty-7even-macquarie-park",
   datePublished: "2026-05-07",
-  dateModified: "2026-05-07",
+  dateModified: modifiedDate("/blog/thirty-7even-macquarie-park", "2026-05-07"),
   image: "https://brewstamp.app/blog/thirty-7even-interior.jpg",
   about: {
     "@type": "LocalBusiness",

@@ -16,16 +16,12 @@
  *
  * Run it AFTER a deploy has gone live, so the key file and the pages exist.
  */
-const KEY = "0692e347fd0dec4ee5b37c0110ba607e";
-const HOST = "brewstamp.app";
-const KEY_LOCATION = `https://${HOST}/${KEY}.txt`;
-const SITEMAP = `https://${HOST}/sitemap.xml`;
+import { INDEXNOW_HOST, parseSitemap, submitToIndexNow } from "../src/lib/indexnow";
 
 async function sitemapUrls(): Promise<string[]> {
-  const res = await fetch(SITEMAP);
+  const res = await fetch(`https://${INDEXNOW_HOST}/sitemap.xml`);
   if (!res.ok) throw new Error(`Failed to fetch sitemap: ${res.status}`);
-  const xml = await res.text();
-  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
+  return parseSitemap(await res.text()).map(([url]) => url);
 }
 
 async function main() {
@@ -39,23 +35,11 @@ async function main() {
   console.log(`Submitting ${urlList.length} URL(s) to IndexNow:`);
   for (const u of urlList) console.log(`  ${u}`);
 
-  const res = await fetch("https://api.indexnow.org/indexnow", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify({
-      host: HOST,
-      key: KEY,
-      keyLocation: KEY_LOCATION,
-      urlList,
-    }),
-  });
-
   // 200 OK / 202 Accepted = success. 403 = key not found/valid (is the key
   // file deployed?). 422 = URL/host mismatch. 429 = rate limited.
-  const body = await res.text();
-  console.log(`\nIndexNow response: ${res.status} ${res.statusText}`);
-  if (body) console.log(body);
-  if (res.status !== 200 && res.status !== 202) process.exit(1);
+  const status = await submitToIndexNow(urlList);
+  console.log(`\nIndexNow response: ${status}`);
+  if (status !== 200 && status !== 202) process.exit(1);
   console.log("Done.");
 }
 

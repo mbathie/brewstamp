@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { LANDING_LANGS } from "@/lib/i18n/landing";
 
 const ATTR_COOKIE = "bs_attr";
 const REF_COOKIE = "bs_ref";
@@ -17,7 +18,19 @@ const IMPERSONATE_COOKIE = "bs_impersonate";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const IMPERSONATION_ESCAPE_HATCH = "/api/admin/impersonate";
 
+// Translated home pages (/es, /fr, …) share the root layout's <html lang="en">,
+// so say which language each one is in the response; Bing and AI crawlers
+// read Content-Language alongside the hreflang links.
+const LANG_PATH = new Map(LANDING_LANGS.map((l) => [`/${l}`, l]));
+
 export function proxy(request: NextRequest) {
+  const response = route(request);
+  const lang = LANG_PATH.get(request.nextUrl.pathname);
+  if (lang) response.headers.set("Content-Language", lang);
+  return response;
+}
+
+function route(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (

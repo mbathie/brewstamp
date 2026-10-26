@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title:
@@ -59,7 +60,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-cards",
   datePublished: "2026-05-05",
-  dateModified: "2026-10-21",
+  dateModified: modifiedDate("/blog/coffee-shop-loyalty-cards", "2026-10-21"),
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

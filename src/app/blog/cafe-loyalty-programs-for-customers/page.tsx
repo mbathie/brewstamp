@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   // SERP-tuned: lead with the implicit answer ("Yes —") and the payoff
@@ -59,7 +60,7 @@ const jsonLd = {
   mainEntityOfPage:
     "https://brewstamp.app/blog/cafe-loyalty-programs-for-customers",
   datePublished: "2026-05-11",
-  dateModified: "2026-05-11",
+  dateModified: modifiedDate("/blog/cafe-loyalty-programs-for-customers", "2026-05-11"),
   image:
     "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

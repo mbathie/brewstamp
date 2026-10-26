@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 // Comparison roundup targeting the "cafe loyalty app" / "coffee loyalty app" /
 // "coffee rewards app" query cluster (see the 2026-10 SEO report) — searchers
@@ -67,7 +68,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/best-coffee-shop-loyalty-apps",
   datePublished: "2026-10-21",
-  dateModified: "2026-10-21",
+  dateModified: modifiedDate("/blog/best-coffee-shop-loyalty-apps", "2026-10-21"),
   image: HERO,
 };
 

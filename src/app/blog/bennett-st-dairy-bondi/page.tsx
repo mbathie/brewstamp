@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title:
@@ -56,7 +57,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/bennett-st-dairy-bondi",
   datePublished: "2026-05-06",
-  dateModified: "2026-05-06",
+  dateModified: modifiedDate("/blog/bennett-st-dairy-bondi", "2026-05-06"),
   image:
     "https://images.pexels.com/photos/16323069/pexels-photo-16323069.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630",
   about: {

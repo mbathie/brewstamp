@@ -5,6 +5,7 @@ import { ArrowRight, Users, Store, Download, LayoutGrid, ShieldCheck } from "luc
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Multi-Shop, Team Logins, and a New Pricing Lineup",
@@ -55,7 +56,7 @@ const jsonLd = {
   mainEntityOfPage:
     "https://brewstamp.app/blog/multiple-shops-and-team-logins",
   datePublished: "2026-05-16",
-  dateModified: "2026-10-21",
+  dateModified: modifiedDate("/blog/multiple-shops-and-team-logins", "2026-10-21"),
   image:
     "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=70&auto=format&fit=crop",
 };

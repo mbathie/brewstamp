@@ -6,6 +6,7 @@ import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Add Your Coffee Loyalty Card to Apple Wallet & Google Wallet",
@@ -56,7 +57,7 @@ const jsonLd = {
   mainEntityOfPage:
     "https://brewstamp.app/blog/apple-google-wallet-loyalty-card",
   datePublished: "2026-06-22",
-  dateModified: "2026-06-22",
+  dateModified: modifiedDate("/blog/apple-google-wallet-loyalty-card", "2026-06-22"),
   image:
     "https://images.pexels.com/photos/887751/pexels-photo-887751.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

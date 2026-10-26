@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Corporate Perk Mode: Subsidised Staff Coffee From One QR Code",
@@ -60,7 +61,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/corporate-coffee-perk",
   datePublished: "2026-06-13",
-  dateModified: "2026-10-21",
+  dateModified: modifiedDate("/blog/corporate-coffee-perk", "2026-10-21"),
   image:
     "https://images.unsplash.com/photo-1726666339581-07d2c51baeeb?w=1600&q=70&auto=format&fit=crop",
 };

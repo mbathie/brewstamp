@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title:
@@ -58,7 +59,7 @@ const jsonLd = {
   mainEntityOfPage:
     "https://brewstamp.app/blog/how-many-stamps-for-a-free-coffee",
   datePublished: "2026-05-13",
-  dateModified: "2026-05-13",
+  dateModified: modifiedDate("/blog/how-many-stamps-for-a-free-coffee", "2026-05-13"),
   image:
     "https://images.unsplash.com/photo-1726666339581-07d2c51baeeb?w=940&h=650&q=70&auto=format&fit=crop",
 };

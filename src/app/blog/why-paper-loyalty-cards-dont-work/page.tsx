@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Why Paper Loyalty Cards Don't Work Anymore",
@@ -54,7 +55,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/why-paper-loyalty-cards-dont-work",
   datePublished: "2026-02-27",
-  dateModified: "2026-05-05",
+  dateModified: modifiedDate("/blog/why-paper-loyalty-cards-dont-work", "2026-05-05"),
   image:
     "https://images.pexels.com/photos/6632853/pexels-photo-6632853.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

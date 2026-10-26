@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Multi-Language Loyalty Cards: 14 Languages, Same QR Code",
@@ -53,7 +54,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/multi-language-loyalty-card",
   datePublished: "2026-05-10",
-  dateModified: "2026-06-14",
+  dateModified: modifiedDate("/blog/multi-language-loyalty-card", "2026-06-14"),
   image:
     "https://images.pexels.com/photos/2074130/pexels-photo-2074130.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

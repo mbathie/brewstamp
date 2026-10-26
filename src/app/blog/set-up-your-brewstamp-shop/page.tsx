@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "How to Set Up Your Brewstamp Shop in 5 Minutes",
@@ -71,7 +72,7 @@ const jsonLd = {
     },
   ],
   datePublished: "2026-05-10",
-  dateModified: "2026-05-10",
+  dateModified: modifiedDate("/blog/set-up-your-brewstamp-shop", "2026-05-10"),
   author: { "@type": "Organization", name: "Brewstamp" },
   publisher: {
     "@type": "Organization",

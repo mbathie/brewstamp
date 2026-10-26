@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "QR Code Loyalty Program: How to Set One Up for Your Cafe (Free)",
@@ -53,7 +54,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/qr-code-loyalty-program",
   datePublished: "2026-02-27",
-  dateModified: "2026-05-05",
+  dateModified: modifiedDate("/blog/qr-code-loyalty-program", "2026-05-05"),
   image:
     "https://images.pexels.com/photos/16345589/pexels-photo-16345589.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

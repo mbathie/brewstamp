@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Coffee Shop Loyalty Card Printing: Free Printable QR Template (PDF)",
@@ -56,7 +57,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/coffee-shop-loyalty-card-printing",
   datePublished: "2026-05-14",
-  dateModified: "2026-05-14",
+  dateModified: modifiedDate("/blog/coffee-shop-loyalty-card-printing", "2026-05-14"),
   image:
     "https://images.pexels.com/photos/6829507/pexels-photo-6829507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

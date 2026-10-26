@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import { FREE_STAMPS } from "@/lib/plans";
+import { modifiedDate } from "@/lib/content-dates";
 
 export const metadata: Metadata = {
   title: "Digital Loyalty Cards for Cafes: How They Work & What They Cost",
@@ -53,7 +54,7 @@ const jsonLd = {
   },
   mainEntityOfPage: "https://brewstamp.app/blog/digital-loyalty-cards-for-cafes",
   datePublished: "2026-02-27",
-  dateModified: "2026-10-21",
+  dateModified: modifiedDate("/blog/digital-loyalty-cards-for-cafes", "2026-10-21"),
   image:
     "https://images.pexels.com/photos/30226644/pexels-photo-30226644.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
 };

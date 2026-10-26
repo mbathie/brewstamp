@@ -1,138 +1,125 @@
 import type { MetadataRoute } from "next";
 import { LANDING_LANGS } from "@/lib/i18n/landing";
 import { SITE_URL } from "@/lib/site";
+import { contentDate } from "@/lib/content-dates";
+
+// <lastmod> is when the page's content last changed (git), not today: a
+// sitemap that's always "modified now" teaches crawlers to ignore it.
+function withLastModified(entry: MetadataRoute.Sitemap[number]): MetadataRoute.Sitemap[number] {
+  const path = entry.url.slice(SITE_URL.length) || "/";
+  const date = contentDate(LANDING_LANGS.includes(path.slice(1)) ? "/[lang]" : path);
+  return date ? { ...entry, lastModified: date } : entry;
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = SITE_URL;
 
-  return [
-    { url: baseUrl, lastModified: new Date(), priority: 1 },
+  const entries: MetadataRoute.Sitemap = [
+    { url: baseUrl, priority: 1 },
     ...LANDING_LANGS.map((lang) => ({
       url: `${baseUrl}/${lang}`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     })),
-    { url: `${baseUrl}/features`, lastModified: new Date(), priority: 0.9 },
-    { url: `${baseUrl}/how-it-works`, lastModified: new Date(), priority: 0.8 },
+    { url: `${baseUrl}/features`, priority: 0.9 },
+    { url: `${baseUrl}/how-it-works`, priority: 0.8 },
     {
       url: `${baseUrl}/coffee-rewards-app`,
-      lastModified: new Date(),
-      priority: 0.9,
+            priority: 0.9,
     },
     {
       url: `${baseUrl}/cafe-loyalty-app`,
-      lastModified: new Date(),
-      priority: 0.9,
+            priority: 0.9,
     },
-    { url: `${baseUrl}/pricing`, lastModified: new Date(), priority: 0.9 },
-    { url: `${baseUrl}/partners`, lastModified: new Date(), priority: 0.6 },
-    { url: `${baseUrl}/try`, lastModified: new Date(), priority: 0.8 },
-    { url: `${baseUrl}/register`, lastModified: new Date(), priority: 0.7 },
-    { url: `${baseUrl}/login`, lastModified: new Date(), priority: 0.5 },
-    { url: `${baseUrl}/alternatives`, lastModified: new Date(), priority: 0.7 },
+    { url: `${baseUrl}/pricing`, priority: 0.9 },
+    { url: `${baseUrl}/partners`, priority: 0.6 },
+    { url: `${baseUrl}/try`, priority: 0.8 },
+    { url: `${baseUrl}/register`, priority: 0.7 },
+    { url: `${baseUrl}/login`, priority: 0.5 },
+    { url: `${baseUrl}/alternatives`, priority: 0.7 },
     {
       url: `${baseUrl}/alternatives/stamp-me`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/alternatives/loopy-loyalty`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/alternatives/punchpass`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/alternatives/square-loyalty`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/alternatives/loyverse`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/alternatives/smile-io`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
-    { url: `${baseUrl}/blog`, lastModified: new Date(), priority: 0.7 },
+    { url: `${baseUrl}/blog`, priority: 0.7 },
     {
       url: `${baseUrl}/blog/apple-google-wallet-loyalty-card`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/corporate-coffee-perk`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/coffee-shop-loyalty-card-printing`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/how-many-stamps-for-a-free-coffee`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/cafe-loyalty-programs-for-customers`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/multi-language-loyalty-card`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/set-up-your-brewstamp-shop`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/thirty-7even-macquarie-park`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/blog/bennett-st-dairy-bondi`,
-      lastModified: new Date(),
-      priority: 0.7,
+            priority: 0.7,
     },
     {
       url: `${baseUrl}/blog/best-coffee-shop-loyalty-apps`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/coffee-shop-loyalty-cards`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/digital-loyalty-cards-for-cafes`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/qr-code-loyalty-program`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/why-paper-loyalty-cards-dont-work`,
-      lastModified: new Date(),
-      priority: 0.8,
+            priority: 0.8,
     },
-    { url: `${baseUrl}/contact`, lastModified: new Date(), priority: 0.5 },
-    { url: `${baseUrl}/privacy`, lastModified: new Date(), priority: 0.3 },
-    { url: `${baseUrl}/terms`, lastModified: new Date(), priority: 0.3 },
+    { url: `${baseUrl}/contact`, priority: 0.5 },
+    { url: `${baseUrl}/privacy`, priority: 0.3 },
+    { url: `${baseUrl}/terms`, priority: 0.3 },
   ];
+  return entries.map(withLastModified);
 }

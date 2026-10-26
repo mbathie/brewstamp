@@ -12,6 +12,7 @@ import { Socket } from "net";
 import { randomUUID } from "crypto";
 import { startDripCron } from "./src/lib/drip-cron";
 import { startBillingCron } from "./src/lib/billing-cron";
+import { scheduleIndexNowAfterDeploy } from "./src/lib/indexnow";
 import { isProbePath } from "./src/lib/probe-paths";
 
 const dev = process.env.NODE_ENV !== "production";
@@ -258,6 +259,7 @@ app.prepare().then(() => {
     // often a copy of prod, so a run here would email real customers about
     // sandbox failures. Opt in with ENABLE_LOCAL_BILLING_CRON=1 when testing.
     const isLocal = process.env.NEXT_PUBLIC_APP_URL?.includes("localhost") ?? dev;
+    if (!isLocal) scheduleIndexNowAfterDeploy(Number(port));
     if (!isLocal || process.env.ENABLE_LOCAL_BILLING_CRON === "1") {
       startBillingCron();
     } else {
