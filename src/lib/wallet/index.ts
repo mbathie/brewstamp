@@ -117,6 +117,10 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
         .lean<any>()
     )?.walletRecoverToken;
   }
+  // What the pass shows right now (before the recover link, which syncs don't
+  // include either), so the first sync after a save doesn't re-push an
+  // unchanged pass.
+  const contentHash = passFingerprint(d);
   d.recoverUrl = `${APP_URL}/api/wallet/recover?t=${recoverToken}`;
 
   const links: SaveLinks = { google: null, apple: null };
@@ -172,6 +176,7 @@ export async function issueSaveLinks(cardId: string): Promise<SaveLinks> {
           serial,
           authToken,
           recoverToken,
+          contentHash,
         },
         { upsert: true },
       );
@@ -238,16 +243,24 @@ export async function syncWalletBranding(shopId: string): Promise<void> {
 
     if (avail.apple) {
       const passes = await WalletPass.find({ shop: shopId, provider: "apple" })
-        .select("registrations")
-        .lean<ApplePassLike[]>();
-      // Mark the change BEFORE the push: a woken device immediately asks what
-      // changed, and must see the new time or it skips the update. Branding is
-      // part of every pass's fingerprint, so the stored ones are now stale.
-      await WalletPass.updateMany(
-        { shop: shopId, provider: "apple" },
-        { $set: { lastPushedAt: new Date() }, $unset: { contentHash: 1 } },
-      );
-      await applePushUpdate(applePushTokens(passes));
+        .select("card registrations contentHash")
+        .lean<(ApplePassLike & { _id: unknown; card: unknown; contentHash?: string })[]>();
+      // Only passes whose content really changed: a settings save can flag a
+      // branding field (e.g. a regenerated logo URL) without changing what the
+      // pass shows, and Wallet logs an error when we resend an unchanged pass.
+      const changed: typeof passes = [];
+      for (const p of passes) {
+        const d = await buildCardData(String(p.card));
+        if (!d) continue;
+        const contentHash = passFingerprint(d);
+        if (p.contentHash === contentHash) continue;
+        // Mark the change BEFORE the push: a woken device immediately asks
+        // what changed, and must see the new time or it skips the update.
+        await WalletPass.updateOne({ _id: p._id }, { $set: { lastPushedAt: new Date(), contentHash } });
+        changed.push(p);
+      }
+      console.log(`[Wallet] branding sync shop=${shopId}: ${changed.length}/${passes.length} apple pass(es) changed`);
+      if (changed.length) await applePushUpdate(applePushTokens(changed));
     }
   } catch (err) {
     console.error("[Wallet] branding sync failed for shop", shopId, err);

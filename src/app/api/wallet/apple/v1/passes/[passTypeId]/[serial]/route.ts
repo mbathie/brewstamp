@@ -38,7 +38,9 @@ export async function GET(
     return new Response(null, { status: 304 });
   }
 
-  console.log(`[Wallet/apple] refresh: serving latest pass serial=${serial}`);
+  console.log(
+    `[Wallet/apple] refresh: serving latest pass serial=${serial} modified=${modifiedAt.toISOString()} if-modified-since=${req.headers.get("if-modified-since") ?? "none"}`,
+  );
   const buf = await pkpassForSerial(serial);
   if (!buf) return new Response("Not found", { status: 404 });
   return new Response(new Uint8Array(buf), {
