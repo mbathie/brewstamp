@@ -931,7 +931,7 @@ const PLAN_BADGE: Record<PlanSlug, string> = {
 };
 // Private deals (custom_* slugs, e.g. custom_pedal) aren't in the map above.
 const CUSTOM_BADGE = "border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-300";
-const planBadgeClass = (slug: string) =>
+export const planBadgeClass = (slug: string) =>
   PLAN_BADGE[slug as PlanSlug] ?? (slug.startsWith("custom") ? CUSTOM_BADGE : PLAN_BADGE.free);
 
 function fmtPrice(cents: number): string {

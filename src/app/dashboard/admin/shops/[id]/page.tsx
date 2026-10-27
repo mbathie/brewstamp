@@ -21,7 +21,9 @@ import {
   Gift,
   Coffee,
   Store,
+  CornerDownRight,
 } from "lucide-react";
+import { planBadgeClass } from "../shops-table";
 import { Sparkline } from "@/components/sparkline";
 import {
   Table,
@@ -96,6 +98,7 @@ interface ShopDetail {
     walletPasses: boolean;
     planSlug: string;
     planLabel: string;
+    coveredBy: { label: string; slug: string; shopId: string; shopName: string } | null;
     owner: {
       name: string;
       email: string;
@@ -173,13 +176,6 @@ type SortDir = "asc" | "desc";
 const PAGE_SIZE = 20;
 
 // Tier badge colours, kept in sync with the admin shops list.
-const PLAN_BADGE: Record<string, string> = {
-  free: "border-border text-muted-foreground",
-  pro: "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
-  plus: "border-sky-500/30 bg-sky-500/15 text-sky-300",
-  max: "border-violet-500/30 bg-violet-500/15 text-violet-300",
-};
-
 function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -479,15 +475,32 @@ export default function AdminShopDetailPage() {
         <div className="flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl font-semibold text-foreground">{shop.name}</h1>
-            <Badge
-              variant="outline"
-              className={`text-xs px-2 py-0.5 hover:bg-transparent ${
-                PLAN_BADGE[shop.planSlug] ?? PLAN_BADGE.free
-              }`}
-            >
-              {shop.planSlug !== "free" && <Zap className="mr-1 size-3" />}
-              {shop.planLabel}
-            </Badge>
+            {shop.coveredBy ? (
+              <Badge
+                variant="outline"
+                className={`border-dashed text-xs px-2 py-0.5 hover:bg-transparent ${planBadgeClass(
+                  shop.coveredBy.slug,
+                )}`}
+                title={`No subscription on this shop; it's covered by the owner's ${shop.coveredBy.label} plan on ${shop.coveredBy.shopName}`}
+              >
+                <CornerDownRight className="mr-1 size-3" />
+                {shop.coveredBy.label}
+                <Link
+                  href={`/dashboard/admin/shops/${shop.coveredBy.shopId}`}
+                  className="ml-1 opacity-70 hover:underline"
+                >
+                  via {shop.coveredBy.shopName}
+                </Link>
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className={`text-xs px-2 py-0.5 hover:bg-transparent ${planBadgeClass(shop.planSlug)}`}
+              >
+                {shop.planSlug !== "free" && <Zap className="mr-1 size-3" />}
+                {shop.planLabel}
+              </Badge>
+            )}
             {shop.perkMode && (
               <Badge className="border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/15 text-xs px-2 py-0.5">
                 <Coffee className="mr-1 size-3" />

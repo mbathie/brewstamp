@@ -186,8 +186,19 @@ export async function GET(
     ? await Subscription.findOne({
         shop: { $in: ownerShops.map((s: any) => s._id) },
         status: { $in: LIVE_SUB_STATUSES },
-      }).select("shop").lean()
+      }).lean()
     : null;
+  // No plan of its own, but the owner's plan on another shop covers it.
+  const coverPlan = !activeSub && paidOn ? (await getPlanCatalog()).resolveSub(paidOn as any) : null;
+  const coveredBy =
+    coverPlan && paidOn
+      ? {
+          label: coverPlan.label,
+          slug: coverPlan.slug,
+          shopId: String((paidOn as any).shop),
+          shopName: ownerShops.find((s: any) => String(s._id) === String((paidOn as any).shop))?.name ?? "",
+        }
+      : null;
   const mainShopId = String((paidOn as any)?.shop ?? ownerShops[0]?._id ?? "");
 
   const signupReferrer = (ownerDoc as any)?.signupReferrer || "";
@@ -222,6 +233,7 @@ export async function GET(
       perkMode: !!(shop as any).perkMode,
       walletPasses: !!(shop as any).walletPasses,
       planSlug: plan?.slug ?? "free",
+      coveredBy,
       planLabel: plan?.label ?? `Free trial · ${freeTier.stampLimit}`,
       freeTier: freeTier.tier,
       freeLimit: freeTier.stampLimit,
