@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getCurrentShopContext } from "@/lib/shop-context";
 import { getUserPlanLimits } from "@/lib/plan-limits";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import NewShopForm from "./new-shop-form";
 
 export default async function NewShopPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userId = session.user.id as string;
+  // The context's user, not the session's: under admin "view as" that's the
+  // merchant being viewed, so the limit shown is theirs.
+  const ctx = await getCurrentShopContext();
+  if (!ctx) redirect("/login");
+  const userId = ctx.userId;
 
   // Server-side plan-limit guard — if the user is already at their plan's
   // shop quota, bounce them to the billing page where they can upgrade
