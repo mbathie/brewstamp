@@ -4,7 +4,8 @@ import type { ProgramConfig } from "@/lib/program";
  * Renders the "value" of an approved transaction row in the activity tables
  * (dashboard Recent Check-ins + customer-detail History). Perk shops show a
  * flat free-coffee label; stamp shops show the stamp delta (+awarded, with the
- * -threshold cost on a redemption). Shared so the rule lives in one place.
+ * -threshold cost on a redemption, or the stamps removed on an "adjusted"
+ * row). Shared so the rule lives in one place.
  */
 export function ActivityValue({
   status,
@@ -19,6 +20,10 @@ export function ActivityValue({
   threshold: number;
   program: ProgramConfig;
 }) {
+  if (status === "adjusted") {
+    // Stamps an owner or manager took off by hand (stampsAwarded is negative).
+    return <span className="text-red-400">{stampsAwarded}</span>;
+  }
   if (status !== "approved") {
     return <span className="text-muted-foreground">—</span>;
   }

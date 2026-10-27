@@ -38,5 +38,11 @@ export default async function CustomerDetailPage({
   if (!customer || !shop) notFound();
 
   const props = await loadCustomerDetail(stampCard, customer, shop);
-  return <CustomerDetailContent {...props} />;
+  const role = ctx.memberships.find((m) => m.shopId === shop._id.toString())?.role;
+  return (
+    <CustomerDetailContent
+      {...props}
+      canRemoveStamps={role === "owner" || role === "manager"}
+    />
+  );
 }

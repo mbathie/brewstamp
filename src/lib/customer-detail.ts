@@ -16,16 +16,19 @@ export async function loadCustomerDetail(
   const requests = (await StampRequest.find({
     shop: stampCard.shop,
     customer: customer._id,
-    status: { $in: ["approved", "rejected"] },
+    status: { $in: ["approved", "rejected", "adjusted"] },
   })
     .sort({ createdAt: -1 })
     .limit(200)
+    .populate("adjustedBy", "name email")
     .lean()) as Array<{
     _id: { toString(): string };
     createdAt: Date;
-    status: "approved" | "rejected";
+    status: "approved" | "rejected" | "adjusted";
     stampsAwarded?: number;
     redeem?: boolean;
+    reason?: string;
+    adjustedBy?: { name?: string; email?: string } | null;
   }>;
 
   // Engagement signals
@@ -94,6 +97,8 @@ export async function loadCustomerDetail(
     status: r.status,
     stampsAwarded: r.stampsAwarded || 0,
     redeem: !!r.redeem,
+    reason: r.reason || null,
+    adjustedBy: r.adjustedBy?.name || r.adjustedBy?.email || null,
   }));
 
   return {

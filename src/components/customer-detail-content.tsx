@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import StampDisplay from "@/components/stamp-display";
 import MerchantCheckin from "@/components/merchant-checkin";
 import MergeCustomerDialog from "@/components/merge-customer-dialog";
+import RemoveStampsDialog from "@/components/remove-stamps-dialog";
 import { getProgram } from "@/lib/program";
 import { ActivityValue } from "@/components/activity-value";
 import { avatarTint, initialsOf } from "@/lib/avatar";
@@ -38,9 +39,12 @@ import { toast } from "sonner";
 interface HistoryRow {
   id: string;
   createdAt: string;
-  status: "approved" | "rejected";
+  status: "approved" | "rejected" | "adjusted";
   stampsAwarded: number;
   redeem: boolean;
+  // Removals ("adjusted"): why, and who did it.
+  reason?: string | null;
+  adjustedBy?: string | null;
 }
 
 interface Props {
@@ -68,6 +72,8 @@ interface Props {
   // Admin view: no editing, no check-in, no disable — the write APIs are
   // merchant-scoped, and support shouldn't be changing a shop's records.
   readOnly?: boolean;
+  // Owners and managers can take stamps off the card; staff can't.
+  canRemoveStamps?: boolean;
   // Where the back arrow goes; defaults to the merchant's customer list.
   backHref?: string;
 }
@@ -95,6 +101,7 @@ export default function CustomerDetailContent({
   initialTags,
   initialDisabled = false,
   readOnly = false,
+  canRemoveStamps = false,
   backHref = "/dashboard/customers",
 }: Props) {
   const [showCardPreview, setShowCardPreview] = useState(false);
@@ -413,6 +420,17 @@ export default function CustomerDetailContent({
                     reward{freeRedeemed === 1 ? "" : "s"} redeemed
                   </span>
                 </span>
+                {!readOnly && canRemoveStamps && stamps > 0 && (
+                  <span className="ml-auto">
+                    <RemoveStampsDialog
+                      shopId={shopId}
+                      customerId={customerId}
+                      displayName={displayName}
+                      stamps={stamps}
+                      threshold={threshold}
+                    />
+                  </span>
+                )}
               </div>
 
               <button
@@ -573,6 +591,13 @@ export default function CustomerDetailContent({
                           <span suppressHydrationWarning>
                             {shortDateTime(req.createdAt)}
                           </span>
+                          {req.status === "adjusted" && (req.adjustedBy || req.reason) && (
+                            <span className="block text-xs">
+                              {[req.adjustedBy && `by ${req.adjustedBy}`, req.reason]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <ActivityValue

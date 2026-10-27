@@ -9,10 +9,12 @@ export function StatusBadge({ status }: { status: string }) {
       className={
         status === "approved"
           ? "border-green-500/50 text-green-500"
-          : "border-red-400/50 text-red-400"
+          : status === "adjusted"
+            ? "border-muted-foreground/40 text-muted-foreground"
+            : "border-red-400/50 text-red-400"
       }
     >
-      {status}
+      {status === "adjusted" ? "removed" : status}
     </Badge>
   );
 }
