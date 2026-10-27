@@ -20,6 +20,7 @@ import {
   Compass,
   Gift,
   Coffee,
+  Store,
 } from "lucide-react";
 import { Sparkline } from "@/components/sparkline";
 import {
@@ -102,6 +103,7 @@ interface ShopDetail {
       authMethods?: string[];
       signupReferrer?: string;
       signupLandingPage?: string;
+      shops?: { _id: string; name: string }[];
     };
   };
   customers: {
@@ -508,6 +510,27 @@ export default function AdminShopDetailPage() {
               <> &middot; {shop.owner.authMethods.join(", ")}</>
             )}
           </p>
+          {shop.owner.shops && shop.owner.shops.length > 1 && (
+            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+              <Store className="size-3 text-sky-300" />
+              <span className="font-medium text-sky-300">{shop.owner.shops.length} shops</span>
+              {shop.owner.shops.map((s) => (
+                <span key={s._id}>
+                  {" · "}
+                  {s._id === shop._id ? (
+                    <span className="text-foreground">{s.name}</span>
+                  ) : (
+                    <Link
+                      href={`/dashboard/admin/shops/${s._id}`}
+                      className="underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                      {s.name}
+                    </Link>
+                  )}
+                </span>
+              ))}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             <span className="font-mono">{shop.code}</span>
             {" · "}

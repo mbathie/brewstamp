@@ -175,6 +175,12 @@ export async function GET(
   }
   if (authMethods.length === 0) authMethods.push("magic-link");
 
+  // Every shop this owner has, this one included (logo excluded: it's base64).
+  const ownerShops = await Shop.find({ owner: ownerId })
+    .select("name")
+    .sort({ createdAt: 1 })
+    .lean();
+
   const signupReferrer = (ownerDoc as any)?.signupReferrer || "";
   const signupLandingPage = (ownerDoc as any)?.signupLandingPage || "";
 
@@ -193,7 +199,13 @@ export async function GET(
       upgradeNudgeSent: !!(shop as any).upgradeNudgeSent,
       firstCustomerEmailSent: !!(shop as any).firstCustomerEmailSent,
       language: (shop as any).language || "en",
-      owner: { ...(shop as any).owner, authMethods, signupReferrer, signupLandingPage },
+      owner: {
+        ...(shop as any).owner,
+        authMethods,
+        signupReferrer,
+        signupLandingPage,
+        shops: ownerShops.map((s: any) => ({ _id: String(s._id), name: s.name })),
+      },
       isPro: !!activeSub,
       perkMode: !!(shop as any).perkMode,
       walletPasses: !!(shop as any).walletPasses,
