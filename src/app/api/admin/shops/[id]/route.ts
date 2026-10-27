@@ -180,6 +180,15 @@ export async function GET(
     .select("name")
     .sort({ createdAt: 1 })
     .lean();
+  // The main shop is the one holding the owner's paid plan (it covers the
+  // rest); with no plan, the first shop they made.
+  const paidOn = ownerShops.length > 1
+    ? await Subscription.findOne({
+        shop: { $in: ownerShops.map((s: any) => s._id) },
+        status: { $in: LIVE_SUB_STATUSES },
+      }).select("shop").lean()
+    : null;
+  const mainShopId = String((paidOn as any)?.shop ?? ownerShops[0]?._id ?? "");
 
   const signupReferrer = (ownerDoc as any)?.signupReferrer || "";
   const signupLandingPage = (ownerDoc as any)?.signupLandingPage || "";
@@ -204,7 +213,10 @@ export async function GET(
         authMethods,
         signupReferrer,
         signupLandingPage,
-        shops: ownerShops.map((s: any) => ({ _id: String(s._id), name: s.name })),
+        shops: ownerShops
+          .map((s: any) => ({ _id: String(s._id), name: s.name, main: String(s._id) === mainShopId }))
+          .sort((a, b) => Number(b.main) - Number(a.main)),
+        mainPaid: !!paidOn,
       },
       isPro: !!activeSub,
       perkMode: !!(shop as any).perkMode,

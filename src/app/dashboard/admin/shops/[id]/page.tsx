@@ -103,7 +103,8 @@ interface ShopDetail {
       authMethods?: string[];
       signupReferrer?: string;
       signupLandingPage?: string;
-      shops?: { _id: string; name: string }[];
+      shops?: { _id: string; name: string; main: boolean }[];
+      mainPaid?: boolean;
     };
   };
   customers: {
@@ -515,7 +516,7 @@ export default function AdminShopDetailPage() {
               <Store className="size-3 text-sky-300" />
               <span className="font-medium text-sky-300">{shop.owner.shops.length} shops</span>
               {shop.owner.shops.map((s) => (
-                <span key={s._id}>
+                <span key={s._id} className="inline-flex items-center gap-1">
                   {" · "}
                   {s._id === shop._id ? (
                     <span className="text-foreground">{s.name}</span>
@@ -526,6 +527,18 @@ export default function AdminShopDetailPage() {
                     >
                       {s.name}
                     </Link>
+                  )}
+                  {s.main && (
+                    <span
+                      className="rounded border border-sky-500/40 bg-sky-500/10 px-1 text-[10px] font-medium leading-4 text-sky-300"
+                      title={
+                        shop.owner.mainPaid
+                          ? "Holds the owner's paid plan, which covers their other shops"
+                          : "The owner's first shop"
+                      }
+                    >
+                      main
+                    </span>
                   )}
                 </span>
               ))}
