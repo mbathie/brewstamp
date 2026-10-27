@@ -14,16 +14,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Hint } from "@/components/ui/hint";
 
 type Mode = "add" | "remove" | "redeem";
 
 const MAX_ADD = 10;
 
+const STAFF_HINT =
+  "Only the owner or a manager can change stamps here. Customers' own scans still come to you to approve.";
+
 // The stamp controls on a customer's page: add stamps, redeem a reward, and
 // (owners and managers) remove stamps. All three use the same dialog, and
 // nothing is recorded until it's confirmed. Adding and redeeming go through
 // the normal stamp-request approval, so the free-trial limit, wallet passes
-// and history behave exactly as for a scan at the counter; removing is logged
+// and history behave exactly as for a scan at the counter (the server allows
+// them for owners and managers only); removing is logged
 // as an "adjusted" row with who did it and why. Perk shops keep no stamps, so
 // they get a single "Give free reward" in the same dialog.
 export default function StampActions({
@@ -32,7 +37,7 @@ export default function StampActions({
   displayName,
   stamps,
   threshold,
-  canRemove,
+  canManage,
   perk = false,
 }: {
   shopId: string;
@@ -40,7 +45,8 @@ export default function StampActions({
   displayName: string;
   stamps: number;
   threshold: number;
-  canRemove: boolean;
+  // Owners and managers. Staff see the buttons, disabled, with the reason.
+  canManage: boolean;
   perk?: boolean;
 }) {
   const router = useRouter();
@@ -169,48 +175,81 @@ export default function StampActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        {perk && (
-          <Button
-            size="sm"
-            className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
-            onClick={() => open("redeem")}
+        {perk ? (
+          <Hint
+            label={
+              canManage ? `Record a free reward for ${displayName}` : STAFF_HINT
+            }
           >
-            <Gift className="mr-1 size-3.5" />
-            Give free reward
-          </Button>
-        )}
-        {!perk && canRemove && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="cursor-pointer"
-            onClick={() => open("remove")}
-            disabled={stamps === 0}
-            title={stamps === 0 ? "No stamps on the card to remove" : undefined}
-          >
-            <Minus className="mr-1 size-3.5" />
-            Remove
-          </Button>
-        )}
-        {!perk && (
-          <Button
-            size="sm"
-            className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
-            onClick={() => open("add")}
-          >
-            <Plus className="mr-1 size-3.5" />
-            Add stamps
-          </Button>
-        )}
-        {!perk && canRedeem && (
-          <Button
-            size="sm"
-            className="cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700"
-            onClick={() => open("redeem")}
-          >
-            <Gift className="mr-1 size-3.5" />
-            Redeem reward
-          </Button>
+            <Button
+              size="sm"
+              className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
+              onClick={() => open("redeem")}
+              disabled={!canManage}
+            >
+              <Gift className="mr-1 size-3.5" />
+              Give free reward
+            </Button>
+          </Hint>
+        ) : (
+          <>
+            <Hint
+              label={
+                !canManage
+                  ? STAFF_HINT
+                  : stamps === 0
+                    ? "The card has no stamps to remove"
+                    : "Take stamps off the card, e.g. one given by mistake"
+              }
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => open("remove")}
+                disabled={!canManage || stamps === 0}
+              >
+                <Minus className="mr-1 size-3.5" />
+                Remove
+              </Button>
+            </Hint>
+            <Hint
+              label={
+                canManage
+                  ? "Add stamps without the customer scanning"
+                  : STAFF_HINT
+              }
+            >
+              <Button
+                size="sm"
+                className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
+                onClick={() => open("add")}
+                disabled={!canManage}
+              >
+                <Plus className="mr-1 size-3.5" />
+                Add stamps
+              </Button>
+            </Hint>
+            {canRedeem && (
+              <Hint
+                label={
+                  canManage
+                    ? `Use ${threshold} stamps for ${displayName}'s reward`
+                    : STAFF_HINT
+                }
+              >
+                <Button
+                  size="sm"
+                  className="cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700"
+                  onClick={() => open("redeem")}
+                  disabled={!canManage}
+                >
+                  <Gift className="mr-1 size-3.5" />
+                  Redeem reward
+                </Button>
+              </Hint>
+            )}
+          </>
         )}
       </div>
 
@@ -247,6 +286,7 @@ export default function StampActions({
                   onClick={() => setAmount((n) => Math.max(min, n - 1))}
                   disabled={amount <= min}
                   aria-label="Fewer"
+                  title="One fewer"
                 >
                   <Minus className="size-5" />
                 </Button>
@@ -261,6 +301,7 @@ export default function StampActions({
                   onClick={() => setAmount((n) => Math.min(max, n + 1))}
                   disabled={amount >= max}
                   aria-label="More"
+                  title="One more"
                 >
                   <Plus className="size-5" />
                 </Button>

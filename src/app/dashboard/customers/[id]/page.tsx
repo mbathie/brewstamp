@@ -42,7 +42,7 @@ export default async function CustomerDetailPage({
   return (
     <CustomerDetailContent
       {...props}
-      canRemoveStamps={role === "owner" || role === "manager"}
+      canManage={role === "owner" || role === "manager"}
     />
   );
 }

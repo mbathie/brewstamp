@@ -542,7 +542,10 @@ export default function CustomerSearch({
             )}
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
+                <Button
+                  className="cursor-pointer bg-amber-700 hover:bg-amber-800"
+                  title="Add a customer without a phone, so you can stamp them by name"
+                >
                   <Plus className="mr-1 size-4" />
                   Add customer
                 </Button>

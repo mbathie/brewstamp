@@ -6,6 +6,7 @@ import { StampCard } from "@/models";
 // PATCH: enable/disable a customer at the merchant's current shop. Disabling is
 // per-shop (lives on the StampCard) and blocks both stamp earning and perk
 // claims. Upserts the card so a customer with no card yet can be pre-disabled.
+// Owners and managers only.
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -13,6 +14,12 @@ export async function PATCH(
   const merchant = await getMerchant();
   if (!merchant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (merchant.role !== "owner" && merchant.role !== "manager") {
+    return NextResponse.json(
+      { error: "Only the owner or a manager can disable customers." },
+      { status: 403 },
+    );
   }
 
   const { id } = await params;

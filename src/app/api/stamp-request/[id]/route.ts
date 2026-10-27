@@ -77,6 +77,17 @@ export async function PATCH(
   if (!merchant.shopIds.includes(request.shop.toString())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  // Stamps given from the customer page (not a scan at the counter) are an
+  // owner/manager action. Staff approve customers' own scans.
+  if (request.manual && status === "approved") {
+    const role = merchant.memberships.find((m) => m.shopId === request.shop.toString())?.role;
+    if (role !== "owner" && role !== "manager") {
+      return NextResponse.json(
+        { error: "Only the owner or a manager can add stamps from the customer page." },
+        { status: 403 },
+      );
+    }
+  }
   if (request.status !== "pending") {
     return NextResponse.json(
       {

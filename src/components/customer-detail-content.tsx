@@ -37,6 +37,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Hint } from "@/components/ui/hint";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import MergeCustomerDialog from "@/components/merge-customer-dialog";
 import StampActions from "@/components/stamp-actions";
 import { getProgram } from "@/lib/program";
@@ -81,8 +87,9 @@ interface Props {
   // Admin view: no editing, no check-in, no disable — the write APIs are
   // merchant-scoped, and support shouldn't be changing a shop's records.
   readOnly?: boolean;
-  // Owners and managers can take stamps off the card; staff can't.
-  canRemoveStamps?: boolean;
+  // Owners and managers can add, remove and redeem stamps, merge and disable.
+  // Staff see those controls disabled, with the reason.
+  canManage?: boolean;
   // Where the back arrow goes; defaults to the merchant's customer list.
   backHref?: string;
 }
@@ -110,7 +117,7 @@ export default function CustomerDetailContent({
   initialTags,
   initialDisabled = false,
   readOnly = false,
-  canRemoveStamps = false,
+  canManage = false,
   backHref = "/dashboard/customers",
 }: Props) {
   const [page, setPage] = useState(0);
@@ -237,6 +244,7 @@ export default function CustomerDetailContent({
         <Link
           href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          title="Back to all customers"
         >
           <ArrowLeft className="size-4" />
           Customers
@@ -273,6 +281,7 @@ export default function CustomerDetailContent({
                 {email ? (
                   <a
                     href={`mailto:${email}`}
+                    title={`Email ${displayName}`}
                     className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
                   >
                     <Mail className="size-3.5" />
@@ -283,6 +292,7 @@ export default function CustomerDetailContent({
                     <button
                       type="button"
                       onClick={openEdit}
+                      title="Add an email address for this customer"
                       className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
                     >
                       <Mail className="size-3.5" />
@@ -299,22 +309,32 @@ export default function CustomerDetailContent({
 
           {!readOnly && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Customer actions"
-                  className="shrink-0 cursor-pointer"
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label="Customer actions"
+                      className="shrink-0 cursor-pointer"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Edit, merge or disable this customer
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuItem onSelect={openEdit}>
                   <Pencil className="size-4" />
                   Edit name &amp; email
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setMergeOpen(true)}>
+                <DropdownMenuItem
+                  onSelect={() => setMergeOpen(true)}
+                  disabled={!canManage}
+                >
                   <Combine className="size-4" />
                   Merge a duplicate card
                 </DropdownMenuItem>
@@ -322,7 +342,7 @@ export default function CustomerDetailContent({
                 {disabled ? (
                   <DropdownMenuItem
                     onSelect={toggleDisabled}
-                    disabled={togglingDisabled}
+                    disabled={togglingDisabled || !canManage}
                   >
                     <CircleCheck className="size-4" />
                     Enable customer
@@ -331,11 +351,17 @@ export default function CustomerDetailContent({
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={toggleDisabled}
-                    disabled={togglingDisabled}
+                    disabled={togglingDisabled || !canManage}
                   >
                     <Ban className="size-4" />
                     Disable customer
                   </DropdownMenuItem>
+                )}
+                {!canManage && (
+                  // Disabled menu items can't show a tooltip, so say why here.
+                  <p className="px-2 pt-1.5 pb-1 text-xs text-muted-foreground">
+                    Only the owner or a manager can merge or disable customers.
+                  </p>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -350,15 +376,23 @@ export default function CustomerDetailContent({
               rewards.
             </span>
             {!readOnly && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleDisabled}
-                disabled={togglingDisabled}
-                className="cursor-pointer"
+              <Hint
+                label={
+                  canManage
+                    ? "Let them earn stamps and claim rewards again"
+                    : "Only the owner or a manager can enable customers."
+                }
               >
-                {togglingDisabled ? "…" : "Enable customer"}
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleDisabled}
+                  disabled={togglingDisabled || !canManage}
+                  className="cursor-pointer"
+                >
+                  {togglingDisabled ? "…" : "Enable customer"}
+                </Button>
+              </Hint>
             )}
           </div>
         )}
@@ -380,7 +414,7 @@ export default function CustomerDetailContent({
                 displayName={displayName}
                 stamps={stamps}
                 threshold={threshold}
-                canRemove={canRemoveStamps}
+                canManage={canManage}
                 perk={perkMode}
               />
             )}
@@ -496,14 +530,19 @@ export default function CustomerDetailContent({
             )
           ) : (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+              <CardHeader className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+                  <span
+                    className="text-xs text-muted-foreground"
+                    aria-live="polite"
+                  >
+                    {savingNotes ? "Saving…" : notesDirty ? "" : "Saved"}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {savingNotes
-                    ? "Saving…"
-                    : notesDirty
-                      ? ""
-                      : "Saved automatically"}
+                  Your team sees these on the check-in popup when this customer
+                  scans. Customers never see them.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -520,6 +559,7 @@ export default function CustomerDetailContent({
                         onClick={() => removeTag(t)}
                         className="cursor-pointer text-amber-500/70 hover:text-amber-500"
                         aria-label={`Remove tag ${t}`}
+                        title={`Remove tag ${t}`}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -541,10 +581,9 @@ export default function CustomerDetailContent({
                         setTagInput("");
                       }
                     }}
-                    placeholder={
-                      tags.length === 0 ? "+ Add tag (e.g. VIP)" : "+ Add tag"
-                    }
+                    placeholder="+ Add tag"
                     aria-label="Add tag"
+                    title="Type a tag and press Enter, e.g. VIP or Oat milk"
                     className="h-7 w-32 text-xs"
                   />
                 </div>
