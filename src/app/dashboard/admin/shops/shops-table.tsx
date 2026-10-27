@@ -78,6 +78,7 @@ type SortKey =
   | "likelihood"
   | "stamps"
   | "customers"
+  | "ownerShops"
   | "requests14d"
   | "createdAt"
   | "lastActive";
@@ -321,6 +322,16 @@ export function ShopsTable({
 
   const filtered = useMemo(() => shops.filter((s) => matchesFilters(s, filters)), [shops, filters]);
 
+  // How many shops each owner has, across all shops (not just the filtered ones).
+  const shopsByOwner = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const s of shops) {
+      if (s.ownerEmail) out.set(s.ownerEmail, (out.get(s.ownerEmail) ?? 0) + 1);
+    }
+    return out;
+  }, [shops]);
+  const ownerShops = (s: ShopRow) => shopsByOwner.get(s.ownerEmail) ?? 1;
+
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
     const activity = (s: ShopRow) => (s.perkMode ? s.freeCoffees : s.totalStamps);
@@ -337,6 +348,8 @@ export function ShopsTable({
           return activity(s);
         case "customers":
           return s.customers;
+        case "ownerShops":
+          return ownerShops(s);
         case "requests14d":
           return s.requests14d;
         case "createdAt":
@@ -354,7 +367,8 @@ export function ShopsTable({
       if (typeof av === "string") return av.localeCompare(bv as string) * dir;
       return ((av as number) - (bv as number)) * dir;
     });
-  }, [filtered, sortKey, sortDir]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ownerShops reads shopsByOwner
+  }, [filtered, sortKey, sortDir, shopsByOwner]);
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, pageCount - 1);
@@ -556,6 +570,16 @@ export function ShopsTable({
                   onClick={toggleSort}
                 />
                 <SortHead
+                  k="ownerShops"
+                  label="Shops"
+                  title="Shops this owner has. Click a count to list them."
+                  align="right"
+                  className="hidden md:table-cell"
+                  sortKey={sortKey}
+                  dir={sortDir}
+                  onClick={toggleSort}
+                />
+                <SortHead
                   k="requests14d"
                   label="14d"
                   title="Approved stamp requests in the last 14 days"
@@ -582,7 +606,7 @@ export function ShopsTable({
             <TableBody>
               {sorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center">
+                  <TableCell colSpan={10} className="py-12 text-center">
                     <p className="text-sm text-muted-foreground">No shops match these filters.</p>
                     <Button
                       variant="link"
@@ -599,6 +623,8 @@ export function ShopsTable({
                   <ShopTableRow
                     key={shop._id}
                     shop={shop}
+                    ownerShops={ownerShops(shop)}
+                    onOwnerShops={() => update({ ...DEFAULT_FILTERS, q: shop.ownerEmail })}
                     now={now}
                     onOpen={() => router.push(`/dashboard/admin/shops/${shop._id}`)}
                   />
@@ -651,10 +677,14 @@ export function ShopsTable({
 
 function ShopTableRow({
   shop,
+  ownerShops,
+  onOwnerShops,
   now,
   onOpen,
 }: {
   shop: ShopRow;
+  ownerShops: number;
+  onOwnerShops: () => void;
   now: number;
   onOpen: () => void;
 }) {
@@ -754,6 +784,24 @@ function ShopTableRow({
 
       <TableCell className="hidden py-2.5 text-right tabular-nums sm:table-cell">
         {shop.customers.toLocaleString()}
+      </TableCell>
+
+      <TableCell className="hidden py-2.5 text-right tabular-nums md:table-cell">
+        {ownerShops > 1 ? (
+          <button
+            type="button"
+            className="cursor-pointer rounded px-1.5 font-medium text-sky-300 hover:bg-sky-500/10"
+            title={`Show all ${ownerShops} shops owned by ${shop.ownerEmail}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOwnerShops();
+            }}
+          >
+            {ownerShops}
+          </button>
+        ) : (
+          <span className="px-1.5 text-muted-foreground/50">1</span>
+        )}
       </TableCell>
 
       <TableCell
