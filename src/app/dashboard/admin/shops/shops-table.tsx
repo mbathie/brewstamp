@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ArrowUpDown, Coffee, Eye, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Coffee, CornerDownRight, Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,8 @@ export interface ShopRow {
   cancelAtPeriodEnd: boolean;
   /** Plan label of the owner's paid sub on another shop, when that covers this one. */
   coveredBy: string | null;
+  /** The owner's shop that holds that paid sub (this shop is a sub-shop of it). */
+  coveredByShop: { _id: string; name: string; slug: string } | null;
   /** Free trial tier: 50 stamps for new shops, 100 if grandfathered. */
   freeTier: "free_50" | "free_100";
   freeLimit: number;
@@ -326,7 +328,7 @@ export function ShopsTable({
   const shopsByOwner = useMemo(() => {
     const out = new Map<string, number>();
     for (const s of shops) {
-      if (s.ownerEmail) out.set(s.ownerEmail, (out.get(s.ownerEmail) ?? 0) + 1);
+      if (s.ownerEmail && s.ownerEmail !== "Unknown") out.set(s.ownerEmail, (out.get(s.ownerEmail) ?? 0) + 1);
     }
     return out;
   }, [shops]);
@@ -712,10 +714,24 @@ function ShopTableRow({
           {shop.coveredBy ? (
             <Badge
               variant="outline"
-              className="px-1.5 py-0 text-[10px] text-muted-foreground"
-              title={`No subscription on this shop; the owner's ${shop.coveredBy} plan covers it`}
+              className={`border-dashed px-1.5 py-0 text-[10px] opacity-80 hover:bg-transparent ${planBadgeClass(
+                shop.coveredByShop?.slug ?? "free",
+              )}`}
+              title={`No subscription on this shop; it's covered by the owner's ${shop.coveredBy} plan${
+                shop.coveredByShop ? ` on ${shop.coveredByShop.name}` : ""
+              }`}
             >
-              {shop.coveredBy} · owner
+              <CornerDownRight className="mr-0.5 size-2.5" />
+              {shop.coveredBy}
+              {shop.coveredByShop && (
+                <Link
+                  href={`/dashboard/admin/shops/${shop.coveredByShop._id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="ml-1 max-w-[9rem] truncate opacity-70 hover:underline"
+                >
+                  via {shop.coveredByShop.name}
+                </Link>
+              )}
             </Badge>
           ) : (
             <PlanBadge slug={shop.planSlug} label={shop.planLabel} monthlyCents={shop.monthlyCents} />
@@ -915,6 +931,8 @@ const PLAN_BADGE: Record<PlanSlug, string> = {
 };
 // Private deals (custom_* slugs, e.g. custom_pedal) aren't in the map above.
 const CUSTOM_BADGE = "border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-300";
+const planBadgeClass = (slug: string) =>
+  PLAN_BADGE[slug as PlanSlug] ?? (slug.startsWith("custom") ? CUSTOM_BADGE : PLAN_BADGE.free);
 
 function fmtPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
@@ -929,7 +947,7 @@ export function PlanBadge({
   label: string;
   monthlyCents: number;
 }) {
-  const cls = PLAN_BADGE[slug] ?? (slug.startsWith("custom") ? CUSTOM_BADGE : PLAN_BADGE.free);
+  const cls = planBadgeClass(slug);
   return (
     <Badge variant="outline" className={`px-1.5 py-0 text-[10px] hover:bg-transparent ${cls}`}>
       {slug === "free" ? label || "Free" : label}

@@ -163,10 +163,18 @@ export async function GET() {
   );
   // A paid plan covers every shop the owner has (see getShopPlanLimits), so
   // a sub-less shop whose owner pays elsewhere is not an upgrade lead.
-  const payingOwners = new Map<string, string>();
+  const shopName = new Map(shops.map((s) => [key(s._id), s.name as string]));
+  const payingOwners = new Map<string, { label: string; slug: string; shopId: string; shopName: string }>();
   for (const s of subs) {
     const owner = shopOwner.get(key(s.shop));
-    if (owner) payingOwners.set(owner, catalog.resolveSub(s).label);
+    if (!owner) continue;
+    const plan = catalog.resolveSub(s);
+    payingOwners.set(owner, {
+      label: plan.label,
+      slug: plan.slug,
+      shopId: key(s.shop),
+      shopName: shopName.get(key(s.shop)) ?? "",
+    });
   }
 
   const planCounts: Record<PlanSlug, number> = { free: 0, pro: 0, plus: 0, max: 0 };
@@ -177,7 +185,8 @@ export async function GET() {
     const stat = statMap.get(id);
     const sub = subMap.get(id);
     const act = activityMap.get(id);
-    const coveredBy = !sub ? payingOwners.get(key(shop.owner)) ?? null : null;
+    const cover = !sub ? payingOwners.get(key(shop.owner)) ?? null : null;
+    const coveredBy = cover?.label ?? null;
     const planSlug = (sub?.slug ?? "free") as PlanSlug;
     // Free trial allowance: 50 for new shops, 100 if grandfathered.
     const freeTier = freeTierOf(shop);
@@ -216,6 +225,7 @@ export async function GET() {
       subStatus: sub?.status ?? null,
       cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
       coveredBy,
+      coveredByShop: cover ? { _id: cover.shopId, name: cover.shopName, slug: cover.slug } : null,
       totalStamps: stat?.totalStamps || 0,
       freeCoffees: stat?.freeRedeemed || 0,
       customers: stat?.activeCustomers || 0,
