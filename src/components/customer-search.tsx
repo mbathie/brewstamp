@@ -44,6 +44,8 @@ import {
 import { generateAnimalName } from "@/lib/animal-names";
 import { avatarTint, initialsOf } from "@/lib/avatar";
 import { Pager } from "@/components/ui/pager";
+import { PageHeader } from "@/components/page-header";
+import { timeAgo } from "@/lib/date";
 
 interface Customer {
   _id: string;
@@ -65,13 +67,65 @@ interface StampCardData {
   stamps: number;
   totalEarned: number;
   freeRedeemed: number;
+  createdAt: string;
   updatedAt: string;
+  // From approved stamp requests (see the page): null if they never visited.
+  lastVisit?: string | null;
+  visits?: number;
   tags?: string[];
   notes?: string;
   disabled?: boolean;
 }
 
-type StatusFilter = "active" | "disabled" | "all";
+// Quick views over the list. Every view but "disabled" leaves disabled
+// customers out, so the working list stays clean.
+type View =
+  | "all"
+  | "ready"
+  | "redeemed"
+  | "new"
+  | "lapsed"
+  | "never"
+  | "email"
+  | "disabled";
+
+const DAY = 864e5;
+const NEW_DAYS = 30;
+const LAPSED_DAYS = 30;
+
+const VIEWS: { key: View; label: string; hint: string; stampOnly?: boolean }[] =
+  [
+    { key: "all", label: "All", hint: "Every active customer" },
+    {
+      key: "ready",
+      label: "Reward ready",
+      hint: "Card is full: a reward is waiting",
+      stampOnly: true,
+    },
+    {
+      key: "redeemed",
+      label: "Redeemed before",
+      hint: "Has redeemed at least one reward",
+      stampOnly: true,
+    },
+    { key: "new", label: "New", hint: `Joined in the last ${NEW_DAYS} days` },
+    {
+      key: "lapsed",
+      label: "Lapsed",
+      hint: `Visited before, but not in the last ${LAPSED_DAYS} days`,
+    },
+    {
+      key: "never",
+      label: "No visits yet",
+      hint: "Has a card but no approved stamps",
+    },
+    { key: "email", label: "Has email", hint: "Has an email address on file" },
+    {
+      key: "disabled",
+      label: "Disabled",
+      hint: "Can't earn stamps or claim rewards",
+    },
+  ];
 
 type PerkRange = "7d" | "30d" | "mtd" | "all";
 
@@ -145,7 +199,9 @@ function downloadCsv(
     ...(perkMode
       ? [`Rewards (${rangeLabel})`, "Rewards Today", "Rewards All Time"]
       : ["Current Stamps", "Total Earned", "Free Rewards Redeemed"]),
+    "Visits",
     "Last Visit",
+    "Customer Since",
   ];
   const lines = [header.map(csvCell).join(",")];
   for (const c of rows) {
@@ -170,7 +226,9 @@ function downloadCsv(
               csvCell(c.totalEarned),
               csvCell(c.freeRedeemed),
             ]),
-        csvCell(new Date(c.updatedAt).toISOString()),
+        csvCell(c.visits ?? 0),
+        csvCell(c.lastVisit ? new Date(c.lastVisit).toISOString() : ""),
+        csvCell(new Date(c.createdAt).toISOString()),
       ].join(","),
     );
   }
@@ -267,14 +325,12 @@ export default function CustomerSearch({
   }, [validCards]);
 
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  // Default to active so disabled (e.g. spoofed/ex-staff) customers are hidden
-  // from the working list but still reachable via the filter and the CSV.
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [view, setView] = useState<View>("all");
 
   // Reset to first page when the visible set changes
   useEffect(() => {
     setPage(0);
-  }, [query, statusFilter, tagFilter]);
+  }, [query, view, tagFilter]);
 
   type SortKey =
     | "customer"
@@ -304,8 +360,7 @@ export default function CustomerSearch({
     }
   }
 
-  // Search + tag filtered and sorted, across ALL statuses. This is what the CSV
-  // exports — so a Plus owner gets active and disabled customers in one file.
+  // Search + tag filtered and sorted; the view chips narrow it further.
   const sortedAll = useMemo(() => {
     const list = validCards.filter((card) => {
       if (tagFilter && !(card.tags || []).includes(tagFilter)) return false;
@@ -359,25 +414,57 @@ export default function CustomerSearch({
         case "perkToday":
           return (statOf(a).today - statOf(b).today) * mul;
         case "lastVisit":
-          return (
-            (new Date(a.updatedAt).getTime() -
-              new Date(b.updatedAt).getTime()) *
-            mul
-          );
+          return (visitTime(a) - visitTime(b)) * mul;
       }
     };
     return [...list].sort(compare);
   }, [validCards, query, tagFilter, sortKey, sortDir, statOf]);
 
-  // Table view applies the status filter on top of the sorted base.
-  const filtered = useMemo(() => {
-    if (statusFilter === "all") return sortedAll;
-    const wantDisabled = statusFilter === "disabled";
-    return sortedAll.filter((c) => !!c.disabled === wantDisabled);
-  }, [sortedAll, statusFilter]);
+  const views = VIEWS.filter((v) => !(perkMode && v.stampOnly));
 
-  const disabledCount = useMemo(
-    () => validCards.filter((c) => c.disabled).length,
+  // Which views a card belongs to. Computed once per render of the list and
+  // shared by the chip counts and the filter, so the two always agree.
+  const inView = useCallback(
+    (c: StampCardData, v: View): boolean => {
+      if (v === "disabled") return !!c.disabled;
+      if (c.disabled) return false;
+      const now = Date.now();
+      switch (v) {
+        case "all":
+          return true;
+        case "ready":
+          return c.stamps >= (c.shop?.stampThreshold ?? threshold);
+        case "redeemed":
+          return c.freeRedeemed > 0;
+        case "new":
+          return now - new Date(c.createdAt).getTime() < NEW_DAYS * DAY;
+        case "lapsed":
+          return (
+            !!c.lastVisit &&
+            now - new Date(c.lastVisit).getTime() >= LAPSED_DAYS * DAY
+          );
+        case "never":
+          return !c.lastVisit;
+        case "email":
+          return !!c.customer.email?.trim();
+      }
+    },
+    [threshold],
+  );
+
+  const counts = useMemo(() => {
+    const out = {} as Record<View, number>;
+    for (const v of VIEWS)
+      out[v.key] = sortedAll.filter((c) => inView(c, v.key)).length;
+    return out;
+  }, [sortedAll, inView]);
+
+  const filtered = useMemo(
+    () => sortedAll.filter((c) => inView(c, view)),
+    [sortedAll, view, inView],
+  );
+  const activeTotal = useMemo(
+    () => validCards.filter((c) => !c.disabled).length,
     [validCards],
   );
 
@@ -401,31 +488,120 @@ export default function CustomerSearch({
 
   return (
     <>
-      <div className="flex gap-3">
-        <div className="relative flex-1">
+      <PageHeader
+        title="Customers"
+        description={`${activeTotal} active`}
+        actions={
+          <>
+            {canExportCsv ? (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  downloadCsv(
+                    filtered,
+                    aggregate,
+                    perkMode,
+                    statOf,
+                    perkRangeLabel,
+                  )
+                }
+                disabled={filtered.length === 0}
+                className="cursor-pointer"
+                title={`Download the ${filtered.length} customers in this view as CSV`}
+              >
+                <Download className="mr-1 size-4" />
+                Export
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* Wrapper span so the tooltip still fires on a disabled
+                  button (disabled elements don't emit pointer events). */}
+                  <span tabIndex={0}>
+                    <Button
+                      variant="outline"
+                      disabled
+                      className="pointer-events-none opacity-60"
+                    >
+                      <Download className="mr-1 size-4" />
+                      Export
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  CSV export is available on the Business plan.
+                  {planLabel ? ` You're on ${planLabel}.` : ""}{" "}
+                  <a
+                    href="/dashboard/billing"
+                    className="underline underline-offset-2"
+                  >
+                    Upgrade
+                  </a>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
+                  <Plus className="mr-1 size-4" />
+                  Add customer
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add customer</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    For customers who don&apos;t have a phone. You can stamp
+                    them in manually and search for them on future visits.
+                  </p>
+                </DialogHeader>
+                <form onSubmit={handleAdd} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customer-name">Name</Label>
+                    <Input
+                      id="customer-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Customer name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customer-email">Email (optional)</Label>
+                    <Input
+                      id="customer-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="customer@example.com"
+                    />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button
+                    type="submit"
+                    className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
+                    disabled={!!adding}
+                  >
+                    {adding || "Add customer"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </>
+        }
+      />
+
+      <div className="flex flex-wrap gap-3">
+        <div className="relative min-w-[200px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search customers..."
+            placeholder="Search by name, email or tag"
+            aria-label="Search customers"
             className="pl-9"
           />
         </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-        >
-          <SelectTrigger className="w-[130px] cursor-pointer">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="disabled">
-              Disabled{disabledCount > 0 ? ` (${disabledCount})` : ""}
-            </SelectItem>
-            <SelectItem value="all">All</SelectItem>
-          </SelectContent>
-        </Select>
         {perkMode && (
           <Select
             value={perkRange}
@@ -443,100 +619,39 @@ export default function CustomerSearch({
             </SelectContent>
           </Select>
         )}
-        {canExportCsv ? (
-          <Button
-            variant="outline"
-            onClick={() =>
-              downloadCsv(
-                sortedAll,
-                aggregate,
-                perkMode,
-                statOf,
-                perkRangeLabel,
-              )
-            }
-            disabled={sortedAll.length === 0}
-            className="cursor-pointer"
-            title="Download all customers (active + disabled) as CSV"
-          >
-            <Download className="mr-1 size-4" />
-            Export CSV
-          </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* Wrapper span so the tooltip still fires on a disabled
-                  button (disabled elements don't emit pointer events). */}
-              <span tabIndex={0}>
-                <Button
-                  variant="outline"
-                  disabled
-                  className="pointer-events-none opacity-60"
-                >
-                  <Download className="mr-1 size-4" />
-                  Export CSV
-                </Button>
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="Filter customers"
+        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+      >
+        {views.map((v) => {
+          const active = view === v.key;
+          const n = counts[v.key];
+          return (
+            <button
+              key={v.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              title={v.hint}
+              onClick={() => setView(v.key)}
+              className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+                active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+              }`}
+            >
+              {v.label}
+              <span
+                className={`tabular-nums text-xs ${active ? "text-background/70" : "text-muted-foreground/70"}`}
+              >
+                {n}
               </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              CSV export is available on the Business plan.
-              {planLabel ? ` You're on ${planLabel}.` : ""}{" "}
-              <a
-                href="/dashboard/billing"
-                className="underline underline-offset-2"
-              >
-                Upgrade
-              </a>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="cursor-pointer bg-amber-700 hover:bg-amber-800">
-              <Plus className="mr-1 size-4" />
-              Add Customer
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Customer</DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                For customers who don&apos;t have a phone. You can stamp them in
-                manually and search for them on future visits.
-              </p>
-            </DialogHeader>
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer-name">Name</Label>
-                <Input
-                  id="customer-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Customer name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="customer-email">Email (optional)</Label>
-                <Input
-                  id="customer-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="customer@example.com"
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button
-                type="submit"
-                className="w-full cursor-pointer bg-amber-700 hover:bg-amber-800"
-                disabled={!!adding}
-              >
-                {adding || "Add Customer"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </button>
+          );
+        })}
       </div>
       {perkMode && (
         <p className="text-sm text-muted-foreground">
@@ -549,16 +664,14 @@ export default function CustomerSearch({
           </span>{" "}
           {perkTotals.people === 1 ? "person" : "people"} ·{" "}
           {perkRangeLabel.toLowerCase()}
-          {perkDailyLimit
-            ? ` · limit ${perkDailyLimit}/person/day`
-            : ""}
-          . Counted by work email, so duplicate sign-ups don&apos;t split a
+          {perkDailyLimit ? ` · limit ${perkDailyLimit}/person/day` : ""}.
+          Counted by work email, so duplicate sign-ups don&apos;t split a
           person&apos;s total.
         </p>
       )}
       {allTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">Filter by tag:</span>
+          <span className="text-xs text-muted-foreground">Tags:</span>
           <button
             type="button"
             onClick={() => setTagFilter(null)}
@@ -590,11 +703,9 @@ export default function CustomerSearch({
         <p className="text-sm text-muted-foreground">
           {query.trim() || tagFilter
             ? "No customers match your search."
-            : statusFilter === "disabled"
-              ? "No disabled customers."
-              : statusFilter === "active"
-                ? "No active customers."
-                : "No customers yet."}
+            : view === "all"
+              ? "No customers yet. They appear here after their first scan."
+              : `No customers in “${views.find((v) => v.key === view)?.label}”.`}
         </p>
       ) : (
         <Table>
@@ -618,7 +729,7 @@ export default function CustomerSearch({
               )}
               {!perkMode && (
                 <SortHeader
-                  label="Current Stamps"
+                  label="Card"
                   k="stamps"
                   activeKey={sortKey}
                   dir={sortDir}
@@ -627,11 +738,12 @@ export default function CustomerSearch({
               )}
               {!perkMode && (
                 <SortHeader
-                  label="Total Earned"
+                  label="Lifetime stamps"
                   k="totalEarned"
                   activeKey={sortKey}
                   dir={sortDir}
                   onClick={toggleSort}
+                  className="hidden md:table-cell"
                 />
               )}
               {perkMode ? (
@@ -660,15 +772,16 @@ export default function CustomerSearch({
                 </>
               ) : (
                 <SortHeader
-                  label="Free Redeemed"
+                  label="Rewards"
                   k="freeRedeemed"
                   activeKey={sortKey}
                   dir={sortDir}
                   onClick={toggleSort}
+                  className="hidden md:table-cell"
                 />
               )}
               <SortHeader
-                label="Last Visit"
+                label="Last visit"
                 k="lastVisit"
                 activeKey={sortKey}
                 dir={sortDir}
@@ -688,9 +801,7 @@ export default function CustomerSearch({
                   key={card._id}
                   className="cursor-pointer transition-colors hover:bg-muted/40"
                   onClick={() =>
-                    router.push(
-                      `/dashboard/customers/${card.customer._id}`,
-                    )
+                    router.push(`/dashboard/customers/${card.customer._id}`)
                   }
                 >
                   <TableCell className="max-w-[260px]">
@@ -698,7 +809,13 @@ export default function CustomerSearch({
                       <Monogram name={displayName} dimmed={!!card.disabled} />
                       <div className="min-w-0">
                         <p className="flex items-center gap-2 font-medium">
-                          <span className={card.disabled ? "text-muted-foreground line-through" : ""}>
+                          <span
+                            className={
+                              card.disabled
+                                ? "text-muted-foreground line-through"
+                                : ""
+                            }
+                          >
                             {displayName}
                           </span>
                           {card.disabled && (
@@ -751,7 +868,7 @@ export default function CustomerSearch({
                   )}
                   {!perkMode && (
                     <TableCell
-                      className={`tabular-nums ${card.totalEarned ? "" : "text-muted-foreground"}`}
+                      className={`hidden tabular-nums md:table-cell ${card.totalEarned ? "" : "text-muted-foreground"}`}
                     >
                       {card.totalEarned}
                     </TableCell>
@@ -792,8 +909,7 @@ export default function CustomerSearch({
                           </span>
                         ) : (
                           <span className="text-muted-foreground">
-                            0
-                            {perkDailyLimit ? `/${perkDailyLimit}` : ""}
+                            0{perkDailyLimit ? `/${perkDailyLimit}` : ""}
                           </span>
                         )}
                       </TableCell>
@@ -802,7 +918,7 @@ export default function CustomerSearch({
                       </TableCell>
                     </>
                   ) : (
-                    <TableCell className="tabular-nums">
+                    <TableCell className="hidden tabular-nums md:table-cell">
                       {card.freeRedeemed > 0 ? (
                         <span className="font-medium text-amber-500">
                           {card.freeRedeemed}
@@ -812,12 +928,16 @@ export default function CustomerSearch({
                       )}
                     </TableCell>
                   )}
-                  <TableCell className="text-right text-muted-foreground">
-                    {new Date(card.updatedAt).toLocaleDateString("en-AU", {
-                      day: "numeric",
-                      month: "short",
-                      year: "2-digit",
-                    })}
+                  <TableCell
+                    className="text-right text-muted-foreground"
+                    title={
+                      card.lastVisit
+                        ? new Date(card.lastVisit).toLocaleString()
+                        : undefined
+                    }
+                    suppressHydrationWarning
+                  >
+                    {card.lastVisit ? timeAgo(card.lastVisit) : "No visits"}
                   </TableCell>
                 </TableRow>
               );
@@ -861,10 +981,17 @@ function StampProgress({
     threshold > 0 ? Math.min(100, Math.round((stamps / threshold) * 100)) : 0;
   const ready = threshold > 0 && stamps >= threshold;
   return (
-    <div className="flex w-24 flex-col gap-1.5">
-      <span className="text-sm tabular-nums">
-        <span className="font-semibold text-foreground">{stamps}</span>
-        <span className="text-muted-foreground"> / {threshold}</span>
+    <div className="flex w-28 flex-col gap-1.5">
+      <span className="flex items-center gap-1.5 text-sm tabular-nums">
+        <span>
+          <span className="font-semibold text-foreground">{stamps}</span>
+          <span className="text-muted-foreground"> / {threshold}</span>
+        </span>
+        {ready && (
+          <span className="rounded-full bg-emerald-500/15 px-1.5 text-[10px] font-medium text-emerald-500">
+            Ready
+          </span>
+        )}
       </span>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -888,6 +1015,7 @@ function SortHeader<K extends string>({
   dir,
   onClick,
   align,
+  className,
 }: {
   label: string;
   k: K;
@@ -895,10 +1023,13 @@ function SortHeader<K extends string>({
   dir: "asc" | "desc";
   onClick: (k: K) => void;
   align?: "right";
+  className?: string;
 }) {
   const active = activeKey === k;
   return (
-    <TableHead className={align === "right" ? "text-right" : undefined}>
+    <TableHead
+      className={`${align === "right" ? "text-right" : ""} ${className ?? ""}`}
+    >
       <button
         type="button"
         onClick={() => onClick(k)}
@@ -919,4 +1050,10 @@ function SortHeader<K extends string>({
       </button>
     </TableHead>
   );
+}
+
+// Sort key for "Last visit": the real last visit, or the day the card was made
+// for someone who has never been stamped (so they sort as oldest).
+function visitTime(c: StampCardData): number {
+  return new Date(c.lastVisit || c.createdAt).getTime();
 }

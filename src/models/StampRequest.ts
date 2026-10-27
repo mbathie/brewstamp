@@ -29,6 +29,9 @@ const stampRequestSchema = new mongoose.Schema(
     adjustedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     reason: { type: String },
     redeem: { type: Boolean, default: false },
+    // Created by staff from the customer page and approved in the same breath,
+    // so the pending-request popup must never show it as a customer scan.
+    manual: { type: Boolean },
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 10 * 60 * 1000),

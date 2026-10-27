@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Combine, Loader2, Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,8 +32,10 @@ interface CardRow {
 // cards when a scan opens a different browser (the card lives in a browser
 // cookie). The owner picks the duplicate; its stamps, rewards, history and
 // wallet pass move onto this card, and the duplicate's phone shows this card
-// from then on. Not reversible.
+// from then on. Not reversible. Opened from the customer page's actions menu.
 export default function MergeCustomerDialog({
+  open,
+  onOpenChange,
   customerId,
   displayName,
   stamps,
@@ -41,6 +43,8 @@ export default function MergeCustomerDialog({
   freeRedeemed,
   threshold,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   customerId: string;
   displayName: string;
   stamps: number;
@@ -49,7 +53,6 @@ export default function MergeCustomerDialog({
   threshold: number;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<CardRow[] | null>(null);
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<CardRow | null>(null);
@@ -98,7 +101,7 @@ export default function MergeCustomerDialog({
   }, [rows, q]);
 
   function reset(next: boolean) {
-    setOpen(next);
+    onOpenChange(next);
     if (!next) {
       setPicked(null);
       setQ("");
@@ -131,158 +134,145 @@ export default function MergeCustomerDialog({
   const combined = picked ? stamps + picked.stamps : stamps;
 
   return (
-    <>
-      <Button
-        variant="outline"
-        className="cursor-pointer"
-        onClick={() => reset(true)}
-      >
-        <Combine className="mr-1.5 size-4" />
-        Merge duplicate
-      </Button>
-      <Sheet open={open} onOpenChange={reset}>
-        {/* Full-height side panel so the customer list gets the whole viewport. */}
-        <SheetContent className="flex w-full flex-col gap-0 sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Merge a duplicate card into {displayName}</SheetTitle>
-            <SheetDescription>
-              For when the same customer ended up with a second card, for
-              example after scanning with a different browser. The
-              duplicate&apos;s stamps, rewards and history move onto this card,
-              and their phone shows this card from then on.
-            </SheetDescription>
-          </SheetHeader>
+    <Sheet open={open} onOpenChange={reset}>
+      {/* Full-height side panel so the customer list gets the whole viewport. */}
+      <SheetContent className="flex w-full flex-col gap-0 sm:max-w-lg">
+        <SheetHeader>
+          <SheetTitle>Merge a duplicate card into {displayName}</SheetTitle>
+          <SheetDescription>
+            For when the same customer ended up with a second card, for example
+            after scanning with a different browser. The duplicate&apos;s
+            stamps, rewards and history move onto this card, and their phone
+            shows this card from then on.
+          </SheetDescription>
+        </SheetHeader>
 
-          {!picked ? (
-            <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  autoFocus
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search the duplicate by name or email"
-                  aria-label="Search customers"
-                  className="pl-8"
-                />
+        {!picked ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search the duplicate by name or email"
+                aria-label="Search customers"
+                className="pl-8"
+              />
+            </div>
+            <div className="min-h-0 overflow-y-auto rounded-md border">
+              {!rows ? (
+                <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Loading
+                  customers…
+                </div>
+              ) : shown.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No other customers match.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {shown.map((r) => (
+                    <li key={r.customerId}>
+                      <button
+                        type="button"
+                        onClick={() => setPicked(r)}
+                        className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-muted/50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium">
+                            {r.name}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {r.email ? `${r.email} · ` : ""}first seen{" "}
+                            {timeAgo(r.createdAt)} · last {timeAgo(r.updatedAt)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                          <span className="block text-sm font-medium text-foreground">
+                            {r.stamps} / {threshold}
+                          </span>
+                          {r.totalEarned} earned
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 space-y-3 overflow-y-auto px-4 text-sm">
+            <div className="rounded-lg border p-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Duplicate (removed)
+                </span>
+                <span className="font-medium">{picked.name}</span>
               </div>
-              <div className="min-h-0 overflow-y-auto rounded-md border">
-                {!rows ? (
-                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 size-4 animate-spin" /> Loading
-                    customers…
-                  </div>
-                ) : shown.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    No other customers match.
-                  </p>
-                ) : (
-                  <ul className="divide-y">
-                    {shown.map((r) => (
-                      <li key={r.customerId}>
-                        <button
-                          type="button"
-                          onClick={() => setPicked(r)}
-                          className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-muted/50"
-                        >
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium">
-                              {r.name}
-                            </span>
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {r.email ? `${r.email} · ` : ""}first seen{" "}
-                              {timeAgo(r.createdAt)} · last{" "}
-                              {timeAgo(r.updatedAt)}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                            <span className="block text-sm font-medium text-foreground">
-                              {r.stamps} / {threshold}
-                            </span>
-                            {r.totalEarned} earned
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kept</span>
+                <span className="font-medium">{displayName}</span>
               </div>
             </div>
-          ) : (
-            <div className="flex-1 space-y-3 overflow-y-auto px-4 text-sm">
-              <div className="rounded-lg border p-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Duplicate (removed)
-                  </span>
-                  <span className="font-medium">{picked.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Kept</span>
-                  <span className="font-medium">{displayName}</span>
-                </div>
+            <div className="space-y-1 rounded-lg border bg-muted/30 p-3 tabular-nums">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Current stamps</span>
+                <span>
+                  {stamps} + {picked.stamps} = <b>{combined}</b> / {threshold}
+                </span>
               </div>
-              <div className="space-y-1 rounded-lg border bg-muted/30 p-3 tabular-nums">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current stamps</span>
-                  <span>
-                    {stamps} + {picked.stamps} = <b>{combined}</b> / {threshold}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Stamps earned, all time
-                  </span>
-                  <span>{totalEarned + picked.totalEarned}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Rewards redeemed
-                  </span>
-                  <span>{freeRedeemed + picked.freeRedeemed}</span>
-                </div>
-                {combined >= threshold && (
-                  <p className="pt-1 text-xs text-emerald-400">
-                    A reward will be ready
-                    {combined - threshold > 0
-                      ? `, with ${combined - threshold} stamps carried over`
-                      : ""}
-                    .
-                  </p>
-                )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Stamps earned, all time
+                </span>
+                <span>{totalEarned + picked.totalEarned}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                This can&apos;t be undone.
-              </p>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Rewards redeemed</span>
+                <span>{freeRedeemed + picked.freeRedeemed}</span>
+              </div>
+              {combined >= threshold && (
+                <p className="pt-1 text-xs text-emerald-400">
+                  A reward will be ready
+                  {combined - threshold > 0
+                    ? `, with ${combined - threshold} stamps carried over`
+                    : ""}
+                  .
+                </p>
+              )}
             </div>
-          )}
+            <p className="text-xs text-muted-foreground">
+              This can&apos;t be undone.
+            </p>
+          </div>
+        )}
 
-          {picked && (
-            <SheetFooter className="flex-row justify-end gap-2 border-t">
-              <>
-                <Button
-                  variant="ghost"
-                  className="cursor-pointer"
-                  onClick={() => setPicked(null)}
-                  disabled={merging}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="cursor-pointer bg-amber-700 hover:bg-amber-800"
-                  onClick={merge}
-                  disabled={merging}
-                >
-                  {merging ? (
-                    <Loader2 className="mr-1.5 size-4 animate-spin" />
-                  ) : null}
-                  Merge into {displayName}
-                </Button>
-              </>
-            </SheetFooter>
-          )}
-        </SheetContent>
-      </Sheet>
-    </>
+        {picked && (
+          <SheetFooter className="flex-row justify-end gap-2 border-t">
+            <>
+              <Button
+                variant="ghost"
+                className="cursor-pointer"
+                onClick={() => setPicked(null)}
+                disabled={merging}
+              >
+                Back
+              </Button>
+              <Button
+                className="cursor-pointer bg-amber-700 hover:bg-amber-800"
+                onClick={merge}
+                disabled={merging}
+              >
+                {merging ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : null}
+                Merge into {displayName}
+              </Button>
+            </>
+          </SheetFooter>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }

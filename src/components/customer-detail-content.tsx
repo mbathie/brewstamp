@@ -4,21 +4,32 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VisitCadence, { type CadenceDay } from "@/components/visit-cadence";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Pager } from "@/components/ui/pager";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, X, Pencil, Ban } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  Check,
+  CircleCheck,
+  Combine,
+  Gift,
+  Mail,
+  MinusCircle,
+  MoreHorizontal,
+  Pencil,
+  Stamp,
+  X,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -26,14 +37,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import StampDisplay from "@/components/stamp-display";
-import MerchantCheckin from "@/components/merchant-checkin";
 import MergeCustomerDialog from "@/components/merge-customer-dialog";
-import RemoveStampsDialog from "@/components/remove-stamps-dialog";
+import StampActions from "@/components/stamp-actions";
 import { getProgram } from "@/lib/program";
-import { ActivityValue } from "@/components/activity-value";
 import { avatarTint, initialsOf } from "@/lib/avatar";
 import { timeAgo, shortDateTime, membershipDuration } from "@/lib/date";
+import type { ProgramConfig } from "@/lib/program";
 import { toast } from "sonner";
 
 interface HistoryRow {
@@ -104,7 +113,6 @@ export default function CustomerDetailContent({
   canRemoveStamps = false,
   backHref = "/dashboard/customers",
 }: Props) {
-  const [showCardPreview, setShowCardPreview] = useState(false);
   const [page, setPage] = useState(0);
   const [notes, setNotes] = useState(initialNotes);
   const [tags, setTags] = useState<string[]>(initialTags);
@@ -125,6 +133,7 @@ export default function CustomerDetailContent({
   // Per-shop disable state.
   const [disabled, setDisabled] = useState(initialDisabled);
   const [togglingDisabled, setTogglingDisabled] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   const displayName = realName.trim() || customerName;
 
@@ -224,408 +233,386 @@ export default function CustomerDetailContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <Link
-            href={backHref}
-            className="mt-1 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          {/* Monogram — same colour this customer carries in the list, so the
-              detail page reads as "the same person" at a glance. */}
-          <div
-            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-              disabled ? "bg-muted text-muted-foreground" : avatarTint(displayName)
-            }`}
-          >
-            {initialsOf(displayName)}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-foreground">
-                {displayName}
-              </h1>
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={openEdit}
-                  aria-label="Edit customer"
-                  className="cursor-pointer text-muted-foreground/60 transition-colors hover:text-foreground"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              )}
-              {disabled && (
-                <Badge
-                  variant="outline"
-                  className="border-red-500/40 font-normal text-red-400"
-                >
-                  Disabled
-                </Badge>
-              )}
+      <div className="space-y-4">
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Customers
+        </Link>
+
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            {/* Monogram — same colour this customer carries in the list, so the
+                detail page reads as "the same person" at a glance. */}
+            <div
+              className={`flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${
+                disabled
+                  ? "bg-muted text-muted-foreground"
+                  : avatarTint(displayName)
+              }`}
+            >
+              {initialsOf(displayName)}
             </div>
-            {email && (
-              <a
-                href={`mailto:${email}`}
-                className="text-sm text-muted-foreground hover:text-amber-700 hover:underline"
-              >
-                {email}
-              </a>
-            )}
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-              <Badge
-                variant="outline"
-                className="font-normal"
-                suppressHydrationWarning
-              >
-                Last visit · {timeAgo(lastVisit)}
-              </Badge>
-              <Badge variant="outline" className="font-normal">
-                {visitsLast30d} visit{visitsLast30d === 1 ? "" : "s"} · last 30d
-              </Badge>
-              <Badge
-                variant="outline"
-                className="font-normal"
-                suppressHydrationWarning
-              >
-                Member · {membershipDuration(memberSince)}
-              </Badge>
-              {tags.map((t) => (
-                <Badge
-                  key={t}
-                  variant="outline"
-                  className="border-amber-500/50 font-normal text-amber-500"
-                >
-                  {t}
-                </Badge>
-              ))}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-2xl font-semibold text-foreground">
+                  {displayName}
+                </h1>
+                {disabled && (
+                  <Badge
+                    variant="outline"
+                    className="border-red-500/40 font-normal text-red-400"
+                  >
+                    Disabled
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                {email ? (
+                  <a
+                    href={`mailto:${email}`}
+                    className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
+                  >
+                    <Mail className="size-3.5" />
+                    {email}
+                  </a>
+                ) : (
+                  !readOnly && (
+                    <button
+                      type="button"
+                      onClick={openEdit}
+                      className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+                    >
+                      <Mail className="size-3.5" />
+                      Add email
+                    </button>
+                  )
+                )}
+                <span suppressHydrationWarning>
+                  Customer for {membershipDuration(memberSince)}
+                </span>
+              </div>
             </div>
           </div>
+
+          {!readOnly && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Customer actions"
+                  className="shrink-0 cursor-pointer"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onSelect={openEdit}>
+                  <Pencil className="size-4" />
+                  Edit name &amp; email
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setMergeOpen(true)}>
+                  <Combine className="size-4" />
+                  Merge a duplicate card
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {disabled ? (
+                  <DropdownMenuItem
+                    onSelect={toggleDisabled}
+                    disabled={togglingDisabled}
+                  >
+                    <CircleCheck className="size-4" />
+                    Enable customer
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={toggleDisabled}
+                    disabled={togglingDisabled}
+                  >
+                    <Ban className="size-4" />
+                    Disable customer
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {readOnly ? (
-            disabled && (
-              <Badge
-                variant="outline"
-                className="border-red-500/40 px-3 py-1.5 font-normal text-red-400"
-              >
-                Disabled — can&apos;t earn or claim
-              </Badge>
-            )
-          ) : disabled ? (
-            <>
-              <Badge
-                variant="outline"
-                className="border-red-500/40 px-3 py-1.5 font-normal text-red-400"
-              >
-                Disabled — can&apos;t earn or claim
-              </Badge>
+
+        {disabled && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+            <span className="flex items-center gap-2 text-red-400">
+              <Ban className="size-4 shrink-0" />
+              Disabled at this shop: they can&apos;t earn stamps or claim
+              rewards.
+            </span>
+            {!readOnly && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={toggleDisabled}
                 disabled={togglingDisabled}
                 className="cursor-pointer"
               >
                 {togglingDisabled ? "…" : "Enable customer"}
               </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={toggleDisabled}
-                disabled={togglingDisabled}
-                className="cursor-pointer border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
-              >
-                <Ban className="mr-1.5 size-4" />
-                {togglingDisabled ? "…" : "Disable"}
-              </Button>
-              <MergeCustomerDialog
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Two columns on desktop: the card, activity and history on the left,
+          the at-a-glance facts and notes on the right. On a phone the side
+          column drops in straight after the card. */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base">
+              {perkMode ? program.detailTitle : "Stamp card"}
+            </CardTitle>
+            {!readOnly && !disabled && (
+              <StampActions
+                shopId={shopId}
                 customerId={customerId}
                 displayName={displayName}
                 stamps={stamps}
-                totalEarned={totalEarned}
-                freeRedeemed={freeRedeemed}
                 threshold={threshold}
+                canRemove={canRemoveStamps}
+                perk={perkMode}
               />
-              <MerchantCheckin
-                shopId={shopId}
-                customerId={customerId}
-                customerName={displayName}
-                stamps={stamps}
-                threshold={threshold}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{program.detailTitle}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {perkMode ? (
-            // Perk customers earn no stamps — the meaningful number is how many
-            // free coffees they've redeemed (the reimbursement figure).
-            <div className="space-y-2 text-sm text-foreground">
-              <div>
-                <strong className="text-2xl font-bold">{freeRedeemed}</strong>{" "}
-                <span className="text-muted-foreground">
-                  {freeRedeemed === 1 ? program.unit : program.unitPlural}{" "}
-                  redeemed
-                </span>
+            )}
+          </CardHeader>
+          <CardContent>
+            {perkMode ? (
+              // Perk customers earn no stamps — the meaningful number is how
+              // many free coffees they've redeemed (the reimbursement figure).
+              <div className="space-y-2 text-sm text-foreground">
+                <div>
+                  <strong className="text-3xl font-bold">{freeRedeemed}</strong>{" "}
+                  <span className="text-muted-foreground">
+                    {freeRedeemed === 1 ? program.unit : program.unitPlural}{" "}
+                    redeemed
+                  </span>
+                </div>
+                {perkVerifications >= 2 && (
+                  <p className="text-xs text-muted-foreground">
+                    Email verified{" "}
+                    <strong className="text-foreground">
+                      {perkVerifications}
+                    </strong>{" "}
+                    times — their phone isn&apos;t keeping the cookie between
+                    scans, so they&apos;re re-entering the code.
+                  </p>
+                )}
               </div>
-              {perkVerifications >= 2 && (
-                <p className="text-xs text-muted-foreground">
-                  Email verified{" "}
-                  <strong className="text-foreground">{perkVerifications}</strong>{" "}
-                  times — their phone isn&apos;t keeping the cookie between
-                  scans, so they&apos;re re-entering the code.
+            ) : (
+              <div className="space-y-4">
+                <StampDots stamps={stamps} threshold={threshold} />
+                <p className="text-sm">
+                  <strong className="text-foreground">
+                    {stamps} of {threshold}
+                  </strong>{" "}
+                  {canRedeem ? (
+                    <span className="font-medium text-emerald-500">
+                      · reward ready to redeem
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      · {threshold - stamps} more for a reward
+                    </span>
+                  )}
                 </p>
-              )}
-            </div>
-          ) : (
-            <>
-              <div>
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">
-                    {stamps} of {threshold} stamps
-                  </span>
-                  <span className="text-muted-foreground">
-                    {canRedeem
-                      ? "Reward earned"
-                      : `${threshold - stamps} to go`}
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full transition-all ${canRedeem ? "bg-emerald-500" : "bg-amber-500"}`}
-                    style={{
-                      width: `${Math.min(100, (stamps / threshold) * 100)}%`,
-                    }}
-                  />
-                </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                <span className="text-foreground">
-                  <strong className="font-semibold">{totalEarned}</strong>{" "}
-                  <span className="text-muted-foreground">lifetime stamps</span>
-                </span>
-                <span className="text-foreground">
-                  <strong className="font-semibold">{freeRedeemed}</strong>{" "}
-                  <span className="text-muted-foreground">
-                    reward{freeRedeemed === 1 ? "" : "s"} redeemed
-                  </span>
-                </span>
-                {!readOnly && canRemoveStamps && stamps > 0 && (
-                  <span className="ml-auto">
-                    <RemoveStampsDialog
-                      shopId={shopId}
-                      customerId={customerId}
-                      displayName={displayName}
-                      stamps={stamps}
-                      threshold={threshold}
-                    />
-                  </span>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowCardPreview((v) => !v)}
-                className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                {showCardPreview ? (
-                  <ChevronUp className="h-3 w-3" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-                {showCardPreview ? "Hide card preview" : "Show card preview"}
-              </button>
-              {showCardPreview && (
-                <div className="mx-auto max-w-xs pt-2">
-                  <StampDisplay stamps={stamps} threshold={threshold} />
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {cadence.length > 0 && (
-        <VisitCadence cadence={cadence} perkMode={perkMode} />
-      )}
-
-      {readOnly ? (
-        (tags.length > 0 || notes.trim()) && (
+        <div className="space-y-6 lg:col-start-3 lg:row-span-3 lg:row-start-1">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+            <CardHeader>
+              <CardTitle className="text-base">Overview</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+            <CardContent>
+              <dl className="divide-y text-sm">
+                <Fact label="Last visit">
+                  <span suppressHydrationWarning>{timeAgo(lastVisit)}</span>
+                </Fact>
+                <Fact label="Visits, last 30 days">{visitsLast30d}</Fact>
+                {!perkMode && (
+                  <Fact label="Lifetime stamps">{totalEarned}</Fact>
+                )}
+                <Fact
+                  label={
+                    perkMode
+                      ? program.unitPlural.replace(/^./, (c) => c.toUpperCase())
+                      : "Rewards redeemed"
+                  }
+                >
+                  {freeRedeemed}
+                </Fact>
+                <Fact label="Customer since">
+                  <span suppressHydrationWarning>
+                    {new Date(memberSince).toLocaleDateString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </Fact>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {readOnly ? (
+            (tags.length > 0 || notes.trim()) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((t) => (
+                        <Badge
+                          key={t}
+                          variant="outline"
+                          className="border-amber-500/50 font-normal text-amber-500"
+                        >
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {notes.trim() && (
+                    <p className="whitespace-pre-wrap text-sm text-foreground">
+                      {notes}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          ) : (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Notes &amp; tags</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {savingNotes
+                    ? "Saving…"
+                    : notesDirty
+                      ? ""
+                      : "Saved automatically"}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
                   {tags.map((t) => (
                     <Badge
                       key={t}
                       variant="outline"
-                      className="border-amber-500/50 font-normal text-amber-500"
+                      className="gap-1 border-amber-500/50 font-normal text-amber-500"
                     >
                       {t}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(t)}
+                        className="cursor-pointer text-amber-500/70 hover:text-amber-500"
+                        aria-label={`Remove tag ${t}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </Badge>
                   ))}
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        addTag(tagInput);
+                        setTagInput("");
+                      }
+                    }}
+                    onBlur={() => {
+                      if (tagInput.trim()) {
+                        addTag(tagInput);
+                        setTagInput("");
+                      }
+                    }}
+                    placeholder={
+                      tags.length === 0 ? "+ Add tag (e.g. VIP)" : "+ Add tag"
+                    }
+                    aria-label="Add tag"
+                    className="h-7 w-32 text-xs"
+                  />
                 </div>
-              )}
-              {notes.trim() && (
-                <p className="whitespace-pre-wrap text-sm text-foreground">{notes}</p>
-              )}
-            </CardContent>
-          </Card>
-        )
-      ) : (
-      <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Notes &amp; tags</CardTitle>
-          {savingNotes && (
-            <p className="text-xs text-muted-foreground">Saving…</p>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    setNotesDirty(true);
+                  }}
+                  placeholder="Allergies, usual order, anything worth remembering…"
+                  aria-label="Notes"
+                  className="min-h-[96px] text-sm"
+                  maxLength={2000}
+                />
+              </CardContent>
+            </Card>
           )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground">Tags</p>
-            <div className="flex flex-wrap items-center gap-2">
-              {tags.map((t) => (
-                <Badge
-                  key={t}
-                  variant="outline"
-                  className="gap-1 border-amber-500/50 font-normal text-amber-500"
-                >
-                  {t}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(t)}
-                    className="cursor-pointer text-amber-500/70 hover:text-amber-500"
-                    aria-label={`Remove tag ${t}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === ",") {
-                    e.preventDefault();
-                    addTag(tagInput);
-                    setTagInput("");
-                  }
-                }}
-                onBlur={() => {
-                  if (tagInput.trim()) {
-                    addTag(tagInput);
-                    setTagInput("");
-                  }
-                }}
-                placeholder={
-                  tags.length === 0
-                    ? "Add tags (e.g. VIP, regular)"
-                    : "Add another"
-                }
-                className="h-7 w-40 text-xs"
-              />
-            </div>
-          </div>
+        </div>
 
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground">Notes</p>
-            <Textarea
-              value={notes}
-              onChange={(e) => {
-                setNotes(e.target.value);
-                setNotesDirty(true);
-              }}
-              placeholder="Allergies, preferences, anything worth remembering…"
-              className="min-h-[80px] text-sm"
-              maxLength={2000}
-            />
+        {cadence.length > 0 && (
+          <div className="lg:col-span-2">
+            <VisitCadence cadence={cadence} perkMode={perkMode} />
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No history yet.</p>
+            ) : (
+              <>
+                <ul className="divide-y">
+                  {pagedHistory.map((row) => (
+                    <HistoryItem
+                      key={row.id}
+                      row={row}
+                      threshold={threshold}
+                      program={program}
+                    />
+                  ))}
+                </ul>
+                <Pager
+                  page={page}
+                  pageSize={PAGE_SIZE}
+                  count={history.length}
+                  onPage={setPage}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {!readOnly && (
+        <MergeCustomerDialog
+          open={mergeOpen}
+          onOpenChange={setMergeOpen}
+          customerId={customerId}
+          displayName={displayName}
+          stamps={stamps}
+          totalEarned={totalEarned}
+          freeRedeemed={freeRedeemed}
+          threshold={threshold}
+        />
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No history yet.</p>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>When</TableHead>
-                    <TableHead>Stamps</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pagedHistory.map((req) => {
-                    const awarded = req.stampsAwarded || 0;
-                    return (
-                      <TableRow key={req.id}>
-                        <TableCell className="text-muted-foreground">
-                          {req.redeem && !perkMode && (
-                            <Badge
-                              variant="outline"
-                              className="mr-2 border-amber-500/50 font-normal text-amber-500"
-                            >
-                              Redeem
-                            </Badge>
-                          )}
-                          <span suppressHydrationWarning>
-                            {shortDateTime(req.createdAt)}
-                          </span>
-                          {req.status === "adjusted" && (req.adjustedBy || req.reason) && (
-                            <span className="block text-xs">
-                              {[req.adjustedBy && `by ${req.adjustedBy}`, req.reason]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <ActivityValue
-                            status={req.status}
-                            redeem={req.redeem}
-                            stampsAwarded={awarded}
-                            threshold={threshold}
-                            program={program}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <StatusBadge status={req.status} />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              <Pager
-                page={page}
-                pageSize={PAGE_SIZE}
-                count={history.length}
-                onPage={setPage}
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
 
       <Dialog
         open={editOpen}
@@ -681,5 +668,149 @@ export default function CustomerDetailContent({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function Fact({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium tabular-nums text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+// The card as stamp slots: filled ones in amber, empty ones dashed, all
+// green once a reward is ready. Falls back to a bar for very long cards.
+function StampDots({
+  stamps,
+  threshold,
+}: {
+  stamps: number;
+  threshold: number;
+}) {
+  const ready = stamps >= threshold;
+  if (threshold > 20) {
+    return (
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full transition-all ${ready ? "bg-emerald-500" : "bg-amber-500"}`}
+          style={{ width: `${Math.min(100, (stamps / threshold) * 100)}%` }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div
+      className="flex flex-wrap gap-2"
+      aria-label={`${stamps} of ${threshold} stamps`}
+    >
+      {Array.from({ length: threshold }, (_, i) => {
+        const filled = i < stamps;
+        return (
+          <span
+            key={i}
+            className={`flex size-9 items-center justify-center rounded-full border-2 sm:size-10 ${
+              filled
+                ? ready
+                  ? "border-emerald-500 bg-emerald-500 text-white"
+                  : "border-amber-500 bg-amber-500 text-white"
+                : "border-dashed border-muted-foreground/30"
+            }`}
+          >
+            {filled ? (
+              <Check className="size-4" strokeWidth={3} />
+            ) : (
+              i === threshold - 1 && (
+                <Gift className="size-4 text-muted-foreground/50" />
+              )
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// One row of the history: what happened in plain words, with an icon, and
+// when. Removals also say who made them and why.
+function HistoryItem({
+  row,
+  threshold,
+  program,
+}: {
+  row: HistoryRow;
+  threshold: number;
+  program: ProgramConfig;
+}) {
+  const n = Math.abs(row.stampsAwarded || 0);
+  const stampsText = `${n} stamp${n === 1 ? "" : "s"}`;
+  let icon = <Stamp className="size-4" />;
+  let tint = "bg-amber-500/15 text-amber-500";
+  let title: string;
+  let detail: string | null = null;
+  let delta: React.ReactNode = null;
+
+  if (row.status === "adjusted") {
+    icon = <MinusCircle className="size-4" />;
+    tint = "bg-red-500/15 text-red-400";
+    title = `Removed ${stampsText}`;
+    detail =
+      [row.reason, row.adjustedBy && `by ${row.adjustedBy}`]
+        .filter(Boolean)
+        .join(" · ") || null;
+    delta = <span className="text-red-400">−{n}</span>;
+  } else if (row.status === "rejected") {
+    icon = <X className="size-4" />;
+    tint = "bg-muted text-muted-foreground";
+    title = "Request declined";
+  } else if (program.isPerk) {
+    icon = <Gift className="size-4" />;
+    tint = "bg-emerald-500/15 text-emerald-500";
+    title = program.eventLabel;
+  } else if (row.redeem) {
+    icon = <Gift className="size-4" />;
+    tint = "bg-emerald-500/15 text-emerald-500";
+    title = n ? `Reward redeemed, plus ${stampsText}` : "Reward redeemed";
+    delta = (
+      <span>
+        <span className="text-muted-foreground">−{threshold}</span>
+        {n > 0 && <span className="text-amber-500"> +{n}</span>}
+      </span>
+    );
+  } else {
+    title = `Earned ${stampsText}`;
+    delta = <span className="text-amber-500">+{n}</span>;
+  }
+
+  return (
+    <li className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+      <span
+        className={`flex size-8 shrink-0 items-center justify-center rounded-full ${tint}`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p
+          className="truncate text-xs text-muted-foreground"
+          suppressHydrationWarning
+        >
+          {shortDateTime(row.createdAt)}
+          {detail && ` · ${detail}`}
+        </p>
+      </div>
+      {delta && (
+        <span className="shrink-0 text-sm font-medium tabular-nums">
+          {delta}
+        </span>
+      )}
+    </li>
   );
 }

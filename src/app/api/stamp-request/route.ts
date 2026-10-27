@@ -28,6 +28,7 @@ export async function GET() {
   const pending = await StampRequest.find({
     shop: shopId,
     status: "pending",
+    manual: { $ne: true },
     createdAt: { $gte: fresh },
   })
     .sort({ createdAt: -1 })
@@ -72,7 +73,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   await connectDB();
-  const { shopId, customerId, redeem } = await req.json().catch(() => ({}));
+  const { shopId, customerId, redeem, manual } = await req.json().catch(() => ({}));
 
   if (!shopId || !customerId) {
     return NextResponse.json(
@@ -168,6 +169,7 @@ export async function POST(req: Request) {
     redeem: shop?.perkMode ? true : !!redeem,
     // Denormalise the work email so the daily cap can be counted by identity.
     email: perkEmail,
+    ...(manual ? { manual: true } : {}),
   });
 
   return NextResponse.json({ request }, { status: 201 });

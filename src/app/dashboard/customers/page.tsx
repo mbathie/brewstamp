@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
+import { Types } from "mongoose";
 import { getCurrentShopContext } from "@/lib/shop-context";
 import { getShopPlanLimits, getUserPlanLimits } from "@/lib/plan-limits";
 import { connectDB } from "@/lib/mongoose";
 import { StampCard, StampRequest } from "@/models";
 import { startOfDayInTz } from "@/lib/perk";
 import CustomerSearch from "@/components/customer-search";
-import { PageHeader } from "@/components/page-header";
 
 /**
  * Reporting windows for perk shops. `freeRedeemed` on the card is a lifetime
@@ -86,7 +86,30 @@ export default async function CustomersPage({
       })()
     : stampCards;
 
-  const serialized = JSON.parse(JSON.stringify(deduped));
+  // Real last visit and visit count per card, from approved stamp requests.
+  // The card's updatedAt also moves on a notes or tag edit, so it can't stand
+  // in for "last visit".
+  const shopIds = aggregate
+    ? ctx.memberships.map((m) => new Types.ObjectId(m.shopId))
+    : [ctx.shop._id];
+  const visitRows = await StampRequest.aggregate([
+    { $match: { shop: { $in: shopIds }, status: "approved" } },
+    {
+      $group: {
+        _id: { shop: "$shop", customer: "$customer" },
+        last: { $max: "$createdAt" },
+        visits: { $sum: 1 },
+      },
+    },
+  ]);
+  const visitsByCard = new Map<string, { last: Date; visits: number }>(
+    visitRows.map((r: any) => [`${r._id.shop}:${r._id.customer}`, r]),
+  );
+
+  const serialized = JSON.parse(JSON.stringify(deduped)).map((card: any) => {
+    const v = visitsByCard.get(`${card.shop?._id ?? card.shop}:${card.customer?._id}`);
+    return { ...card, lastVisit: v?.last ?? null, visits: v?.visits ?? 0 };
+  });
 
   // Perk usage is counted by EMAIL, not by stamp card — the same identity the
   // daily cap uses (see countPerkDrinksToday). Counting by card would under-
@@ -150,7 +173,6 @@ export default async function CustomersPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Customers" />
       <CustomerSearch
         stampCards={serialized}
         threshold={aggregate ? 8 : ctx.shop.stampThreshold}
