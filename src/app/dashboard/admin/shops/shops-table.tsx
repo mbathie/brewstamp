@@ -913,6 +913,8 @@ const PLAN_BADGE: Record<PlanSlug, string> = {
   plus: "border-sky-500/30 bg-sky-500/15 text-sky-300",
   max: "border-violet-500/30 bg-violet-500/15 text-violet-300",
 };
+// Private deals (custom_* slugs, e.g. custom_pedal) aren't in the map above.
+const CUSTOM_BADGE = "border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-300";
 
 function fmtPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
@@ -927,7 +929,7 @@ export function PlanBadge({
   label: string;
   monthlyCents: number;
 }) {
-  const cls = PLAN_BADGE[slug] ?? PLAN_BADGE.free;
+  const cls = PLAN_BADGE[slug] ?? (slug.startsWith("custom") ? CUSTOM_BADGE : PLAN_BADGE.free);
   return (
     <Badge variant="outline" className={`px-1.5 py-0 text-[10px] hover:bg-transparent ${cls}`}>
       {slug === "free" ? label || "Free" : label}
