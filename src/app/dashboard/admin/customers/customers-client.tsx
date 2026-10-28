@@ -2,10 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Loader2, RefreshCw, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -15,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page-header";
+import { planBadgeClass } from "../shops/shops-table";
 
 interface CustomerRow {
   shopId: string | null;
@@ -50,16 +59,31 @@ interface CustomerRow {
   nextAttemptAt: string | null;
 }
 
-type SortKey = "shopName" | "plan" | "price" | "startedAt" | "nextBillAt" | "timesBilled" | "total" | "status";
+type SortKey = "shopName" | "price" | "nextBillAt" | "total" | "status";
 type SortDir = "asc" | "desc";
-type StatusFilter = "all" | "active" | "canceled";
+type StatusFilter = "active" | "attention" | "canceled" | "all";
+type ProductFilter = "all" | "brewstamp" | "stampystamp";
+type BillingFilter = "all" | "stripe_main" | "stripe_legacy" | "paypal";
 
-const PLAN_BADGE: Record<string, string> = {
-  pro: "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
-  plus: "border-sky-500/30 bg-sky-500/15 text-sky-300",
-  max: "border-violet-500/30 bg-violet-500/15 text-violet-300",
-  stampy: "border-orange-500/30 bg-orange-500/15 text-orange-300",
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "active", label: "Paying" },
+  { value: "attention", label: "Needs attention" },
+  { value: "canceled", label: "Canceled" },
+  { value: "all", label: "All" },
+];
+const PRODUCT_FILTERS: { value: ProductFilter; label: string }[] = [
+  { value: "all", label: "All products" },
+  { value: "brewstamp", label: "Brewstamp" },
+  { value: "stampystamp", label: "StampyStamp" },
+];
+const BILLING_LABELS: Record<BillingFilter, string> = {
+  all: "All billing",
+  stripe_main: "Stripe · Brewstamp",
+  stripe_legacy: "Stripe · old shared",
+  paypal: "PayPal",
 };
+
+const STAMPY_BADGE = "border-orange-500/30 bg-orange-500/15 text-orange-300";
 
 const sym = (cur: string) => (cur === "aud" ? "A$" : cur === "usd" ? "US$" : cur.toUpperCase() + " ");
 const money = (cents: number, cur: string) => `${sym(cur)}${(cents / 100).toFixed(2)}`;
@@ -69,12 +93,30 @@ const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" }) : "—";
 const daysUntil = (d: string | null) => (d ? Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) : null);
 
-// Sum a per-currency map at par for sorting/headline only (the cell shows
-// the real split).
+const isLive = (r: CustomerRow) => ["active", "past_due"].includes(r.status);
+const billingOf = (r: CustomerRow): Exclude<BillingFilter, "all"> =>
+  r.provider === "paypal" ? "paypal" : r.stripeAccount === "main" ? "stripe_main" : "stripe_legacy";
+
+// Why a live customer needs a look, or null. Past due (a charge failed),
+// overdue (the renewal date passed with no charge recorded — usually a sub
+// billed outside our cron), or cancelling at the end of the period.
+function attentionReason(r: CustomerRow): string | null {
+  if (!isLive(r)) return null;
+  if (r.status === "past_due") return "payment failed";
+  const d = daysUntil(r.nextBillAt);
+  if (d != null && d < 0) return `${-d}d overdue`;
+  if (r.cancelAtPeriodEnd) return "cancelling";
+  return null;
+}
+
+// Sum a per-currency map at par for sorting only (cells show the real split).
 const atPar = (m: Record<string, number>) => Object.values(m).reduce((a, b) => a + b, 0);
 function totalLabel(m: Record<string, number>, whole = false) {
   const parts = Object.entries(m).sort().map(([c, v]) => (whole ? moneyWhole : money)(v, c));
   return parts.length ? parts.join(" + ") : "—";
+}
+function addTo(m: Record<string, number>, cur: string, cents: number) {
+  m[cur] = (m[cur] ?? 0) + cents;
 }
 
 export default function CustomersClient() {
@@ -82,7 +124,10 @@ export default function CustomersClient() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("nextBillAt");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [filter, setFilter] = useState<StatusFilter>("active");
+  const [status, setStatus] = useState<StatusFilter>("active");
+  const [product, setProduct] = useState<ProductFilter>("all");
+  const [billing, setBilling] = useState<BillingFilter>("all");
+  const [query, setQuery] = useState("");
 
   function load() {
     setLoading(true);
@@ -93,20 +138,32 @@ export default function CustomersClient() {
   }
   useEffect(load, []);
 
+  // The product filter scopes everything, the tiles included; status, billing
+  // and search narrow the table only.
+  const inProduct = useMemo(
+    () =>
+      (rows ?? []).filter((r) =>
+        product === "all" ? true : product === "stampystamp" ? r.legacy === "stampystamp" : r.legacy !== "stampystamp",
+      ),
+    [rows, product],
+  );
+
   const visible = useMemo(() => {
-    if (!rows) return [];
-    const f = rows.filter((r) =>
-      filter === "all" ? true : filter === "active" ? ["active", "past_due"].includes(r.status) : !["active", "past_due"].includes(r.status)
-    );
+    const q = query.trim().toLowerCase();
+    const f = inProduct.filter((r) => {
+      if (status === "active" && !isLive(r)) return false;
+      if (status === "canceled" && isLive(r)) return false;
+      if (status === "attention" && !attentionReason(r)) return false;
+      if (billing !== "all" && billingOf(r) !== billing) return false;
+      if (q && ![r.shopName, r.ownerEmail, r.ownerName].some((s) => s?.toLowerCase().includes(q))) return false;
+      return true;
+    });
     const dir = sortDir === "asc" ? 1 : -1;
     const val = (r: CustomerRow): number | string => {
       switch (sortKey) {
         case "shopName": return r.shopName.toLowerCase();
-        case "plan": return r.monthlyCents;
         case "price": return r.monthlyCents;
-        case "startedAt": return r.startedAt ? new Date(r.startedAt).getTime() : 0;
         case "nextBillAt": return r.nextBillAt ? new Date(r.nextBillAt).getTime() : Number.MAX_SAFE_INTEGER;
-        case "timesBilled": return r.timesBilled;
         case "total": return atPar(r.totalPaid);
         case "status": return r.status;
       }
@@ -117,7 +174,7 @@ export default function CustomersClient() {
       if (va > vb) return 1 * dir;
       return 0;
     });
-  }, [rows, sortKey, sortDir, filter]);
+  }, [inProduct, status, billing, query, sortKey, sortDir]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -127,19 +184,47 @@ export default function CustomersClient() {
     }
   }
 
-  // Headline tiles over the visible (filtered) set.
   const summary = useMemo(() => {
-    const live = (rows ?? []).filter((r) => ["active", "past_due"].includes(r.status));
+    const live = inProduct.filter(isLive);
     const mrr: Record<string, number> = {};
     const collected: Record<string, number> = {};
-    for (const r of live) mrr[r.currency] = (mrr[r.currency] ?? 0) + r.monthlyCents;
-    for (const r of rows ?? []) for (const [c, v] of Object.entries(r.totalPaid)) collected[c] = (collected[c] ?? 0) + v;
-    const dueSoon = live.filter((r) => { const d = daysUntil(r.nextBillAt); return d != null && d <= 7; }).length;
-    const onPaypal = live.filter((r) => r.provider === "paypal").length;
-    const onStripeMain = live.filter((r) => r.provider === "stripe" && r.stripeAccount === "main").length;
-    const stampy = live.filter((r) => r.legacy === "stampystamp").length;
-    return { live: live.length, mrr, collected, dueSoon, onPaypal, onStripeMain, stampy };
-  }, [rows]);
+    const thisMonth: Record<string, number> = {};
+    for (const r of live) addTo(mrr, r.currency, r.monthlyCents);
+    for (const r of inProduct) for (const [c, v] of Object.entries(r.totalPaid)) addTo(collected, c, v);
+    // What the next 30 days should bring in: each live, non-cancelling sub
+    // whose next charge falls inside the window, at its full price.
+    for (const r of live) {
+      const d = daysUntil(r.nextBillAt);
+      if (d != null && d >= 0 && d <= 30) addTo(thisMonth, r.currency, r.priceCents);
+    }
+    const byBilling = { stripe_main: 0, stripe_legacy: 0, paypal: 0 };
+    for (const r of live) byBilling[billingOf(r)]++;
+    const attention = live.filter((r) => attentionReason(r));
+    return {
+      live: live.length,
+      annual: live.filter((r) => r.interval === "year").length,
+      mrr,
+      collected,
+      thisMonth,
+      byBilling,
+      attention: attention.length,
+      pastDue: attention.filter((r) => r.status === "past_due").length,
+      overdue: attention.filter((r) => r.status !== "past_due" && (daysUntil(r.nextBillAt) ?? 0) < 0).length,
+      cancelling: attention.filter((r) => r.cancelAtPeriodEnd).length,
+      productCounts: {
+        all: (rows ?? []).filter(isLive).length,
+        brewstamp: (rows ?? []).filter((r) => isLive(r) && r.legacy !== "stampystamp").length,
+        stampystamp: (rows ?? []).filter((r) => isLive(r) && r.legacy === "stampystamp").length,
+      },
+    };
+  }, [inProduct, rows]);
+
+  const filtered = status !== "active" || billing !== "all" || query.trim() !== "";
+  function clearFilters() {
+    setStatus("active");
+    setBilling("all");
+    setQuery("");
+  }
 
   if (loading && !rows) {
     return (
@@ -152,133 +237,195 @@ export default function CustomersClient() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageHeader title="Customers" description="Every shop that has held a paid plan — from the billing ledger, both providers." />
+        <PageHeader title="Customers" description="Every paid plan, from the billing ledger: Brewstamp and legacy StampyStamp, Stripe and PayPal." />
         <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
-            {(["active", "canceled", "all"] as StatusFilter[]).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`cursor-pointer rounded px-3 py-1 capitalize transition ${filter === f ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          <Button variant="outline" size="sm" onClick={load} disabled={loading} className="cursor-pointer">
-            <RefreshCw className={`mr-1.5 size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          <Segmented
+            value={product}
+            onChange={setProduct}
+            options={PRODUCT_FILTERS.map((p) => ({ ...p, count: summary.productCounts[p.value] }))}
+          />
+          <Button variant="outline" size="sm" onClick={load} disabled={loading} className="cursor-pointer" aria-label="Refresh">
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Paying now" value={String(summary.live)} sub={`${summary.onStripeMain} on Stripe · ${summary.live - summary.onPaypal - summary.onStripeMain} on old Stripe · ${summary.onPaypal} on PayPal${summary.stampy ? ` · ${summary.stampy} legacy StampyStamp` : ""}`} />
-        <Tile label="MRR" value={totalLabel(summary.mrr, true)} sub="at current prices" />
-        <Tile label="Collected all-time" value={totalLabel(summary.collected, true)} sub="gross of refunds" />
-        <Tile label="Renewing in 7 days" value={String(summary.dueSoon)} sub="next charge within a week" />
+        <Tile
+          label="Paying now"
+          value={String(summary.live)}
+          sub={[
+            summary.byBilling.stripe_main && `${summary.byBilling.stripe_main} Stripe`,
+            summary.byBilling.stripe_legacy && `${summary.byBilling.stripe_legacy} old Stripe`,
+            summary.byBilling.paypal && `${summary.byBilling.paypal} PayPal`,
+          ].filter(Boolean).join(" · ") || "none"}
+        />
+        <Tile
+          label="MRR"
+          value={totalLabel(summary.mrr, true)}
+          sub={`${summary.annual} annual, counted monthly`}
+        />
+        <Tile
+          label="Due in 30 days"
+          value={totalLabel(summary.thisMonth, true)}
+          sub={`collected all-time ${totalLabel(summary.collected, true)}`}
+        />
+        <Tile
+          label="Needs attention"
+          value={String(summary.attention)}
+          tone={summary.attention ? "warn" : undefined}
+          sub={
+            summary.attention
+              ? [
+                  summary.pastDue && `${summary.pastDue} past due`,
+                  summary.overdue && `${summary.overdue} overdue`,
+                  summary.cancelling && `${summary.cancelling} cancelling`,
+                ].filter(Boolean).join(" · ")
+              : "all renewing normally"
+          }
+          onClick={summary.attention ? () => setStatus("attention") : undefined}
+          active={status === "attention"}
+        />
       </div>
 
-      <Card>
+      <Card className="gap-0 py-0">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
+          <div className="relative min-w-48 flex-1 sm:max-w-72">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Shop, owner or email"
+              className="h-8 pl-8 text-sm"
+            />
+          </div>
+          <Segmented value={status} onChange={setStatus} options={STATUS_FILTERS} />
+          <Select value={billing} onValueChange={(v) => setBilling(v as BillingFilter)}>
+            <SelectTrigger className="h-8 w-auto cursor-pointer text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(BILLING_LABELS) as BillingFilter[]).map((k) => (
+                <SelectItem key={k} value={k} className="cursor-pointer text-xs">
+                  {BILLING_LABELS[k]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            {visible.length} {visible.length === 1 ? "customer" : "customers"}
+            {filtered && (
+              <button type="button" onClick={clearFilters} className="inline-flex cursor-pointer items-center gap-0.5 hover:text-foreground">
+                <X className="size-3" /> Clear
+              </button>
+            )}
+          </div>
+        </div>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <SortHead label="Shop / owner" k="shopName" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortHead label="Plan" k="plan" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortHead label="Price" k="price" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="text-right" />
-                <TableHead>Provider</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <SortHead label="Customer" k="shopName" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="pl-4" />
+                <SortHead label="Plan" k="price" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                <TableHead className="hidden md:table-cell">Billing</TableHead>
                 <SortHead label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortHead label="Started" k="startedAt" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortHead label="Next bill" k="nextBillAt" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortHead label="Billed" k="timesBilled" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="text-right" />
-                <SortHead label="Total paid" k="total" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="text-right" />
-                <TableHead>Migration</TableHead>
-                <TableHead />
+                <SortHead label="Next charge" k="nextBillAt" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                <SortHead label="Lifetime" k="total" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="hidden pr-4 text-right lg:table-cell" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {visible.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
-                    No customers match this filter.
+                  <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                    No customers match these filters.
                   </TableCell>
                 </TableRow>
               )}
               {visible.map((r) => {
                 const days = daysUntil(r.nextBillAt);
+                const attention = attentionReason(r);
+                const stampy = r.legacy === "stampystamp";
                 return (
-                  <TableRow key={r.shopId ?? `stampy:${r.ownerEmail}`}>
-                    <TableCell>
-                      <div className="font-medium text-foreground">{r.shopName}</div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {r.legacy === "stampystamp" && (
-                          <span className="rounded bg-orange-500/15 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-orange-300">legacy</span>
+                  <TableRow key={r.shopId ?? `stampy:${r.ownerEmail}`} className={isLive(r) ? "" : "opacity-60"}>
+                    <TableCell className="max-w-64 pl-4">
+                      <div className="flex items-center gap-1.5">
+                        {r.shopId ? (
+                          <Link href={`/dashboard/admin/shops/${r.shopId}`} className="truncate font-medium text-foreground hover:underline">
+                            {r.shopName}
+                          </Link>
+                        ) : (
+                          <span className="truncate font-medium text-foreground">{r.shopName}</span>
                         )}
-                        {r.ownerEmail}
+                        {stampy && (
+                          <span className="shrink-0 rounded bg-orange-500/15 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-orange-300">
+                            Stampy
+                          </span>
+                        )}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{r.ownerEmail}</div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Badge variant="outline" className={stampy ? STAMPY_BADGE : planBadgeClass(r.planSlug)}>
+                        {r.planLabel.replace(/^StampyStamp /, "")}
+                      </Badge>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        <span className="text-foreground">{money(r.priceCents, r.currency)}</span>/{r.interval === "year" ? "yr" : "mo"}
+                        {r.interval === "year" && ` · ${money(r.monthlyCents, r.currency)}/mo`}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={PLAN_BADGE[r.planSlug] ?? ""}>{r.planLabel}</Badge>
+                    <TableCell className="hidden whitespace-nowrap md:table-cell">
+                      <div className="text-sm text-foreground">
+                        {r.provider === "paypal" ? "PayPal" : "Stripe"}
+                        {r.provider === "stripe" && (
+                          <span className={`ml-1.5 text-xs ${r.stripeAccount === "main" ? "text-emerald-400" : "text-muted-foreground"}`}>
+                            {r.stripeAccount === "main" ? "Brewstamp" : "old shared"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.card ? `${r.card.brand?.toLowerCase() ?? "card"} •••• ${r.card.last4}` : r.provider === "paypal" ? "no card saved" : ""}
+                        {r.migration === "awaiting_card" && (
+                          <span className="text-amber-400"> · move emailed {fmtDate(r.migrationEmailedAt)}</span>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <div className="text-foreground">{money(r.priceCents, r.currency)}<span className="text-xs text-muted-foreground">/{r.interval === "year" ? "yr" : "mo"}</span></div>
-                      {r.interval === "year" && <div className="text-xs text-muted-foreground">{money(r.monthlyCents, r.currency)}/mo</div>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-foreground">{r.provider === "paypal" ? "PayPal" : "Stripe"}</div>
-                      {r.provider === "stripe" && (
-                        <div className={`text-xs ${r.stripeAccount === "main" ? "text-emerald-400" : "text-muted-foreground"}`}>
-                          {r.stripeAccount === "main" ? "Brewstamp account" : "old shared account"}
-                        </div>
-                      )}
-                      {r.card && <div className="text-xs text-muted-foreground">{r.card.brand?.toLowerCase()} •••• {r.card.last4}</div>}
-                    </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <StatusBadge status={r.status} cancelAtPeriodEnd={r.cancelAtPeriodEnd} />
                       {r.status === "past_due" && r.nextAttemptAt && (
-                        <div className="mt-0.5 text-xs text-muted-foreground">retry {fmtDate(r.nextAttemptAt)} · attempt {r.failedAttempts}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">retry {fmtDate(r.nextAttemptAt)} · try {r.failedAttempts}</div>
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{fmtDate(r.startedAt)}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       {r.nextBillAt ? (
                         <>
-                          <div className={days != null && days <= 7 ? "text-amber-400" : "text-foreground"}>{fmtDate(r.nextBillAt)}</div>
-                          <div className="text-xs text-muted-foreground">{days != null && days >= 0 ? `in ${days}d` : days != null ? `${-days}d overdue` : ""}</div>
+                          <div className={days != null && days < 0 ? "text-red-400" : days != null && days <= 7 ? "text-amber-400" : "text-foreground"}>
+                            {fmtDate(r.nextBillAt)}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {attention && attention.endsWith("overdue") && <AlertTriangle className="size-3 text-red-400" />}
+                            {days != null && days >= 0 ? (days === 0 ? "today" : `in ${days}d`) : `${-(days ?? 0)}d overdue`}
+                          </div>
                         </>
                       ) : r.endsAt ? (
                         <>
                           <div className="text-amber-400">ends {fmtDate(r.endsAt)}</div>
-                          <div className="text-xs text-muted-foreground">cancel scheduled</div>
+                          <div className="text-xs text-muted-foreground">won&apos;t renew</div>
                         </>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="text-foreground">{r.timesBilled}</div>
-                      {r.failedCharges > 0 && <div className="text-xs text-red-400">{r.failedCharges} failed</div>}
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="hidden whitespace-nowrap pr-4 text-right lg:table-cell">
                       <div className="text-foreground">{totalLabel(r.totalPaid)}</div>
-                      {r.refundedCents > 0 && <div className="text-xs text-muted-foreground">−{(r.refundedCents / 100).toFixed(2)} refunded</div>}
-                      {r.lastPaidAt && <div className="text-xs text-muted-foreground">last {fmtDate(r.lastPaidAt)}</div>}
-                    </TableCell>
-                    <TableCell>
-                      <MigrationBadge state={r.migration} />
-                      {r.migration === "awaiting_card" && r.migrationEmailedAt && (
-                        <div className="mt-0.5 text-xs text-muted-foreground">emailed {fmtDate(r.migrationEmailedAt)}</div>
-                      )}
-                      {r.migration === "migrated" && r.migratedAt && (
-                        <div className="mt-0.5 text-xs text-muted-foreground">card saved {fmtDate(r.migratedAt)}</div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {r.shopId && (
-                        <Link href={`/dashboard/admin/shops/${r.shopId}`} className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
-                          Shop <ChevronRight className="size-3.5" />
-                        </Link>
+                      <div className="text-xs text-muted-foreground">
+                        {r.timesBilled} {r.timesBilled === 1 ? "charge" : "charges"} since {fmtDate(r.startedAt)}
+                      </div>
+                      {(r.failedCharges > 0 || r.refundedCents > 0) && (
+                        <div className="text-xs">
+                          {r.failedCharges > 0 && <span className="text-red-400">{r.failedCharges} failed</span>}
+                          {r.failedCharges > 0 && r.refundedCents > 0 && <span className="text-muted-foreground"> · </span>}
+                          {r.refundedCents > 0 && <span className="text-muted-foreground">−{(r.refundedCents / 100).toFixed(2)} refunded</span>}
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -292,14 +439,45 @@ export default function CustomersClient() {
   );
 }
 
-function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
+function Segmented<T extends string>({
+  value, onChange, options,
+}: { value: T; onChange: (v: T) => void; options: { value: T; label: string; count?: number }[] }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-        <div className="mt-1 text-2xl font-semibold text-foreground">{value}</div>
-        <div className="text-xs text-muted-foreground">{sub}</div>
-      </CardContent>
+    <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`cursor-pointer whitespace-nowrap rounded px-2.5 py-1 transition ${value === o.value ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          {o.label}
+          {o.count != null && <span className="ml-1 tabular-nums opacity-60">{o.count}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Tile({
+  label, value, sub, tone, onClick, active,
+}: { label: string; value: string; sub: string; tone?: "warn"; onClick?: () => void; active?: boolean }) {
+  const body = (
+    <CardContent className="p-4">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`mt-1 text-2xl font-semibold tabular-nums ${tone === "warn" ? "text-amber-400" : "text-foreground"}`}>{value}</div>
+      <div className="truncate text-xs text-muted-foreground">{sub}</div>
+    </CardContent>
+  );
+  return (
+    <Card className={`py-0 ${onClick ? "cursor-pointer transition hover:border-amber-500/40" : ""} ${active ? "border-amber-500/50" : ""}`}>
+      {onClick ? (
+        <button type="button" onClick={onClick} className="w-full cursor-pointer text-left">
+          {body}
+        </button>
+      ) : (
+        body
+      )}
     </Card>
   );
 }
@@ -325,16 +503,5 @@ function StatusBadge({ status, cancelAtPeriodEnd }: { status: string; cancelAtPe
     : status === "past_due" ? "border-red-500/30 bg-red-500/15 text-red-300"
     : "border-border text-muted-foreground";
   const label = status === "active" && cancelAtPeriodEnd ? "cancelling" : status.replace("_", " ");
-  return <Badge variant="outline" className={cls}>{label}</Badge>;
-}
-
-// Stripe → PayPal migration state: email not sent → sent, waiting for the
-// customer to save a card → done. PayPal-native subs have nothing to migrate.
-function MigrationBadge({ state }: { state: CustomerRow["migration"] }) {
-  if (state === "n/a") return <span className="text-xs text-muted-foreground">on PayPal</span>;
-  const [cls, label] =
-    state === "migrated" ? ["border-emerald-500/30 bg-emerald-500/15 text-emerald-300", "migrated"]
-    : state === "awaiting_card" ? ["border-amber-500/30 bg-amber-500/15 text-amber-300", "awaiting card"]
-    : ["border-border text-muted-foreground", "email not sent"];
   return <Badge variant="outline" className={cls}>{label}</Badge>;
 }
