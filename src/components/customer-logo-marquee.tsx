@@ -41,7 +41,7 @@ const ROW_B: CustomerLogo[] = [
   { name: "Baked since 95", place: "Hillside, Melbourne", country: "AU", logo: "/customers/baked-since-95.jpg", padded: true },
   { name: "Handy + Hot", place: "United States", country: "US", logo: "/customers/handy-and-hot.webp" },
   { name: "Fantong", place: "Australia", country: "AU", logo: "/customers/fantong.webp" },
-  { name: "Perry's Social Club", place: "Melbourne", country: "AU" },
+  { name: "Perry's Social Club", place: "Keilor East, Melbourne", country: "AU", logo: "/customers/perrys-social-club.webp" },
   { name: "Brown Sugar Bakery", place: "Forresters Beach, NSW", country: "AU", logo: "/customers/brown-sugar-bakery.png", padded: true },
 ];
 
