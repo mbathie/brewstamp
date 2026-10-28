@@ -29,13 +29,13 @@ const ROW_A: CustomerLogo[] = [
   { name: "Hasan's Café", place: "Saudi Arabia", country: "SA" },
   { name: "Haus Social", place: "Melbourne", country: "AU", logo: "/customers/haus-social.webp" },
   { name: "Little Yokozuna +cafe", place: "Guam", country: "US", logo: "/customers/little-yokozuna.webp" },
-  { name: "Hearthside", place: "Australia", country: "AU" },
+  { name: "Hearthside", place: "Potts Point, Sydney", country: "AU", logo: "/customers/hearthside.webp" },
 ];
 
 const ROW_B: CustomerLogo[] = [
   { name: "Tamping Ground", place: "Sutherland Shire, Sydney", country: "AU", logo: "/customers/tamping-ground.png", padded: true },
   { name: "Xoco House", place: "United States", country: "US", logo: "/customers/xoco-house.webp" },
-  { name: "The Coffee Lounge", place: "Woolwich, London", country: "UK" },
+  { name: "The Coffee Lounge", place: "Woolwich, London", country: "UK", logo: "/customers/the-coffee-lounge.webp" },
   { name: "Eliam Coffee", place: "Australia", country: "AU", logo: "/customers/eliam-coffee.webp" },
   { name: "Hampstead Rehab Centre Kiosk", place: "Adelaide", country: "AU", logo: "/customers/hampstead-kiosk.webp" },
   { name: "Baked since 95", place: "Hillside, Melbourne", country: "AU", logo: "/customers/baked-since-95.jpg", padded: true },
