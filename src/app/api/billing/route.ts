@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMerchant } from "@/lib/auth";
-import { Payment, ShopMembership, StampCard, Subscription } from "@/models";
-import { freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
+import { Payment, Shop, ShopMembership, StampCard, Subscription } from "@/models";
+import { LIVE_SUB_STATUSES, freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
 import { getPlanCatalog } from "@/lib/plan-catalog";
 import { billingProvider } from "@/lib/paypal";
 
@@ -68,7 +68,29 @@ export async function GET() {
   const provider = billingProvider();
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || null;
 
-  const ownedShops = await ShopMembership.countDocuments({ user: merchant.user._id, role: "owner" });
+  const ownedMemberships = await ShopMembership.find({ user: merchant.user._id, role: "owner" }).select("shop").lean();
+  const ownedShops = ownedMemberships.length;
+
+  // No live plan here but a paid sub on another of the owner's shops: that
+  // plan covers this shop too (see getShopPlanLimits), so the page shows it
+  // rather than the Free trial. The highest plan wins, as it does there.
+  let coveredBy: { shopId: string; shopName: string; planLabel: string } | null = null;
+  if (!subscription || !(LIVE_SUB_STATUSES as readonly string[]).includes(subscription.status)) {
+    const others = await Subscription.find({
+      shop: { $in: ownedMemberships.map((m: any) => m.shop), $ne: shopId },
+      status: { $in: LIVE_SUB_STATUSES },
+    }).lean<any[]>();
+    let best: { sub: any; rank: number; label: string } | null = null;
+    for (const s of others) {
+      const plan = catalog.resolveSub(s);
+      const rank = catalog.rank(plan.slug);
+      if (!best || rank > best.rank) best = { sub: s, rank, label: plan.label };
+    }
+    if (best && best.rank > catalog.rank("free")) {
+      const payer = await Shop.findById(best.sub.shop).select("name").lean<any>();
+      coveredBy = { shopId: String(best.sub.shop), shopName: payer?.name ?? "your other shop", planLabel: best.label };
+    }
+  }
 
   return NextResponse.json({
     totalStamps,
@@ -83,6 +105,7 @@ export async function GET() {
       changedAt: FREE_TIER_CHANGED_AT,
     },
     ownedShops,
+    coveredBy,
     // The whole catalogue (archived plans and prices included) — the page
     // shows active plans plus the shop's own plan if it's been archived.
     // Another customer's custom deal is never sent.

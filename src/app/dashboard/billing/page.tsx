@@ -97,6 +97,9 @@ interface BillingData {
     changedAt: string; // ISO date the 50-stamp allowance started
   };
   ownedShops: number;
+  // Set when this shop has no plan of its own but another of the owner's
+  // shops pays for one, which covers this shop too.
+  coveredBy: { shopId: string; shopName: string; planLabel: string } | null;
   // Provider a NEW subscription would bill through; existing subs carry
   // their own provider below.
   provider: "stripe" | "paypal";
@@ -365,6 +368,34 @@ export default function BillingPage() {
     );
   }
   if (!data || !currentPlan) return null;
+
+  // A shop covered by the owner's plan on another shop has nothing to buy or
+  // manage here: billing lives on the shop that holds the subscription.
+  if (data.coveredBy && currentSlug === "free") {
+    const { shopId, shopName, planLabel } = data.coveredBy;
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Billing" description="This shop is covered by your plan on another shop." />
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Current plan</div>
+              <div className="text-lg font-semibold text-foreground">
+                {planLabel} · via {shopName}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your {planLabel} plan on {shopName} covers all your shops, so this one has no stamp limit
+                ({data.totalStamps.toLocaleString()} stamps so far). Manage the plan and payments from {shopName}.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="cursor-pointer">
+              <a href={`/api/shop-context?switch=${shopId}`}>Go to {shopName}</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

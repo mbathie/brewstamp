@@ -9,6 +9,8 @@ interface Props {
   planLabel?: string;
   /** This shop's Free allowance: 50 for new shops, 100 if grandfathered. */
   freeLimit: number;
+  /** Plain label, no link to billing (a shop paid for from another shop). */
+  static?: boolean;
 }
 
 export function StampUsageIndicator({
@@ -16,15 +18,20 @@ export function StampUsageIndicator({
   hasSubscription,
   planLabel,
   freeLimit,
+  static: isStatic = false,
 }: Props) {
   if (hasSubscription) {
-    return (
-      <Link
-        href="/dashboard/billing"
-        className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/25"
-      >
+    const pill = "flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400";
+    const label = (
+      <>
         <Zap className="size-3" />
         {planLabel || "Pro"}
+      </>
+    );
+    if (isStatic) return <span className={pill}>{label}</span>;
+    return (
+      <Link href="/dashboard/billing" className={`${pill} transition-colors hover:bg-emerald-500/25`}>
+        {label}
       </Link>
     );
   }

@@ -20,6 +20,28 @@ export function startDripCron() {
   console.log("[Drip] Cron scheduled: daily 8am AEDT");
 }
 
+// The owner's id on a shop whose `owner` may or may not be populated.
+function ownerIdOf(shop: any): string {
+  return String(shop.owner?._id ?? shop.owner ?? "");
+}
+
+// Owners with a live subscription on ANY of their shops. A paid plan covers
+// every shop the owner has (see getShopPlanLimits), so a second shop with no
+// sub of its own is still paid and gets no Free-trial nudges.
+async function paidOwnerIds(shops: any[]): Promise<Set<string>> {
+  const ownerIds = [...new Set(shops.map(ownerIdOf).filter(Boolean))];
+  if (ownerIds.length === 0) return new Set();
+  const owned = await Shop.find({ owner: { $in: ownerIds } }).select("_id owner").lean();
+  const subs = await Subscription.find({
+    shop: { $in: owned.map((s: any) => s._id) },
+    status: { $in: LIVE_SUB_STATUSES },
+  })
+    .select("shop")
+    .lean();
+  const ownerOfShop = new Map(owned.map((s: any) => [String(s._id), String(s.owner)]));
+  return new Set(subs.map((s: any) => ownerOfShop.get(String(s.shop))!).filter(Boolean));
+}
+
 export async function runDripEmails() {
   await connectDB();
 
@@ -59,9 +81,7 @@ export async function runDripEmails() {
       { $match: { shop: { $in: goLiveIds }, status: "approved" } },
       { $group: { _id: "$shop", last: { $max: "$createdAt" } } },
     ]),
-    Subscription.find({ shop: { $in: goLiveIds }, status: { $in: LIVE_SUB_STATUSES } }).select(
-      "shop",
-    ),
+    paidOwnerIds(goLiveCandidates),
   ]);
 
   const statsMap = new Map<string, { stamps: number; customers: number }>(
@@ -73,7 +93,6 @@ export async function runDripEmails() {
   const lastActivityMap = new Map<string, Date>(
     goLiveLastActivity.map((r: any) => [r._id.toString(), r.last]),
   );
-  const paidIds = new Set(goLivePaid.map((s: any) => s.shop.toString()));
 
   const isBranded = (shop: any) =>
     !!shop.logo ||
@@ -86,7 +105,7 @@ export async function runDripEmails() {
     const id = shop._id.toString();
     const stats = statsMap.get(id);
     const engaged =
-      paidIds.has(id) ||
+      goLivePaid.has(ownerIdOf(shop)) ||
       (stats?.customers ?? 0) >= 10 ||
       (stats?.stamps ?? 0) >= 50;
     const last = lastActivityMap.get(id);
@@ -125,14 +144,7 @@ export async function runDripEmails() {
 
   const upgradeShopIds = upgradeShops.map((s: any) => s._id);
 
-  const activeSubShopIds = new Set(
-    (
-      await Subscription.find({
-        shop: { $in: upgradeShopIds },
-        status: { $in: LIVE_SUB_STATUSES },
-      }).select("shop")
-    ).map((s: any) => s.shop.toString()),
-  );
+  const upgradePaidOwners = await paidOwnerIds(upgradeShops);
 
   const upgradeStampCounts = await StampCard.aggregate([
     { $match: { shop: { $in: upgradeShopIds } } },
@@ -150,7 +162,7 @@ export async function runDripEmails() {
     // Nudge at 60% of this shop's Free allowance (30 of 50, or 60 of a
     // grandfathered 100) — breathing room before stamping pauses at the cap.
     const limit = freeStampLimit(shop);
-    if (stamps < Math.ceil(limit * 0.6) || activeSubShopIds.has(shopIdStr)) continue;
+    if (stamps < Math.ceil(limit * 0.6) || upgradePaidOwners.has(ownerIdOf(shop))) continue;
 
     const owner = shop.owner as any;
     await Shop.updateOne({ _id: shop._id }, { upgradeNudgeSent: true });

@@ -140,6 +140,11 @@ export default async function DashboardLayout({
   const canManageBilling = aggregate
     ? ctx.memberships.some((m) => m.role === "owner")
     : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role === "owner";
+  // A shop paid for by the owner's plan on another shop has no billing of its
+  // own (it's all on the paying shop), so it gets no Billing nav item. Nor
+  // Team for the owner: that page already covers all their shops from the
+  // main one. A manager of only this shop still needs it here.
+  const coveredElsewhere = !aggregate && !activeSub && hasPaidPlan;
   // Team is for owners and managers; staff can't change anything there.
   const canManageTeam = aggregate
     ? ctx.memberships.some((m) => m.role !== "staff")
@@ -175,8 +180,8 @@ export default async function DashboardLayout({
           userName={session.user.name || "Merchant"}
           shopName={aggregate ? "All shops" : ctx.shop.name}
           userEmail={session.user.email || ""}
-          canManageBilling={canManageBilling}
-          canManageTeam={canManageTeam}
+          canManageBilling={canManageBilling && !coveredElsewhere}
+          canManageTeam={canManageTeam && !(coveredElsewhere && canManageBilling)}
         />
         <SidebarInset>
           {billingNotice && <BillingBanner notice={billingNotice} />}
@@ -214,6 +219,7 @@ export default async function DashboardLayout({
                 totalStamps={totalStamps}
                 hasSubscription={hasPaidPlan}
                 freeLimit={freeTier.stampLimit}
+                static={coveredElsewhere}
                 planLabel={
                   // Derive from the live stripePriceId so the badge follows
                   // upgrades/downgrades instantly. Old subs without the
