@@ -30,6 +30,7 @@ const GUIDES: Link[] = [
   { title: "Why paper loyalty cards don't work anymore", path: "/blog/why-paper-loyalty-cards-dont-work", note: "Lost cards, fraud, and zero data." },
   { title: "Cafe loyalty programs for customers", path: "/blog/cafe-loyalty-programs-for-customers", note: "How the customer experience works." },
   { title: "Multi-language loyalty cards", path: "/blog/multi-language-loyalty-card", note: "One QR code, every customer language." },
+  { title: "Loyalty across multiple cafes", path: "/blog/multi-location-cafe-loyalty-program", note: "Every shop under one account, all-shops dashboard, per-shop team access." },
   { title: "Multi-shop and team logins", path: "/blog/multiple-shops-and-team-logins", note: "Running multiple cafes and inviting staff." },
   { title: "Set up your Brewstamp shop in 5 minutes", path: "/blog/set-up-your-brewstamp-shop", note: "Onboarding walkthrough." },
 ];

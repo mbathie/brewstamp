@@ -125,6 +125,18 @@ export default function BlogPost() {
             </p>
           </header>
 
+          <p className="mb-6 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-600">
+            <strong className="text-stone-900">Updated October 2026:</strong>{" "}
+            team access is now per shop, with an All shops option that
+            includes new locations automatically.{" "}
+            <Link
+              href="/blog/multi-location-cafe-loyalty-program"
+              className="text-amber-700 underline-offset-2 hover:underline"
+            >
+              Read how multi-shop and team access work today →
+            </Link>
+          </p>
+
           <div className="mb-14 rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
               The short version

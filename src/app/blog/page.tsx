@@ -35,6 +35,18 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "multi-location-cafe-loyalty-program",
+    title: "Running a Loyalty Program Across Multiple Cafes: Shops, Staff and Access",
+    description:
+      "Every shop under one account and one plan, an all-shops dashboard, and team logins scoped to the shops each person works at — including ones you open later.",
+    tag: "Product update",
+    image:
+      "https://images.pexels.com/photos/30267627/pexels-photo-30267627.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
+    imageAlt: "Barista pouring coffee",
+    publishedAt: "2026-10-29",
+    publishedAtDisplay: "29 Oct 2026",
+  },
+  {
     slug: "best-coffee-shop-loyalty-apps",
     title: "The Best Coffee Shop Loyalty Apps in 2026, Compared",
     description:

@@ -62,6 +62,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { url: `${baseUrl}/blog`, priority: 0.7 },
     {
+      url: `${baseUrl}/blog/multi-location-cafe-loyalty-program`,
+            priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/multiple-shops-and-team-logins`,
+            priority: 0.7,
+    },
+    {
       url: `${baseUrl}/blog/apple-google-wallet-loyalty-card`,
             priority: 0.8,
     },
