@@ -51,6 +51,9 @@ type NavItem = {
   ownerOnly?: boolean;
   /** Hidden from staff (Team). */
   managerUp?: boolean;
+  /** Hidden from the owner on a shop their plan on another shop pays for:
+   *  these pages cover all their shops, so they live on the main one. */
+  mainShopOnly?: boolean;
 };
 
 // Grouped by job: running the shop day to day first, account admin below.
@@ -63,9 +66,9 @@ const shopItems: NavItem[] = [
 ];
 
 const manageItems: NavItem[] = [
-  { title: "Team", href: "/dashboard/team", icon: IdCard, managerUp: true },
-  { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
-  { title: "Partners", href: "/dashboard/partners", icon: Handshake },
+  { title: "Team", href: "/dashboard/team", icon: IdCard, managerUp: true, mainShopOnly: true },
+  { title: "Billing", href: "/dashboard/billing", icon: CreditCard, ownerOnly: true, mainShopOnly: true },
+  { title: "Partners", href: "/dashboard/partners", icon: Handshake, mainShopOnly: true },
 ];
 
 const adminItems = [
@@ -83,17 +86,24 @@ export function DashboardSidebar({
   userEmail,
   canManageBilling = true,
   canManageTeam = true,
+  coveredShop = false,
 }: {
   userName: string;
   shopName: string;
   userEmail: string;
   canManageBilling?: boolean;
   canManageTeam?: boolean;
+  coveredShop?: boolean;
 }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const visible = (items: NavItem[]) =>
-    items.filter((i) => (!i.ownerOnly || canManageBilling) && (!i.managerUp || canManageTeam));
+    items.filter(
+      (i) =>
+        (!i.ownerOnly || canManageBilling) &&
+        (!i.managerUp || canManageTeam) &&
+        !(i.mainShopOnly && coveredShop),
+    );
 
   const group = (label: string | null, items: NavItem[]) =>
     items.length > 0 && (

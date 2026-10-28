@@ -141,9 +141,9 @@ export default async function DashboardLayout({
     ? ctx.memberships.some((m) => m.role === "owner")
     : ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role === "owner";
   // A shop paid for by the owner's plan on another shop has no billing of its
-  // own (it's all on the paying shop), so it gets no Billing nav item. Nor
-  // Team for the owner: that page already covers all their shops from the
-  // main one. A manager of only this shop still needs it here.
+  // own (it's all on the paying shop). The owner's Billing, Team and Partners
+  // pages cover all their shops, so on this one they're left to the main
+  // shop; a manager of only this shop still gets Team here.
   const coveredElsewhere = !aggregate && !activeSub && hasPaidPlan;
   // Team is for owners and managers; staff can't change anything there.
   const canManageTeam = aggregate
@@ -180,8 +180,9 @@ export default async function DashboardLayout({
           userName={session.user.name || "Merchant"}
           shopName={aggregate ? "All shops" : ctx.shop.name}
           userEmail={session.user.email || ""}
-          canManageBilling={canManageBilling && !coveredElsewhere}
-          canManageTeam={canManageTeam && !(coveredElsewhere && canManageBilling)}
+          canManageBilling={canManageBilling}
+          canManageTeam={canManageTeam}
+          coveredShop={coveredElsewhere && canManageBilling}
         />
         <SidebarInset>
           {billingNotice && <BillingBanner notice={billingNotice} />}
