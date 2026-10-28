@@ -9,8 +9,9 @@
 
 export interface CustomerLogo {
   name: string;
-  place: string;
-  country: string;
+  // Optional where we couldn't confirm where the shop is.
+  place?: string;
+  country?: string;
   logo?: string;
   // Square or transparent logos need breathing room inside the 3:1 tile;
   // the 3:1 banners uploaded through the dashboard fill it edge to edge.
@@ -30,6 +31,7 @@ const ROW_A: CustomerLogo[] = [
   { name: "Haus Social", place: "Melbourne", country: "AU", logo: "/customers/haus-social.webp" },
   { name: "Little Yokozuna +cafe", place: "Guam", country: "US", logo: "/customers/little-yokozuna.webp" },
   { name: "Hearthside", place: "Potts Point, Sydney", country: "AU", logo: "/customers/hearthside.webp" },
+  { name: "CRAVO", place: "Lilydale, Melbourne", country: "AU", logo: "/customers/cravo.webp" },
 ];
 
 const ROW_B: CustomerLogo[] = [
@@ -43,9 +45,11 @@ const ROW_B: CustomerLogo[] = [
   { name: "Fantong", place: "Australia", country: "AU", logo: "/customers/fantong.webp" },
   { name: "Perry's Social Club", place: "Keilor East, Melbourne", country: "AU", logo: "/customers/perrys-social-club.webp" },
   { name: "Brown Sugar Bakery", place: "Forresters Beach, NSW", country: "AU", logo: "/customers/brown-sugar-bakery.png", padded: true },
+  { name: "The Cheesecake Bar", place: "Bali, Indonesia", country: "ID", logo: "/customers/the-cheesecake-bar.webp" },
+  { name: "Munay cafetería", logo: "/customers/munay-cafeteria.webp" },
 ];
 
-export const CUSTOMER_COUNTRIES = new Set([...ROW_A, ...ROW_B].map((c) => c.country)).size;
+export const CUSTOMER_COUNTRIES = new Set([...ROW_A, ...ROW_B].map((c) => c.country).filter(Boolean)).size;
 
 function Tile({ c, dup }: { c: CustomerLogo; dup?: boolean }) {
   return (
@@ -66,7 +70,7 @@ function Tile({ c, dup }: { c: CustomerLogo; dup?: boolean }) {
         )}
       </div>
       <p className="mt-2 truncate text-center text-sm font-semibold text-stone-900">{c.name}</p>
-      <p className="truncate text-center text-xs text-stone-500">{c.place}</p>
+      <p className="truncate text-center text-xs text-stone-500">{c.place || "\u00a0"}</p>
     </li>
   );
 }
