@@ -10,8 +10,8 @@ const PATH = "/blog/multi-location-cafe-loyalty-program";
 const TITLE = "Running a Loyalty Program Across Multiple Cafes: Shops, Staff and Access";
 const DESCRIPTION =
   "How to run one loyalty program across several cafe locations: every shop under one account, an all-shops dashboard, and team logins scoped to the shops each person works at.";
-const IMAGE =
-  "https://images.pexels.com/photos/30267627/pexels-photo-30267627.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop";
+const IMAGE = "https://brewstamp.app/blog/multi-location-map.png";
+const IMAGE_ALT = "A map with five cafe locations linked to one All shops dashboard";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     url: PATH,
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: IMAGE, width: 1200, height: 630, alt: "Barista pouring coffee" }],
+    images: [{ url: IMAGE, width: 1200, height: 630, alt: IMAGE_ALT }],
   },
   twitter: {
     card: "summary_large_image",
@@ -135,6 +135,13 @@ export default function BlogPost() {
               Published <time dateTime="2026-10-29">29 Oct 2026</time>
             </p>
           </header>
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/blog/multi-location-map.svg"
+            alt={IMAGE_ALT}
+            className="mb-12 aspect-[1200/630] w-full rounded-2xl shadow-sm ring-1 ring-stone-200"
+          />
 
           <div className="mb-14 rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">The short version</p>

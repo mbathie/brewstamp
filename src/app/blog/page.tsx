@@ -40,9 +40,8 @@ const posts = [
     description:
       "Every shop under one account and one plan, an all-shops dashboard, and team logins scoped to the shops each person works at — including ones you open later.",
     tag: "Product update",
-    image:
-      "https://images.pexels.com/photos/30267627/pexels-photo-30267627.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-    imageAlt: "Barista pouring coffee",
+    image: "/blog/multi-location-map.svg",
+    imageAlt: "A map with five cafe locations linked to one All shops dashboard",
     publishedAt: "2026-10-29",
     publishedAtDisplay: "29 Oct 2026",
   },
