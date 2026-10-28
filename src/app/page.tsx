@@ -24,6 +24,7 @@ import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
 import { FREE_STAMPS, formatCents, type PlanCatalog } from "@/lib/plans";
 import PlanCards from "@/app/pricing/plan-cards";
+import CustomerLogoMarquee, { CUSTOMER_COUNTRIES } from "@/components/customer-logo-marquee";
 import { getPlanCatalog } from "@/lib/plan-catalog";
 import { PLAN_OFFERS, withPlanOffers } from "@/lib/structured-data";
 
@@ -300,66 +301,13 @@ export default async function Home() {
               Trusted by cafes
             </p>
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">
-              Independent cafes running real loyalty programs with us
+              Independent cafes in {CUSTOMER_COUNTRIES} countries running real
+              loyalty programs with us
             </h2>
           </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                name: "Thirty 7even",
-                location: "Macquarie Park, Sydney",
-                logo: "/customers/thirty-7even.png",
-                logoClass: "invert",
-              },
-              {
-                name: "Bennett St Dairy",
-                location: "Bondi, Sydney",
-                logo: "/customers/bennett-st-dairy.jpg",
-              },
-              {
-                name: "Short Stop Coffee",
-                location: "Melbourne & Sydney",
-                logo: "/customers/short-stop-coffee.png",
-              },
-              {
-                name: "Tamping Ground",
-                location: "Sutherland Shire, Sydney",
-                logo: "/customers/tamping-ground.png",
-              },
-              {
-                name: "Baked since 95",
-                location: "Hillside, Melbourne",
-                logo: "/customers/baked-since-95.jpg",
-              },
-              {
-                name: "Brown Sugar Bakery",
-                location: "Forresters Beach, NSW",
-                logo: "/customers/brown-sugar-bakery.png",
-              },
-            ].map(({ name, location, logo, logoClass }) => (
-              <div
-                key={name}
-                className="flex flex-col items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 px-6 py-8 text-center transition-shadow hover:shadow-md"
-              >
-                <div className="mb-3 flex h-16 w-full items-center justify-center">
-                  <img
-                    src={logo}
-                    alt={`${name} logo`}
-                    className={`max-h-16 w-auto object-contain ${logoClass ?? ""}`}
-                    loading="lazy"
-                  />
-                </div>
-                <p className="text-base font-semibold tracking-tight text-stone-900">
-                  {name}
-                </p>
-                <p className="mt-1 text-xs text-stone-500">{location}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-stone-400">
-            Includes cafes on Brewstamp and on our long-running predecessor
-            platform StampyStamp.
-          </p>
+        </div>
+        <div className="mx-auto mt-10 max-w-7xl">
+          <CustomerLogoMarquee />
         </div>
       </section>
 

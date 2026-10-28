@@ -165,3 +165,33 @@
   color: inherit !important;
   opacity: 0.7 !important;
 }
+/* Homepage customer logo strip (components/customer-logo-marquee.tsx). */
+.logo-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+.logo-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: logo-marquee linear infinite;
+}
+.logo-marquee-track[data-reverse] {
+  animation-direction: reverse;
+}
+.logo-marquee:hover .logo-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes logo-marquee {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-marquee { mask-image: none; }
+  .logo-marquee-track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.5rem;
+  }
+  .logo-marquee-item[data-dup] { display: none; }
+}
