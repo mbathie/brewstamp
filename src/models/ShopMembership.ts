@@ -19,6 +19,9 @@ const shopMembershipSchema = new mongoose.Schema(
     },
     invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     acceptedAt: { type: Date },
+    // Given access to all the owner's shops, so shops the owner adds later
+    // are granted too (see grantAllShopsAccess in lib/team.ts).
+    allShops: { type: Boolean },
   },
   { timestamps: true }
 );

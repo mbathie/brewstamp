@@ -7,6 +7,7 @@
 // Who can change what, per shop: the owner manages anyone but the owner;
 // a manager manages staff only, and can't create managers.
 
+import crypto from "crypto";
 import { Types } from "mongoose";
 import { Invite, Shop, ShopMembership } from "@/models";
 import { hasStaffLogins } from "@/lib/plans";
@@ -70,6 +71,64 @@ export function canAssign(myRole: MembershipRole, role: TeamRole, current?: Memb
   if (current === "owner") return false;
   if (myRole === "owner") return true;
   return myRole === "manager" && role === "staff" && (current === undefined || current === "staff");
+}
+
+/**
+ * A new shop joins the owner's "all shops" team: everyone given access to all
+ * the owner's shops gets it here too, in the same role, and pending all-shops
+ * invites gain this shop. Call after the owner's own membership is created.
+ */
+export async function grantAllShopsAccess(ownerId: string, shopId: string): Promise<void> {
+  const others = (await Shop.find({ owner: ownerId, _id: { $ne: shopId } }).select("_id").lean()).map((s) => s._id);
+  if (!others.length) return;
+
+  const plan = (await getUserPlanLimits(ownerId)).plan;
+  if (!hasStaffLogins(plan)) return;
+  let seats = plan.staffLoginLimit === "unlimited" ? Infinity : plan.staffLoginLimit;
+
+  // One role per person: manager if they manage any of the shops.
+  const members = await ShopMembership.find({ shop: { $in: others }, allShops: true, role: { $ne: "owner" } }).lean();
+  const people = new Map<string, { role: TeamRole; invitedBy?: unknown }>();
+  for (const m of members as any[]) {
+    const id = m.user.toString();
+    if (id === ownerId) continue;
+    const prev = people.get(id);
+    if (!prev || m.role === "manager") people.set(id, { role: m.role, invitedBy: m.invitedBy });
+  }
+  for (const [user, p] of people) {
+    if (seats <= 0) break;
+    const done = await ShopMembership.updateOne(
+      { user, shop: shopId },
+      { $setOnInsert: { role: p.role, invitedBy: p.invitedBy, acceptedAt: new Date(), allShops: true } },
+      { upsert: true },
+    );
+    if (done.upsertedCount) seats--;
+  }
+
+  const invites = await Invite.find({
+    shop: { $in: others },
+    allShops: true,
+    acceptedAt: { $exists: false },
+    expiresAt: { $gt: new Date() },
+  }).lean();
+  const byEmail = new Map<string, any>();
+  for (const inv of invites as any[]) {
+    const prev = byEmail.get(inv.email);
+    if (!prev || inv.role === "manager") byEmail.set(inv.email, inv);
+  }
+  for (const inv of byEmail.values()) {
+    if (seats <= 0) break;
+    await Invite.create({
+      shop: shopId,
+      email: inv.email,
+      role: inv.role,
+      token: crypto.randomBytes(24).toString("hex"),
+      invitedBy: inv.invitedBy,
+      expiresAt: inv.expiresAt,
+      allShops: true,
+    });
+    seats--;
+  }
 }
 
 export function seatFree(shop: TeamShop): boolean {

@@ -21,6 +21,8 @@ const inviteSchema = new mongoose.Schema(
     },
     expiresAt: { type: Date, required: true },
     acceptedAt: { type: Date },
+    // Invited to all the owner's shops, including ones added later.
+    allShops: { type: Boolean },
   },
   { timestamps: true }
 );

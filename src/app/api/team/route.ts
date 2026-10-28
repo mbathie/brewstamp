@@ -43,9 +43,11 @@ export async function GET() {
         email: m.user.email || "",
         isMe: id === ctx.userId,
         since: m.createdAt,
+        allShops: false,
         access: [],
       });
     }
+    if (m.allShops) people.get(id).allShops = true;
     people.get(id).access.push({ membershipId: m._id.toString(), shopId: m.shop.toString(), role: m.role });
   }
 
@@ -58,10 +60,12 @@ export async function GET() {
         role: inv.role,
         expiresAt: inv.expiresAt,
         invitedBy: inv.invitedBy?.name || inv.invitedBy?.email || "",
+        allShops: false,
         items: [],
       };
       pending.set(inv.email, group);
     }
+    if (inv.allShops) group.allShops = true;
     if (inv.expiresAt > group.expiresAt) group.expiresAt = inv.expiresAt;
     group.items.push({ inviteId: inv._id.toString(), shopId: inv.shop.toString(), role: inv.role });
   }
@@ -75,8 +79,9 @@ export async function GET() {
 }
 
 // POST /api/team — invite someone to one or more shops.
-// Body: { email, role: 'manager' | 'staff', shopIds?: string[] } — shopIds
-// defaults to the current shop. One email goes out; accepting it accepts the
+// Body: { email, role: 'manager' | 'staff', shopIds?: string[], allShops? } —
+// shopIds defaults to the current shop. allShops (owner only) invites them to
+// every shop the viewer owns, and to shops added later. One email goes out; accepting it accepts the
 // invite at every shop (see /api/invites/accept).
 export async function POST(req: Request) {
   const session = await auth();
@@ -85,7 +90,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { email?: string; role?: TeamRole; shopIds?: string[] };
+  const body = (await req.json().catch(() => ({}))) as {
+    email?: string;
+    role?: TeamRole;
+    shopIds?: string[];
+    allShops?: boolean;
+  };
+  const allShops = body.allShops === true;
   const email = body.email?.trim().toLowerCase();
   const role = body.role;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -94,13 +105,18 @@ export async function POST(req: Request) {
   if (role !== "manager" && role !== "staff") {
     return NextResponse.json({ error: "Role must be 'manager' or 'staff'" }, { status: 400 });
   }
-  const wanted = body.shopIds?.length ? body.shopIds : ctx.shopId ? [ctx.shopId] : [];
+  await connectDB();
+  const mine = await teamShops(ctx);
+  const owned = mine.filter((s) => s.myRole === "owner").map((s) => s._id);
+  if (allShops && !owned.length) {
+    return NextResponse.json({ error: "Only the owner can invite people to all shops." }, { status: 403 });
+  }
+  const wanted = allShops ? owned : body.shopIds?.length ? body.shopIds : ctx.shopId ? [ctx.shopId] : [];
   if (!wanted.length) {
     return NextResponse.json({ error: "Pick at least one shop." }, { status: 400 });
   }
 
-  await connectDB();
-  const shops = (await teamShops(ctx)).filter((s) => wanted.includes(s._id));
+  const shops = mine.filter((s) => wanted.includes(s._id));
   if (shops.length !== new Set(wanted).size) {
     return NextResponse.json({ error: "You don't have access to one of those shops." }, { status: 403 });
   }
@@ -127,6 +143,16 @@ export async function POST(req: Request) {
       )
     : new Set<string>();
   const targets = shops.filter((s) => !already.has(s._id));
+  // Already on some shops: from now on they follow the owner's new shops too.
+  if (allShops && existingUser && already.size) {
+    await ShopMembership.updateMany(
+      { user: existingUser._id, shop: { $in: [...already] }, role: { $ne: "owner" } },
+      { $set: { allShops: true } },
+    );
+    if (!targets.length) {
+      return NextResponse.json({ ok: true, invited: [], skipped: shops.map((s) => s.name) });
+    }
+  }
   if (!targets.length) {
     return NextResponse.json({ error: `${email} already has access to ${shopList(shops.map((s) => s.name))}.` }, { status: 400 });
   }
@@ -158,7 +184,7 @@ export async function POST(req: Request) {
     tokens.push(token);
     await Invite.findOneAndUpdate(
       { shop: s._id, email, acceptedAt: { $exists: false } },
-      { $set: { role, token, expiresAt, invitedBy: session.user.id } },
+      { $set: { role, token, expiresAt, invitedBy: session.user.id, allShops } },
       { upsert: true },
     );
   }

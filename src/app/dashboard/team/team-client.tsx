@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Check, Crown, Loader2, Lock, Mail, Search, Store, Trash2, UserPlus, Users } from "lucide-react";
+import { Check, Crown, Info, Loader2, Lock, Mail, Search, Store, Trash2, UserPlus, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/page-header";
+import { Hint } from "@/components/ui/hint";
 import { avatarTint } from "@/lib/avatar";
 import type { TeamShop } from "@/lib/team";
 
@@ -32,6 +33,8 @@ interface Person {
   email: string;
   isMe: boolean;
   since: string;
+  /** Follows every shop the owner has, including ones added later. */
+  allShops: boolean;
   access: { membershipId: string; shopId: string; role: Role }[];
 }
 
@@ -40,6 +43,7 @@ interface PendingInvite {
   role: TeamRole;
   expiresAt: string;
   invitedBy: string;
+  allShops: boolean;
   items: { inviteId: string; shopId: string; role: TeamRole }[];
 }
 
@@ -127,7 +131,14 @@ function Avatar({ name, email, pending }: { name: string; email: string; pending
 }
 
 /** Which shops a row can use: names for a few, a count for many. */
-function ShopAccess({ ids, shops }: { ids: string[]; shops: TeamShop[] }) {
+function ShopAccess({ ids, shops, all }: { ids: string[]; shops: TeamShop[]; all?: boolean }) {
+  if (all) {
+    return (
+      <span className="text-xs text-muted-foreground" title="Including shops added later">
+        All shops <span className="text-amber-500/80">· incl. new</span>
+      </span>
+    );
+  }
   if (ids.length === shops.length) {
     return <span className="text-xs text-muted-foreground">All {shops.length} shops</span>;
   }
@@ -334,7 +345,7 @@ export default function TeamClient() {
                 </div>
                 {multiShop && (
                   <div className="hidden w-56 md:block">
-                    <ShopAccess ids={p.access.map((a) => a.shopId)} shops={shops} />
+                    <ShopAccess ids={p.access.map((a) => a.shopId)} shops={shops} all={p.allShops} />
                   </div>
                 )}
                 <div className="w-28">
@@ -367,7 +378,7 @@ export default function TeamClient() {
                 </div>
                 {multiShop && (
                   <div className="hidden w-56 md:block">
-                    <ShopAccess ids={inv.items.map((i) => i.shopId)} shops={shops} />
+                    <ShopAccess ids={inv.items.map((i) => i.shopId)} shops={shops} all={inv.allShops} />
                   </div>
                 )}
                 <div className="w-28">
@@ -434,6 +445,8 @@ function ShopPicker({
   onChange,
   disabled,
   note,
+  allShops,
+  onAllShops,
 }: {
   shops: TeamShop[];
   selected: Set<string>;
@@ -441,9 +454,12 @@ function ShopPicker({
   /** Shops shown but not toggleable, with the reason. */
   disabled?: Map<string, string>;
   note?: Map<string, string>;
+  /** Owners only: every shop, including ones added later. */
+  allShops?: boolean;
+  onAllShops?: (on: boolean) => void;
 }) {
   const [query, setQuery] = useState("");
-  const togglable = shops.filter((s) => !disabled?.has(s._id));
+  const togglable = allShops ? [] : shops.filter((s) => !disabled?.has(s._id));
   const shown = query ? shops.filter((s) => s.name.toLowerCase().includes(query.toLowerCase())) : shops;
   const allOn = togglable.every((s) => selected.has(s._id));
 
@@ -456,24 +472,48 @@ function ShopPicker({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <Label>Shops</Label>
+      <Label>Shops</Label>
+      {onAllShops && (
         <button
           type="button"
-          className="cursor-pointer text-xs text-amber-500 hover:underline"
-          onClick={() => {
-            const next = new Set(selected);
-            for (const s of togglable) {
-              if (allOn) next.delete(s._id);
-              else next.add(s._id);
-            }
-            onChange(next);
-          }}
+          onClick={() => onAllShops(!allShops)}
+          className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+            allShops ? "border-amber-600 bg-amber-600/10" : "hover:bg-muted/50"
+          }`}
         >
-          {allOn ? "Clear all" : `Select all ${togglable.length}`}
+          <span
+            className={`flex size-4 shrink-0 items-center justify-center rounded border ${
+              allShops ? "border-amber-600 bg-amber-600 text-white" : "border-muted-foreground/40"
+            }`}
+          >
+            {allShops && <Check className="size-3" />}
+          </span>
+          <span className="flex-1 truncate">
+            <span className="font-medium text-foreground">All shops</span>
+            <span className="text-xs text-muted-foreground"> · including any you add later</span>
+          </span>
         </button>
-      </div>
-      {shops.length >= SHOP_SEARCH_FROM && (
+      )}
+      {!allShops && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-muted-foreground">{onAllShops ? "Or pick shops" : ""}</span>
+          <button
+            type="button"
+            className="cursor-pointer text-xs text-amber-500 hover:underline"
+            onClick={() => {
+              const next = new Set(selected);
+              for (const s of togglable) {
+                if (allOn) next.delete(s._id);
+                else next.add(s._id);
+              }
+              onChange(next);
+            }}
+          >
+            {allOn ? "Clear all" : `Select all ${togglable.length}`}
+          </button>
+        </div>
+      )}
+      {!allShops && shops.length >= SHOP_SEARCH_FROM && (
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a shop" className="h-8 pl-8 text-sm" />
@@ -481,13 +521,13 @@ function ShopPicker({
       )}
       <div className="min-h-48 flex-1 divide-y overflow-y-auto rounded-lg border">
         {shown.map((s) => {
-          const lock = disabled?.get(s._id);
-          const on = selected.has(s._id);
+          const lock = disabled?.get(s._id) ?? (allShops ? "" : undefined);
+          const on = allShops || selected.has(s._id);
           return (
             <button
               key={s._id}
               type="button"
-              disabled={!!lock}
+              disabled={lock !== undefined}
               onClick={() => toggle(s._id)}
               className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -508,7 +548,9 @@ function ShopPicker({
         {!shown.length && <p className="px-3 py-4 text-center text-xs text-muted-foreground">No shop matches.</p>}
       </div>
       <p className="text-xs text-muted-foreground">
-        {`${selected.size} of ${shops.length} selected.`} They&apos;ll only see these shops in their shop switcher.
+        {allShops
+          ? `All ${shops.length} shops now, and any you add later.`
+          : `${selected.size} of ${shops.length} selected. They'll only see these shops in their shop switcher.`}
       </p>
     </div>
   );
@@ -523,25 +565,29 @@ function RolePicker({
   onChange: (r: TeamRole) => void;
   canManager: boolean;
 }) {
+  // A compact toggle; what each role can do is in the tooltip, and in the
+  // role cards on the page behind the sheet.
   return (
-    <div className="space-y-2">
+    <div className="flex items-center justify-between gap-3">
       <Label>Role</Label>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="inline-flex rounded-lg border p-0.5">
         {ROLES.filter((r): r is (typeof ROLES)[number] & { role: TeamRole } => r.role !== "owner").map((r) => {
           const locked = r.role === "manager" && !canManager;
           return (
-            <button
-              key={r.role}
-              type="button"
-              disabled={locked}
-              onClick={() => onChange(r.role)}
-              className={`cursor-pointer rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                value === r.role ? "border-amber-600 bg-amber-600/10" : "hover:bg-muted/50"
-              }`}
-            >
-              <p className="text-sm font-medium text-foreground">{r.label}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{locked ? "Only the owner can add managers." : r.blurb}</p>
-            </button>
+            <Hint key={r.role} label={locked ? "Only the owner can add managers." : r.blurb}>
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => onChange(r.role)}
+                aria-pressed={value === r.role}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  value === r.role ? "bg-amber-600 text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+                <Info className="size-3.5 opacity-60" />
+              </button>
+            </Hint>
           );
         })}
       </div>
@@ -594,8 +640,11 @@ function InviteForm({
       new Set(defaultShopId && shops.some((s) => s._id === defaultShopId) ? [defaultShopId] : shops.map((s) => s._id)),
   );
   const [sending, setSending] = useState(false);
+  const [allShops, setAllShops] = useState(false);
 
   const ownerSomewhere = shops.some((s) => s.myRole === "owner");
+  // "All shops" means all the owner's shops, so only an owner of every shop here gets it.
+  const canAll = shops.length > 1 && shops.every((s) => s.myRole === "owner");
   const effectiveRole = role === "manager" && !ownerSomewhere ? "staff" : role;
   // Managers can't be invited to shops the viewer only manages.
   const locked = new Map(
@@ -603,7 +652,7 @@ function InviteForm({
       .filter((s) => effectiveRole === "manager" && s.myRole !== "owner")
       .map((s) => [s._id, "Owner only"] as const),
   );
-  const chosen = [...selected].filter((id) => !locked.has(id));
+  const chosen = allShops ? shops.map((s) => s._id) : [...selected].filter((id) => !locked.has(id));
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -612,7 +661,7 @@ function InviteForm({
       const res = await fetch("/api/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role: effectiveRole, shopIds: chosen }),
+        body: JSON.stringify({ email, role: effectiveRole, shopIds: chosen, allShops }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -646,7 +695,16 @@ function InviteForm({
           />
         </div>
         <RolePicker value={effectiveRole} onChange={setRole} canManager={ownerSomewhere} />
-        {shops.length > 1 && <ShopPicker shops={shops} selected={selected} onChange={setSelected} disabled={locked} />}
+        {shops.length > 1 && (
+          <ShopPicker
+            shops={shops}
+            selected={selected}
+            onChange={setSelected}
+            disabled={locked}
+            allShops={allShops}
+            onAllShops={canAll ? setAllShops : undefined}
+          />
+        )}
       </div>
       <SheetFooter className="border-t">
         <Button
@@ -655,7 +713,11 @@ function InviteForm({
           className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
         >
           {sending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Mail className="mr-2 size-4" />}
-          {shops.length > 1 ? `Send invite · ${chosen.length} shop${chosen.length === 1 ? "" : "s"}` : "Send invite"}
+          {shops.length <= 1
+            ? "Send invite"
+            : allShops
+              ? "Send invite · all shops"
+              : `Send invite · ${chosen.length} shop${chosen.length === 1 ? "" : "s"}`}
         </Button>
       </SheetFooter>
     </form>
@@ -694,9 +756,11 @@ function AccessSheetBody({
   const [role, setRole] = useState<TeamRole>(() => (mine.some((a) => a.role === "manager") ? "manager" : "staff"));
   const [selected, setSelected] = useState<Set<string>>(() => new Set(mine.map((a) => a.shopId)));
   const [saving, setSaving] = useState<"save" | "remove" | null>(null);
+  const [allShops, setAllShops] = useState(person.allShops);
 
   const theirs = new Map(person.access.map((a) => [a.shopId, a.role]));
   const ownerSomewhere = shops.some((s) => s.myRole === "owner");
+  const canAll = shops.length > 1 && shops.every((s) => s.myRole === "owner");
   // Shops where the viewer can't make this change: they're the owner there, or
   // the viewer is a manager and they're a manager (or would become one).
   const locked = new Map<string, string>();
@@ -717,8 +781,11 @@ function AccessSheetBody({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               access: Object.fromEntries(
-                shops.filter((s) => !locked.has(s._id)).map((s) => [s._id, selected.has(s._id) ? role : null]),
+                shops
+                  .filter((s) => !locked.has(s._id))
+                  .map((s) => [s._id, allShops || selected.has(s._id) ? role : null]),
               ),
+              ...(canAll ? { allShops } : {}),
             }),
           });
       const json = await res.json().catch(() => ({}));
@@ -755,7 +822,14 @@ function AccessSheetBody({
             </p>
           )}
           {shops.length > 1 && (
-            <ShopPicker shops={shops} selected={selected} onChange={setSelected} disabled={locked} />
+            <ShopPicker
+              shops={shops}
+              selected={selected}
+              onChange={setSelected}
+              disabled={locked}
+              allShops={allShops}
+              onAllShops={canAll ? setAllShops : undefined}
+            />
           )}
         </div>
         <SheetFooter className="flex-row justify-between border-t">
@@ -771,7 +845,7 @@ function AccessSheetBody({
             Remove
           </Button>
           <Button
-            disabled={!!saving || (shops.length > 1 && selected.size === 0)}
+            disabled={!!saving || (shops.length > 1 && !allShops && selected.size === 0)}
             onClick={() => save()}
             className="cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
           >

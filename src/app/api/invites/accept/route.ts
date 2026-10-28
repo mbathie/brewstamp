@@ -81,7 +81,11 @@ export async function POST(req: Request) {
         role: inv.role,
         invitedBy: inv.invitedBy,
         acceptedAt: new Date(),
+        ...(inv.allShops ? { allShops: true } : {}),
       });
+    } else if (inv.allShops && existing.role !== "owner" && !existing.allShops) {
+      existing.allShops = true;
+      await existing.save();
     }
     inv.acceptedAt = new Date();
     await inv.save();

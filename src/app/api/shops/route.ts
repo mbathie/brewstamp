@@ -5,6 +5,7 @@ import { Shop, ShopMembership } from "@/models";
 import { CURRENT_SHOP_COOKIE } from "@/lib/shop-context";
 import { getUserPlanLimits } from "@/lib/plan-limits";
 import { DEFAULT_FREE_TIER } from "@/lib/plans";
+import { grantAllShopsAccess } from "@/lib/team";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -81,6 +82,10 @@ export async function POST(req: Request) {
     role: "owner",
     acceptedAt: new Date(),
   });
+  // People with access to all the owner's shops get this one too.
+  await grantAllShopsAccess(userId, shop._id.toString()).catch((err) =>
+    console.error("[shops] all-shops access failed:", err),
+  );
 
   const res = NextResponse.json(
     { success: true, shopId: shop._id.toString() },

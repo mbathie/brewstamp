@@ -10,14 +10,15 @@ type Access = Record<string, TeamRole | null>;
 // what. Body: { access: { [shopId]: 'manager' | 'staff' | null } }; null
 // removes them from that shop, shops left out are untouched. Adding a shop
 // gives access straight away (they already have a login), subject to the
-// plan's staff seats.
+// plan's staff seats. An owner can also send allShops: true to have them
+// follow every shop the owner adds later, or false to stop that.
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
-  const body = (await req.json().catch(() => ({}))) as { access?: Access };
+  const body = (await req.json().catch(() => ({}))) as { access?: Access; allShops?: boolean };
   if (!body.access || typeof body.access !== "object") {
     return NextResponse.json({ error: "Missing access" }, { status: 400 });
   }
   const { userId } = await params;
-  return setAccess(userId, body.access);
+  return setAccess(userId, body.access, false, typeof body.allShops === "boolean" ? body.allShops : undefined);
 }
 
 // DELETE /api/team/people/[userId] — remove them from every shop the viewer
@@ -30,7 +31,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   return setAccess(userId, access, true);
 }
 
-async function setAccess(userId: string, access: Access, lenient = false) {
+async function setAccess(userId: string, access: Access, lenient = false, allShops?: boolean) {
   const ctx = await getCurrentShopContext();
   if (!ctx || ctx.memberships.length === 0) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -108,6 +109,17 @@ async function setAccess(userId: string, access: Access, lenient = false) {
     ...updates.map((u) => ShopMembership.updateOne({ _id: u.id }, { $set: { role: u.role } })),
     deletes.length && ShopMembership.deleteMany({ _id: { $in: deletes } }),
   ]);
+
+  // Only the owner decides whether someone follows all their shops.
+  if (allShops !== undefined) {
+    const owned = [...shops.values()].filter((s) => s.myRole === "owner").map((s) => s._id);
+    if (owned.length) {
+      await ShopMembership.updateMany(
+        { user: userId, shop: { $in: owned }, role: { $ne: "owner" } },
+        allShops ? { $set: { allShops: true } } : { $unset: { allShops: 1 } },
+      );
+    }
+  }
 
   return NextResponse.json({ ok: true, added: creates.length, changed: updates.length, removed: deletes.length });
 }
