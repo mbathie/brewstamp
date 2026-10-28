@@ -49,7 +49,7 @@ type NavItem = {
   icon: typeof Home;
   /** Hidden from managers and staff (Billing). */
   ownerOnly?: boolean;
-  /** Hidden from staff (Team). */
+  /** Hidden from staff (Team, Shop setup). */
   managerUp?: boolean;
   /** Hidden from the owner on a shop their plan on another shop pays for:
    *  these pages cover all their shops, so they live on the main one. */
@@ -62,7 +62,7 @@ type NavItem = {
 const shopItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Customers", href: "/dashboard/customers", icon: Users },
-  { title: "Shop setup", href: "/dashboard/settings", icon: Store },
+  { title: "Shop setup", href: "/dashboard/settings", icon: Store, managerUp: true },
 ];
 
 const manageItems: NavItem[] = [

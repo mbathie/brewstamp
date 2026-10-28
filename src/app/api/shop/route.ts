@@ -63,6 +63,15 @@ export async function PATCH(req: Request) {
     );
   }
 
+  // Shop setup is for owners and managers; staff run the counter only.
+  const role = ctx.memberships.find((m) => m.shopId === ctx.shopId)?.role;
+  if (role !== "owner" && role !== "manager") {
+    return NextResponse.json(
+      { error: "Only the owner or a manager can change the shop setup." },
+      { status: 403 },
+    );
+  }
+
   await connectDB();
   const shop = ctx.shop;
   const {
