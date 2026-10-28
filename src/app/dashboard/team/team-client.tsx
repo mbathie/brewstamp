@@ -163,6 +163,7 @@ export default function TeamClient() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [shopFilter, setShopFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [inviting, setInviting] = useState(false);
   const [editing, setEditing] = useState<Person | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -186,12 +187,16 @@ export default function TeamClient() {
     if (!data) return { people: [], invites: [] };
     const q = query.trim().toLowerCase();
     const match = (name: string, email: string) => !q || name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
-    const atShop = (ids: string[]) => shopFilter === "all" || ids.includes(shopFilter);
+    // Shop and role together: their role at the chosen shop, or at any shop.
+    const fits = (items: { shopId: string; role: Role }[]) =>
+      items.some(
+        (a) => (shopFilter === "all" || a.shopId === shopFilter) && (roleFilter === "all" || a.role === roleFilter),
+      );
     return {
-      people: data.people.filter((p) => match(p.name, p.email) && atShop(p.access.map((a) => a.shopId))),
-      invites: data.invites.filter((i) => match("", i.email) && atShop(i.items.map((x) => x.shopId))),
+      people: data.people.filter((p) => match(p.name, p.email) && fits(p.access)),
+      invites: data.invites.filter((i) => match("", i.email) && fits(i.items)),
     };
-  }, [data, query, shopFilter]);
+  }, [data, query, shopFilter, roleFilter]);
 
   if (error) {
     return (
@@ -300,6 +305,20 @@ export default function TeamClient() {
                   className="h-9 w-full pl-9 text-sm sm:w-72"
                 />
               </div>
+              <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as Role | "all")}>
+                <SelectTrigger className="!h-9 w-36">
+                  <Users className="size-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All roles</SelectItem>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r.role} value={r.role}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {multiShop && (
                 <Select value={shopFilter} onValueChange={setShopFilter}>
                   <SelectTrigger className="!h-9 w-48">
@@ -402,7 +421,7 @@ export default function TeamClient() {
           })}
 
           {!rows.people.length && !rows.invites.length && (
-            <p className="px-6 py-10 text-center text-sm text-muted-foreground">Nobody matches that search.</p>
+            <p className="px-6 py-10 text-center text-sm text-muted-foreground">Nobody matches those filters.</p>
           )}
           {data.people.length === 1 && !data.invites.length && canInviteAnywhere && !noLogins && !allFull && (
             <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
