@@ -18,6 +18,9 @@ import {
   Lock,
   Users,
   HelpCircle,
+  Store,
+  LayoutGrid,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Tooltip,
@@ -94,6 +97,8 @@ const jsonLd = {
     "Printable QR code PDF, branded with shop colours",
     "Drip lifecycle emails + first-stamp customer email",
     "Live activity dashboard with date-range filtering",
+    "Multiple shops under one account, each with its own card, QR code and customers, plus an all-shops dashboard",
+    "Team logins with owner, manager and staff roles, scoped to the shops you choose",
     "Corporate perk mode — employer-subsidised staff coffee, capped per day and gated to work email domains",
   ],
 };
@@ -247,12 +252,13 @@ const FEATURE_TABLE: Array<{
         label: "Multiple shops under one account",
         free: "1 shop",
         pro: "Up to 3",
+        hint: "Business covers up to 3 shops on one plan. Running a bigger group? A Custom plan covers as many as you need.",
       },
       {
         label: "Manager & staff logins",
         free: "—",
         pro: "1 on Pro, unlimited on Business",
-        hint: "Give baristas and managers their own logins to approve stamps, instead of sharing one account.",
+        hint: "Give baristas and managers their own logins instead of sharing one account. Pick which shops each person can use, or give them all shops, including ones you add later.",
       },
       {
         label: "Cross-shop rollup reporting",
@@ -493,6 +499,99 @@ export default async function FeaturesPage() {
                   className="block aspect-[3/1] w-full max-w-md rounded-2xl object-cover shadow-sm"
                 />
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── MULTI-SHOP + TEAM ───────── */}
+        <section className="border-b border-stone-200 bg-white py-20">
+          <div className="mx-auto max-w-5xl px-6">
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
+                Multiple shops &amp; your team
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
+                Every shop, every barista, one account.
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
+                Add your second (or twenty-fifth) location without a second
+                login or a second bill, and give your team their own logins
+                to the shops they work at.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                  <Store className="size-5 text-amber-700" aria-hidden />
+                </div>
+                <h3 className="mt-5 text-lg font-bold text-stone-900">
+                  Manage multiple shops under one account
+                </h3>
+                <ul className="mt-4 space-y-3 text-base text-stone-700">
+                  {[
+                    "Each shop keeps its own card design, QR code, stamp rules, language and customer list",
+                    "Switch between shops from the top bar, or search when you have a lot of them",
+                    "An All shops dashboard adds up stamps, customers and rewards across every location, with a per-shop breakdown",
+                    "One plan covers every shop: up to 3 on Business, or a Custom plan for larger groups",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <Check className="mt-0.5 size-5 shrink-0 text-amber-700" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                  <Users className="size-5 text-amber-700" aria-hidden />
+                </div>
+                <h3 className="mt-5 text-lg font-bold text-stone-900">
+                  Manage your team and staff
+                </h3>
+                <ul className="mt-4 space-y-3 text-base text-stone-700">
+                  {[
+                    "Invite people by email; they sign in with their own login, no shared passwords",
+                    "Choose which shops each person can use, or tick All shops so new locations are included automatically",
+                    "See everyone in one list, filtered by shop or role, and change access in a couple of clicks",
+                    "Pro includes 1 staff login; Business and up are unlimited",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <Check className="mt-0.5 size-5 shrink-0 text-amber-700" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  icon: ShieldCheck,
+                  role: "Owner",
+                  body: "Everything, including billing and the plan. Adds shops and invites the team.",
+                },
+                {
+                  icon: LayoutGrid,
+                  role: "Manager",
+                  body: "Runs the shop day to day: settings, the team, and fixing a customer's stamps, with every change logged.",
+                },
+                {
+                  icon: Coffee,
+                  role: "Staff",
+                  body: "Approves stamps at the counter and looks up customers. Can't change settings or stamps by hand.",
+                },
+              ].map(({ icon: Icon, role, body }) => (
+                <div key={role} className="rounded-xl border border-stone-200 bg-white p-5">
+                  <div className="flex items-center gap-2">
+                    <Icon className="size-4 text-amber-700" aria-hidden />
+                    <p className="text-sm font-semibold text-stone-900">{role}</p>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
