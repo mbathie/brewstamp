@@ -514,7 +514,7 @@ export default async function FeaturesPage() {
                 Every shop, every barista, one account.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-                Add your second (or twenty-fifth) location without a second
+                Add your second (or one thousandth) location without a second
                 login or a second bill, and give your team their own logins
                 to the shops they work at.
               </p>
