@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { redirect, useRouter } from "next/navigation";
@@ -163,22 +163,43 @@ export default function AdminShopsPage() {
 
   // Start the data request immediately rather than after the session loads:
   // the API enforces admin itself, so waiting only added a round-trip.
+  // Then refresh quietly every minute while the tab is visible, and as soon
+  // as it's shown again, so new signups and stamps appear without a reload.
+  // A failed background refresh keeps the data already on screen.
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch("/api/admin/shops", { signal: ctrl.signal })
-      .then((res) => {
-        if (res.status === 403) {
-          window.location.replace("/dashboard");
-          return null;
-        }
-        if (!res.ok) throw new Error(String(res.status));
-        return res.json();
-      })
-      .then((d: ShopsResponse | null) => d && setData(d))
-      .catch((e) => {
-        if (e.name !== "AbortError") setError(true);
-      });
-    return () => ctrl.abort();
+    let loaded = false;
+    const load = () =>
+      fetch("/api/admin/shops", { signal: ctrl.signal })
+        .then((res) => {
+          if (res.status === 403) {
+            window.location.replace("/dashboard");
+            return null;
+          }
+          if (!res.ok) throw new Error(String(res.status));
+          return res.json();
+        })
+        .then((d: ShopsResponse | null) => {
+          if (!d) return;
+          loaded = true;
+          setData(d);
+        })
+        .catch((e) => {
+          if (e.name !== "AbortError" && !loaded) setError(true);
+        });
+    load();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      ctrl.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   useEffect(() => {
@@ -188,8 +209,10 @@ export default function AdminShopsPage() {
 
   // Honour the URL hash once the (async) content exists — the browser's own
   // anchor scroll fired while the skeleton was showing.
+  const scrolledToHash = useRef(false);
   useEffect(() => {
-    if (!data) return;
+    if (!data || scrolledToHash.current) return;
+    scrolledToHash.current = true;
     const hash = window.location.hash;
     if (!hash) return;
     requestAnimationFrame(() => {
