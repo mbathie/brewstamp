@@ -172,6 +172,14 @@ const jsonLd = (cost: string) => ({
         },
         {
           "@type": "Question",
+          name: "Do I need a POS system to use Brewstamp?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. All you need is a phone or tablet behind the counter, logged in to your Brewstamp shop. Print the QR code from your shop settings and put it where customers order; they scan it, and you approve the stamp on your device. It works alongside a cash register or any POS — there's nothing to integrate.",
+          },
+        },
+        {
+          "@type": "Question",
           name: "Do customers need to download an app?",
           acceptedAnswer: {
             "@type": "Answer",
@@ -602,6 +610,10 @@ export default async function Home() {
               {
                 q: "How does a QR code coffee rewards program work?",
                 a: "You place a QR code at your counter. Customers scan it with their phone camera, you approve the stamp from your dashboard, and the stamp appears on their digital card instantly. After enough stamps, they earn a free drink.",
+              },
+              {
+                q: "Do I need a POS system to use Brewstamp?",
+                a: "No. All you need is a phone or tablet behind the counter, logged in to your Brewstamp shop. Print the QR code from your shop settings and put it where customers order; they scan it, and you approve the stamp on your device. It works alongside a cash register or any POS — there's nothing to integrate.",
               },
               {
                 q: "Do customers need to download an app?",
