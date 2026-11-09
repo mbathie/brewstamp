@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     { url: `${baseUrl}/features`, priority: 0.9 },
     { url: `${baseUrl}/how-it-works`, priority: 0.8 },
+    { url: `${baseUrl}/faq`, priority: 0.7 },
     {
       url: `${baseUrl}/coffee-rewards-app`,
             priority: 0.9,

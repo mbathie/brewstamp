@@ -19,10 +19,11 @@ import {
 import PublicHeader from "@/components/public-header";
 import Footer from "@/components/footer";
 import RelatedGuides from "@/components/related-guides";
+import { faqItems, faqJsonLd, FaqList, type FaqItem } from "@/components/faq";
 import { WalletBadges } from "@/components/wallet-badges";
 import Testimonials from "@/components/testimonials";
 import { buildHreflangMap } from "@/lib/i18n/landing";
-import { FREE_STAMPS, formatCents, type PlanCatalog } from "@/lib/plans";
+import { FREE_STAMPS } from "@/lib/plans";
 import PlanCards from "@/app/pricing/plan-cards";
 import CustomerLogoMarquee, { CUSTOMER_COUNTRIES } from "@/components/customer-logo-marquee";
 import { getPlanCatalog } from "@/lib/plan-catalog";
@@ -75,21 +76,7 @@ export const metadata: Metadata = {
   },
 };
 
-// The FAQ's price answer, from the plan catalogue (it appears both on the
-// page and in the FAQPage JSON-LD, which must match).
-function costAnswer(catalog: PlanCatalog): string {
-  const pro = catalog.bySlug("pro");
-  const business = catalog.publicPlans.find((p) => p.slug === "plus");
-  const proLine = pro
-    ? ` After that, Pro is ${formatCents(catalog.priceCents(pro, "month"))}/month for unlimited stamps (or ${formatCents(catalog.priceCents(pro, "year"))}/year, ${catalog.monthsFree(pro)} months free)`
-    : "";
-  const bizLine = business
-    ? `, and ${business.label} is ${formatCents(catalog.priceCents(business, "month"))}/month for teams and up to ${business.shopLimit} shops`
-    : "";
-  return `Brewstamp is free for your first ${FREE_STAMPS} stamps — enough to test if a loyalty program works for your shop.${proLine}${bizLine}.`;
-}
-
-const jsonLd = (cost: string) => ({
+const jsonLd = (faq: FaqItem[]) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -143,86 +130,18 @@ const jsonLd = (cost: string) => ({
         },
       ],
     },
-    {
-      "@type": "FAQPage",
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "What's the best loyalty program for a coffee shop?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "A digital loyalty card with a free-coffee-after-8-stamps reward beats paper punch cards on every measurable front: lower fraud, no lost cards, real customer data, and zero ongoing printing cost. See the full guide to coffee shop loyalty cards for what rewards work, the 8-stamp rule, and how to launch one in under 2 minutes.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "What is a digital coffee loyalty card?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "A digital coffee loyalty card replaces paper stamp cards with a phone-based version. Customers scan a QR code at your counter to collect stamps and earn free drinks — no app download required.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How does a QR code coffee rewards program work?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "You place a QR code at your counter. Customers scan it with their phone camera, you approve the stamp from your dashboard, and the stamp appears on their digital card instantly. After enough stamps, they earn a free drink.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Do I need a POS system to use Brewstamp?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "No. All you need is a phone or tablet behind the counter, logged in to your Brewstamp shop. Print the QR code from your shop settings and put it where customers order; they scan it, and you approve the stamp on your device. It works alongside a cash register or any POS — there's nothing to integrate.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Do customers need to download an app?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Can customers add the card to Apple Wallet or Google Wallet?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes — on every plan, customers can save their loyalty card to Apple Wallet or Google Wallet for lock-screen access, and it updates automatically each time they earn a stamp. There's still no app to download, and the browser card works for everyone either way.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How much does a digital loyalty card for cafes cost?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: cost,
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How long does it take to set up a coffee shop loyalty program?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Less than 2 minutes. Create your shop, customise your card, print your QR code, and start stamping. No technical knowledge required.",
-          },
-        },
-      ],
-    },
+    faqJsonLd(faq),
   ],
 });
 
 export default async function Home() {
   const catalog = await getPlanCatalog();
-  const cost = costAnswer(catalog);
+  const faq = faqItems(catalog);
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd(cost), catalog)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(withPlanOffers(jsonLd(faq), catalog)) }}
       />
       <PublicHeader transparent />
 
@@ -582,71 +501,8 @@ export default async function Home() {
               Frequently asked questions
             </h2>
           </div>
-          <div className="mt-12 space-y-6">
-            {([
-              {
-                q: "What's the best loyalty program for a coffee shop?",
-                a: (
-                  <>
-                    A digital loyalty card with a free-coffee-after-8-stamps
-                    reward beats paper punch cards on every measurable front:
-                    lower fraud, no lost cards, real customer data, and zero
-                    ongoing printing cost.{" "}
-                    <Link
-                      href="/blog/coffee-shop-loyalty-cards"
-                      className="font-medium text-amber-700 underline hover:text-amber-800"
-                    >
-                      See the full guide to coffee shop loyalty cards
-                    </Link>{" "}
-                    for what rewards work, the 8-stamp rule, and how to launch
-                    one in under 2 minutes.
-                  </>
-                ),
-              },
-              {
-                q: "What is a digital coffee loyalty card?",
-                a: "A digital coffee loyalty card replaces paper stamp cards with a phone-based version. Customers scan a QR code at your counter to collect stamps and earn free drinks — no app download required.",
-              },
-              {
-                q: "How does a QR code coffee rewards program work?",
-                a: "You place a QR code at your counter. Customers scan it with their phone camera, you approve the stamp from your dashboard, and the stamp appears on their digital card instantly. After enough stamps, they earn a free drink.",
-              },
-              {
-                q: "Do I need a POS system to use Brewstamp?",
-                a: "No. All you need is a phone or tablet behind the counter, logged in to your Brewstamp shop. Print the QR code from your shop settings and put it where customers order; they scan it, and you approve the stamp on your device. It works alongside a cash register or any POS — there's nothing to integrate.",
-              },
-              {
-                q: "Do customers need to download an app?",
-                a: "No. Brewstamp works entirely in the phone's browser. Customers just scan the QR code — no app to download, no account to create. It works on any iPhone or Android phone.",
-              },
-              {
-                q: "Can customers add the card to Apple Wallet or Google Wallet?",
-                a: "Yes — on every plan, customers can save their loyalty card to Apple Wallet or Google Wallet for lock-screen access, and it updates automatically each time they earn a stamp. There's still no app to download, and the browser card works for everyone either way.",
-              },
-              {
-                q: "How much does a digital loyalty card for cafes cost?",
-                a: cost,
-              },
-              {
-                q: "How long does it take to set up a coffee shop loyalty program?",
-                a: "Less than 2 minutes. Create your shop, customise your card, print your QR code, and start stamping. No technical knowledge required.",
-              },
-            ] as Array<{ q: string; a: React.ReactNode }>).map(({ q, a }) => (
-              <details
-                key={q}
-                className="group rounded-xl border border-stone-200 bg-stone-50 px-6 py-5"
-              >
-                <summary className="flex cursor-pointer items-center justify-between font-semibold text-stone-900">
-                  {q}
-                  <span className="ml-4 text-stone-400 transition-transform group-open:rotate-45">
-                    +
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-stone-500">
-                  {a}
-                </p>
-              </details>
-            ))}
+          <div className="mt-12">
+            <FaqList items={faq} />
           </div>
         </div>
       </section>

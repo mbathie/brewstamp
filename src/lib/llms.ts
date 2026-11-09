@@ -16,6 +16,7 @@ const PRODUCT: Link[] = [
   { title: "Cafe loyalty app for the counter", path: "/cafe-loyalty-app", note: "Staff approve stamps on any device; owners see every regular." },
   { title: "Features", path: "/features", note: "Full feature list across the Free, Pro, and Business plans." },
   { title: "Pricing", path: "/pricing", note: "Plans compared side by side, with a pricing FAQ." },
+  { title: "FAQ", path: "/faq", note: "Common questions: how the QR card works, no POS or customer app needed, wallet passes, pricing and setup." },
   { title: "Corporate perk mode (subsidised staff coffee)", path: "/blog/corporate-coffee-perk", note: "Employer-paid staff coffee at a local cafe — staff scan and enter their work email for a free coffee, gated to the company's email domain and capped per person per day. On the Business plan." },
   { title: "Apple Wallet and Google Wallet cards", path: "/blog/apple-google-wallet-loyalty-card", note: "Customers save the card to their phone's wallet; stamps update automatically. Every plan." },
 ];
