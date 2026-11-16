@@ -177,7 +177,7 @@ export async function GET(
 
   // Every shop this owner has, this one included (logo excluded: it's base64).
   const ownerShops = await Shop.find({ owner: ownerId })
-    .select("name")
+    .select("name code createdAt")
     .sort({ createdAt: 1 })
     .lean();
   // The main shop is the one holding the owner's paid plan (it covers the
@@ -200,6 +200,78 @@ export async function GET(
         }
       : null;
   const mainShopId = String((paidOn as any)?.shop ?? ownerShops[0]?._id ?? "");
+
+  // Per-shop figures for a multi-shop owner, so the admin can compare the
+  // locations in a group without opening each one.
+  const groupStats = new Map<string, { customers: number; stamps: number; stamps30: number; last: Date | null; spark: number[] }>();
+  if (ownerShops.length > 1) {
+    const ids = ownerShops.map((s: any) => s._id);
+    const SPARK_DAYS = 14;
+    const dayKeys: string[] = [];
+    for (let i = SPARK_DAYS - 1; i >= 0; i--) {
+      dayKeys.push(new Date(Date.now() - i * 86400e3).toISOString().slice(0, 10));
+    }
+    const [cardAgg, reqAgg, dayAgg] = await Promise.all([
+      StampCard.aggregate([
+        { $match: { shop: { $in: ids } } },
+        {
+          $group: {
+            _id: "$shop",
+            // Same "real customer" rule as the customers table above.
+            customers: {
+              $sum: { $cond: [{ $or: [{ $gt: ["$totalEarned", 0] }, { $gt: ["$freeRedeemed", 0] }] }, 1, 0] },
+            },
+          },
+        },
+      ]),
+      StampRequest.aggregate([
+        { $match: { shop: { $in: ids }, status: "approved" } },
+        {
+          $group: {
+            _id: "$shop",
+            last: { $max: "$createdAt" },
+            // From approved requests, like the 30-day figure beside it (card
+            // totals drift from this when a balance is adjusted by hand).
+            stamps: { $sum: { $ifNull: ["$stampsAwarded", 0] } },
+            stamps30: {
+              $sum: { $cond: [{ $gte: ["$createdAt", thirtyDaysAgo] }, { $ifNull: ["$stampsAwarded", 0] }, 0] },
+            },
+          },
+        },
+      ]),
+      StampRequest.aggregate([
+        {
+          $match: {
+            shop: { $in: ids },
+            status: "approved",
+            createdAt: { $gte: new Date(`${dayKeys[0]}T00:00:00Z`) },
+          },
+        },
+        {
+          $group: {
+            _id: { shop: "$shop", d: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } },
+            stamps: { $sum: { $ifNull: ["$stampsAwarded", 0] } },
+          },
+        },
+      ]),
+    ]);
+    for (const s of ownerShops as any[]) {
+      groupStats.set(String(s._id), { customers: 0, stamps: 0, stamps30: 0, last: null, spark: dayKeys.map(() => 0) });
+    }
+    for (const r of cardAgg) {
+      const g = groupStats.get(String(r._id));
+      if (g) g.customers = r.customers;
+    }
+    for (const r of reqAgg) {
+      const g = groupStats.get(String(r._id));
+      if (g) { g.last = r.last; g.stamps = r.stamps; g.stamps30 = r.stamps30; }
+    }
+    for (const r of dayAgg) {
+      const g = groupStats.get(String(r._id.shop));
+      const i = dayKeys.indexOf(r._id.d);
+      if (g && i >= 0) g.spark[i] = r.stamps;
+    }
+  }
 
   const signupReferrer = (ownerDoc as any)?.signupReferrer || "";
   const signupLandingPage = (ownerDoc as any)?.signupLandingPage || "";
@@ -225,7 +297,14 @@ export async function GET(
         signupReferrer,
         signupLandingPage,
         shops: ownerShops
-          .map((s: any) => ({ _id: String(s._id), name: s.name, main: String(s._id) === mainShopId }))
+          .map((s: any) => ({
+            _id: String(s._id),
+            name: s.name,
+            code: s.code,
+            createdAt: s.createdAt,
+            main: String(s._id) === mainShopId,
+            ...(groupStats.get(String(s._id)) ?? {}),
+          }))
           .sort((a, b) => Number(b.main) - Number(a.main)),
         mainPaid: !!paidOn,
       },

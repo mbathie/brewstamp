@@ -106,7 +106,7 @@ interface ShopDetail {
       authMethods?: string[];
       signupReferrer?: string;
       signupLandingPage?: string;
-      shops?: { _id: string; name: string; main: boolean }[];
+      shops?: GroupShop[];
       mainPaid?: boolean;
     };
   };
@@ -138,6 +138,22 @@ interface ShopDetail {
   recentRequests: RequestRow[];
   billing: Billing | null;
 }
+
+// One shop of a multi-shop owner, with the figures the group table compares.
+interface GroupShop {
+  _id: string;
+  name: string;
+  code?: string;
+  createdAt?: string;
+  main: boolean;
+  customers?: number;
+  stamps?: number;
+  stamps30?: number;
+  last?: string | null;
+  spark?: number[];
+}
+
+type GroupSortKey = "name" | "customers" | "stamps" | "stamps30" | "last";
 
 interface Billing {
   stripeCustomerId: string;
@@ -458,6 +474,11 @@ export default function AdminShopDetailPage() {
     { label: "Upgrade nudge", on: !!shop.upgradeNudgeSent },
   ];
 
+  // Every shop of this owner (this one included); empty for a single-shop owner.
+  const group = shop.owner.shops && shop.owner.shops.length > 1 ? shop.owner.shops : [];
+  const mainShop = group.find((s) => s.main);
+  const groupActive = group.filter((s) => (s.stamps30 ?? 0) > 0).length;
+
   const referrer = shop.owner.signupReferrer || "";
   const landing = shop.owner.signupLandingPage || "";
   const referrerHost = referrer ? safeHost(referrer) : "";
@@ -524,37 +545,28 @@ export default function AdminShopDetailPage() {
               <> &middot; {shop.owner.authMethods.join(", ")}</>
             )}
           </p>
-          {shop.owner.shops && shop.owner.shops.length > 1 && (
+          {group.length > 1 && (
             <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
               <Store className="size-3 text-sky-300" />
-              <span className="font-medium text-sky-300">{shop.owner.shops.length} shops</span>
-              {shop.owner.shops.map((s) => (
-                <span key={s._id} className="inline-flex items-center gap-1">
+              <a href="#shops" className="font-medium text-sky-300 underline-offset-2 hover:underline">
+                {group.length} shops
+              </a>
+              <span>
+                {" · "}
+                {groupActive} active in the last 30 days
+              </span>
+              {mainShop && mainShop._id !== shop._id && (
+                <span>
                   {" · "}
-                  {s._id === shop._id ? (
-                    <span className="text-foreground">{s.name}</span>
-                  ) : (
-                    <Link
-                      href={`/dashboard/admin/shops/${s._id}`}
-                      className="underline-offset-2 hover:text-foreground hover:underline"
-                    >
-                      {s.name}
-                    </Link>
-                  )}
-                  {s.main && (
-                    <span
-                      className="rounded border border-sky-500/40 bg-sky-500/10 px-1 text-[10px] font-medium leading-4 text-sky-300"
-                      title={
-                        shop.owner.mainPaid
-                          ? "Holds the owner's paid plan, which covers their other shops"
-                          : "The owner's first shop"
-                      }
-                    >
-                      main
-                    </span>
-                  )}
+                  part of{" "}
+                  <Link
+                    href={`/dashboard/admin/shops/${mainShop._id}`}
+                    className="text-foreground underline-offset-2 hover:underline"
+                  >
+                    {mainShop.name}
+                  </Link>
                 </span>
-              ))}
+              )}
             </p>
           )}
           <p className="text-xs text-muted-foreground">
@@ -604,6 +616,7 @@ export default function AdminShopDetailPage() {
       {/* Anchor pill nav */}
       <nav className="sticky top-0 z-10 -mx-6 flex flex-wrap gap-2 border-b border-border/40 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <AnchorPill href="#overview" label="Overview" />
+        {group.length > 1 && <AnchorPill href="#shops" label={`Shops (${group.length})`} />}
         {data.billing && <AnchorPill href="#billing" label="Billing" />}
         <AnchorPill href="#activity" label="Activity" />
         <AnchorPill href="#customers" label="Customers" />
@@ -647,6 +660,10 @@ export default function AdminShopDetailPage() {
           <ChecklistCard title="Outreach emails" items={outreachItems} />
         </div>
       </section>
+
+      {group.length > 1 && (
+        <GroupShopsSection shops={group} currentId={shop._id} mainPaid={!!shop.owner.mainPaid} />
+      )}
 
       {/* Billing — Stripe payment history for this shop */}
       {data.billing && (
@@ -1087,6 +1104,223 @@ export default function AdminShopDetailPage() {
         </section>
       )}
     </div>
+  );
+}
+
+// Every shop of a multi-shop owner in one sortable table: the per-location
+// figures side by side, group totals underneath, and a row click to drill
+// into a location. Shown on each shop of the group, with that shop marked.
+function GroupShopsSection({
+  shops,
+  currentId,
+  mainPaid,
+}: {
+  shops: GroupShop[];
+  currentId: string;
+  mainPaid: boolean;
+}) {
+  const router = useRouter();
+  const [sortKey, setSortKey] = useState<GroupSortKey>("stamps30");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [search, setSearch] = useState("");
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const val = (s: GroupShop): string | number => {
+      switch (sortKey) {
+        case "name":
+          return s.name.toLowerCase();
+        case "customers":
+          return s.customers ?? 0;
+        case "stamps":
+          return s.stamps ?? 0;
+        case "last":
+          return s.last ? new Date(s.last).getTime() : 0;
+        case "stamps30":
+        default:
+          return s.stamps30 ?? 0;
+      }
+    };
+    return shops
+      .filter((s) => !q || s.name.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const av = val(a);
+        const bv = val(b);
+        const cmp =
+          typeof av === "string"
+            ? av.localeCompare(bv as string)
+            : (av as number) - (bv as number);
+        // Ties (a group is often mostly zeros) fall back to all-time stamps, then name.
+        const tie = (b.stamps ?? 0) - (a.stamps ?? 0) || a.name.localeCompare(b.name);
+        return cmp === 0 ? tie : sortDir === "asc" ? cmp : -cmp;
+      });
+  }, [shops, search, sortKey, sortDir]);
+
+  const total = (k: "customers" | "stamps" | "stamps30") => shops.reduce((n, s) => n + (s[k] ?? 0), 0);
+  const neverStamped = shops.filter((s) => !s.last).length;
+  // Bars are scaled to the busiest location so the spread is visible at a glance.
+  const max30 = Math.max(1, ...shops.map((s) => s.stamps30 ?? 0));
+
+  function toggle(key: GroupSortKey) {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
+  }
+
+  const cols: { key: GroupSortKey; label: string; align: string }[] = [
+    { key: "name", label: "Shop", align: "" },
+    { key: "customers", label: "Customers", align: "text-right" },
+    { key: "stamps", label: "Stamps", align: "text-right" },
+    { key: "stamps30", label: "Stamps · 30d", align: "text-right" },
+    { key: "last", label: "Last stamp", align: "" },
+  ];
+
+  return (
+    <section id="shops" className="scroll-mt-16">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Shops ({shops.length})</h2>
+          <p className="text-xs text-muted-foreground">
+            All shops under this owner
+            {neverStamped > 0 && ` · ${neverStamped} never stamped`}
+          </p>
+        </div>
+        {shops.length > 8 && (
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search shops..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 text-foreground"
+            />
+          </div>
+        )}
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {cols.map(({ key, label, align }) => (
+                <TableHead
+                  key={key}
+                  className={`cursor-pointer select-none ${align}`}
+                  onClick={() => toggle(key)}
+                >
+                  {label}
+                  {sortKey !== key ? (
+                    <ArrowUpDown className="ml-1 inline size-3 opacity-40" />
+                  ) : sortDir === "asc" ? (
+                    <ArrowUp className="ml-1 inline size-3" />
+                  ) : (
+                    <ArrowDown className="ml-1 inline size-3" />
+                  )}
+                </TableHead>
+              ))}
+              <TableHead className="text-right">14 days</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  No shops match
+                </TableCell>
+              </TableRow>
+            )}
+            {rows.map((s) => {
+              const current = s._id === currentId;
+              const idle = (s.stamps ?? 0) === 0;
+              return (
+                <TableRow
+                  key={s._id}
+                  onClick={current ? undefined : () => router.push(`/dashboard/admin/shops/${s._id}`)}
+                  className={
+                    current
+                      ? "bg-muted/40 hover:bg-muted/40"
+                      : "cursor-pointer transition-colors hover:bg-muted/40"
+                  }
+                >
+                  <TableCell className={idle ? "text-muted-foreground" : "text-foreground"}>
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      <span className={current ? "font-medium" : undefined}>{s.name}</span>
+                      {s.main && (
+                        <span
+                          className="rounded border border-sky-500/40 bg-sky-500/10 px-1 text-[10px] font-medium leading-4 text-sky-300"
+                          title={
+                            mainPaid
+                              ? "Holds the owner's paid plan, which covers their other shops"
+                              : "The owner's first shop"
+                          }
+                        >
+                          main
+                        </span>
+                      )}
+                      {current && (
+                        <span className="rounded border border-border px-1 text-[10px] leading-4 text-muted-foreground">
+                          viewing
+                        </span>
+                      )}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    {(s.customers ?? 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    {(s.stamps ?? 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="inline-flex items-center justify-end gap-2">
+                      <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-muted sm:block">
+                        <span
+                          className="block h-full rounded-full bg-emerald-500/70"
+                          style={{ width: `${((s.stamps30 ?? 0) / max30) * 100}%` }}
+                        />
+                      </span>
+                      <span
+                        className={`w-10 tabular-nums ${(s.stamps30 ?? 0) > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                      >
+                        {(s.stamps30 ?? 0).toLocaleString()}
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {s.last ? timeAgo(new Date(s.last)) : "Never"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="inline-flex justify-end">
+                      {s.spark && s.spark.some((n) => n > 0) ? (
+                        <Sparkline data={s.spark} color="var(--chart-2)" width={64} height={20} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {!search.trim() && (
+              <TableRow className="border-t-2 hover:bg-transparent">
+                <TableCell className="font-medium text-foreground">All {shops.length} shops</TableCell>
+                <TableCell className="text-right font-medium tabular-nums text-foreground">
+                  {total("customers").toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right font-medium tabular-nums text-foreground">
+                  {total("stamps").toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right font-medium tabular-nums text-foreground">
+                  <span className="inline-block w-10">{total("stamps30").toLocaleString()}</span>
+                </TableCell>
+                <TableCell />
+                <TableCell />
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
   );
 }
 
