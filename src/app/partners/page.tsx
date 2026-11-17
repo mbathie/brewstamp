@@ -38,7 +38,7 @@ const FAQ = [
   },
   {
     q: "How much can I earn?",
-    a: `${REFERRAL_RATE_PERCENT}% of what a referred shop pays, on every payment, for ${REFERRAL_MONTHS} months from their first payment. A shop on Pro (US$9/month) is about US${Math.round((9 * 12 * REFERRAL_RATE_PERCENT) / 100)} to you over the year; a Business shop (US$29/month) about US${Math.round((29 * 12 * REFERRAL_RATE_PERCENT) / 100)}. Refer ten cafes and it adds up.`,
+    a: `${REFERRAL_RATE_PERCENT}% of what a referred shop pays, on every payment, for ${REFERRAL_MONTHS} months from their first payment. A shop on Pro (US$9/month) is about US${Math.round((9 * 12 * REFERRAL_RATE_PERCENT) / 100)} to you over the year; a Business shop (US$25/month) about US${Math.round((25 * 12 * REFERRAL_RATE_PERCENT) / 100)}. Refer ten cafes and it adds up.`,
   },
   {
     q: "How is a referral tracked?",
@@ -150,7 +150,7 @@ export default function PartnersPage() {
                   <tbody>
                     {[
                       ["Pro", 9],
-                      ["Business", 29],
+                      ["Business", 25],
                     ].map(([name, price]) => (
                       <tr key={name as string} className="border-b border-stone-100 last:border-0">
                         <td className="px-5 py-3.5 font-medium text-stone-900">{name}</td>

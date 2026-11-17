@@ -100,7 +100,7 @@ const APPS: App[] = [
     rewards: "Stamp per visit, free-drink threshold",
     summary: [
       "Yes, this is our product, so read this section with that in mind. Brewstamp is a browser-based coffee loyalty app: the customer scans a QR code at the counter, their stamp card opens in the phone browser, and the stamp lands once you approve it from your dashboard. No App Store, no sign-up form, no POS integration to set up.",
-      `It's free for your first ${FREE_STAMPS} stamps, then $9/mo flat for unlimited stamps on one shop. Business ($29/mo) covers up to 3 shops with staff logins, CSV exports and cross-shop reporting; for more shops, get in touch. Cards can also be saved to Apple Wallet and Google Wallet on every plan, including Free, and the customer-facing card is translated into 14 languages.`,
+      `It's free for your first ${FREE_STAMPS} stamps, then $9/mo flat for unlimited stamps on one shop. Business ($25/mo) covers up to 3 shops with staff logins, CSV exports and cross-shop reporting; for more shops, get in touch. Cards can also be saved to Apple Wallet and Google Wallet on every plan, including Free, and the customer-facing card is translated into 14 languages.`,
     ],
     pros: [
       "No app for customers to install — the biggest single driver of sign-ups",

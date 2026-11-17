@@ -84,7 +84,7 @@ const PLANS: Array<{
   },
   {
     name: "Business",
-    price: "$29/mo",
+    price: "$25/mo",
     tagline: "Teams and multi-shop brands",
     shops: "Up to 3 shops",
     highlights: [

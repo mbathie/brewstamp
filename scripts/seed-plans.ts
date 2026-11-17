@@ -149,8 +149,8 @@ const PLANS: SeedPlan[] = [
       "Corporate perk mode (subsidised staff coffee)",
     ],
     prices: [
-      usd("month", 2900, "active"),
-      usd("year", 29000, "active"),
+      usd("month", 2500, "active"),
+      usd("year", 25000, "active"),
       usd("month", 1900, "archived"),
       usd("year", 20900, "archived"),
       legacy("month", 1900, "usd", "price_1TxlSpHxHWKx0vW1spV4qCjP", "active"),
@@ -198,6 +198,8 @@ const PLANS: SeedPlan[] = [
 //   US$12 / US$120 Pro: on sale 2026-10-21 → 2026-11-18, replaced by US$9 / US$90.
 const WITHDRAWN: Record<string, SeedPrice[]> = {
   pro: [usd("month", 1200, "archived"), usd("year", 12000, "archived")],
+  //   US$29 / US$290 Business: on sale 2026-10-21 → 2026-11-18, replaced by US$25 / US$250.
+  plus: [usd("month", 2900, "archived"), usd("year", 29000, "archived")],
 };
 
 const confirm = process.argv.includes("--confirm");

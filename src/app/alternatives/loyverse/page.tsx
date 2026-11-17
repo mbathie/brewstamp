@@ -424,7 +424,7 @@ export default async function LoyverseAlternative() {
           <div className="mt-10 text-center">
             <p className="text-sm text-stone-500">
               Need multi-shop, team logins, or CSV exports? The Business
-              plan is $29/mo for up to 3 shops.{" "}
+              plan is $25/mo for up to 3 shops.{" "}
               <a href="/pricing" className="font-medium text-amber-700 underline-offset-2 hover:underline">
                 See full plan comparison →
               </a>

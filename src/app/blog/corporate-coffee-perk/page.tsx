@@ -284,7 +284,7 @@ export default function BlogPost() {
                 },
                 {
                   q: "Which plans include perk mode?",
-                  a: "The Business plan ($29/month). You can set it up the same day you upgrade.",
+                  a: "The Business plan ($25/month). You can set it up the same day you upgrade.",
                 },
               ].map(({ q, a }) => (
                 <details
