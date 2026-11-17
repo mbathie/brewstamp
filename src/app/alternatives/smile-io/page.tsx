@@ -26,14 +26,14 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Smile.io Alternative for Cafes — Stamp-Based Loyalty",
   description:
-    `Brewstamp is a Smile.io alternative for in-store cafes — stamp-based, browser-only loyalty without the e-commerce overhead. Free to ${FREE_STAMPS} stamps, $12/mo flat after.`,
+    `Brewstamp is a Smile.io alternative for in-store cafes — stamp-based, browser-only loyalty without the e-commerce overhead. Free to ${FREE_STAMPS} stamps, $9/mo flat after.`,
   alternates: { canonical: "/alternatives/smile-io" },
   openGraph: {
     type: "website",
     url: "/alternatives/smile-io",
     title: "Smile.io Alternative for Cafes — Brewstamp",
     description:
-      `A Smile.io alternative built for in-store cafes, not e-commerce stores. Free up to ${FREE_STAMPS} stamps, $12/mo flat.`,
+      `A Smile.io alternative built for in-store cafes, not e-commerce stores. Free up to ${FREE_STAMPS} stamps, $9/mo flat.`,
     images: [
       {
         url: "https://images.pexels.com/photos/1907227/pexels-photo-1907227.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Smile.io Alternative for Cafes — Brewstamp",
     description:
-      `A Smile.io alternative for in-store cafe loyalty. Free to ${FREE_STAMPS} stamps, $12/mo flat.`,
+      `A Smile.io alternative for in-store cafe loyalty. Free to ${FREE_STAMPS} stamps, $9/mo flat.`,
     images: [
       "https://images.pexels.com/photos/1907227/pexels-photo-1907227.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -220,7 +220,7 @@ export default async function SmileIoAlternative() {
                   },
                   {
                     feature: "Starting paid price",
-                    brewstamp: { good: true, text: "$12/mo flat" },
+                    brewstamp: { good: true, text: "$9/mo flat" },
                     smile: { good: false, text: "$49+/month + e-commerce platform fees" },
                   },
                   {
@@ -273,8 +273,8 @@ export default async function SmileIoAlternative() {
               },
               {
                 icon: DollarSign,
-                title: "$12/mo vs $49/month",
-                desc: "Smile.io's paid plans start at around $49/month and scale up fast based on order volume. Brewstamp is a flat $12/mo after the free tier. For most cafes that's the difference between affordable and not worth it.",
+                title: "$9/mo vs $49/month",
+                desc: "Smile.io's paid plans start at around $49/month and scale up fast based on order volume. Brewstamp is a flat $9/mo after the free tier. For most cafes that's the difference between affordable and not worth it.",
               },
               {
                 icon: Eye,
@@ -359,7 +359,7 @@ export default async function SmileIoAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to {FREE_STAMPS}{" "}stamps. $12/mo flat after. No e-commerce store
+              Free up to {FREE_STAMPS}{" "}stamps. $9/mo flat after. No e-commerce store
               required.
             </p>
           </div>
@@ -398,7 +398,7 @@ export default async function SmileIoAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$12</span>
+                <span className="text-4xl font-bold text-stone-900">$9</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -449,7 +449,7 @@ export default async function SmileIoAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Smile.io alternative?",
-                a: `Yes. Brewstamp is free for the first ${FREE_STAMPS} stamps total, then $12/mo for unlimited stamps. Smile.io has a free tier capped at low order volumes; paid plans start at around $49/month plus your underlying Shopify or BigCommerce subscription.`,
+                a: `Yes. Brewstamp is free for the first ${FREE_STAMPS} stamps total, then $9/mo for unlimited stamps. Smile.io has a free tier capped at low order volumes; paid plans start at around $49/month plus your underlying Shopify or BigCommerce subscription.`,
               },
               {
                 q: "Do I need a Shopify store to use Brewstamp?",

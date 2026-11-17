@@ -26,14 +26,14 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Loopy Loyalty Alternative — Free Stamp Card",
   description:
-    `Brewstamp is a browser-based Loopy Loyalty alternative. No Apple Wallet pass setup, free up to ${FREE_STAMPS} stamps, $12/mo flat after.`,
+    `Brewstamp is a browser-based Loopy Loyalty alternative. No Apple Wallet pass setup, free up to ${FREE_STAMPS} stamps, $9/mo flat after.`,
   alternates: { canonical: "/alternatives/loopy-loyalty" },
   openGraph: {
     type: "website",
     url: "/alternatives/loopy-loyalty",
     title: "Loopy Loyalty Alternative — Brewstamp",
     description:
-      `A simpler, cheaper Loopy Loyalty alternative. Browser-based, free up to ${FREE_STAMPS} stamps, and $12/mo flat after.`,
+      `A simpler, cheaper Loopy Loyalty alternative. Browser-based, free up to ${FREE_STAMPS} stamps, and $9/mo flat after.`,
     images: [
       {
         url: "https://images.pexels.com/photos/30267627/pexels-photo-30267627.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -59,7 +59,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Loopy Loyalty Alternative — Brewstamp",
   description:
-    `Brewstamp is a Loopy Loyalty alternative for independent cafes — a browser-based digital coffee loyalty card with no Apple Wallet setup, free up to ${FREE_STAMPS} stamps, and flat $12/mo pricing.`,
+    `Brewstamp is a Loopy Loyalty alternative for independent cafes — a browser-based digital coffee loyalty card with no Apple Wallet setup, free up to ${FREE_STAMPS} stamps, and flat $9/mo pricing.`,
   url: "https://brewstamp.app/alternatives/loopy-loyalty",
   about: {
     "@type": "SoftwareApplication",
@@ -138,7 +138,7 @@ export default async function LoopyLoyaltyAlternative() {
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-500" />
-                $12/mo flat
+                $9/mo flat
               </span>
             </div>
           </div>
@@ -264,8 +264,8 @@ export default async function LoopyLoyaltyAlternative() {
             {[
               {
                 icon: DollarSign,
-                title: "Free to start, $12/mo flat after",
-                desc: `Loopy Loyalty's lowest plan is $25/month. Brewstamp covers your first ${FREE_STAMPS} stamps for free, then $12/mo for unlimited stamps. For most independent cafes, that's the difference between trying it and not.`,
+                title: "Free to start, $9/mo flat after",
+                desc: `Loopy Loyalty's lowest plan is $25/month. Brewstamp covers your first ${FREE_STAMPS} stamps for free, then $9/mo for unlimited stamps. For most independent cafes, that's the difference between trying it and not.`,
               },
               {
                 icon: Zap,
@@ -352,7 +352,7 @@ export default async function LoopyLoyaltyAlternative() {
               Pricing
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
-              One-fifth the price of Loopy Loyalty
+              About a third the price of Loopy Loyalty
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
               No tiered features locked behind enterprise plans. One simple
@@ -394,7 +394,7 @@ export default async function LoopyLoyaltyAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$12</span>
+                <span className="text-4xl font-bold text-stone-900">$9</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -445,7 +445,7 @@ export default async function LoopyLoyaltyAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Loopy Loyalty alternative?",
-                a: `Yes — Brewstamp is free for your first ${FREE_STAMPS} stamps total, then $12/mo for unlimited stamps. Loopy Loyalty's lowest plan is $25/month with a free trial.`,
+                a: `Yes — Brewstamp is free for your first ${FREE_STAMPS} stamps total, then $9/mo for unlimited stamps. Loopy Loyalty's lowest plan is $25/month with a free trial.`,
               },
               {
                 q: "Does Brewstamp support Apple Wallet and Google Wallet?",

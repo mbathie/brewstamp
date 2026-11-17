@@ -83,7 +83,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "What happens when I use up the free stamps?",
-    a: `Free covers your first ${FREE_STAMPS} stamps with the full single-shop setup, no card details needed. When you reach the limit, the dashboard asks you to pick a plan before awarding more. Customers' existing stamps are kept. Pro is $12/month for unlimited stamps at one shop.`,
+    a: `Free covers your first ${FREE_STAMPS} stamps with the full single-shop setup, no card details needed. When you reach the limit, the dashboard asks you to pick a plan before awarding more. Customers' existing stamps are kept. Pro is $9/month for unlimited stamps at one shop.`,
   },
 ];
 

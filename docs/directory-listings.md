@@ -29,7 +29,7 @@ Marketplace).
 **Name:** Brewstamp
 **Website:** https://brewstamp.app
 **Category:** Customer loyalty / loyalty program software (cafes, coffee shops)
-**Pricing:** Free for the first 50 stamps · Pro US$12/mo · Business US$29/mo (annual = two months free)
+**Pricing:** Free for the first 50 stamps · Pro US$9/mo · Business US$29/mo (annual = two months free)
 
 **Tagline (≤60 chars):**
 Digital coffee loyalty cards — no app for customers
@@ -51,7 +51,7 @@ get a free coffee.
 - Customer list and visit insights you never had with paper
 - One staff login on Pro; up to 3 shops, unlimited staff logins and CSV exports on Business (US$29/month)
 - Available in 14 languages
-- Free for your first 50 stamps; Pro is US$12/month for unlimited stamps
+- Free for your first 50 stamps; Pro is US$9/month for unlimited stamps
 
 **Features list (for checkbox-style forms):** digital stamp card, QR code check-in, Apple Wallet, Google Wallet, real-time approvals, rewards management, customer database, analytics, multi-location, staff accounts, CSV export, multi-language.
 

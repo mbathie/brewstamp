@@ -96,11 +96,11 @@ const APPS: App[] = [
     customerApp: "No — opens in the browser",
     lockIn: "None — works alongside any POS",
     free: `Yes — first ${FREE_STAMPS} stamps`,
-    paid: "$12/mo flat",
+    paid: "$9/mo flat",
     rewards: "Stamp per visit, free-drink threshold",
     summary: [
       "Yes, this is our product, so read this section with that in mind. Brewstamp is a browser-based coffee loyalty app: the customer scans a QR code at the counter, their stamp card opens in the phone browser, and the stamp lands once you approve it from your dashboard. No App Store, no sign-up form, no POS integration to set up.",
-      `It's free for your first ${FREE_STAMPS} stamps, then $12/mo flat for unlimited stamps on one shop. Business ($29/mo) covers up to 3 shops with staff logins, CSV exports and cross-shop reporting; for more shops, get in touch. Cards can also be saved to Apple Wallet and Google Wallet on every plan, including Free, and the customer-facing card is translated into 14 languages.`,
+      `It's free for your first ${FREE_STAMPS} stamps, then $9/mo flat for unlimited stamps on one shop. Business ($29/mo) covers up to 3 shops with staff logins, CSV exports and cross-shop reporting; for more shops, get in touch. Cards can also be saved to Apple Wallet and Google Wallet on every plan, including Free, and the customer-facing card is translated into 14 languages.`,
     ],
     pros: [
       "No app for customers to install — the biggest single driver of sign-ups",
@@ -269,7 +269,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a free cafe loyalty app?",
-    a: `Yes, with caveats. Brewstamp is free for your first ${FREE_STAMPS} stamps, then $12/month. Loyverse&apos;s loyalty feature is free if you use Loyverse POS. Smile.io has a free plan for low online order volume. Stamp Me offers a 30-day trial rather than a free plan.`,
+    a: `Yes, with caveats. Brewstamp is free for your first ${FREE_STAMPS} stamps, then $9/month. Loyverse&apos;s loyalty feature is free if you use Loyverse POS. Smile.io has a free plan for low online order volume. Stamp Me offers a 30-day trial rather than a free plan.`,
   },
   {
     q: "Do customers need to download an app for a coffee loyalty program?",
@@ -285,7 +285,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How much does a cafe loyalty app cost per month?",
-    a: "Based on public pricing when we last reviewed (May 2026): Brewstamp is free to start then $12/month, Loopy Loyalty starts at $25/month, Stamp Me at $29/month, Square Loyalty around $45/month on top of Square fees, and Smile.io paid plans around $49/month. Prices change, so always check each provider&apos;s own site.",
+    a: "Based on public pricing when we last reviewed (May 2026): Brewstamp is free to start then $9/month, Loopy Loyalty starts at $25/month, Stamp Me at $29/month, Square Loyalty around $45/month on top of Square fees, and Smile.io paid plans around $49/month. Prices change, so always check each provider&apos;s own site.",
   },
 ];
 
@@ -355,7 +355,7 @@ export default function BlogPost() {
               Smile.io is the strongest. For an independent cafe that wants a
               stamp card customers use without downloading anything, a
               browser-based app like Brewstamp (free for the first{" "}
-              {FREE_STAMPS} stamps, then $12/mo) or PunchPass is the simplest
+              {FREE_STAMPS} stamps, then $9/mo) or PunchPass is the simplest
               fit.
             </p>
           </div>

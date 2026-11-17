@@ -394,7 +394,7 @@ export default async function Home() {
             {[
               { value: "< 5s", label: "Customer setup time" },
               { value: "0", label: "Apps to download" },
-              { value: "$12", label: `Per month after ${FREE_STAMPS} total stamps` },
+              { value: "$9", label: `Per month after ${FREE_STAMPS} total stamps` },
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="text-3xl font-bold text-amber-700 md:text-4xl">

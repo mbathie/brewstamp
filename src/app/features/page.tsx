@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   title:
     "Features — Free Customisable Loyalty Card for Cafes, Bakeries, Barbers & More",
   description:
-    `Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to ${FREE_STAMPS} stamps; Pro is $12/mo for unlimited stamps, with card branding free on every plan.`,
+    `Every Brewstamp feature, listed: no-app QR loyalty card, 198 colour + 36 pattern combos, your logo on the card, 14 languages, real-time stamp approval, CSV export, drip-email lifecycle. Free up to ${FREE_STAMPS} stamps; Pro is $9/mo for unlimited stamps, with card branding free on every plan.`,
   alternates: { canonical: "/features" },
   keywords: [
     "loyalty card features",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     url: "/features",
     title: "Brewstamp Features — Free, Customisable, No App Required",
     description:
-      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 14 languages. Real-time stamp approval. CSV export. Free to start; Pro is $12/mo for unlimited stamps.",
+      "No-app QR loyalty card. 198 colour combos + 36 patterns + your logo. 14 languages. Real-time stamp approval. CSV export. Free to start; Pro is $9/mo for unlimited stamps.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&h=630&q=70&auto=format&fit=crop",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brewstamp Features — Free Customisable Loyalty Card",
     description:
-      "No customer app. Branded card design free. 14 languages. Free to start; Pro is $12/mo for unlimited stamps.",
+      "No customer app. Branded card design free. 14 languages. Free to start; Pro is $9/mo for unlimited stamps.",
   },
 };
 
@@ -279,7 +279,7 @@ const FEATURE_TABLE: Array<{
     icon: Tag,
     rows: [
       { label: "Stamps included", free: `${FREE_STAMPS} lifetime`, pro: "Unlimited" },
-      { label: "Monthly price", free: "$0", pro: "From $12" },
+      { label: "Monthly price", free: "$0", pro: "From $9" },
     ],
   },
 ];

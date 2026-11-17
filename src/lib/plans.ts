@@ -142,7 +142,7 @@ export function customPlanCard(maxPublicShops: number) {
   };
 }
 
-/** "$12" for whole dollars, "$6.42" otherwise. */
+/** "$9" for whole dollars, "$6.42" otherwise. */
 export function formatCents(cents: number): string {
   const dollars = cents / 100;
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;

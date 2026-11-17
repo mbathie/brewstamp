@@ -4,7 +4,8 @@
 // change pricing: add the new price as "active", set the old one to
 // "archived", and re-run. Existing subscribers keep renewing at whatever price
 // they're on; archived prices stay in the catalogue so their subscriptions
-// still resolve to the right plan. Prices are never deleted by this script.
+// still resolve to the right plan. The only prices this script removes are the
+// ones listed in WITHDRAWN (never subscribed to).
 //
 // Stripe price ids on the MAIN account are found in the Stripe account of the
 // key in use (product metadata brewstamp_slug = brewstamp_<slug>, matched on
@@ -108,8 +109,8 @@ const PLANS: SeedPlan[] = [
       "Priority support",
     ],
     prices: [
-      usd("month", 1200, "active"),
-      usd("year", 12000, "active"),
+      usd("month", 900, "active"),
+      usd("year", 9000, "active"),
       // 2026-10-12 → 2026-10-21
       usd("month", 700, "archived"),
       usd("year", 7700, "archived"),
@@ -189,6 +190,16 @@ const PLANS: SeedPlan[] = [
   },
 ];
 
+// Prices withdrawn before anyone subscribed to them on Stripe. Unlike an
+// archived price these are removed from the catalogue, and with
+// --create-stripe their Stripe price is deactivated (Stripe's API can't
+// delete a price). Only list a price here once Stripe shows no subscription
+// has ever used it.
+//   US$12 / US$120 Pro: on sale 2026-10-21 → 2026-11-18, replaced by US$9 / US$90.
+const WITHDRAWN: Record<string, SeedPrice[]> = {
+  pro: [usd("month", 1200, "archived"), usd("year", 12000, "archived")],
+};
+
 const confirm = process.argv.includes("--confirm");
 const createStripe = process.argv.includes("--create-stripe");
 const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -225,6 +236,16 @@ async function resolveStripeIds(plan: SeedPlan): Promise<void> {
   }
   const existing: Stripe.Price[] = [];
   for await (const p of stripe.prices.list({ product: product.id, limit: 100 })) existing.push(p);
+  for (const gone of WITHDRAWN[plan.slug] ?? []) {
+    const hit = existing.find(
+      (s) => s.unit_amount === gone.amountCents && s.currency === gone.currency && s.recurring?.interval === gone.interval,
+    );
+    if (!hit?.active) continue;
+    const used = await stripe.subscriptions.list({ price: hit.id, status: "all", limit: 1 });
+    if (used.data.length) throw new Error(`${plan.slug}: withdrawn price ${hit.id} has subscriptions — archive it instead`);
+    console.log(`  ${createStripe && confirm ? "deactivating" : "would deactivate"} withdrawn Stripe price ${hit.id} (${gone.currency} ${gone.amountCents / 100}/${gone.interval})`);
+    if (createStripe && confirm) await stripe.prices.update(hit.id, { active: false });
+  }
   for (const price of mainPrices) {
     const hit = existing.find(
       (s) => s.unit_amount === price.amountCents && s.currency === price.currency && s.recurring?.interval === price.interval,
@@ -266,7 +287,14 @@ async function main() {
     // are added). Nothing is removed, so an old price can't vanish from
     // under a subscriber.
     const doc = await Plan.findOne({ slug: plan.slug }).lean<any>();
-    const prices: PlanPrice[] = (doc?.prices ?? []).map((p: any) => ({ ...p }));
+    const withdrawn = WITHDRAWN[plan.slug] ?? [];
+    const prices: PlanPrice[] = (doc?.prices ?? [])
+      .map((p: any) => ({ ...p }))
+      .filter((p: PlanPrice) => {
+        const gone = withdrawn.some((w) => samePrice(w, p));
+        if (gone) console.log(`  removing withdrawn ${p.account} ${p.interval} ${p.currency} ${p.amountCents / 100}  ${p.stripePriceId ?? "-"}`);
+        return !gone;
+      });
     for (const seed of plan.prices) {
       const i = prices.findIndex((p) => samePrice(p, seed));
       const next: PlanPrice = { ...seed, stripePriceId: seed.stripePriceId ?? (i >= 0 ? prices[i].stripePriceId : null) };

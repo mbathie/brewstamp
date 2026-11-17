@@ -77,7 +77,7 @@ const PLANS: Array<{
   },
   {
     name: "Pro",
-    price: "$12/mo",
+    price: "$9/mo",
     tagline: "A single busy shop",
     shops: "1 shop",
     highlights: ["Unlimited stamps", "1 staff login", "Apple & Google Wallet passes", "Customer analytics", "Priority support"],

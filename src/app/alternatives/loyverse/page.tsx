@@ -26,14 +26,14 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Loyverse Loyalty Alternative — No Customer App",
   description:
-    `Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to ${FREE_STAMPS} stamps, $12/mo flat after.`,
+    `Brewstamp is a Loyverse Loyalty alternative for cafes that don't want their customers to install a POS app. Free to ${FREE_STAMPS} stamps, $9/mo flat after.`,
   alternates: { canonical: "/alternatives/loyverse" },
   openGraph: {
     type: "website",
     url: "/alternatives/loyverse",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      `A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to ${FREE_STAMPS} stamps, $12/mo flat.`,
+      `A Loyverse Loyalty alternative for cafes whose customers don't want to install another POS-tied app. Free up to ${FREE_STAMPS} stamps, $9/mo flat.`,
     images: [
       {
         url: "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Loyverse Loyalty Alternative — Brewstamp",
     description:
-      `A Loyverse Loyalty alternative your customers don't have to download. Free to ${FREE_STAMPS} stamps, $12/mo flat.`,
+      `A Loyverse Loyalty alternative your customers don't have to download. Free to ${FREE_STAMPS} stamps, $9/mo flat.`,
     images: [
       "https://images.pexels.com/photos/1437318/pexels-photo-1437318.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop",
     ],
@@ -159,7 +159,7 @@ export default async function LoyverseAlternative() {
             <strong>with no app at all</strong> — the card lives at a URL the
             customer scans into. The other big differences:{" "}
             <strong>POS independence</strong> and a{" "}
-            <strong>flat $12/mo price</strong> (vs Loyverse&apos;s
+            <strong>flat $9/mo price</strong> (vs Loyverse&apos;s
             paid POS add-ons for advanced features).
           </p>
         </div>
@@ -214,7 +214,7 @@ export default async function LoyverseAlternative() {
                   },
                   {
                     feature: "Public pricing",
-                    brewstamp: { good: true, text: "$12/mo flat (after free tier)" },
+                    brewstamp: { good: true, text: "$9/mo flat (after free tier)" },
                     loyverse: { good: null, text: "Free + paid add-ons (per outlet)" },
                   },
                   {
@@ -278,7 +278,7 @@ export default async function LoyverseAlternative() {
               {
                 icon: DollarSign,
                 title: "One flat price",
-                desc: "Loyverse's loyalty basics are free, but real reporting and multi-outlet support sit behind paid Loyverse add-ons charged per outlet per month. Brewstamp is $12/mo flat. No add-ons. No surprises.",
+                desc: "Loyverse's loyalty basics are free, but real reporting and multi-outlet support sit behind paid Loyverse add-ons charged per outlet per month. Brewstamp is $9/mo flat. No add-ons. No surprises.",
               },
               {
                 icon: Eye,
@@ -358,7 +358,7 @@ export default async function LoyverseAlternative() {
               Public, simple, on the website
             </h2>
             <p className="mx-auto mt-4 max-w-md text-stone-500">
-              Free up to {FREE_STAMPS}{" "}stamps. $12/mo flat after. No customer app, no
+              Free up to {FREE_STAMPS}{" "}stamps. $9/mo flat after. No customer app, no
               POS lock-in.
             </p>
           </div>
@@ -397,7 +397,7 @@ export default async function LoyverseAlternative() {
               <h3 className="text-lg font-semibold text-stone-900">Pro</h3>
               <p className="mt-1 text-sm text-stone-500">For busy shops</p>
               <p className="mt-6">
-                <span className="text-4xl font-bold text-stone-900">$12</span>
+                <span className="text-4xl font-bold text-stone-900">$9</span>
                 <span className="text-stone-500"> /month</span>
               </p>
               <ul className="mt-6 space-y-3 text-sm text-stone-600">
@@ -448,7 +448,7 @@ export default async function LoyverseAlternative() {
             {[
               {
                 q: "Is Brewstamp a free Loyverse Loyalty alternative?",
-                a: `Yes. Brewstamp is free up to ${FREE_STAMPS} stamps total, then $12/mo for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.`,
+                a: `Yes. Brewstamp is free up to ${FREE_STAMPS} stamps total, then $9/mo for unlimited stamps. Loyverse's basic loyalty feature is also free — but only when bundled with Loyverse POS, and customers need the Loyverse app.`,
               },
               {
                 q: "Do my customers need to download an app to use Brewstamp?",
@@ -460,7 +460,7 @@ export default async function LoyverseAlternative() {
               },
               {
                 q: "How is Brewstamp different from Loyverse Loyalty?",
-                a: "Loyverse ties loyalty to its own POS and customer app. Brewstamp is POS-agnostic and runs in the browser — no apps anywhere. The pricing model is also flatter: $12/mo flat instead of free-but-with-paid-add-ons priced per outlet.",
+                a: "Loyverse ties loyalty to its own POS and customer app. Brewstamp is POS-agnostic and runs in the browser — no apps anywhere. The pricing model is also flatter: $9/mo flat instead of free-but-with-paid-add-ons priced per outlet.",
               },
               {
                 q: "Can I switch from Loyverse to Brewstamp?",

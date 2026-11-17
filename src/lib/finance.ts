@@ -107,7 +107,7 @@ export async function getMrrSnapshot(): Promise<MrrSnapshot> {
     activeShops.add(shopKey);
     addCur(mrr, cur, m);
     // One row per plan, currency, interval and price actually paid, so a
-    // grandfathered US$5 Pro and today's US$12 Pro don't blur together.
+    // grandfathered US$5 Pro and today's US$9 Pro don't blur together.
     const interval: "month" | "year" = s.interval === "year" ? "year" : "month";
     const priceCents = s.priceCents ?? (interval === "year" ? m * 12 : m);
     const plan = catalog.bySlug(tier.slug);
