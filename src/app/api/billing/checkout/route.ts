@@ -96,5 +96,8 @@ export async function POST(req: Request) {
     },
   });
 
+  // Pairs with the "[Billing] page view" line: who went on to Stripe, and for what.
+  console.log(`[Billing] checkout started shop="${shop.name}" id=${shop._id} plan=${plan.slug}/${interval} session=${session.id}`);
+
   return NextResponse.json({ url: session.url });
 }

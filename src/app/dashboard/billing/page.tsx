@@ -193,7 +193,8 @@ export default function BillingPage() {
   const hitShopLimit = searchParams.get("limit") === "1";
 
   useEffect(() => {
-    fetch("/api/billing")
+    // ?view=1 marks the page's first load, which the API logs as a visit.
+    fetch("/api/billing?view=1")
       .then((res) => res.json())
       .then((d: BillingData) => {
         setData(d);

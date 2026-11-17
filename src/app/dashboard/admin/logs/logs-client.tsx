@@ -37,6 +37,8 @@ const TONE: Record<string, string> = {
 const PRESETS = [
   { label: "PayPal", q: "paypal" },
   { label: "Billing API", q: "/api/billing" },
+  { label: "Billing visits", q: "[Billing] page view" },
+  { label: "Checkouts started", q: "[Billing] checkout started" },
 ];
 
 interface Line {

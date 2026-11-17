@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getMerchant } from "@/lib/auth";
+import { auth, getMerchant } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/impersonation";
 import { Payment, Shop, ShopMembership, StampCard, Subscription } from "@/models";
 import { LIVE_SUB_STATUSES, freeTierOf, FREE_TIER_CHANGED_AT, type BillingInterval } from "@/lib/plans";
 import { getPlanCatalog } from "@/lib/plan-catalog";
 import { billingProvider } from "@/lib/paypal";
 
-export async function GET() {
+export async function GET(req: Request) {
   const merchant = await getMerchant();
   if (!merchant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -89,6 +90,20 @@ export async function GET() {
     if (best && best.rank > catalog.rank("free")) {
       const payer = await Shop.findById(best.sub.shop).select("name").lean<any>();
       coveredBy = { shopId: String(best.sub.shop), shopName: payer?.name ?? "your other shop", planLabel: best.label };
+    }
+  }
+
+  // One log line per visit to the billing page (the page's first load sends
+  // ?view=1; its later refreshes don't). Successful GETs aren't logged by
+  // server.ts, so without this nobody can tell "saw the prices and left" from
+  // "never looked". The admin, including while viewing as a merchant, is skipped.
+  if (new URL(req.url).searchParams.get("view") === "1") {
+    const viewer = (await auth())?.user?.email;
+    if (!isAdminEmail(viewer)) {
+      const live = !!subscription && (LIVE_SUB_STATUSES as readonly string[]).includes(subscription.status);
+      const plan = live ? currentPlanSlug ?? "paid" : coveredBy ? "covered" : "free";
+      const usage = plan === "free" ? ` stamps=${totalStamps}/${freeTier.stampLimit}` : "";
+      console.log(`[Billing] page view shop="${merchant.shop.name}" id=${shopId} plan=${plan}${usage}`);
     }
   }
 
