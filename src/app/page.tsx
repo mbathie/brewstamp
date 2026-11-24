@@ -46,12 +46,17 @@ export const metadata: Metadata = {
   description:
     "A digital coffee loyalty card and stamp card for your cafe. Customers scan a QR code — no app, no signup — and collect stamps toward a free coffee. Free to start.",
   alternates: { canonical: "/", languages: buildHreflangMap() },
-  // Homepage owns the "loyalty card / stamp card" cluster. The "coffee rewards
-  // app/card" cluster is deliberately left to /coffee-rewards-app so the two
-  // pages stop competing for the same SERP (see 2026-06-10 SEO report).
+  // Homepage owns the "loyalty card / stamp card" cluster and, since
+  // 2026-11-23, "coffee loyalty app" and "coffee rewards app/card" too. The
+  // separate /coffee-rewards-app page never ranked (pos 44+ a month after the
+  // split) while the homepage held ~12 for its terms, so it was folded in here
+  // (the "Coffee rewards card" section) and 301s to "/".
   keywords: [
     "coffee loyalty card",
     "coffee loyalty card app",
+    "coffee loyalty app",
+    "coffee rewards app",
+    "coffee rewards card",
     "coffee stamp card",
     "digital coffee card",
     "digital loyalty card",
@@ -373,6 +378,99 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Coffee rewards card — the customer's side. Carries what the retired
+          /coffee-rewards-app page said; other pages link to this anchor. */}
+      <section id="coffee-rewards-card" className="scroll-mt-24 bg-stone-50 py-24">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">
+              Coffee rewards card
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
+              The coffee rewards app your regulars will actually keep
+            </h2>
+            <p className="mt-4 text-stone-500">
+              Every customer gets a coffee rewards card in your cafe&apos;s
+              colours. It opens from a QR scan, fills with stamps toward a free
+              coffee, and saves to Apple Wallet or Google Wallet. It keeps what
+              people like about a paper punch card (visible stamps, a simple
+              &ldquo;buy some, get one free&rdquo; deal) without the card that
+              goes through the wash.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <div className="rounded-xl border border-stone-200 bg-white p-6">
+              <h3 className="font-semibold text-stone-900">
+                What your customers see
+              </h3>
+              <ul className="mt-4 space-y-2">
+                {[
+                  "Your logo, background and stamp colours, and an optional pattern",
+                  "A stamp grid and progress bar that fill toward the free coffee",
+                  "A countdown that uses the customer's name once they've added it",
+                  "An animated stamp drop the moment you approve at the till",
+                  "A redeem button that appears as soon as the reward is unlocked",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2 text-sm leading-relaxed text-stone-600"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-sm leading-relaxed text-stone-500">
+                Between visits the card lives in their phone&apos;s wallet and
+                updates on its own each time you approve a stamp. Here&apos;s{" "}
+                <Link
+                  href="/blog/apple-google-wallet-loyalty-card"
+                  className="text-amber-700 underline-offset-2 hover:underline"
+                >
+                  how the Apple Wallet and Google Wallet passes work
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="rounded-xl border border-stone-200 bg-white p-6">
+              <h3 className="font-semibold text-stone-900">
+                You design the reward
+              </h3>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {[
+                  ["6", "Generous", "A first free coffee comes fast"],
+                  ["8", "The usual", "What a paper punch card asks"],
+                  ["10", "Long game", "For daily regulars"],
+                ].map(([n, label, note]) => (
+                  <div key={n} className="rounded-lg bg-stone-50 p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-700">{n}</p>
+                    <p className="mt-1 text-sm font-semibold text-stone-900">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                      {note}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-stone-500">
+                Set anything from 1 to 20 stamps per shop and change it later.
+                Stamps past the threshold carry over after a free coffee, and
+                a round for the office can be several stamps in one approval.
+                More in{" "}
+                <Link
+                  href="/blog/how-many-stamps-for-a-free-coffee"
+                  className="text-amber-700 underline-offset-2 hover:underline"
+                >
+                  how many stamps for a free coffee
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Stats */}
       <section className="border-y border-stone-200 bg-stone-50 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center">
@@ -381,14 +479,8 @@ export default async function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-stone-500">
             Paper cards get lost, apps get deleted, but a QR code at the counter
-            is always there. Brewstamp is a{" "}
-            <Link
-              href="/coffee-rewards-app"
-              className="text-amber-700 underline-offset-2 hover:underline"
-            >
-              coffee rewards app
-            </Link>{" "}
-            that keeps your regulars coming back with zero effort on their part.
+            is always there. Brewstamp is a coffee rewards app that keeps your
+            regulars coming back with zero effort on their part.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-8">
             {[
@@ -540,7 +632,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <RelatedGuides />
+      <RelatedGuides exclude="/" />
       <Footer />
     </div>
   );

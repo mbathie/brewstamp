@@ -67,6 +67,18 @@ export function faqItems(catalog: PlanCatalog): FaqItem[] {
       text: "Yes — on every plan, customers can save their loyalty card to Apple Wallet or Google Wallet for lock-screen access, and it updates automatically each time they earn a stamp. There's still no app to download, and the browser card works for everyone either way.",
     },
     {
+      q: "What does a coffee rewards card look like to my customers?",
+      text: "A card in your colours, with your logo and an optional background pattern, showing a row of stamps that fills toward their free coffee. Once they add their name it counts down personally (\"two more until your free coffee\"), and each approved stamp drops onto the card with a short animation. It opens in their phone's browser from your QR code — there's no app to install.",
+    },
+    {
+      q: "How many stamps should my coffee rewards card need for a free coffee?",
+      text: "Most cafes land between 6 and 10, and 8 is the default. You can set anything from 1 to 20 per shop and change it later. Lower thresholds feel generous and get more customers to a first reward; higher ones suit cheaper drinks or very frequent regulars.",
+    },
+    {
+      q: "What happens to extra stamps after a customer claims a free coffee?",
+      text: "They carry over. If a customer has 9 stamps on an 8-stamp card and redeems their free coffee, the card drops back to 1 rather than zero — nobody loses a stamp they earned. They can also collect a stamp for today's paid coffee in the same visit.",
+    },
+    {
       q: "How much does a digital loyalty card for cafes cost?",
       text: costAnswer(catalog),
     },

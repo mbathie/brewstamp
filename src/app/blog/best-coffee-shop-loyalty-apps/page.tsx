@@ -10,6 +10,9 @@ import { modifiedDate } from "@/lib/content-dates";
 // Comparison roundup targeting the "cafe loyalty app" / "coffee loyalty app" /
 // "coffee rewards app" query cluster (see the 2026-10 SEO report) — searchers
 // on those queries want to compare options, not land on a single product page.
+// For the bare "coffee loyalty app" query the homepage is the target, though:
+// this post was taking its slot at pos ~23, so it links there with that
+// anchor (2026-11-23).
 //
 // Competitor facts are deliberately limited to what the /alternatives/* pages
 // already state (last reviewed May 2026). If a competitor's pricing changes,
@@ -604,8 +607,14 @@ export default function BlogPost() {
               ))}
             </ol>
             <p className="mt-6 text-base leading-relaxed text-stone-600">
-              Whichever coffee loyalty app you pick, the reward design matters
-              as much as the software. Our guide to{" "}
+              Whichever{" "}
+              <Link
+                href="/"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee loyalty app
+              </Link>{" "}
+              you pick, the reward design matters as much as the software. Our guide to{" "}
               <Link
                 href="/blog/coffee-shop-loyalty-cards"
                 className="font-medium text-amber-700 underline-offset-4 hover:underline"
@@ -724,14 +733,14 @@ export default function BlogPost() {
                 </p>
               </Link>
               <Link
-                href="/coffee-rewards-app"
+                href="/"
                 className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
                   Product
                 </p>
                 <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
-                  The coffee rewards app for cafes
+                  Brewstamp: the coffee loyalty app for cafes
                 </h3>
                 <p className="mt-2 text-sm text-stone-500">
                   A digital rewards card with no app to download — scan, stamp,

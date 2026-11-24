@@ -42,6 +42,9 @@ const nextConfig: NextConfig = {
       // "/home" isn't a route — the marketing homepage lives at "/". Alias it
       // so bookmarks/autocomplete/old links land on the homepage, not a 404.
       { source: "/home", destination: "/", permanent: true },
+      // Folded into the homepage 2026-11-23: it sat at position 44+ for its
+      // own terms while the homepage ranked ~12 for them.
+      { source: "/coffee-rewards-app", destination: "/", permanent: true },
     ];
   },
 };

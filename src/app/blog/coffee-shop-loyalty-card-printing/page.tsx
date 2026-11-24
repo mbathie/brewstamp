@@ -243,7 +243,7 @@ export default function BlogPost() {
               you approve from the dashboard, the stamp lands. It&rsquo;s a
               full{" "}
               <Link
-                href="/coffee-rewards-app"
+                href="/"
                 className="font-medium text-amber-700 underline-offset-4 hover:underline"
               >
                 coffee rewards app

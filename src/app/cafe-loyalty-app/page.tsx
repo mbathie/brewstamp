@@ -27,8 +27,9 @@ export const revalidate = 300;
 // the till, approving stamps, staff logins, multiple shops, dashboard, CSV,
 // languages, plan tiers) for "cafe loyalty app / card" and "coffee shop
 // loyalty app". What the customer sees (the rewards card, wallet passes,
-// reward design) lives on /coffee-rewards-app; the homepage owns "loyalty
-// card / stamp card". Keep the three distinct so they don't compete.
+// reward design) lives on the homepage, which owns "loyalty card / stamp
+// card" and "coffee loyalty/rewards app" (/coffee-rewards-app was folded
+// into it 2026-11-23). Keep the two distinct so they don't compete.
 export const metadata: Metadata = {
   title: {
     absolute: "Cafe Loyalty App for the Counter: Staff, Shops & Data | Brewstamp",
@@ -384,7 +385,7 @@ export default async function CafeLoyaltyAppPage() {
             including Apple Wallet and Google Wallet passes and how to set the
             free-coffee threshold? See{" "}
             <Link
-              href="/coffee-rewards-app"
+              href="/#coffee-rewards-card"
               className="text-amber-700 underline-offset-2 hover:underline"
             >
               the coffee rewards card your customers get
@@ -482,10 +483,10 @@ export default async function CafeLoyaltyAppPage() {
           <ul className="mt-4 space-y-2 text-sm">
             <li>
               <Link
-                href="/coffee-rewards-app"
+                href="/"
                 className="text-amber-700 underline-offset-2 hover:underline"
               >
-                Coffee rewards app: the card and wallet pass your customers see →
+                Coffee loyalty app: the rewards card and wallet pass your customers see →
               </Link>
             </li>
             <li>

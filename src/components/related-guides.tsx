@@ -2,20 +2,21 @@ import Link from "next/link";
 
 /**
  * Internal-link block that funnels link equity to the money pages that need a
- * page-1 push (see the 2026-06-17 SEO report): the /coffee-rewards-app landing
- * page (pos ~34) and the strongest blog guides, led by coffee-shop-loyalty-cards
- * (464 impr/28d but stuck pos ~18). Uses exact-match anchor text so the target
- * pages rank for "coffee rewards app", "coffee shop loyalty cards", and
- * "coffee shop loyalty card printing" rather than the homepage absorbing them.
+ * page-1 push: the homepage for "coffee loyalty app" / "coffee rewards app"
+ * (since 2026-11-23 — blog posts had started taking its slot for those
+ * queries, and the old /coffee-rewards-app page was folded into it) and the
+ * strongest blog guides, led by coffee-shop-loyalty-cards. Uses exact-match
+ * anchor text so each target ranks for its own phrase.
  *
  * Drop this in above <Footer /> on supporting pages (alternatives, narrower
  * blog posts) — anywhere that currently dead-ends into a CTA without passing
- * equity onward. Don't render it on a page it links to (avoids a self-link).
+ * equity onward. On a page it links to, pass that page's path as `exclude`
+ * (avoids a self-link).
  */
 const GUIDES: Array<{ href: string; anchor: string; blurb: string }> = [
   {
-    href: "/coffee-rewards-app",
-    anchor: "Coffee rewards app for cafes",
+    href: "/",
+    anchor: "Coffee loyalty app and rewards card for cafes",
     blurb: "A digital coffee rewards card customers reach by scanning a QR code — no app to download.",
   },
   {
@@ -45,14 +46,14 @@ const GUIDES: Array<{ href: string; anchor: string; blurb: string }> = [
   },
 ];
 
-export default function RelatedGuides() {
+export default function RelatedGuides({ exclude }: { exclude?: string } = {}) {
   return (
     <section className="mx-auto w-full max-w-3xl px-6 py-16">
       <h2 className="text-lg font-semibold text-stone-900">
         Keep reading on coffee loyalty &amp; rewards
       </h2>
       <ul className="mt-5 space-y-4">
-        {GUIDES.map(({ href, anchor, blurb }) => (
+        {GUIDES.filter((g) => g.href !== exclude).map(({ href, anchor, blurb }) => (
           <li key={href}>
             <Link
               href={href}

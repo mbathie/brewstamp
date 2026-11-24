@@ -253,10 +253,10 @@ export default function BlogPost() {
               </Link>
               , or read how a simple{" "}
               <Link
-                href="/coffee-rewards-app"
+                href="/"
                 className="font-medium text-amber-700 underline-offset-4 hover:underline"
               >
-                coffee rewards app
+                coffee loyalty app
               </Link>{" "}
               works. Here&apos;s what matters for independent cafes:
             </p>

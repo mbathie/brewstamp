@@ -616,7 +616,14 @@ export default function BlogPost() {
               >
                 the cafe loyalty app with no customer download
               </Link>
-              .
+              . Brewstamp is a{" "}
+              <Link
+                href="/"
+                className="font-medium text-amber-700 underline-offset-4 hover:underline"
+              >
+                coffee loyalty app
+              </Link>{" "}
+              built that way.
             </p>
           </section>
 
@@ -792,14 +799,14 @@ export default function BlogPost() {
             </h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Link
-                href="/coffee-rewards-app"
+                href="/"
                 className="group block rounded-xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
                   Product
                 </p>
                 <h3 className="mt-2 font-semibold text-stone-900 group-hover:text-amber-800">
-                  The coffee rewards app for cafes
+                  The coffee loyalty app for cafes
                 </h3>
                 <p className="mt-2 text-sm text-stone-500">
                   A digital rewards card with no app to download — scan, stamp,

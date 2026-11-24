@@ -24,10 +24,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/how-it-works`, priority: 0.8 },
     { url: `${baseUrl}/faq`, priority: 0.7 },
     {
-      url: `${baseUrl}/coffee-rewards-app`,
-            priority: 0.9,
-    },
-    {
       url: `${baseUrl}/cafe-loyalty-app`,
             priority: 0.9,
     },

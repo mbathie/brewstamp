@@ -12,7 +12,6 @@ type Link = { title: string; path: string; note?: string };
 const PRODUCT: Link[] = [
   { title: "Coffee loyalty card app (home)", path: "/", note: "What Brewstamp is, how it works, and why digital beats paper punch cards." },
   { title: "How it works", path: "/how-it-works", note: "The three-step setup — customise your branded card, print one QR code for the counter, and approve stamps from your phone or tablet." },
-  { title: "Coffee rewards app", path: "/coffee-rewards-app", note: "The coffee rewards card with no app to download — scan, stamp, free coffee." },
   { title: "Cafe loyalty app for the counter", path: "/cafe-loyalty-app", note: "Staff approve stamps on any device; owners see every regular." },
   { title: "Features", path: "/features", note: "Full feature list across the Free, Pro, and Business plans." },
   { title: "Pricing", path: "/pricing", note: "Plans compared side by side, with a pricing FAQ." },
